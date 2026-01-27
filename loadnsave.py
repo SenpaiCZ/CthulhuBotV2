@@ -1,540 +1,188 @@
-import json, aiofiles, os
+import json
+import aiofiles
+import os
 
+DATA_FOLDER = "data"
+INFODATA_FOLDER = "infodata"
+GAMEDATA_FOLDER = "gamedata"
 
-# Define an async function to load player_stats from a JSON file
+async def _load_json_file(folder, filename):
+    """Helper function to asynchronously load JSON data from a file."""
+    file_path = os.path.join(folder, filename)
+    try:
+        async with aiofiles.open(file_path, 'r', encoding='utf-8') as file:
+            data = await file.read()
+            return json.loads(data)
+    except FileNotFoundError:
+        return {}
+
+async def _save_json_file(folder, filename, data, ensure_ascii=True):
+    """Helper function to asynchronously save JSON data to a file."""
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    file_path = os.path.join(folder, filename)
+    async with aiofiles.open(file_path, 'w', encoding='utf-8') as file:
+        await file.write(json.dumps(data, indent=4, ensure_ascii=ensure_ascii))
+
+# --- Player Stats ---
 async def load_player_stats():
-  try:
-    data_folder = "data"  # Replace with the actual folder name
-    file_path = os.path.join(data_folder, 'player_stats.json')
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
+    return await _load_json_file(DATA_FOLDER, 'player_stats.json')
 
-
-# Define an async function to save player_stats to a JSON file
 async def save_player_stats(player_stats):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'player_stats.json')
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(player_stats, indent=4))
+    await _save_json_file(DATA_FOLDER, 'player_stats.json', player_stats)
 
-
-# Define a function to load settings from a JSON file
+# --- Settings ---
 def load_settings():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'settings.json')
-  try:
-    with open(file_path, 'r') as file:
-      return json.load(file)
-  except FileNotFoundError:
-    return {}  # Default values if the file doesn't exist
+    """Synchronous load for settings."""
+    file_path = os.path.join(DATA_FOLDER, 'settings.json')
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return {}
 
-
-# Define an async function to load server_stats from a JSON file
+# --- Server Stats ---
 async def load_server_stats():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'server_stats.json')
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
+    return await _load_json_file(DATA_FOLDER, 'server_stats.json')
 
-
-# Define an async function to save server_stats to a JSON file
 async def save_server_stats(server_stats):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'server_stats.json')
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(server_stats, indent=4))
+    await _save_json_file(DATA_FOLDER, 'server_stats.json', server_stats)
 
-
-# Define an async function to load smart react data from a JSON file
+# --- Smart React ---
 async def smartreact_load():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'smart_react.json')
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
+    return await _load_json_file(DATA_FOLDER, 'smart_react.json')
 
-
-# Define an async function to save smart_react data to a JSON file
 async def smartreact_save(smart_react):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'smart_react.json')
-  async with aiofiles.open(file_path, 'w', encoding='utf-8') as file:
-    await file.write(json.dumps(smart_react, ensure_ascii=False, indent=4))
+    await _save_json_file(DATA_FOLDER, 'smart_react.json', smart_react, ensure_ascii=False)
 
-
-# Define an async function to load autoroom data from a JSON file
+# --- Auto Room ---
 async def autoroom_load():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'autorooms.json')
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
+    return await _load_json_file(DATA_FOLDER, 'autorooms.json')
 
-
-# Define an async function to save autoroom data to a JSON file
 async def autoroom_save(autorooms):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'autorooms.json')
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(autorooms, indent=4))
+    await _save_json_file(DATA_FOLDER, 'autorooms.json', autorooms)
 
-
-# Define an async function to load YouTube feed data from a JSON file
+# --- YouTube Feed ---
 async def youtube_load():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'youtube_feed.json')
+    return await _load_json_file(DATA_FOLDER, 'youtube_feed.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to save YouTube feed data to a JSON file
 async def youtube_save(youtube_feed):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'youtube_feed.json')
+    await _save_json_file(DATA_FOLDER, 'youtube_feed.json', youtube_feed)
 
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(youtube_feed, indent=4))
-
-
-# Define an async function to load session data from a JSON file
+# --- Session Data ---
 async def load_session_data():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'session_data.json')
+    return await _load_json_file(DATA_FOLDER, 'session_data.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to save session data to a JSON file
 async def save_session_data(session_data):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'session_data.json')
+    await _save_json_file(DATA_FOLDER, 'session_data.json', session_data)
 
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(session_data, indent=4))
-
-
-# Define an async function to load group madness data from a JSON file
+# --- Info Data (Read-only mostly) ---
 async def load_madness_group_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'madness_with_group.json')
+    return await _load_json_file(INFODATA_FOLDER, 'madness_with_group.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load solo madness data from a JSON file
 async def load_madness_solo_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'madness_alone.json')
+    return await _load_json_file(INFODATA_FOLDER, 'madness_alone.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load insane talents data from a JSON file
 async def load_madness_insane_talent_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'insane_talents.json')
+    return await _load_json_file(INFODATA_FOLDER, 'insane_talents.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load phobias data from a JSON file
 async def load_phobias_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'phobias.json')
+    return await _load_json_file(INFODATA_FOLDER, 'phobias.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load manias data from a JSON file
 async def load_manias_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'manias.json')
+    return await _load_json_file(INFODATA_FOLDER, 'manias.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load name data from a JSON file
 async def load_names_male_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'names_male.json')
+    return await _load_json_file(INFODATA_FOLDER, 'names_male.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load name data from a JSON file
 async def load_names_female_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'names_female.json')
+    return await _load_json_file(INFODATA_FOLDER, 'names_female.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load name data from a JSON file
 async def load_names_last_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'names_last.json')
+    return await _load_json_file(INFODATA_FOLDER, 'names_last.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load archetype data from a JSON file
 async def load_archetype_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'archetype_info.json')
+    return await _load_json_file(INFODATA_FOLDER, 'archetype_info.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load firearms data from a JSON file
 async def load_firearms_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'firearms_info.json')
+    return await _load_json_file(INFODATA_FOLDER, 'firearms_info.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load inventions data from a JSON file
 async def load_inventions_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'inventions_info.json')
+    return await _load_json_file(INFODATA_FOLDER, 'inventions_info.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load inventions data from a JSON file
 async def load_occupations_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'occupations_info.json')
+    return await _load_json_file(INFODATA_FOLDER, 'occupations_info.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load inventions data from a JSON file
 async def load_skills_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'skills_info.json')
+    return await _load_json_file(INFODATA_FOLDER, 'skills_info.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load inventions data from a JSON file
 async def load_years_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'years_info.json')
+    return await _load_json_file(INFODATA_FOLDER, 'years_info.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load server_stats from a JSON file
-async def load_luck_stats():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'luck_stats.json')
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to save server_stats to a JSON file
-async def save_luck_stats(server_stats):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'luck_stats.json')
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(server_stats, indent=4))
-
-
-# Define an async function to load inventions data from a JSON file
 async def load_poisons_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'poisions_info.json')
+    return await _load_json_file(INFODATA_FOLDER, 'poisions_info.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to load session data from a JSON file
-async def load_chase_data():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'chase_data.json')
-
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to save session data to a JSON file
-async def save_chase_data(session_data):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'chase_data.json')
-
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(session_data, indent=4))
-
-
-# Define an async function to load session data from a JSON file
-async def load_deleter_data():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'deleter_data.json')
-
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to save session data to a JSON file
-async def save_deleter_data(session_data):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'deleter_data.json')
-
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(session_data, indent=4))
-
-
-# Define an async function to load session data from a JSON file
 async def load_macguffin_data():
-  data_folder = "infodata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'macguffin_info.json')
+    return await _load_json_file(INFODATA_FOLDER, 'macguffin_info.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
+# --- Luck Stats ---
+async def load_luck_stats():
+    return await _load_json_file(DATA_FOLDER, 'luck_stats.json')
 
-# Define an async function to load session data from a JSON file
+async def save_luck_stats(server_stats):
+    await _save_json_file(DATA_FOLDER, 'luck_stats.json', server_stats)
+
+# --- Chase Data ---
+async def load_chase_data():
+    return await _load_json_file(DATA_FOLDER, 'chase_data.json')
+
+async def save_chase_data(session_data):
+    await _save_json_file(DATA_FOLDER, 'chase_data.json', session_data)
+
+# --- Deleter Data ---
+async def load_deleter_data():
+    return await _load_json_file(DATA_FOLDER, 'deleter_data.json')
+
+async def save_deleter_data(session_data):
+    await _save_json_file(DATA_FOLDER, 'deleter_data.json', session_data)
+
+# --- RSS Data ---
 async def load_rss_data():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'rss_data.json')
+    return await _load_json_file(DATA_FOLDER, 'rss_data.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to save session data to a JSON file
 async def save_rss_data(session_data):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'rss_data.json')
+    await _save_json_file(DATA_FOLDER, 'rss_data.json', session_data)
 
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(session_data, indent=4))
-
-
-
-# Define an async function to load session data from a JSON file
+# --- Reminder Data ---
 async def load_reminder_data():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'reminder_data.json')
+    return await _load_json_file(DATA_FOLDER, 'reminder_data.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to save session data to a JSON file
 async def save_reminder_data(session_data):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'reminder_data.json')
+    await _save_json_file(DATA_FOLDER, 'reminder_data.json', session_data)
 
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(session_data, indent=4))
-
-
-
-
-
-# Define an async function to load session data from a JSON file
+# --- Game Data ---
 async def game_load_player_data():
-  data_folder = "gamedata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'player_data.json')
+    return await _load_json_file(GAMEDATA_FOLDER, 'player_data.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to save session data to a JSON file
 async def game_save_player_data(session_data):
-  data_folder = "gamedata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'player_data.json')
+    await _save_json_file(GAMEDATA_FOLDER, 'player_data.json', session_data)
 
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(session_data, indent=4))
-
-
-# Define an async function to load session data from a JSON file
 async def game_load_questions_data():
-  data_folder = "gamedata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'questions_data.json')
+    return await _load_json_file(GAMEDATA_FOLDER, 'questions_data.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to save session data to a JSON file
 async def game_save_questions_data(session_data):
-  data_folder = "gamedata"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'questions_data.json')
+    await _save_json_file(GAMEDATA_FOLDER, 'questions_data.json', session_data)
 
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(session_data, indent=4))
-
-
-# Define an async function to load session data from a JSON file
+# --- Retired Characters ---
 async def load_retired_characters_data():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'retired_characters_data.json')
+    return await _load_json_file(DATA_FOLDER, 'retired_characters_data.json')
 
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
-
-
-# Define an async function to save session data to a JSON file
 async def save_retired_characters_data(session_data):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'retired_characters_data.json')
+    await _save_json_file(DATA_FOLDER, 'retired_characters_data.json', session_data)
 
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(session_data, indent=4))
-    
-# Define an async function to load server_stats from a JSON file
+# --- Gamemode Stats ---
 async def load_gamemode_stats():
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'gamemode.json')
-  try:
-    async with aiofiles.open(file_path, 'r') as file:
-      data = await file.read()
-      return json.loads(data)
-  except FileNotFoundError:
-    return {}
+    return await _load_json_file(DATA_FOLDER, 'gamemode.json')
 
-
-# Define an async function to save server_stats to a JSON file
 async def save_gamemode_stats(server_stats):
-  data_folder = "data"  # Replace with the actual folder name
-  file_path = os.path.join(data_folder, 'gamemode.json')
-  async with aiofiles.open(file_path, 'w') as file:
-    await file.write(json.dumps(server_stats, indent=4))
+    await _save_json_file(DATA_FOLDER, 'gamemode.json', server_stats)

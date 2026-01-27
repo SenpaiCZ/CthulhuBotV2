@@ -1,0 +1,6 @@
+discord.py
+aiofiles
+feedparser
+pytz
+beautifulsoup4
+requests

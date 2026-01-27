@@ -10,16 +10,19 @@ from loadnsave import load_settings
 from loadnsave import youtube_save, youtube_load
 import asyncio
 
-# Define your YouTube API key - This is for REPLIT
-YOUTUBE_API_KEY = os.getenv("YOUTUBETOKEN")
-
-# This is for self hosting
+# Load settings
 settings = load_settings()
-print(settings["youtubetoken"])
-#YOUTUBE_API_KEY = settings["youtubetoken"]
+
+# Define your YouTube API key
+# Try environment variable first, then settings.json
+YOUTUBE_API_KEY = os.getenv("YOUTUBETOKEN") or settings.get("youtubetoken")
 
 # Define an async function to get the RSS link from a YouTube channel page
 async def get_channel_rss_link(channel_input):
+    if not YOUTUBE_API_KEY:
+        print("Error: YouTube API Key not found.")
+        return None
+
     try:
         async with aiohttp.ClientSession() as session:
             if channel_input.startswith('UC'):
@@ -110,6 +113,10 @@ class youtube(commands.Cog):
             return
         if not isinstance(ctx.channel, discord.TextChannel):
             await ctx.send("This command is not allowed in DMs.")
+            return
+
+        if not YOUTUBE_API_KEY:
+            await ctx.send("YouTube API Key is not configured.")
             return
     
         RSS = await get_channel_rss_link(channel_link_or_id)
@@ -205,9 +212,12 @@ class youtube(commands.Cog):
                 if latest_video_link != last_video:
                   print("New video found!")
                   discord_channel = self.bot.get_channel(int(channel_id))
-                  await discord_channel.send(f"New video: {latest_video_link}")
-                  channel["Lastvideo"] = latest_video_link
-                  await youtube_save(youtube_data)
+                  if discord_channel:
+                      await discord_channel.send(f"New video: {latest_video_link}")
+                      channel["Lastvideo"] = latest_video_link
+                      await youtube_save(youtube_data)
+                  else:
+                      print(f"Could not find channel {channel_id}")
                         
 async def setup(bot):
   await bot.add_cog(youtube(bot))
