@@ -1,162 +1,20 @@
 import discord
 from discord.ext import commands
-import asyncio, os, json, os, random, aiofiles
-from loadnsave import load_settings, load_server_stats, load_luck_stats
+import asyncio
+import os
+from loadnsave import load_settings, load_server_stats
+from help_command import CustomHelpCommand
 
 # Load the settings
 settings = load_settings()
-print(settings["token"])
+# Token printing removed for security
+
 # Function to get the bot's prefix dynamically from the JSON file or mentions
 async def get_prefix(bot, message):
     server_prefixes = await load_server_stats()
     server_id = str(message.guild.id) if message.guild else None
     server_prefix = server_prefixes.get(server_id, "!") if server_id else "!"
     return commands.when_mentioned_or(server_prefix)(bot, message)
-
-# Create a custom help command
-class CustomHelpCommand(commands.DefaultHelpCommand):
-    def __init__(self):
-        super().__init__()
-        self.per_page = 20 # Number of commands to display per page
-
-    async def send_bot_help(self, mapping):
-        ctx = self.context
-        bot = ctx.bot
-
-        # Group commands by cog
-        cogs = {
-            "Character creation": [
-                "newinvestigator",
-                "mychar",
-                "autochar",
-                "stat",
-                "rename",
-                "renameskill",
-                "deleteinvestigator",
-                "addbackstory",
-                "updatebackstory",
-                "removebackstory",
-                "generatebackstory",
-                "retire",
-                "unretire"
-
-            ],
-            "Rolling die and session management": [
-                "newroll",
-                "roll",
-                "newbonusroll",
-                "newpenalityroll",
-                "showluck",
-                "startsession",
-                "showsession",
-                "wipesession",
-
-            ],
-            "For Keeper": [
-                "changeluck",
-                "occupationinfo",
-                "skillinfo",
-                "createnpc",
-                "randomname",
-                "macguffin",
-                "loot",
-                "archetypeinfo",
-                "firearms",
-                "inventions",
-                "talents",
-                "years",
-                "madness",
-                "madnessAlone",
-                "insaneTalents",
-                "phobia",
-                "mania",
-                "poisions",
-            ],
-            "Bot functions":[
-                "autoroomkick",
-                "autoroomlock", 
-                "autoroomunlock",
-                "reportbug",
-                "repeatafterme",
-                "uptime"
-            ],
-            "Admin": [
-                "autoroomset",
-                "changeprefix",
-                "ping",
-                "repeatafterme",
-                "addreaction",
-                "removereaction",
-                "listreactions",
-                "youtube",
-                "unsubscribe",
-                "deleter",
-                "autodeleter",
-                "stopdeleter",
-                "rss"
-            ],
-            "NIU": [
-            ],
-        }
-
-        # Add commands not assigned to a specific page to "Other"
-        for cog, command_list in mapping.items():
-            cog_name = getattr(cog, "qualified_name", "No Category")
-            if cog_name not in cogs:
-                pass
-                #cogs["Other"].extend([command.name for command in command_list if not command.hidden])
-
-        # Split commands into pages
-        pages = []
-        for page_name, cog_commands in cogs.items():
-            commands = []
-            for command_name in cog_commands:
-                command = bot.get_command(command_name)
-                if command:
-                    commands.append(command)
-                    if len(commands) >= self.per_page:
-                        pages.append((page_name, commands))
-                        commands = []
-            if commands:
-                pages.append((page_name, commands))
-
-        # Display pages (same code as before)
-        current_page = 0
-        embed = self.create_page_embed(current_page, pages)
-        message = await ctx.send(embed=embed)
-        for emoji in ["⬅️", "➡️"]:
-            await message.add_reaction(emoji)
-        
-        def check(reaction, user):
-            return user == ctx.author and reaction.message.id == message.id and reaction.emoji in ["⬅️", "➡️"]
-        
-        while True:
-            try:
-                reaction, user = await bot.wait_for("reaction_add", timeout=60, check=check)
-                if reaction.emoji == "⬅️":
-                    current_page = max(0, current_page - 1)
-                elif reaction.emoji == "➡️":
-                    current_page = min(len(pages) - 1, current_page + 1)
-                embed = self.create_page_embed(current_page, pages)
-                await message.edit(embed=embed)
-                await message.remove_reaction(reaction.emoji, ctx.author)  # Remove the user's reaction
-            except asyncio.TimeoutError:
-                await message.clear_reactions()
-                break
-
-    def create_page_embed(self, page_num, pages):
-        page_name, page = pages[page_num]
-        embed = discord.Embed(
-            title=f"<:coc:1150679516650418216>Help<:coc:1150679516650418216> - {page_name}",
-            description="This is **UNOFICIAL** bot!\nIt's **not** associated with Chaosium Inc!\nTo be able to play **Call of Cthulhu** you will need [Call of Cthulhu Keeper Rulebook](https://www.chaosium.com/call-of-cthulhu-keeper-rulebook-hardcover/), [Call of Cthulhu Starter Set](https://www.chaosium.com/call-of-cthulhu-starter-set/) or [Pulp Cthulhu](https://www.chaosium.com/pulp-cthulhu-hardcover/) published by [Chaosium.inc](https://www.chaosium.com/)\n\nHere are the available commands, [p] is your prefix:",
-            color=0x00ff00  # You can set a custom color for the embed
-        )
-        for command in page:
-            signature = self.get_command_signature(command)
-            description = command.help or "No description available"
-            embed.add_field(name=signature, value=description, inline=False)
-        embed.set_footer(text=f"Page {page_num + 1}/{len(pages)}")
-        return embed
 
 # Create a bot instance and pass it to the CustomHelpCommand constructor
 bot = commands.Bot(command_prefix=get_prefix,
@@ -166,29 +24,29 @@ bot = commands.Bot(command_prefix=get_prefix,
 help_command = CustomHelpCommand()
 bot.help_command = help_command
 
-
-
-#loading cogs!
+# Loading cogs!
 async def load():
-  #in folder commands
+  # in folder commands
   for filename in os.listdir('./commands'):
-    #all files ending with .py
+    # all files ending with .py
     if filename.endswith('.py'):
-      #load as extencions
+      # load as extensions
       await bot.load_extension(f"commands.{filename[:-3]}")
       print(f"{filename[:-3]} is now LOADED! Yeah Baby!")
-
-
 
 async def main():
   async with bot:
     await load()
-    #This is for REPLIT
-    #TOKEN = os.getenv("TOKEN")
+    # This is for REPLIT
+    # TOKEN = os.getenv("TOKEN")
     
-    #This is for self hosted bot
-    TOKEN = settings["token"]
-    await bot.start(TOKEN)
+    # This is for self hosted bot
+    # Ensure token exists before starting
+    if "token" in settings:
+        TOKEN = settings["token"]
+        await bot.start(TOKEN)
+    else:
+        print("Error: Token not found in settings.")
 
-
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
