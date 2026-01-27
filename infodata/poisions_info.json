@@ -1,0 +1,74 @@
+{
+    "Amanita (agaric mushrooms)": {
+        "Onset Time": "6 to 24 hours",
+        "Symptoms": "Violent stomach pains, vomiting, jaundice.",
+        "Damage": "1D10 damage",
+        "Note": "Responsible for 95% of fatalities from mushroom poisoning, the death cap mushroom being foremost."
+    },
+    "Arsenic": {
+        "Onset Time": "30 minutes to 24 hours",
+        "Symptoms": "Burning pain, vomiting, violent diarrhea.",
+        "Damage": "4D10 damage",
+        "Note": "Arsenic poisoning was difficult to determine (hence its popularity as a tool for murder) until 1836, when the Marsh Test was invented."
+    },
+    "Belladonna (deadly nightshade)": {
+        "Onset Time": "2 hours to 2 days",
+        "Symptoms": "Rapid heartbeat, impaired vision, convulsions.",
+        "Damage": "4D10 damage",
+        "Note": "One of the most toxic plants in the world; consumption of 10-20 berries by an adult will probably cause death."
+    },
+    "Black Widow Spider Venom (latrotoxin)": {
+        "Onset Time": "2 to 8 hours",
+        "Symptoms": "Chills, sweats, nausea.",
+        "Damage": "1D10 damage",
+        "Note": "Rarely causes death if medical treatment is provided."
+    },
+    "Chloroform": {
+        "Onset Time": "1 round",
+        "Symptoms": "Unconsciousness for 1 hour.",
+        "Damage": "No damage",
+        "Note": "Widely used as an anesthetic in the 1800-1900s; however, a high-strength toxic dose may cause death."
+    },
+    "Cobra Venom": {
+        "Onset Time": "15 to 60 minutes",
+        "Symptoms": "Convulsions, respiratory failure.",
+        "Damage": "4D10 damage",
+        "Note": "Contact with eyes will cause immediate irritation and, if untreated, blindness. If serum is available, then major injury and death can be avoided."
+    },
+    "Curare": {
+        "Onset Time": "1 round",
+        "Symptoms": "Muscular paralysis, respiratory failure.",
+        "Damage": "4D10 damage",
+        "Note": "Common name for poison administered to arrows in South America. Harmless if ingested—only direct application via a skin wound results in paralysis."
+    },
+    "Cyanide": {
+        "Onset Time": "1 to 15 minutes",
+        "Symptoms": "Dizziness, convulsions, fainting, death.",
+        "Damage": "4D10 damage",
+        "Note": "Highly toxic—causes death if ingested as cyanide salt or inhaled through gas."
+    },
+    "Rattlesnake Venom": {
+        "Onset Time": "6 to 24 hours",
+        "Symptoms": "Vomiting, violent spasms, yellowish vision.",
+        "Damage": "2D10 damage",
+        "Note": "Venom destroys tissue, causing necrosis, although rarely fatal (especially if an antidote is given within 1 to 2 hours)."
+    },
+    "Rohypnol": {
+        "Onset Time": "15 to 30 minutes",
+        "Symptoms": "Unconsciousness for 4-8 hours, possible amnesia.",
+        "Damage": "No damage",
+        "Note": "Odorless, colorless, and only available in modern game settings."
+    },
+    "Strychnine": {
+        "Onset Time": "10 to 20 minutes",
+        "Symptoms": "Violent muscle contractions, asphyxiation, death.",
+        "Damage": "4D10 damage",
+        "Note": "Death within hours if medical treatment is not provided."
+    },
+    "Yew": {
+        "Onset Time": "30 to 90 minutes",
+        "Symptoms": "Rapid heartbeat, impaired vision, convulsions.",
+        "Damage": "4D10 damage",
+        "Note": "One of the most toxic plants in the world; consumption of 1-2 handfulls of needles by an adult will probably cause death."
+    }
+}

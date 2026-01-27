@@ -1,0 +1,12 @@
+{
+  "Amnesia": "The hero ceases to think of themselves as a hero, losing the ability to use their pulp talents for 1D10 rounds.",
+  "Crazy plan": "For 1D10 rounds, the hero pursues an irrational or ill-conceived plan. The plan must either benefit the enemy's situation or increase the danger for the hero or their allies.",
+  "Rage": "A red mist descends on the hero, and they explode in a spree of uncontrolled violence and rage for 1D10 rounds.",
+  "Gloat": "The hero is compelled to boast, bloat or exclaim their aloud for 1D10 rounds: ˝So, before my friends and I wipe out every ghoul in this lair, just let me tell you this...˝",
+  "Relax":"The hero is convinced that the threat is negligible, and he or she sits back and relaxes for 1D10 rounds. They might take a minute to light a nice cigar or make a toast with hip flask.",
+  "Flee in panic": "The hero is compelled to get as far away as possible by whatever means are available, even if it necessitates taking the only vehicle and leaving everyone else behind. They travel for 1D10 rounds.",
+  "Show off": "The hero becomes an attention-seeking maniac for 1D10 rounds, possibly prone to foolhardy acts.",
+  "Alter ego": "The hero's personality undergoes a complete transformation and is replaced by one completely different for 1D10 rounds. The alter ego is a mirror opposite of the hero. Where one is kind, the other is callous. Where one is selfish, the other is altruistic. This could be used by the Keeper to foreshadow the monster this particular hero will become if they ever descend into permanent insanity.",
+  "Phobia": "The hero gains a new phobia. Roll 1D100 on the Sample Phobias Table (Chapter 9: Sanity, page 160, Call of Cthulhu Rulebook), or the Keeper may choose one. Even if the source of the phobia is not present, the investigator imagines it is there for the next 1D10 rounds.",
+  "Mania": "The hero gains a new mania. Roll 1D100 on the Sample Manias Table (Chapter 9: Sanity, page 161, Call of Cthulhu Rulebook), or the Keeper may choose one. The investigator seeks to indulge in their new mania for the next 1D10 rounds."
+}

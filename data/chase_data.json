@@ -1,0 +1,31 @@
+{
+    "1146458131694624958": {
+        "1146460763280637983": {
+            "type": "car",
+            "pursuit": "following",
+            "keeper": "214351769243877376",
+            "enemy_data": {
+                "MOV": 6,
+                "POSITION": null
+            },
+            "participants": {
+                "214351769243287736": {
+                    "MOV": 6,
+                    "POSITION": null
+                },
+                "2143517692143877376": {
+                    "MOV": 6,
+                    "POSITION": null
+                },
+                "21435176924123877376": {
+                    "MOV": 6,
+                    "POSITION": null
+                },
+                "214351769243877376": {
+                    "MOV": 6,
+                    "POSITION": null
+                }
+            }
+        }
+    }
+}
