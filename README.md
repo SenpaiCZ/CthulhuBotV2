@@ -11,58 +11,218 @@
 *   **Keeper Tools:** Extensive library of game information including firearms, inventions, madness tables, phobias/manias, and NPC generation.
 *   **Session Management:** Tools to start, track, and log game sessions.
 *   **Utility & Admin:** YouTube feed integration, auto-rooms, RSS feeds, and server administration tools.
+*   **Web Dashboard:** An optional web interface for easier management of data files and characters.
 
 ## Installation
 
 ### Prerequisites
 
-*   Python 3.8 or higher
-*   Git
+*   **Python 3.8** or higher: [Download Python](https://www.python.org/downloads/)
+*   **Git**: [Download Git](https://git-scm.com/downloads)
 
-### Setup
+### 1. Installation on Linux
 
-1.  **Clone the repository:**
+**A. Clone and Setup**
+
+1.  Open your terminal.
+2.  Clone the repository:
     ```bash
-    git clone <repository_url>
+    git clone https://github.com/YourUsername/CthulhuBotV2.git
     cd CthulhuBotV2
     ```
-
-2.  **Install dependencies:**
+3.  Create a virtual environment:
+    ```bash
+    python3 -m venv venv
+    ```
+4.  Activate the virtual environment:
+    ```bash
+    source venv/bin/activate
+    ```
+5.  Install dependencies:
     ```bash
     pip install -r requirements.txt
     ```
 
-3.  **Configure Settings:**
-    The bot prioritizes configuration in the following order:
-    1.  **Environment Variables** (Recommended for cloud deployment like Replit)
-    2.  `data/settings.json` (Recommended for local development, this file is git-ignored)
-    3.  `config.json` (Default values)
+**B. Configuration**
 
-    **Local Development:**
-    Create a folder named `data` in the root directory. Inside `data`, create a file named `settings.json`.
-
+1.  Create the `data` directory and `settings.json` file:
     ```bash
-    mkdir data
+    mkdir -p data
     touch data/settings.json
     ```
-
-    Open `data/settings.json` and add your configuration:
+2.  Edit `data/settings.json` using nano or your preferred editor:
+    ```bash
+    nano data/settings.json
+    ```
+3.  Add your configuration (see [Configuration Details](#configuration-details) below for more info):
     ```json
     {
         "token": "YOUR_DISCORD_BOT_TOKEN",
         "youtubetoken": "YOUR_YOUTUBE_API_KEY"
     }
     ```
-    *   `token`: Your Discord Bot Token (Required).
-    *   `youtubetoken`: Your YouTube Data API Key (Optional, for YouTube feed features).
 
-    **Deployment on Replit:**
-    1.  Fork the repository to your Replit account.
-    2.  Go to the **Tools** pane and select **Secrets**.
-    3.  Add the following secrets (Environment Variables):
-        *   `DISCORD_TOKEN`: Your Discord Bot Token.
-        *   `YOUTUBE_API_KEY`: Your YouTube Data API Key (Optional).
-    4.  Run the bot. The `config.json` file serves as a template with default values.
+**C. Running the Bot**
+
+To run the bot manually:
+```bash
+python bot.py
+```
+
+**D. Auto-Start with Systemd**
+
+To keep the bot running in the background and start automatically on boot:
+
+1.  Create a service file:
+    ```bash
+    sudo nano /etc/systemd/system/cthulhubot.service
+    ```
+2.  Paste the following content (update paths and user accordingly):
+    ```ini
+    [Unit]
+    Description=CthulhuBotV2 Discord Bot
+    After=network.target
+
+    [Service]
+    User=your_linux_username
+    WorkingDirectory=/path/to/CthulhuBotV2
+    ExecStart=/path/to/CthulhuBotV2/venv/bin/python bot.py
+    Restart=always
+
+    [Install]
+    WantedBy=multi-user.target
+    ```
+    *Replace `/path/to/CthulhuBotV2` with the actual path to your cloned directory.*
+    *Replace `your_linux_username` with your actual username.*
+
+3.  Enable and start the service:
+    ```bash
+    sudo systemctl daemon-reload
+    sudo systemctl enable cthulhubot.service
+    sudo systemctl start cthulhubot.service
+    ```
+4.  Check status:
+    ```bash
+    sudo systemctl status cthulhubot.service
+    ```
+
+---
+
+### 2. Installation on Windows
+
+**A. Clone and Setup**
+
+1.  Open Command Prompt (cmd) or PowerShell.
+2.  Clone the repository:
+    ```bash
+    git clone https://github.com/YourUsername/CthulhuBotV2.git
+    cd CthulhuBotV2
+    ```
+3.  Create a virtual environment:
+    ```bash
+    python -m venv venv
+    ```
+4.  Activate the virtual environment:
+    ```cmd
+    venv\Scripts\activate
+    ```
+5.  Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+**B. Configuration**
+
+1.  Create a new folder named `data` inside the project folder.
+2.  Inside `data`, create a text file named `settings.json`.
+3.  Open it with Notepad and add your configuration (see [Configuration Details](#configuration-details)):
+    ```json
+    {
+        "token": "YOUR_DISCORD_BOT_TOKEN",
+        "youtubetoken": "YOUR_YOUTUBE_API_KEY"
+    }
+    ```
+
+**C. Running the Bot**
+
+To run the bot manually, make sure the virtual environment is activated, then run:
+```bash
+python bot.py
+```
+
+**D. Auto-Start on Windows**
+
+To make the bot start automatically when you log in:
+
+1.  Create a new file named `start_bot.bat` in the project folder.
+2.  Edit it and add the following lines (adjust paths as necessary):
+    ```batch
+    @echo off
+    cd /d "C:\path\to\CthulhuBotV2"
+    call venv\Scripts\activate.bat
+    python bot.py
+    pause
+    ```
+3.  Press `Win + R`, type `shell:startup`, and press Enter. This opens the Startup folder.
+4.  Create a shortcut to your `start_bot.bat` file and place it in this Startup folder.
+    *   *Alternatively, you can use Windows Task Scheduler for more advanced control (e.g., running regardless of user login).*
+
+---
+
+### 3. Deployment on Replit
+
+1.  Fork the repository to your Replit account.
+2.  Go to the **Tools** pane and select **Secrets**.
+3.  Add the following secrets (Environment Variables):
+    *   `DISCORD_TOKEN`: Your Discord Bot Token.
+    *   `YOUTUBE_API_KEY`: Your YouTube Data API Key (Optional).
+4.  Run the bot. The `config.json` file serves as a template with default values.
+
+---
+
+### Configuration Details
+
+The bot prioritizes configuration in the following order:
+1.  **Environment Variables** (Highest priority)
+2.  `data/settings.json` (Local overrides)
+3.  `config.json` (Default values)
+
+**Common Settings (`data/settings.json`):**
+```json
+{
+    "token": "YOUR_DISCORD_BOT_TOKEN",
+    "youtubetoken": "YOUR_YOUTUBE_API_KEY",
+    "enable_dashboard": true,
+    "admin_password": "your_secure_password"
+}
+```
+
+## Web Dashboard
+
+The bot includes a web dashboard to help manage character data and edit configuration files easily.
+
+### Setup
+1.  Open your `data/settings.json` file.
+2.  Add or update the following keys:
+    ```json
+    {
+        ...
+        "enable_dashboard": true,
+        "admin_password": "SetAStrongPasswordHere"
+    }
+    ```
+    *   `enable_dashboard`: Set to `true` to turn it on.
+    *   `admin_password`: The password required to log in to the dashboard.
+
+### Accessing the Dashboard
+1.  Start the bot.
+2.  Open your web browser and navigate to: `http://localhost:5000`
+    *   If running on a remote server, replace `localhost` with the server's IP address. You may need to open port 5000 in your firewall.
+3.  Log in using the `admin_password` you set.
+
+### Features
+*   **Character Viewer:** View details of active and retired investigators.
+*   **File Editor:** Browse and edit JSON files in the `data` and `infodata` directories directly from the browser (Admin only).
 
 ## Usage
 
