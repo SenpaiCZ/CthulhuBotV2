@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands, tasks
 import asyncio
+import aiofiles
+import io
 
 
 class backup(commands.Cog):
@@ -11,11 +13,15 @@ class backup(commands.Cog):
 
   @tasks.loop(hours=24)
   async def backup_task(self):
-      user_id = 214351769243877376  # Replace with your bot owner's user ID
       try:
-          with open('data/player_stats.json', 'rb') as file:
-              owner = await self.bot.fetch_user(user_id)
-              await owner.send(file=discord.File(file, 'player_stats.json'))
+          # Fetch application info to get the owner
+          app_info = await self.bot.application_info()
+          owner = app_info.owner
+
+          async with aiofiles.open('data/player_stats.json', 'rb') as file:
+              data = await file.read()
+              file_obj = io.BytesIO(data)
+              await owner.send(file=discord.File(file_obj, 'player_stats.json'))
       except Exception as e:
           print(f"An error occurred while sending the backup file: {e}")
 
@@ -29,11 +35,13 @@ class backup(commands.Cog):
     `[p]backup` - Sends the file data/player_data.json to the bot owner.
     """
     # Check if the message author is the bot owner
-    if ctx.message.author.id == 214351769243877376:
+    if await self.bot.is_owner(ctx.author):
         try:
             # Replace 'data/player_data.json' with the actual file path
-            with open('data/player_stats.json', 'rb') as file:
-                await ctx.author.send(file=discord.File(file, 'player_stats.json'))
+            async with aiofiles.open('data/player_stats.json', 'rb') as file:
+                data = await file.read()
+                file_obj = io.BytesIO(data)
+                await ctx.author.send(file=discord.File(file_obj, 'player_stats.json'))
             await ctx.send("Backup file sent to the bot owner.")
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
