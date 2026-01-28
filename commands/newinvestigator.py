@@ -1,133 +1,638 @@
 import discord
+import asyncio
+import random
+import math
 from discord.ext import commands
-from loadnsave import load_player_stats, save_player_stats, load_server_stats
-
+from loadnsave import (
+    load_player_stats, save_player_stats,
+    load_retired_characters_data, save_retired_characters_data,
+    load_occupations_data, load_skills_data
+)
 
 class newinvestigator(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
-  def __init__(self, bot):
-    self.bot = bot
+    async def get_input(self, ctx, prompt, check=None, timeout=300):
+        """Helper to get input from the user."""
+        await ctx.send(prompt)
 
-  @commands.command(aliases=["newInv", "newinv"])
-  async def newinvestigator(self, ctx, *, investigator_name=None):
-    """
-    `[p]newInv Inv-name` - Create a new investigator (e.g. `[p]newInv Oswald Chester Razner`)
-    """
-    server_id = str(ctx.guild.id)  # Get the server's ID as a string
-    server_prefixes = await load_server_stats()
-    prefix = server_prefixes.get(server_id, "!") if server_id else "!"
-    if not isinstance(ctx.channel, discord.TextChannel):
-      await ctx.send("This command is not allowed in DMs.")
-      return
-    user_id = str(ctx.author.id)  # Get the user's ID as a string
+        if check is None:
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
 
-    player_stats = await load_player_stats()
+        try:
+            msg = await self.bot.wait_for('message', check=check, timeout=timeout)
+            return msg.content
+        except asyncio.TimeoutError:
+            await ctx.send("Character creation timed out.")
+            return None
 
-    if investigator_name is None:
-      await ctx.message.channel.send(
-          f"Please add a name for your investigator. (e.g. `{prefix}newInv Mr. Pickles`)"
-      )
-      return
-    # Check if the server has an entry in player_stats
-    if server_id not in player_stats:
-      player_stats[server_id] = {
-      }  # Initialize a new server entry if it doesn't exist
+    @commands.command(aliases=["newInv", "newinv"])
+    async def newinvestigator(self, ctx):
+        """
+        `[p]newInv` - Starts the character creation wizard.
+        """
+        user_id = str(ctx.author.id)
+        server_id = str(ctx.guild.id)
 
-    if user_id not in player_stats[server_id]:
-      player_stats[server_id][user_id] = {
-          "NAME": investigator_name,
-          "STR": 0,
-          "DEX": 0,
-          "CON": 0,
-          "INT": 0,
-          "POW": 0,
-          "EDU": 0,
-          "SIZ": 0,
-          "APP": 0,
-          "SAN": 0,
-          "HP": 0,
-          "MP": 0,
-          "LUCK": 0,
-          "Move": "Calculated on the fly by !myChar",
-          "Build": "Calculated on the fly by !myChar",
-          "Damage Bonus": "Calculated on the fly by !myChar",
-          "Age": 0,
-          "Accounting": 5,
-          "Anthropology": 1,
-          "Appraise": 5,
-          "Archaeology": 1,
-          "Charm": 15,
-          "Art/Craft": 5,
-          "Climb": 20,
-          "Credit Rating": 0,
-          "Cthulhu Mythos": 0,
-          "Disguise": 5,
-          "Dodge": 0,
-          "Drive Auto": 20,
-          "Elec. Repair": 10,
-          "Fast Talk": 5,
-          "Fighting Brawl": 25,
-          "Firearms Handgun": 20,
-          "Firearms Rifle/Shotgun": 25,
-          "First Aid": 30,
-          "History": 5,
-          "Intimidate": 15,
-          "Jump": 10,
-          "Language other": 1,
-          "Language own": 0,
-          "Law": 5,
-          "Library Use": 20,
-          "Listen": 20,
-          "Locksmith": 1,
-          "Mech. Repair": 10,
-          "Medicine": 1,
-          "Natural World": 10,
-          "Navigate": 10,
-          "Occult": 5,
-          "Persuade": 10,
-          "Pilot": 1,
-          "Psychoanalysis": 1,
-          "Psychology": 10,
-          "Ride": 5,
-          "Science specific": 1,
-          "Sleight of Hand": 10,
-          "Spot Hidden": 25,
-          "Stealth": 20,
-          "Survival": 10,
-          "Swim": 20,
-          "Throw": 20,
-          "Track": 10,
-          "CustomSkill": 0,
-          "CustomSkills": 0,
-          "CustomSkillss": 0,
-          "Backstory": {
-              'My Story': [],
-              'Personal Description': [],
-              'Ideology and Beliefs': [],
-              'Significant People': [],
-              'Meaningful Locations': [],
-              'Treasured Possessions': [],
-              'Traits': [],
-              'Injuries and Scars': [],
-              'Phobias and Manias': [],
-              'Arcane Tome and Spells': [],
-              'Encounters with Strange Entities': [],
-              'Fellow Investigators': [],
-              'Gear and Possessions': [],
-              'Spending Level': [],
-              'Cash': [],
-              'Assets': [],
-          }
-      }
-      await ctx.send(
-          f"Investigator '{investigator_name}' has been created with default stats. You can generate random stats by using `{prefix}autoChar` or you can fill your stats with `{prefix}cstat`"
-      )
-      await save_player_stats(player_stats)  # Save the data to the JSON file
-    else:
-      await ctx.send(
-          f"You already have an investigator. You can't create a new one until you delete the existing one with `{prefix}deleteInvestigator`."
-      )
+        # Load stats
+        player_stats = await load_player_stats()
 
+        # Check for existing character
+        if server_id in player_stats and user_id in player_stats[server_id]:
+            existing_char = player_stats[server_id][user_id]
+            char_name = existing_char.get("NAME", "Unknown")
+
+            response = await self.get_input(
+                ctx,
+                f"You already have an investigator named **{char_name}**. \n"
+                "Do you want to **retire** this character to create a new one? (yes/no)"
+            )
+
+            if response is None: return
+
+            if response.lower() in ["yes", "y"]:
+                # Retirement logic
+                retired_characters = await load_retired_characters_data()
+                if user_id not in retired_characters:
+                    retired_characters[user_id] = []
+
+                # Pop the character and save to retired
+                character_data = player_stats[server_id].pop(user_id)
+                retired_characters[user_id].append(character_data)
+
+                await save_retired_characters_data(retired_characters)
+                await save_player_stats(player_stats)
+                await ctx.send(f"**{char_name}** has been retired.")
+            else:
+                await ctx.send("Character creation cancelled. You kept your current investigator.")
+                return
+
+        # Ensure server entry exists
+        if server_id not in player_stats:
+            player_stats[server_id] = {}
+
+        # Step 1: Character Name
+        name = await self.get_input(ctx, "Please enter the **Name** of your new investigator:")
+        if name is None: return
+
+        # Initialize basic character structure
+        new_char = {
+            "NAME": name,
+            "STR": 0, "DEX": 0, "CON": 0, "INT": 0, "POW": 0, "EDU": 0, "SIZ": 0, "APP": 0,
+            "SAN": 0, "HP": 0, "MP": 0, "LUCK": 0,
+            "Move": 0, "Build": 0, "Damage Bonus": 0,
+            "Age": 0,
+            "Credit Rating": 0,
+            "Skills": {} # We will populate this later or stick to the flat structure?
+                         # The original newinvestigator.py had a flat structure for skills.
+                         # I should stick to the existing data structure to avoid breaking other commands.
+        }
+
+        # Populate default skills (flat structure as per original newinvestigator.py)
+        # I need to replicate the default skills list from the original file or load them.
+        # For now, I'll add a method to populate defaults later or do it now.
+        # Original file had a hardcoded list. I should probably use that or the skills_info.json base stats.
+        # skills_info.json has "Base stat - XX%". I could parse that.
+        # But to be safe and consistent with previous behavior, I might want to copy the hardcoded list
+        # OR parse the json. Parsing the JSON is "smarter".
+
+        # Populate default skills (Hardcoded to match original behavior)
+        default_skills = {
+            "Accounting": 5, "Anthropology": 1, "Appraise": 5, "Archaeology": 1, "Charm": 15,
+            "Art/Craft": 5, "Climb": 20, "Credit Rating": 0, "Cthulhu Mythos": 0, "Disguise": 5,
+            "Dodge": 0, "Drive Auto": 20, "Elec. Repair": 10, "Fast Talk": 5, "Fighting Brawl": 25,
+            "Firearms Handgun": 20, "Firearms Rifle/Shotgun": 25, "First Aid": 30, "History": 5,
+            "Intimidate": 15, "Jump": 10, "Language other": 1, "Language own": 0, "Law": 5,
+            "Library Use": 20, "Listen": 20, "Locksmith": 1, "Mech. Repair": 10, "Medicine": 1,
+            "Natural World": 10, "Navigate": 10, "Occult": 5, "Persuade": 10, "Pilot": 1,
+            "Psychoanalysis": 1, "Psychology": 10, "Ride": 5, "Science specific": 1,
+            "Sleight of Hand": 10, "Spot Hidden": 25, "Stealth": 20, "Survival": 10, "Swim": 20,
+            "Throw": 20, "Track": 10, "CustomSkill": 0, "CustomSkills": 0, "CustomSkillss": 0,
+            "Backstory": {
+                'My Story': [], 'Personal Description': [], 'Ideology and Beliefs': [],
+                'Significant People': [], 'Meaningful Locations': [], 'Treasured Possessions': [],
+                'Traits': [], 'Injuries and Scars': [], 'Phobias and Manias': [],
+                'Arcane Tome and Spells': [], 'Encounters with Strange Entities': [],
+                'Fellow Investigators': [], 'Gear and Possessions': [],
+                'Spending Level': [], 'Cash': [], 'Assets': [],
+            }
+        }
+        new_char.update(default_skills)
+
+        await ctx.send(f"Welcome, **{name}**. Let's determine your statistics.")
+
+        # Mode Selection
+        await self.select_mode(ctx, new_char, player_stats)
+
+    async def select_mode(self, ctx, char_data, player_stats):
+        prompt = (
+            "Please choose a method for generating statistics:\n"
+            "1. **Full Auto**: Completely random rolls.\n"
+            "2. **Quick Fire**: Assign standard values (40, 50, 50, 50, 60, 60, 70, 80).\n"
+            "3. **Assisted**: Roll each stat one by one with one reroll allowed.\n"
+            "4. **Forced**: Manually enter specific values.\n\n"
+            "Type the **name** or **number** of the mode."
+        )
+        mode_input = await self.get_input(ctx, prompt)
+        if mode_input is None: return
+
+        mode = mode_input.lower()
+        if "1" in mode or "auto" in mode:
+            await self.mode_full_auto(ctx, char_data)
+        elif "2" in mode or "quick" in mode:
+            await self.mode_quick_fire(ctx, char_data)
+        elif "3" in mode or "assist" in mode:
+            await self.mode_assisted(ctx, char_data)
+        elif "4" in mode or "force" in mode:
+            await self.mode_forced(ctx, char_data)
+        else:
+            await ctx.send("Invalid mode selected. Please try `!newinv` again.")
+            return
+
+        # Proceed to Age Selection
+        await self.select_age(ctx, char_data, player_stats)
+
+    async def mode_full_auto(self, ctx, char_data):
+        char_data["STR"] = 5 * sum([random.randint(1, 6) for _ in range(3)])
+        char_data["CON"] = 5 * sum([random.randint(1, 6) for _ in range(3)])
+        char_data["SIZ"] = 5 * (sum([random.randint(1, 6) for _ in range(2)]) + 6)
+        char_data["DEX"] = 5 * sum([random.randint(1, 6) for _ in range(3)])
+        char_data["APP"] = 5 * sum([random.randint(1, 6) for _ in range(3)])
+        char_data["INT"] = 5 * (sum([random.randint(1, 6) for _ in range(2)]) + 6)
+        char_data["POW"] = 5 * sum([random.randint(1, 6) for _ in range(3)])
+        char_data["EDU"] = 5 * (sum([random.randint(1, 6) for _ in range(2)]) + 6)
+        char_data["LUCK"] = 5 * sum([random.randint(1, 6) for _ in range(3)])
+
+        await self.display_stats(ctx, char_data)
+
+    async def mode_forced(self, ctx, char_data):
+        stats = ["STR", "CON", "SIZ", "DEX", "APP", "INT", "POW", "EDU", "LUCK"]
+        await ctx.send("Enter values for stats (range 0-100).")
+
+        for stat in stats:
+            while True:
+                val = await self.get_input(ctx, f"**{stat}**: ")
+                if val is None: return # Timeout
+                if val.isdigit() and 0 <= int(val) <= 999: # Allow high values just in case
+                    char_data[stat] = int(val)
+                    break
+                else:
+                    await ctx.send("Invalid number. Try again.")
+
+        await self.display_stats(ctx, char_data)
+
+    async def mode_quick_fire(self, ctx, char_data):
+        values = [40, 50, 50, 50, 60, 60, 70, 80]
+        stats = ["STR", "CON", "SIZ", "DEX", "APP", "INT", "POW", "EDU"]
+
+        # Luck is separate in Quick Fire? Usually rolled.
+        # CoC 7e Rulebook says for Quick Fire: "Allocate 40, 50, 50, 50, 60, 60, 70, 80... Determine Luck by rolling 3D6 x 5."
+        char_data["LUCK"] = 5 * sum(sorted([random.randint(1, 6) for _ in range(3)])) # Luck is 3d6*5 total (not 2 highest of 3? wait autochar did 2 highest of 3? No, autochar did 2 highest of 3 for 3d6 stats??)
+        # Re-checking autochar logic: sorted([r1,r2,r3])[1:] means sum of 2 highest?
+        # CoC 7e Rules:
+        # STR, DEX, CON, POW, APP: 3D6 * 5. (Standard is just 3D6*5, no drop lowest?)
+        # Autochar uses "drop lowest" logic? `sum(sorted(...)[1:])` takes the last 2 elements of a sorted 3-element list. Yes, that is 2D6+6 basically? No.
+        # sorted([1, 2, 6]) -> [1, 2, 6]. [1:] is [2, 6]. Sum is 8.
+        # Wait, standard CoC 7e is just 3D6. Not 2 best of 3.
+        # Autochar seems to be using "Heroic" or "Pulp" rules or just a house rule (4D6 drop lowest logic applied to 3D6? No, it's 3 dice, drop 1? That makes average higher).
+        # User requested: "Assisted mode use strictly standard formulas for dice rolls."
+        # Standard: 3D6*5.
+        # I will use 3D6*5 for Assisted.
+        # For Autochar, I'll leave it as is if I were reusing code, but here I am implementing "Full Auto". I'll use Standard Rules unless "Full Auto" implies the old house rule.
+        # I'll stick to Standard Rules for clarity as per "strictly standard formulas" comment for Assisted. I'll apply it to Auto too for consistency unless specified.
+        # Wait, if Autochar was already there, maybe users like that method.
+        # But "Quick fire should chose where to put predefined values".
+        # "Assisted mode is rolling stats one by one... strictly standard formulas".
+        # I will use 3D6*5 for standard stats.
+
+        await ctx.send(f"**Quick Fire Mode**\nValues to assign: {values}\nLuck has been rolled: {char_data['LUCK']}")
+
+        for stat in stats:
+            while True:
+                prompt = f"Assign a value to **{stat}**. Available: {values}"
+                val_input = await self.get_input(ctx, prompt)
+                if val_input is None: return
+
+                if val_input.isdigit() and int(val_input) in values:
+                    val = int(val_input)
+                    char_data[stat] = val
+                    values.remove(val)
+                    break
+                else:
+                    await ctx.send("Invalid value or value already used. Please choose from the list.")
+
+        await self.display_stats(ctx, char_data)
+
+    async def mode_assisted(self, ctx, char_data):
+        # Strictly standard formulas
+        # STR, DEX, CON, APP, POW: 3D6 * 5
+        # SIZ, INT, EDU: (2D6 + 6) * 5
+
+        stat_formulas = {
+            "STR": "3D6 * 5", "DEX": "3D6 * 5", "CON": "3D6 * 5", "APP": "3D6 * 5", "POW": "3D6 * 5",
+            "SIZ": "(2D6 + 6) * 5", "INT": "(2D6 + 6) * 5", "EDU": "(2D6 + 6) * 5"
+        }
+
+        # Luck
+        char_data["LUCK"] = random.randint(3, 18) * 5
+        await ctx.send(f"**Assisted Mode**\nLuck rolled: {char_data['LUCK']}")
+
+        for stat, formula in stat_formulas.items():
+            # Roll function
+            def roll_stat(f):
+                if f == "3D6 * 5":
+                    return sum([random.randint(1, 6) for _ in range(3)]) * 5
+                elif f == "(2D6 + 6) * 5":
+                    return (sum([random.randint(1, 6) for _ in range(2)]) + 6) * 5
+                return 0
+
+            val = roll_stat(formula)
+            prompt = f"**{stat}** ({formula}) rolled: **{val}**. Keep or Reroll? (k/r)"
+            choice = await self.get_input(ctx, prompt)
+            if choice is None: return
+
+            if choice.lower() in ["r", "reroll"]:
+                new_val = roll_stat(formula)
+                await ctx.send(f"Rerolled: **{new_val}** (Previous: {val}). Keeping new value.")
+                char_data[stat] = new_val
+            else:
+                char_data[stat] = val
+
+        await self.display_stats(ctx, char_data)
+
+    async def display_stats(self, ctx, char_data):
+        embed = discord.Embed(title=f"Stats for {char_data['NAME']}", color=discord.Color.green())
+        stats_list = ["STR", "DEX", "CON", "APP", "POW", "SIZ", "INT", "EDU", "LUCK"]
+        desc = "\n".join([f"**{s}**: {char_data.get(s, 0)}" for s in stats_list])
+        embed.description = desc
+        await ctx.send(embed=embed)
+
+    async def select_age(self, ctx, char_data, player_stats):
+        while True:
+            age_input = await self.get_input(ctx, "Enter your investigator's **Age** (15-90):")
+            if age_input is None: return
+            if age_input.isdigit():
+                age = int(age_input)
+                if 15 <= age <= 90:
+                    char_data["Age"] = age
+                    break
+            await ctx.send("Invalid age. Please enter a number between 15 and 90.")
+
+        await self.apply_age_modifiers(ctx, char_data, age)
+
+        # Proceed to Occupation Selection
+        await self.select_occupation(ctx, char_data, player_stats)
+
+    async def apply_age_modifiers(self, ctx, char_data, age):
+        # EDU Improvement Checks
+        edu_checks = 0
+        if 20 <= age <= 39: edu_checks = 1
+        elif 40 <= age <= 49: edu_checks = 2
+        elif 50 <= age <= 59: edu_checks = 3
+        elif age >= 60: edu_checks = 4
+
+        if edu_checks > 0:
+            await ctx.send(f"Performing **{edu_checks}** EDU improvement check(s)...")
+            for i in range(edu_checks):
+                roll = random.randint(1, 100)
+                current_edu = char_data["EDU"]
+                if roll > current_edu:
+                    gain = random.randint(1, 10)
+                    char_data["EDU"] = min(99, current_edu + gain)
+                    await ctx.send(f"Check {i+1}: Rolled {roll} (> {current_edu}). **Success!** Gained {gain} EDU. New EDU: {char_data['EDU']}")
+                else:
+                    await ctx.send(f"Check {i+1}: Rolled {roll} (<= {current_edu}). No improvement.")
+
+        # Young Investigator (15-19)
+        if 15 <= age <= 19:
+            await ctx.send("Young Investigator adjustments: STR -5, SIZ -5, EDU -5. Luck rolled twice (taking best).")
+            char_data["STR"] = max(0, char_data["STR"] - 5)
+            char_data["SIZ"] = max(0, char_data["SIZ"] - 5)
+            char_data["EDU"] = max(0, char_data["EDU"] - 5)
+
+            # Luck Improvement
+            new_luck = 5 * sum(sorted([random.randint(1, 6) for _ in range(3)])) # 3D6*5
+            if new_luck > char_data["LUCK"]:
+                await ctx.send(f"Rolled new Luck: {new_luck} (Old: {char_data['LUCK']}). Taking higher value.")
+                char_data["LUCK"] = new_luck
+            else:
+                await ctx.send(f"Rolled new Luck: {new_luck} (Old: {char_data['LUCK']}). Keeping old value.")
+
+        # Aging Effects (40+)
+        deduction = 0
+        app_penalty = 0
+        if 40 <= age <= 49:
+            deduction = 5
+            app_penalty = 5
+        elif 50 <= age <= 59:
+            deduction = 10
+            app_penalty = 10
+        elif 60 <= age <= 69:
+            deduction = 20
+            app_penalty = 15
+        elif 70 <= age <= 79:
+            deduction = 40
+            app_penalty = 20
+        elif age >= 80:
+            deduction = 80
+            app_penalty = 25
+
+        if app_penalty > 0:
+            char_data["APP"] = max(0, char_data["APP"] - app_penalty)
+            await ctx.send(f"Due to age, APP reduced by {app_penalty}. New APP: {char_data['APP']}")
+
+        if deduction > 0:
+            await ctx.send(f"Due to age, you must deduct a total of **{deduction}** points from **STR**, **CON**, or **DEX**.")
+            await self.deduct_stats(ctx, char_data, deduction)
+
+        await self.display_stats(ctx, char_data)
+
+    async def deduct_stats(self, ctx, char_data, total_deduction):
+        remaining = total_deduction
+        stats_to_reduce = ["STR", "CON", "DEX"]
+
+        while remaining > 0:
+            prompt = (
+                f"Points remaining to deduct: **{remaining}**\n"
+                f"Current Stats: STR: {char_data['STR']}, CON: {char_data['CON']}, DEX: {char_data['DEX']}\n"
+                "Type `STR 5` to deduct 5 from STR, etc."
+            )
+            val_input = await self.get_input(ctx, prompt)
+            if val_input is None: return
+
+            parts = val_input.split()
+            if len(parts) == 2 and parts[0].upper() in stats_to_reduce and parts[1].isdigit():
+                stat = parts[0].upper()
+                amount = int(parts[1])
+
+                if amount > remaining:
+                    await ctx.send(f"You only need to deduct {remaining}.")
+                    continue
+
+                if char_data[stat] - amount < 0:
+                    await ctx.send(f"Cannot reduce {stat} below 0.")
+                    continue
+
+                char_data[stat] -= amount
+                remaining -= amount
+                await ctx.send(f"Deducted {amount} from {stat}. {remaining} left.")
+            else:
+                await ctx.send("Invalid format. Use `STR 5`, `CON 2`, etc.")
+
+    async def select_occupation(self, ctx, char_data, player_stats):
+        occupations_data = await load_occupations_data()
+
+        while True:
+            prompt = (
+                "Please select an **Occupation**.\n"
+                "Type `list` to see all options (spam warning!), or type a search term (e.g. `detective`, `soldier`).\n"
+                "Type the exact name to select."
+            )
+            user_input = await self.get_input(ctx, prompt)
+            if user_input is None: return
+
+            val = user_input.strip()
+            if val.lower() == "list":
+                # Send list in chunks
+                keys = sorted(occupations_data.keys())
+                chunk_size = 50
+                for i in range(0, len(keys), chunk_size):
+                    chunk = keys[i:i + chunk_size]
+                    await ctx.send(", ".join(chunk))
+            elif val in occupations_data:
+                occupation_name = val
+                occupation_info = occupations_data[occupation_name]
+                await ctx.send(f"Selected **{occupation_name}**.")
+                await self.assign_occupation_skills(ctx, char_data, occupation_name, occupation_info)
+                return
+            else:
+                # Search
+                matches = [k for k in occupations_data.keys() if val.lower() in k.lower()]
+                if matches:
+                    await ctx.send(f"Found matches: {', '.join(matches)}")
+                else:
+                    await ctx.send("No occupation found. Try again.")
+
+    async def assign_occupation_skills(self, ctx, char_data, occupation_name, info):
+        # Calculate Points
+        edu = char_data["EDU"]
+        dex = char_data["DEX"]
+        str_stat = char_data["STR"]
+        app = char_data["APP"]
+        pow_stat = char_data["POW"]
+
+        formula = info.get("skill_points", "EDU × 4")
+        points = 0
+
+        # Simple parser for common formulas
+        # "EDU × 4"
+        # "EDU × 2 + DEX × 2"
+        # "EDU × 2 + (DEX × 2 or STR × 2)"
+
+        try:
+            if "EDU × 4" in formula:
+                points = edu * 4
+            elif "EDU × 2" in formula:
+                base = edu * 2
+                extra = 0
+                if "DEX × 2" in formula and "STR × 2" in formula:
+                    extra = max(dex * 2, str_stat * 2)
+                elif "APP × 2" in formula and "POW × 2" in formula:
+                    extra = max(app * 2, pow_stat * 2)
+                elif "DEX × 2" in formula and "APP × 2" in formula: # Freelance Criminal
+                     extra = max(dex * 2, app * 2)
+                elif "DEX × 2" in formula:
+                    extra = dex * 2
+                elif "APP × 2" in formula:
+                    extra = app * 2
+                elif "STR × 2" in formula:
+                    extra = str_stat * 2
+                elif "POW × 2" in formula:
+                    extra = pow_stat * 2
+                points = base + extra
+            else:
+                # Fallback
+                points = edu * 4
+                await ctx.send(f"Could not parse formula `{formula}`. Defaulting to EDU x 4.")
+        except Exception as e:
+            points = edu * 4
+            print(f"Error parsing formula: {e}")
+
+        # Credit Rating
+        cr_range = info.get("credit_rating", "0-99")
+        min_cr, max_cr = 0, 99
+        if "–" in cr_range: cr_range = cr_range.replace("–", "-") # Handle en-dash
+        if "-" in cr_range:
+            parts = cr_range.split("-")
+            try:
+                min_cr = int(parts[0].strip())
+                max_cr = int(parts[1].strip())
+            except: pass
+
+        await ctx.send(
+            f"**Occupation**: {occupation_name}\n"
+            f"**Skill Points**: {points}\n"
+            f"**Credit Rating Range**: {min_cr} - {max_cr}\n"
+            f"**Suggested Skills**: {info.get('skills', 'None')}"
+        )
+
+        # Skill Assignment Loop
+        await self.skill_assignment_loop(ctx, char_data, points, min_cr, max_cr, is_occupation=True)
+
+        # Personal Interest
+        pi_points = char_data["INT"] * 2
+        await ctx.send(f"**Personal Interest Points**: {pi_points}. Assign to any skill (except Cthulhu Mythos).")
+        await self.skill_assignment_loop(ctx, char_data, pi_points, 0, 99, is_occupation=False)
+
+        # Finalization
+        await self.finalize_character(ctx, char_data)
+
+    async def skill_assignment_loop(self, ctx, char_data, total_points, min_cr, max_cr, is_occupation):
+        remaining = total_points
+
+        while remaining > 0:
+            await ctx.send(f"Points remaining: **{remaining}**.\nType `SkillName Value` to add points (e.g. `Spot Hidden 20`). Type `done` to finish.")
+
+            user_input = await self.get_input(ctx, "Command:")
+            if user_input is None: return
+
+            if user_input.lower() == "done":
+                # Validation checks
+                if is_occupation:
+                    current_cr = char_data.get("Credit Rating", 0)
+                    if not (min_cr <= current_cr <= max_cr):
+                        await ctx.send(f"Credit Rating must be between {min_cr} and {max_cr}. Current: {current_cr}. Please adjust.")
+                        continue
+                if remaining > 0:
+                     confirm = await self.get_input(ctx, f"You have {remaining} points left. Are you sure? (yes/no)")
+                     if confirm and confirm.lower() in ["yes", "y"]:
+                         break
+                     else:
+                         continue
+                break
+
+            # Parse Input
+            parts = user_input.split()
+            if len(parts) >= 2 and parts[-1].isdigit():
+                val = int(parts[-1])
+                skill_name_input = " ".join(parts[:-1])
+
+                # Match skill name
+                skill_key = None
+                # Check exact match
+                for k in char_data.keys():
+                    if k.lower() == skill_name_input.lower():
+                        skill_key = k
+                        break
+
+                # Check partial match if not found
+                if not skill_key:
+                     matches = [k for k in char_data.keys() if skill_name_input.lower() in k.lower()]
+                     if len(matches) == 1:
+                         skill_key = matches[0]
+                     elif len(matches) > 1:
+                         await ctx.send(f"Multiple skills found: {', '.join(matches)}. Be more specific.")
+                         continue
+
+                if skill_key:
+                    # Logic
+                    if skill_key == "Cthulhu Mythos":
+                        await ctx.send("Cannot assign points to Cthulhu Mythos.")
+                        continue
+
+                    if val > remaining:
+                        await ctx.send(f"Not enough points. Remaining: {remaining}")
+                        continue
+
+                    current_val = char_data.get(skill_key, 0)
+                    if current_val + val > 99: # Cap check (usually 99, some rules say 90 or 75 for starting?)
+                        # CoC 7e: No hard cap except 99/90? "Keeper may set limits".
+                        # I'll warn if > 90 but allow it up to 99.
+                        await ctx.send("Warning: Skill values over 90 are rare for starting characters.")
+
+                    char_data[skill_key] = current_val + val
+                    remaining -= val
+                    await ctx.send(f"Added {val} to **{skill_key}**. New Value: {char_data[skill_key]}. Remaining: {remaining}")
+                else:
+                    await ctx.send("Skill not found in character sheet.")
+            else:
+                await ctx.send("Invalid format. Use `Skill Name Value`.")
+
+    async def finalize_character(self, ctx, char_data):
+        # Derived Stats
+        str_stat = char_data["STR"]
+        con = char_data["CON"]
+        siz = char_data["SIZ"]
+        dex = char_data["DEX"]
+        pow_stat = char_data["POW"]
+
+        char_data["HP"] = (con + siz) // 10
+        char_data["MP"] = pow_stat // 5
+        char_data["SAN"] = pow_stat
+
+        # Dodge & Language Own
+        # Only update if they are still at 0/default or should I overwrite?
+        # Usually they are base values. If user added points, it should be Base + Added.
+        # But my skill assignment loop added points to the current value.
+        # The current value started at 0 for Dodge/Language Own in my default list?
+        # Let's check default_skills in init: "Dodge": 0, "Language own": 0.
+        # So I should set the BASE now, or should have set it earlier?
+        # If I set it now, I might overwrite user points if I'm not careful.
+        # BUT, Dodge base is DEX/2. If user added 20 points, total is DEX/2 + 20.
+        # My current logic: char_data[skill] += val.
+        # So if I set the base NOW, I should add the existing value (which is just the user added points) to the base.
+
+        char_data["Dodge"] = (dex // 2) + char_data.get("Dodge", 0)
+        char_data["Language own"] = char_data["EDU"] + char_data.get("Language own", 0)
+
+        # Build & Damage Bonus
+        str_siz = str_stat + siz
+        db = "0"
+        build = 0
+
+        if 2 <= str_siz <= 64: db = "-2"; build = -2
+        elif 65 <= str_siz <= 84: db = "-1"; build = -1
+        elif 85 <= str_siz <= 124: db = "0"; build = 0
+        elif 125 <= str_siz <= 164: db = "+1D4"; build = 1
+        elif 165 <= str_siz <= 204: db = "+1D6"; build = 2
+        elif 205 <= str_siz <= 284: db = "+2D6"; build = 3
+        elif 285 <= str_siz <= 364: db = "+3D6"; build = 4
+        elif 365 <= str_siz <= 444: db = "+4D6"; build = 5
+        elif 445 <= str_siz <= 524: db = "+5D6"; build = 6
+        else: db = "+6D6"; build = 7 # Rough extrapolation
+
+        char_data["Damage Bonus"] = db
+        char_data["Build"] = build
+
+        # Movement Rate
+        mov = 8
+        if dex < siz and str_stat < siz: mov = 7
+        elif dex > siz and str_stat > siz: mov = 9
+
+        # Age Mod to MOV
+        age = char_data.get("Age", 20)
+        if 40 <= age <= 49: mov -= 1
+        elif 50 <= age <= 59: mov -= 2
+        elif 60 <= age <= 69: mov -= 3
+        elif 70 <= age <= 79: mov -= 4
+        elif age >= 80: mov -= 5
+
+        char_data["Move"] = max(0, mov)
+
+        # Save
+        player_stats = await load_player_stats()
+        server_id = str(ctx.guild.id)
+        user_id = str(ctx.author.id)
+
+        if server_id not in player_stats: player_stats[server_id] = {}
+        player_stats[server_id][user_id] = char_data
+
+        await save_player_stats(player_stats)
+
+        await ctx.send(f"**Character Creation Complete!**\nInvestigator **{char_data['NAME']}** has been saved.")
+        await self.display_stats(ctx, char_data)
 
 async def setup(bot):
-  await bot.add_cog(newinvestigator(bot))
+    await bot.add_cog(newinvestigator(bot))
