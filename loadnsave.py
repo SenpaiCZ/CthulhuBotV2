@@ -33,13 +33,34 @@ async def save_player_stats(player_stats):
 
 # --- Settings ---
 def load_settings():
-    """Synchronous load for settings."""
+    """Synchronous load for settings with priority: ENV > settings.json > config.json"""
+    settings = {}
+
+    # 1. Load config.json (Defaults)
+    config_path = 'config.json'
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r', encoding='utf-8') as file:
+                settings.update(json.load(file))
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+
+    # 2. Load settings.json (Local overrides)
     file_path = os.path.join(DATA_FOLDER, 'settings.json')
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            return json.load(file)
-    except FileNotFoundError:
-        return {}
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                settings.update(json.load(file))
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+
+    # 3. Environment Variables
+    if os.getenv("DISCORD_TOKEN"):
+        settings["token"] = os.getenv("DISCORD_TOKEN")
+    if os.getenv("YOUTUBE_API_KEY"):
+        settings["youtubetoken"] = os.getenv("YOUTUBE_API_KEY")
+
+    return settings
 
 # --- Server Stats ---
 async def load_server_stats():
