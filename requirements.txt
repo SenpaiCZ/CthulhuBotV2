@@ -3,4 +3,4 @@ aiofiles
 feedparser
 pytz
 beautifulsoup4
-requests
+aiohttp
