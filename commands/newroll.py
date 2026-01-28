@@ -19,6 +19,32 @@ class newroll(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    def calculate_roll_result(self, roll, skill_value):
+        # Fumble Logic - Check first because 100 is always Fumble/Fail
+        is_fumble = False
+        if skill_value < 50:
+            if roll >= 96:
+                is_fumble = True
+        else:
+            if roll == 100:
+                is_fumble = True
+
+        if is_fumble:
+            return "Fumble :warning:", 0
+
+        # Success Logic
+        if roll == 1:
+            return "Critical Success :star2:", 5
+        elif roll <= skill_value // 5:
+            return "Extreme Success :star:", 4
+        elif roll <= skill_value // 2:
+            return "Hard Success :white_check_mark:", 3
+        elif roll <= skill_value:
+            return "Regular Success :heavy_check_mark:", 2
+
+        # If not Success and not Fumble, it is Fail
+        return "Fail :x:", 1
+
     @commands.command(aliases=["ND", "nd", "s"], guild_only=True)
     async def newroll(self, ctx, *, dice_expression):
         server_prefixes = await load_server_stats()
@@ -126,99 +152,162 @@ class newroll(commands.Cog):
                 if user_id not in session_data:
                     ASKFORSESSION = 1
 
+                # Initial Roll
                 roll = random.randint(1, 100)
 
-                if roll == 1:
-                    result = "CRITICAL! :star2:"
+                # New Result Calculation
+                result_text, result_tier = self.calculate_roll_result(roll, current_value)
+                if result_tier >= 2: # Regular Success or better
                     SUCCESSFULLROLL = 1
-                elif roll <= current_value // 5:
-                    result = "Extreme Success :star:"
-                    SUCCESSFULLROLL = 1
-                elif roll <= current_value // 2:
-                    result = "Hard Success :white_check_mark:"
-                    SUCCESSFULLROLL = 1
-                elif roll <= current_value:
-                    result = "Regular Success :heavy_check_mark:"
-                    SUCCESSFULLROLL = 1
-                elif roll > 95:
-                    result = "Fumble :warning:"
-                else:
-                    result = "Fail :x:"
 
                 formatted_luck = f":four_leaf_clover: LUCK: {player_stats[server_id][user_id]['LUCK']}"
                 formatted_skill = f"**{stat_name}**: {current_value} - {current_value // 2} - {current_value // 5}"
 
                 embed = discord.Embed(
-                    title=
-                    f"{ctx.author.display_name}'s Skill Check for '{stat_name}{get_stat_emoji(stat_name)}'",
-                    description=
-                    f"{ctx.author.mention} :game_die: Rolled: {roll}\n{result}\n{formatted_skill}\n{formatted_luck}",
+                    title=f"{ctx.author.display_name}'s Skill Check for '{stat_name}{get_stat_emoji(stat_name)}'",
+                    description=f"{ctx.author.mention} :game_die: Rolled: {roll}\n{result_text}\n{formatted_skill}\n{formatted_luck}",
                     color=discord.Color.green(),
                 )
 
-                luck_stats = await load_luck_stats()
-                LUCKTHR = luck_stats[
-                    server_id] if server_id in luck_stats else 10
-                if (roll > current_value and roll <= current_value + LUCKTHR
-                        and player_stats[server_id][user_id]['LUCK']
-                        >= roll - current_value and stat_name != "LUCK"):
-                    difference = roll - current_value
-                    prompt_embed = discord.Embed(
-                        title="Use LUCK?",
-                        description=
-                        f"{ctx.author.mention} :game_die: Rolled: {roll}\n{result}\n{formatted_skill}\n{formatted_luck}\n\nYour roll is close to your skill (**{difference}**). Do you want to use LUCK to turn it into a Regular Success?\n"
-                        "Reply with ✅ to use LUCK or ❌ to skip within 1 minute.",
-                        color=discord.Color.orange(),
-                    )
-                    prompt_message = await ctx.send(embed=prompt_embed)
-                    await prompt_message.add_reaction("✅")
-                    await prompt_message.add_reaction("❌")
+                # Determine interactions
+                can_push = False
+                can_luck = False
+                luck_target_tier = 0
+                luck_cost = 0
 
+                player_luck = player_stats[server_id][user_id]['LUCK']
+
+                # Logic to determine if Luck is usable
+                def update_luck_availability():
+                    nonlocal can_luck, luck_target_tier, luck_cost
+                    can_luck = False
+                    if stat_name != "LUCK" and result_tier != 0: # Not Luck skill, Not Fumble
+                        if result_tier == 1: # Fail -> Regular
+                            target_val = current_value
+                            luck_cost_temp = roll - target_val
+                            if player_luck >= luck_cost_temp:
+                                can_luck = True
+                                luck_target_tier = 2
+                                luck_cost = luck_cost_temp
+                        elif result_tier == 2: # Regular -> Hard
+                            target_val = current_value // 2
+                            luck_cost_temp = roll - target_val
+                            if player_luck >= luck_cost_temp:
+                                can_luck = True
+                                luck_target_tier = 3
+                                luck_cost = luck_cost_temp
+                        elif result_tier == 3: # Hard -> Extreme
+                            target_val = current_value // 5
+                            luck_cost_temp = roll - target_val
+                            if player_luck >= luck_cost_temp:
+                                can_luck = True
+                                luck_target_tier = 4
+                                luck_cost = luck_cost_temp
+
+                update_luck_availability()
+
+                # Push Logic: Fail(1), Not Fumble(0). Not Luck Skill.
+                if stat_name != "LUCK" and result_tier == 1:
+                     can_push = True
+
+                # Send initial message
+                if can_luck or can_push:
+                    instructions = "\n\nReact within 180s:"
+                    if can_luck:
+                        instructions += "\n🍀 Use LUCK to improve success level"
+                    if can_push:
+                        instructions += "\n🔄 PUSH the roll (Risk of Dire Consequences!)"
+                    embed.description += instructions
+
+                message = await ctx.send(embed=embed)
+
+                if can_luck: await message.add_reaction("🍀")
+                if can_push: await message.add_reaction("🔄")
+
+                # Interaction Loop
+                loop = True
+                while loop and (can_luck or can_push):
                     def check(reaction, user):
-                        return user == ctx.author and reaction.message.id == prompt_message.id and str(
-                            reaction.emoji) in ["✅", "❌"]
+                        return user == ctx.author and reaction.message.id == message.id and str(reaction.emoji) in ["🍀", "🔄"]
 
                     try:
-                        reaction, _ = await self.bot.wait_for("reaction_add",
-                                                              timeout=60,
-                                                              check=check)
-                        await prompt_message.delete()
+                        reaction, _ = await self.bot.wait_for("reaction_add", timeout=180, check=check)
 
-                        if str(reaction.emoji) == "✅":
-                            luck_used = min(
-                                player_stats[server_id][user_id]['LUCK'],
-                                difference)
-                            player_stats[server_id][user_id][
-                                'LUCK'] -= luck_used
-                            formatted_luck = f":four_leaf_clover: LUCK: {player_stats[server_id][user_id]['LUCK']}"
-                            result = "Regular Success (LUCK Used) :heavy_check_mark:"
-                            current_value += luck_used
-                            formatted_skill = f"**{stat_name}**: {current_value} - {current_value // 2} - {current_value // 5}"
-                            SUCCESSFULLROLL = 1
+                        if str(reaction.emoji) == "🍀" and can_luck:
+                            # Apply Luck
+                            player_stats[server_id][user_id]['LUCK'] -= luck_cost
+                            player_luck = player_stats[server_id][user_id]['LUCK'] # Update local var
 
-                        else:
-                            result = "Fail :x:"
+                            # Upgrade Result
+                            if result_tier == 1:
+                                result_tier = 2
+                                result_text = "Regular Success (LUCK Used) :heavy_check_mark:"
+                                SUCCESSFULLROLL = 1
+                            elif result_tier == 2:
+                                result_tier = 3
+                                result_text = "Hard Success (LUCK Used) :white_check_mark:"
+                            elif result_tier == 3:
+                                result_tier = 4
+                                result_text = "Extreme Success (LUCK Used) :star:"
 
-                        embed = discord.Embed(
-                            title=
-                            f"{ctx.author.display_name}'s Skill Check for '{stat_name}'",
-                            description=
-                            f"{ctx.author.mention} :game_die: Rolled: {roll}\n{result}\n{formatted_skill}\n{formatted_luck}",
-                            color=discord.Color.green(),
-                        )
+                            roll -= luck_cost
+
+                            formatted_luck = f":four_leaf_clover: LUCK: {player_luck}"
+                            embed.description = f"{ctx.author.mention} :game_die: Rolled: {roll}\n{result_text}\n{formatted_skill}\n{formatted_luck}"
+
+                            # Re-evaluate options
+                            can_push = False # Cannot push after using Luck
+                            update_luck_availability()
+
+                            instructions = ""
+                            if can_luck:
+                                instructions += "\n\nReact within 180s:\n🍀 Improve success level further"
+                            embed.description += instructions
+
+                            await message.edit(embed=embed)
+                            await message.remove_reaction(reaction.emoji, ctx.author)
+
+                            if not can_luck:
+                                try: await message.clear_reactions()
+                                except: pass
+                                loop = False
+                            else:
+                                try: await message.clear_reaction("🔄")
+                                except: pass
+
+                        elif str(reaction.emoji) == "🔄" and can_push:
+                            # Push Roll
+                            roll = random.randint(1, 100)
+                            result_text, result_tier = self.calculate_roll_result(roll, current_value)
+
+                            description_add = f"\n\n**PUSHED ROLL**: {roll}\nResult: {result_text}"
+
+                            if result_tier <= 1: # Fail or Fumble
+                                description_add += "\n:warning: **DIRE CONSEQUENCES!**"
+                                SUCCESSFULLROLL = 0
+                            else:
+                                SUCCESSFULLROLL = 1
+
+                            embed.description = f"{ctx.author.mention} :game_die: Original Roll Pushed.\n{formatted_skill}\n{formatted_luck}" + description_add
+
+                            await message.edit(embed=embed)
+                            try: await message.clear_reactions()
+                            except: pass
+                            loop = False
+
                     except asyncio.TimeoutError:
-                        await prompt_message.delete()
-                    except Exception as e:
-                        print(f"An error occurred: {e}")
-                await ctx.send(embed=embed)
+                        try: await message.clear_reactions()
+                        except: pass
+                        loop = False
+
                 await save_player_stats(player_stats)
+
                 if SUCCESSFULLROLL == 1 and ASKFORSESSION == 1:
                     session_message = await ctx.send(
                         "**Do you want to create a gaming session?**\n\nGaming session will record all your successful rolls for the character development phase."
                     )
-                    await session_message.add_reaction("✅"
-                                                       )  # Add checkmark emoji
-                    await session_message.add_reaction("❌")  # Add X emoji
+                    await session_message.add_reaction("✅")
+                    await session_message.add_reaction("❌")
 
                     def check(reaction, user):
                         return (user == ctx.author
