@@ -37,16 +37,13 @@ async def load():
 async def main():
   async with bot:
     await load()
-    # This is for REPLIT
-    # TOKEN = os.getenv("TOKEN")
     
-    # This is for self hosted bot
     # Ensure token exists before starting
-    if "token" in settings:
+    if settings.get("token"):
         TOKEN = settings["token"]
         await bot.start(TOKEN)
     else:
-        print("Error: Token not found in settings.")
+        print("Error: Bot token not found in settings or environment variables.")
 
 if __name__ == "__main__":
     asyncio.run(main())

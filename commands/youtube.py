@@ -14,8 +14,7 @@ import asyncio
 settings = load_settings()
 
 # Define your YouTube API key
-# Try environment variable first, then settings.json
-YOUTUBE_API_KEY = os.getenv("YOUTUBETOKEN") or settings.get("youtubetoken")
+YOUTUBE_API_KEY = settings.get("youtubetoken")
 
 # Define an async function to get the RSS link from a YouTube channel page
 async def get_channel_rss_link(channel_input, session=None):

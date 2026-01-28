@@ -33,6 +33,12 @@
     ```
 
 3.  **Configure Settings:**
+    The bot prioritizes configuration in the following order:
+    1.  **Environment Variables** (Recommended for cloud deployment like Replit)
+    2.  `data/settings.json` (Recommended for local development, this file is git-ignored)
+    3.  `config.json` (Default values)
+
+    **Local Development:**
     Create a folder named `data` in the root directory. Inside `data`, create a file named `settings.json`.
 
     ```bash
@@ -49,6 +55,14 @@
     ```
     *   `token`: Your Discord Bot Token (Required).
     *   `youtubetoken`: Your YouTube Data API Key (Optional, for YouTube feed features).
+
+    **Deployment on Replit:**
+    1.  Fork the repository to your Replit account.
+    2.  Go to the **Tools** pane and select **Secrets**.
+    3.  Add the following secrets (Environment Variables):
+        *   `DISCORD_TOKEN`: Your Discord Bot Token.
+        *   `YOUTUBE_API_KEY`: Your YouTube Data API Key (Optional).
+    4.  Run the bot. The `config.json` file serves as a template with default values.
 
 ## Usage
 
