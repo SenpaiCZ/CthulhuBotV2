@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - CoC Bot{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">Call of Cthulhu Bot Dashboard</h1>
+    <p class="lead">Welcome to the management interface for your Discord bot.</p>
+    <hr class="my-4">
+    <p>Use the navigation menu to browse characters or log in to manage settings.</p>
+    <a class="btn btn-primary btn-lg" href="/characters" role="button">View Characters</a>
+    {% if is_admin %}
+    <a class="btn btn-secondary btn-lg" href="/admin" role="button">Admin Panel</a>
+    {% endif %}
+</div>
+{% endblock %}

@@ -62,6 +62,10 @@ def load_settings():
 
     return settings
 
+async def save_settings(settings_data):
+    """Asynchronously save settings to settings.json (overrides config.json)"""
+    await _save_json_file(DATA_FOLDER, 'settings.json', settings_data)
+
 # --- Server Stats ---
 async def load_server_stats():
     return await _load_json_file(DATA_FOLDER, 'server_stats.json')

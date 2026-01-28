@@ -1,4 +1,7 @@
 {
     "token": "",
-    "youtubetoken": ""
+    "youtubetoken": "",
+    "enable_dashboard": false,
+    "dashboard_port": 5000,
+    "admin_password": "changeme"
 }
