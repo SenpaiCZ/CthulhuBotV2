@@ -23,51 +23,47 @@ class stat(commands.Cog):
         server_prefixes = await load_server_stats()
         prefix = server_prefixes.get(server_id, "!") if server_id else "!"
 
-        # Kontrola, zda je příkaz používán ve správném kanálu
+        # Check if the command is used in a valid channel
         if not isinstance(ctx.channel, discord.TextChannel):
             await ctx.send("This command is not allowed in DMs.")
             return
 
-        # Kontrola, zda jsou zadány argumenty
+        # Check if arguments are provided
         if not args:
             await ctx.send(
                 f"`{prefix}cstat stat-name` - Edit your investigators stats. (e.g. `{prefix}cstat STR 50` or `{prefix}cstat HP +1` or `{prefix}cstat SAN -5`)"
             )
             return
 
-        # Kontrola, zda má hráč vytvořeného investigátora
+        # Check if the player has an investigator
         if user_id not in player_stats[server_id]:
             await ctx.send(
                 f"{ctx.author.display_name} doesn't have an investigator. Use `{prefix}newInv` for creating a new investigator."
             )
             return
 
-        # Získání hodnoty ze vstupního výrazu
+        # Get the value from the input expression (e.g., +5, -2, 50)
         match = re.match(r'([+\-]?\d+)$', args[-1])
 
         if match:
-            # Získání aktuální hodnoty statistiky
+            # Get current stat value
             current_value = 0
             matching_stats = []
 
-            # Slova z poslední části příkazu (mimo posledního argumentu, což je hodnota)
+            # Words from the command arguments (excluding the last one which is the value)
             stat_name_words = args[:-1]
 
-            # Hledáme statistiky s dokonalým matchem
-            for stat_key, stat_value in player_stats[server_id][user_id].items(
-            ):
-                if all(word.lower() == stat_key.lower()
-                       for word in stat_name_words):
+            # Look for exact match
+            for stat_key, stat_value in player_stats[server_id][user_id].items():
+                if all(word.lower() == stat_key.lower() for word in stat_name_words):
                     matching_stats.append(stat_key)
                     current_value = stat_value
-                    break  # Ukončíme smyčku po prvním nalezeném dokonalém matchi
+                    break  # Stop loop after first exact match
 
-            # Pokud nemáme dokonalý match, použijeme druhý for loop
+            # If no exact match, look for partial match
             if not matching_stats:
-                for stat_key, stat_value in player_stats[server_id][
-                        user_id].items():
-                    if any(word.lower() in stat_key.lower()
-                           for word in stat_name_words):
+                for stat_key, stat_value in player_stats[server_id][user_id].items():
+                    if any(word.lower() in stat_key.lower() for word in stat_name_words):
                         matching_stats.append(stat_key)
                         current_value = stat_value
 
@@ -93,7 +89,7 @@ class stat(commands.Cog):
                     for emoji in emoji_list[:len(matching_stats)]:
                         await message.add_reaction(emoji)
 
-                    # Čeká na reakci od původního autora zprávy
+                    # Wait for reaction from original author
                     def check(reaction, user):
                         return (user == ctx.author
                                 and str(reaction.emoji) in emoji_list)
@@ -103,7 +99,7 @@ class stat(commands.Cog):
                                                               timeout=60,
                                                               check=check)
 
-                        # Zpracuje reakci
+                        # Process reaction
                         selected_stat_index = emoji_list.index(reaction.emoji)
                         selected_stat = matching_stats[selected_stat_index]
                         matching_stats = [selected_stat]
@@ -123,42 +119,40 @@ class stat(commands.Cog):
                     return
 
             if len(matching_stats) == 1:
-                # Zabránení změny jména na číslo
+                # Prevent changing name to a number
                 if matching_stats[0] == "NAME":
                     await ctx.send(
                         f"You can not change your name with this command. Please, use `{prefix}rename` instead."
                     )
                     return
 
-                # Získání hodnoty, kterou chceme přidat nebo odečíst
+                # Get the value to add or subtract or set
                 change_value = int(match.group(1))
 
                 stat_name = matching_stats[0]
 
-                # Výpočet nové hodnoty podle předchozí logiky
+                # Get fresh value in case it wasn't set correctly during partial match loop if multiple matches occurred initially but were filtered
+                current_value = player_stats[server_id][user_id][stat_name]
+
+                # Calculate new value
                 if args[-1].startswith('+') or args[-1].startswith('-'):
                     new_value = current_value + change_value
                 else:
                     new_value = change_value
                     change_value = change_value - current_value
 
-                stat_name = matching_stats[0]
-
-                #loading game mode
-                server_id = str(
-                    ctx.guild.id)  # Get the server's ID as a string
+                # Loading game mode
                 server_stats = await load_gamemode_stats()
 
                 if server_id not in server_stats:
                     server_stats[server_id] = {}
 
                 if 'game_mode' not in server_stats[server_id]:
-                    server_stats[server_id][
-                        'game_mode'] = 'Call of Cthulhu'  # Default to Call of Cthulhu
+                    server_stats[server_id]['game_mode'] = 'Call of Cthulhu'  # Default to Call of Cthulhu
 
                 current_mode = server_stats[server_id]['game_mode']
 
-                #Surpassing MAX_HP in Call of Cthulhu
+                # Surpassing MAX_HP in Call of Cthulhu
                 if current_mode == 'Call of Cthulhu' and stat_name == "HP" and new_value > (
                         math.floor(
                             (player_stats[server_id][user_id]["CON"] +
@@ -179,7 +173,6 @@ class stat(commands.Cog):
                                                               timeout=60,
                                                               check=check)
                         if str(reaction.emoji) == "✅":
-                            #await ctx.send(f"✅")
                             pass
                         elif str(reaction.emoji) == "📈":
                             new_value = math.floor(
@@ -197,7 +190,7 @@ class stat(commands.Cog):
                             f"{ctx.author.display_name} took too long to react. **HP**:heartpulse: will not be saved."
                         )
 
-                #Surpassing MAX_HP in Pulp of Cthulhu
+                # Surpassing MAX_HP in Pulp of Cthulhu
                 if current_mode == 'Pulp of Cthulhu' and stat_name == "HP" and new_value > (
                         math.floor(
                             (player_stats[server_id][user_id]["CON"] +
@@ -218,7 +211,6 @@ class stat(commands.Cog):
                                                               timeout=60,
                                                               check=check)
                         if str(reaction.emoji) == "✅":
-                            #await ctx.send(f"✅")
                             pass
                         elif str(reaction.emoji) == "📈":
                             new_value = math.floor(
@@ -236,7 +228,7 @@ class stat(commands.Cog):
                             f"{ctx.author.display_name} took too long to react. **HP**:heartpulse: will not be saved."
                         )
 
-                #Surpassing MAX_MP
+                # Surpassing MAX_MP
                 if stat_name == "MP" and new_value > (math.floor(
                         player_stats[server_id][user_id]["POW"] / 5)):
                     maxmp_message = await ctx.send(
@@ -255,7 +247,6 @@ class stat(commands.Cog):
                                                               timeout=60,
                                                               check=check)
                         if str(reaction.emoji) == "✅":
-                            # await ctx.send(f"✅")
                             pass
                         elif str(reaction.emoji) == "📈":
                             new_value = math.floor(
@@ -272,7 +263,7 @@ class stat(commands.Cog):
                             f"{ctx.author.display_name} took too long to react. **MP**:sparkles: will not be saved."
                         )
 
-                #Surpassing MAX_SAN
+                # Surpassing MAX_SAN
                 if stat_name == "SAN" and new_value > (
                         99 -
                         player_stats[server_id][user_id]["Cthulhu Mythos"]):
@@ -292,7 +283,6 @@ class stat(commands.Cog):
                                                               timeout=60,
                                                               check=check)
                         if str(reaction.emoji) == "✅":
-                            # await ctx.send(f"✅")
                             pass
                         elif str(reaction.emoji) == "📈":
                             new_value = player_stats[server_id][user_id][
@@ -310,20 +300,20 @@ class stat(commands.Cog):
                             f"{ctx.author.display_name} took too long to react. **SAN**:scales: will not be saved."
                         )
 
-                # Aktualizace hodnoty v player_stats
+                # Update value in player_stats
                 player_stats[server_id][user_id][matching_stats[0]] = new_value
 
-                # Uložení změn
+                # Save changes
                 await save_player_stats(player_stats)
 
-                # Příprava barvy pro Embed
+                # Prepare color for Embed
                 color = discord.Color.green(
                 ) if change_value >= 0 else discord.Color.red()
 
-                # Příprava jména statu s emodži
+                # Prepare stat name with emoji
                 stat_name_with_emoji = f"{get_stat_emoji(matching_stats[0])} {matching_stats[0]}"
 
-                # Příprava Embedu
+                # Prepare Embed
                 embed = discord.Embed(
                     title=f"Stat Change - {stat_name_with_emoji}",
                     description=
@@ -339,10 +329,10 @@ class stat(commands.Cog):
                                 value=new_value,
                                 inline=False)
 
-                # Odeslání Embedu
+                # Send Embed
                 await ctx.send(embed=embed)
 
-                #automatic calculation of HP
+                # Automatic calculation of HP
                 if stat_name == "CON" or stat_name == "SIZ":
                     if player_stats[server_id][user_id][
                             "CON"] != 0 and player_stats[server_id][user_id][
@@ -382,7 +372,7 @@ class stat(commands.Cog):
                                 f"{ctx.author.display_name} took too long to react. The calculation of **HP**:heartpulse: will not proceed."
                             )
 
-                #automatic calculation of MP
+                # Automatic calculation of MP
                 if stat_name == "POW":
                     if player_stats[server_id][user_id][
                             "POW"] != 0 and player_stats[server_id][user_id][
@@ -420,7 +410,7 @@ class stat(commands.Cog):
                                 f"{ctx.author.display_name} took too long to react. The calculation of **MP**:sparkles: will not proceed."
                             )
 
-                #automatic calculation of SAN
+                # Automatic calculation of SAN
                 if stat_name == "POW":
                     if player_stats[server_id][user_id][
                             "POW"] != 0 and player_stats[server_id][user_id][
@@ -455,7 +445,7 @@ class stat(commands.Cog):
                             await ctx.send(
                                 f"{ctx.author.display_name} took too long to react. The calculation of **SAN**:scales: will not proceed."
                             )
-                #automatic calculation of Dodge
+                # Automatic calculation of Dodge
                 if stat_name == "DEX":
                     if player_stats[server_id][user_id][
                             "DEX"] != 0 and player_stats[server_id][user_id][
@@ -494,7 +484,7 @@ class stat(commands.Cog):
                                 f"{ctx.author.display_name} took too long to react. The calculation of **Dodge**:warning: will not proceed."
                             )
 
-                #automatic calculation of Language (own)
+                # Automatic calculation of Language (own)
                 if stat_name == "EDU":
                     if player_stats[server_id][user_id][
                             "EDU"] != 0 and player_stats[server_id][user_id][
@@ -531,8 +521,8 @@ class stat(commands.Cog):
                             await ctx.send(
                                 f"{ctx.author.display_name} took too long to react. The calculation of **Language own**:speech_balloon: will not proceed."
                             )
-                #Prompt about Age
-                if stat_name == "STR" or stat_name == "DEX" or stat_name == "CON" or stat_name == "EDU" or stat_name == "APP" or stat_name == "SIZ" or stat_name == "LUCK":
+                # Prompt about Age
+                if stat_name in ["STR", "DEX", "CON", "EDU", "APP", "SIZ", "LUCK"]:
                     if player_stats[server_id][user_id]["STR"] != 0 and player_stats[
                             server_id][user_id]["DEX"] != 0 and player_stats[
                                 server_id][user_id]["CON"] != 0 and player_stats[
@@ -550,7 +540,7 @@ class stat(commands.Cog):
                             f"{ctx.author.display_name} filled all stats that are affected by Age. Fill your age with `{prefix}cstat Age`"
                         )
 
-                #Age mod help
+                # Age mod help
                 if stat_name == "Age":
                     if player_stats[server_id][user_id]["Age"] < 15:
                         await ctx.send(
@@ -608,19 +598,19 @@ class stat(commands.Cog):
                         )
 
             elif len(matching_stats) > 1:
-                # Nalezeno více shodujících se statů, vyžaduje přesnější příkaz
+                # Multiple matching stats found, requires a more precise command
                 stats_list = ', '.join(matching_stats)
                 await ctx.send(
-                    f"Zadaný název statu se shoduje s více statistikami: {stats_list}. Zadejte přesnější název."
+                    f"The entered stat name matches multiple stats: {stats_list}. Please enter a more precise name."
                 )
             else:
                 await ctx.send(
-                    f"Stat s názvem '{' '.join(stat_name_words)}' nebyl nalezen."
+                    f"Stat named '{' '.join(stat_name_words)}' was not found."
                 )
         else:
-            # Vstupní výraz neodpovídá očekávanému formátu
+            # Input expression matches expected format
             await ctx.send(
-                "Nesprávný formát výrazu pro změnu hodnoty. Použijte například `!stat HP +5`, `!stat HP -5` nebo `!stat HP 5`."
+                "Incorrect format for changing value. Use for example `!stat HP +5`, `!stat HP -5` or `!stat HP 5`."
             )
 
 

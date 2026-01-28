@@ -8,7 +8,7 @@
 
 *   **Character Management:** Create, update, and manage investigator sheets, including stats, skills, and backstories.
 *   **Dice Rolling:** Advanced dice rolling capabilities, including standard rolls, bonus/penalty dice, luck rolls, and skill checks.
-*   **Keeper Tools:** extensive library of game information including firearms, inventions, madness tables, phobias/manias, and NPC generation.
+*   **Keeper Tools:** Extensive library of game information including firearms, inventions, madness tables, phobias/manias, and NPC generation.
 *   **Session Management:** Tools to start, track, and log game sessions.
 *   **Utility & Admin:** YouTube feed integration, auto-rooms, RSS feeds, and server administration tools.
 
@@ -65,10 +65,10 @@ The bot should now be online and ready to use in your Discord server.
 The bot uses a dynamic prefix (default is `!`). Here is a list of available commands categorized by function:
 
 ### Character Creation
-*   `newinvestigator`: Create a new investigator.
+*   `newinvestigator`: Create a new investigator (Wizard).
 *   `mychar`: View your character sheet.
-*   `autochar`: Automatically generate a character.
-*   `stat`: View specific stats.
+*   `autochar`: Generate stats for your investigator (Standard CoC 7e rules).
+*   `stat`: View or edit specific stats.
 *   `rename`: Rename your character.
 *   `renameskill`: Rename a skill on your sheet.
 *   `deleteinvestigator`: Delete a character.
@@ -80,10 +80,7 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 *   `unretire`: Bring a retired character back.
 
 ### Rolling Die and Session Management
-*   `newroll`: Perform a dice roll.
-*   `roll`: Standard roll command.
-*   `newbonusroll`: Roll with a bonus die.
-*   `newpenalityroll`: Roll with a penalty die.
+*   `newroll` (aliases: `roll`, `d`, `nd`, `s`): Perform a dice roll or skill check. Interactive interface allows for Bonus/Penalty dice and Luck spending.
 *   `showluck`: Display current luck.
 *   `startsession`: Start a new game session.
 *   `showsession`: Show current session details.
@@ -94,20 +91,20 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 *   `occupationinfo`: Lookup occupation details.
 *   `skillinfo`: Lookup skill details.
 *   `createnpc`: Generate an NPC.
-*   `randomname`: Generate a random name.
+*   `randomname`: Generate a random name (1920s).
 *   `macguffin`: Generate a MacGuffin.
 *   `loot`: Generate random loot.
 *   `archetypeinfo`: Lookup archetype info (Pulp).
 *   `firearms`: Lookup firearm statistics.
 *   `inventions`: Lookup invention details.
 *   `talents`: Lookup talent info.
-*   `years`: historical info for different years.
+*   `years`: Historical info for different years.
 *   `madness`: Consult madness rules.
 *   `madnessAlone`: Madness tables for solo investigators.
 *   `insaneTalents`: Lookup insane talents.
 *   `phobia`: Random phobia.
 *   `mania`: Random mania.
-*   `poisions`: Lookup poison info.
+*   `poisons`: Lookup poison info.
 
 ### Bot Functions
 *   `autoroomkick`: Kick user from auto-room.
