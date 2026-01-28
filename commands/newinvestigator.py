@@ -6,7 +6,7 @@ from discord.ext import commands
 from loadnsave import (
     load_player_stats, save_player_stats,
     load_retired_characters_data, save_retired_characters_data,
-    load_occupations_data, load_skills_data
+    load_occupations_data
 )
 
 class newinvestigator(commands.Cog):
@@ -85,18 +85,8 @@ class newinvestigator(commands.Cog):
             "Move": 0, "Build": 0, "Damage Bonus": 0,
             "Age": 0,
             "Credit Rating": 0,
-            "Skills": {} # We will populate this later or stick to the flat structure?
-                         # The original newinvestigator.py had a flat structure for skills.
-                         # I should stick to the existing data structure to avoid breaking other commands.
+            "Skills": {}
         }
-
-        # Populate default skills (flat structure as per original newinvestigator.py)
-        # I need to replicate the default skills list from the original file or load them.
-        # For now, I'll add a method to populate defaults later or do it now.
-        # Original file had a hardcoded list. I should probably use that or the skills_info.json base stats.
-        # skills_info.json has "Base stat - XX%". I could parse that.
-        # But to be safe and consistent with previous behavior, I might want to copy the hardcoded list
-        # OR parse the json. Parsing the JSON is "smarter".
 
         # Populate default skills (Hardcoded to match original behavior)
         default_skills = {
@@ -187,25 +177,8 @@ class newinvestigator(commands.Cog):
         values = [40, 50, 50, 50, 60, 60, 70, 80]
         stats = ["STR", "CON", "SIZ", "DEX", "APP", "INT", "POW", "EDU"]
 
-        # Luck is separate in Quick Fire? Usually rolled.
-        # CoC 7e Rulebook says for Quick Fire: "Allocate 40, 50, 50, 50, 60, 60, 70, 80... Determine Luck by rolling 3D6 x 5."
-        char_data["LUCK"] = 5 * sum(sorted([random.randint(1, 6) for _ in range(3)])) # Luck is 3d6*5 total (not 2 highest of 3? wait autochar did 2 highest of 3? No, autochar did 2 highest of 3 for 3d6 stats??)
-        # Re-checking autochar logic: sorted([r1,r2,r3])[1:] means sum of 2 highest?
-        # CoC 7e Rules:
-        # STR, DEX, CON, POW, APP: 3D6 * 5. (Standard is just 3D6*5, no drop lowest?)
-        # Autochar uses "drop lowest" logic? `sum(sorted(...)[1:])` takes the last 2 elements of a sorted 3-element list. Yes, that is 2D6+6 basically? No.
-        # sorted([1, 2, 6]) -> [1, 2, 6]. [1:] is [2, 6]. Sum is 8.
-        # Wait, standard CoC 7e is just 3D6. Not 2 best of 3.
-        # Autochar seems to be using "Heroic" or "Pulp" rules or just a house rule (4D6 drop lowest logic applied to 3D6? No, it's 3 dice, drop 1? That makes average higher).
-        # User requested: "Assisted mode use strictly standard formulas for dice rolls."
-        # Standard: 3D6*5.
-        # I will use 3D6*5 for Assisted.
-        # For Autochar, I'll leave it as is if I were reusing code, but here I am implementing "Full Auto". I'll use Standard Rules unless "Full Auto" implies the old house rule.
-        # I'll stick to Standard Rules for clarity as per "strictly standard formulas" comment for Assisted. I'll apply it to Auto too for consistency unless specified.
-        # Wait, if Autochar was already there, maybe users like that method.
-        # But "Quick fire should chose where to put predefined values".
-        # "Assisted mode is rolling stats one by one... strictly standard formulas".
-        # I will use 3D6*5 for standard stats.
+        # Luck is rolled 3D6 * 5
+        char_data["LUCK"] = 5 * sum([random.randint(1, 6) for _ in range(3)])
 
         await ctx.send(f"**Quick Fire Mode**\nValues to assign: {values}\nLuck has been rolled: {char_data['LUCK']}")
 
@@ -347,6 +320,12 @@ class newinvestigator(commands.Cog):
             await ctx.send(f"Due to age, you must deduct a total of **{deduction}** points from **STR**, **CON**, or **DEX**.")
             await self.deduct_stats(ctx, char_data, deduction)
 
+        # Recalculate Base Skills dependent on stats
+        # Dodge = DEX / 2
+        # Language Own = EDU
+        char_data["Dodge"] = char_data["DEX"] // 2
+        char_data["Language own"] = char_data["EDU"]
+
         await self.display_stats(ctx, char_data)
 
     async def deduct_stats(self, ctx, char_data, total_deduction):
@@ -425,11 +404,6 @@ class newinvestigator(commands.Cog):
 
         formula = info.get("skill_points", "EDU × 4")
         points = 0
-
-        # Simple parser for common formulas
-        # "EDU × 4"
-        # "EDU × 2 + DEX × 2"
-        # "EDU × 2 + (DEX × 2 or STR × 2)"
 
         try:
             if "EDU × 4" in formula:
@@ -547,9 +521,7 @@ class newinvestigator(commands.Cog):
                         continue
 
                     current_val = char_data.get(skill_key, 0)
-                    if current_val + val > 99: # Cap check (usually 99, some rules say 90 or 75 for starting?)
-                        # CoC 7e: No hard cap except 99/90? "Keeper may set limits".
-                        # I'll warn if > 90 but allow it up to 99.
+                    if current_val + val > 99: # Cap check
                         await ctx.send("Warning: Skill values over 90 are rare for starting characters.")
 
                     char_data[skill_key] = current_val + val
@@ -571,21 +543,6 @@ class newinvestigator(commands.Cog):
         char_data["HP"] = (con + siz) // 10
         char_data["MP"] = pow_stat // 5
         char_data["SAN"] = pow_stat
-
-        # Dodge & Language Own
-        # Only update if they are still at 0/default or should I overwrite?
-        # Usually they are base values. If user added points, it should be Base + Added.
-        # But my skill assignment loop added points to the current value.
-        # The current value started at 0 for Dodge/Language Own in my default list?
-        # Let's check default_skills in init: "Dodge": 0, "Language own": 0.
-        # So I should set the BASE now, or should have set it earlier?
-        # If I set it now, I might overwrite user points if I'm not careful.
-        # BUT, Dodge base is DEX/2. If user added 20 points, total is DEX/2 + 20.
-        # My current logic: char_data[skill] += val.
-        # So if I set the base NOW, I should add the existing value (which is just the user added points) to the base.
-
-        char_data["Dodge"] = (dex // 2) + char_data.get("Dodge", 0)
-        char_data["Language own"] = char_data["EDU"] + char_data.get("Language own", 0)
 
         # Build & Damage Bonus
         str_siz = str_stat + siz

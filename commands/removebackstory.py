@@ -1,25 +1,7 @@
 import discord
 from discord.ext import commands
 from loadnsave import load_player_stats, save_player_stats
-
-class BackstoryView(discord.ui.View):
-    def __init__(self, options, author):
-        super().__init__(timeout=60)
-        self.author = author
-        self.selected_option = None
-
-        for option in options:
-            button = discord.ui.Button(label=option, style=discord.ButtonStyle.primary)
-            button.callback = lambda interaction, label=option: self.on_button_click(interaction, label)
-            self.add_item(button)
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user == self.author
-
-    async def on_button_click(self, interaction: discord.Interaction, label):
-        self.selected_option = label
-        self.stop()
-        await interaction.response.edit_message(content=f"Selected: {label}", view=None)
+from commands.backstory_common import BackstoryView
 
 class removebackstory(commands.Cog):
     def __init__(self, bot):
@@ -41,23 +23,46 @@ class removebackstory(commands.Cog):
             return
 
         categories = list(backstory.keys())
+        if not categories:
+             await ctx.send("Your backstory is empty.")
+             return
+
         category_view = BackstoryView(categories, ctx.author)
-        category_view.message = await ctx.send("Select a category from your backstory:", view=category_view)
+        message = await ctx.send("Select a category from your backstory:", view=category_view)
         await category_view.wait()
 
         if category_view.selected_option:
             selected_category = category_view.selected_option
             items = backstory[selected_category]
+
+            if not items:
+                await ctx.send(f"Category '{selected_category}' is empty.")
+                return
+
+            await message.edit(content=f"Selected category: **{selected_category}**", view=None)
+
             item_view = BackstoryView(items, ctx.author)
-            item_view.message = await ctx.send(f"Select an item from '{selected_category}' to remove:", view=item_view)
+            item_msg = await ctx.send(f"Select an item from '{selected_category}' to remove:", view=item_view)
             await item_view.wait()
 
             if item_view.selected_option:
                 selected_item = item_view.selected_option
-                backstory[selected_category].remove(selected_item)
-                # Neodstraňujeme kategorii, i když je prázdná
-                await save_player_stats(player_stats)
-                await ctx.send(f"Item '{selected_item}' removed from '{selected_category}'.")
+
+                try:
+                    backstory[selected_category].remove(selected_item)
+                    await save_player_stats(player_stats)
+                    try:
+                        await item_msg.delete()
+                        await message.delete()
+                    except:
+                        pass
+                    await ctx.send(f"Item '{selected_item}' removed from '{selected_category}'.")
+                except ValueError:
+                    await ctx.send("Error: Item could not be found to remove.")
+            else:
+                await item_msg.edit(content="Item selection cancelled.", view=None)
+        else:
+            await message.edit(content="Category selection cancelled.", view=None)
 
 async def setup(bot):
     await bot.add_cog(removebackstory(bot))
