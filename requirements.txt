@@ -4,3 +4,5 @@ feedparser
 pytz
 beautifulsoup4
 aiohttp
+quart
+hypercorn

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Browse {{ folder }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Browse {{ folder }}</li>
+  </ol>
+</nav>
+
+<h3>Files in <code>{{ folder }}</code></h3>
+
+<div class="list-group mt-3">
+    {% for file in files %}
+    <a href="/admin/edit/{{ folder }}/{{ file }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+        {{ file }}
+        <span class="badge bg-primary rounded-pill">Edit</span>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

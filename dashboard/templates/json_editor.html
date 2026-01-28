@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit {{ filename }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+    <li class="breadcrumb-item"><a href="/admin/browse/{{ folder }}">{{ folder }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ filename }}</li>
+  </ol>
+</nav>
+
+<h3>Editing: {{ filename }}</h3>
+
+<div class="alert alert-success d-none" id="saveMessage">Saved successfully!</div>
+<div class="alert alert-danger d-none" id="errorMessage">Error saving file.</div>
+
+<div class="mb-3">
+    <textarea class="form-control" id="jsonContent" rows="20" style="font-family: monospace;">{{ content }}</textarea>
+</div>
+
+<button class="btn btn-success" id="saveBtn">Save Changes</button>
+<a href="/admin/browse/{{ folder }}" class="btn btn-secondary">Cancel</a>
+
+<script>
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+        const content = document.getElementById('jsonContent').value;
+        const btn = document.getElementById('saveBtn');
+        const saveMsg = document.getElementById('saveMessage');
+        const errorMsg = document.getElementById('errorMessage');
+
+        btn.disabled = true;
+        saveMsg.classList.add('d-none');
+        errorMsg.classList.add('d-none');
+
+        try {
+            // Validate JSON first
+            JSON.parse(content);
+        } catch (e) {
+            errorMsg.textContent = "Invalid JSON: " + e.message;
+            errorMsg.classList.remove('d-none');
+            btn.disabled = false;
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/save/{{ folder }}/{{ filename }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: content })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                saveMsg.classList.remove('d-none');
+            } else {
+                errorMsg.textContent = "Error: " + result.message;
+                errorMsg.classList.remove('d-none');
+            }
+        } catch (e) {
+            errorMsg.textContent = "Network Error: " + e.message;
+            errorMsg.classList.remove('d-none');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+</script>
+{% endblock %}

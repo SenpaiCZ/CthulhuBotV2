@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - CoC Bot{% endblock %}
+
+{% block content %}
+<h2>{{ title }}</h2>
+
+{% if type == 'active' %}
+    {% for server_id, users in data.items() %}
+    <div class="card mb-4">
+        <div class="card-header">Server ID: {{ server_id }}</div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Name</th>
+                        <th>Stats (S/D/P/L)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user_id, char in users.items() %}
+                    <tr>
+                        <td>{{ user_id }}</td>
+                        <td>{{ char.get('NAME', 'Unknown') }}</td>
+                        <td>{{ char.get('STR') }}/{{ char.get('DEX') }}/{{ char.get('POW') }}/{{ char.get('LUCK') }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#modal-{{server_id}}-{{user_id}}">View JSON</button>
+                        </td>
+                    </tr>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="modal-{{server_id}}-{{user_id}}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">{{ char.get('NAME') }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <pre>{{ char | tojson(indent=4) }}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+{% elif type == 'retired' %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Character Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user_id, char_list in data.items() %}
+                {% for char in char_list %}
+                <tr>
+                    <td>{{ user_id }}</td>
+                    <td>{{ char.get('NAME', 'Unknown') }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#modal-ret-{{user_id}}-{{loop.index}}">View JSON</button>
+                    </td>
+                </tr>
+
+                <!-- Modal -->
+                <div class="modal fade" id="modal-ret-{{user_id}}-{{loop.index}}" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">{{ char.get('NAME') }} (Retired)</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <pre>{{ char | tojson(indent=4) }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% endblock %}
