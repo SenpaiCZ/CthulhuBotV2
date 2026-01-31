@@ -255,14 +255,41 @@
                 currentData.files.Root.forEach(f => rootBody.appendChild(createButton(f)));
             }
 
-            Object.keys(currentData.files).forEach(key => {
+            Object.keys(currentData.files).forEach((key, index) => {
                 if (key === 'Root') return;
+
+                const safeKey = `folder-${index}`;
+                const folderColor = currentData.settings?.folder_colors?.[key] || '';
 
                 const card = document.createElement('div');
                 card.className = 'card mb-3';
-                card.innerHTML = `<div class="card-header">${key}</div><div class="card-body" id="folder-${key}"></div>`;
+
+                const headerStyle = folderColor ? `style="background-color: ${folderColor};"` : '';
+
+                card.innerHTML = `
+                    <div class="card-header d-flex justify-content-between align-items-center" ${headerStyle}>
+                        <button class="btn btn-link text-decoration-none text-reset fw-bold p-0" type="button" data-bs-toggle="collapse" data-bs-target="#${safeKey}">
+                            ${key} <span class="small">▼</span>
+                        </button>
+                        <input type="color" class="form-control form-control-color form-control-sm" value="${folderColor || '#f8f9fa'}" title="Choose folder color">
+                    </div>
+                    <div id="${safeKey}" class="collapse">
+                        <div class="card-body" id="body-${safeKey}"></div>
+                    </div>
+                `;
                 filesContainer.appendChild(card);
-                const body = card.querySelector(`#folder-${key}`);
+
+                // Color Picker Logic
+                const colorInput = card.querySelector('input[type="color"]');
+                colorInput.onchange = (e) => {
+                    const newColor = e.target.value;
+                    card.querySelector('.card-header').style.backgroundColor = newColor;
+                    saveFolderColor(key, newColor);
+                };
+                // Prevent collapse when clicking color picker
+                colorInput.onclick = (e) => e.stopPropagation();
+
+                const body = card.querySelector(`#body-${safeKey}`);
                 currentData.files[key].forEach(f => body.appendChild(createButton(f)));
             });
 
@@ -270,6 +297,10 @@
                  filesContainer.innerHTML = '<div class="alert alert-secondary">No sound files found.</div>';
             }
         }
+    }
+
+    async function saveFolderColor(folderName, color) {
+        await apiCall('/api/soundboard/folder/color', { folder_name: folderName, color: color });
     }
 
     // --- Actions ---
