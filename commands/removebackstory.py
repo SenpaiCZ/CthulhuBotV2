@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from loadnsave import load_player_stats, save_player_stats
-from commands.backstory_common import BackstoryView
+from commands._backstory_common import BackstoryView
 
 class removebackstory(commands.Cog):
     def __init__(self, bot):

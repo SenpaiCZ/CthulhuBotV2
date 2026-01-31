@@ -32,7 +32,7 @@ async def load():
   # in folder commands
   for filename in os.listdir('./commands'):
     # all files ending with .py
-    if filename.endswith('.py'):
+    if filename.endswith('.py') and not filename.startswith('_'):
       # load as extensions
       await bot.load_extension(f"commands.{filename[:-3]}")
       print(f"{filename[:-3]} is now LOADED! Yeah Baby!")
