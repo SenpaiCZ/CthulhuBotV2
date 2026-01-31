@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Music Dashboard{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Music Dashboard</h2>
+
+<div id="guilds-container">
+    <div class="text-center">Loading...</div>
+</div>
+
+<script>
+    function updateMusicData() {
+        fetch('/api/music/data')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('guilds-container');
+                container.innerHTML = '';
+
+                if (Object.keys(data.guilds).length === 0) {
+                    container.innerHTML = '<div class="alert alert-info">No active music sessions.</div>';
+                    return;
+                }
+
+                for (const [guildId, guildData] of Object.entries(data.guilds)) {
+                    const card = document.createElement('div');
+                    card.className = 'card mb-3';
+
+                    let nowPlayingHtml = '<div class="text-muted">Nothing playing</div>';
+                    if (guildData.current_track) {
+                        const track = guildData.current_track;
+                        nowPlayingHtml = `
+                            <div class="d-flex align-items-center mb-3">
+                                ${track.thumbnail ? `<img src="${track.thumbnail}" style="width: 120px; height: 90px; object-fit: cover; margin-right: 15px;">` : ''}
+                                <div>
+                                    <h5>${track.title}</h5>
+                                    <p class="mb-1"><a href="${track.url}" target="_blank">Link</a></p>
+                                    <span class="badge ${track.paused ? 'bg-warning' : 'bg-success'}">${track.paused ? 'Paused' : 'Playing'}</span>
+                                    <span class="badge ${track.loop ? 'bg-info' : 'bg-secondary'}">Loop: ${track.loop ? 'On' : 'Off'}</span>
+                                </div>
+                            </div>
+                            <div class="btn-group mb-2">
+                                <button class="btn btn-warning btn-sm" onclick="controlMusic('${guildId}', 'skip')">Skip</button>
+                                <button class="btn btn-secondary btn-sm" onclick="controlMusic('${guildId}', 'loop')">Toggle Loop</button>
+                                <button class="btn btn-danger btn-sm" onclick="banMusic('${track.url}')">Ban Song</button>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <label class="me-2">Volume:</label>
+                                <input type="range" class="form-range" style="width: 150px;" min="0" max="100" value="${track.volume}" onchange="controlMusic('${guildId}', 'volume', this.value)">
+                                <span class="ms-2">${track.volume}%</span>
+                            </div>
+                        `;
+                    }
+
+                    let queueHtml = '';
+                    if (guildData.queue.length > 0) {
+                        queueHtml = '<ul class="list-group list-group-flush mt-3">';
+                        guildData.queue.forEach((song, index) => {
+                            queueHtml += `
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${index + 1}.</strong> ${song.title}
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="controlMusic('${guildId}', 'remove', null, ${index})">&times;</button>
+                                </li>
+                            `;
+                        });
+                        queueHtml += '</ul>';
+                    } else {
+                        queueHtml = '<div class="mt-3 text-muted">Queue is empty</div>';
+                    }
+
+                    card.innerHTML = `
+                        <div class="card-header font-weight-bold">${guildData.name}</div>
+                        <div class="card-body">
+                            ${nowPlayingHtml}
+                            <hr>
+                            <h6>Queue</h6>
+                            ${queueHtml}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
+            });
+    }
+
+    function controlMusic(guildId, action, volume = null, index = null) {
+        fetch('/api/music/control', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ guild_id: guildId, action: action, volume: volume, index: index })
+        }).then(() => updateMusicData());
+    }
+
+    function banMusic(url) {
+        if (!confirm("Are you sure you want to ban this song? It will be skipped and added to the blacklist.")) return;
+        fetch('/api/music/ban', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        }).then(() => updateMusicData());
+    }
+
+    setInterval(updateMusicData, 3000);
+    updateMusicData();
+</script>
+{% endblock %}

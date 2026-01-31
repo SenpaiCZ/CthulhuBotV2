@@ -185,6 +185,13 @@ async def load_soundboard_settings():
 async def save_soundboard_settings(settings_data):
     await _save_json_file(DATA_FOLDER, 'soundboard_settings.json', settings_data)
 
+# --- Music Blacklist ---
+async def load_music_blacklist():
+    return await _load_json_file(DATA_FOLDER, 'music_blacklist.json')
+
+async def save_music_blacklist(blacklist):
+    await _save_json_file(DATA_FOLDER, 'music_blacklist.json', blacklist)
+
 # --- Reminder Data ---
 async def load_reminder_data():
     return await _load_json_file(DATA_FOLDER, 'reminder_data.json')
