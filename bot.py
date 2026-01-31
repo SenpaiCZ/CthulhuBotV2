@@ -49,6 +49,7 @@ async def main():
     # Start Dashboard if enabled
     if settings.get("enable_dashboard", False):
         print(f"Starting Dashboard on port {settings.get('dashboard_port', 5000)}...")
+        app.bot = bot  # Inject bot instance into the Quart app
         config = Config()
         config.bind = [f"0.0.0.0:{settings.get('dashboard_port', 5000)}"]
         # Run Hypercorn in the background
