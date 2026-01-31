@@ -79,12 +79,19 @@ async def get_or_join_voice_channel(guild_id, channel_id):
 
     try:
         if voice_client:
-            if voice_client.channel.id != channel.id:
+            if not voice_client.is_connected():
+                # Stale connection object? try to cleanup and reconnect
+                await voice_client.disconnect(force=True)
+                voice_client = await channel.connect()
+            elif voice_client.channel.id != channel.id:
                 await voice_client.move_to(channel)
         else:
             voice_client = await channel.connect()
     except Exception as e:
         return None, str(e)
+
+    if voice_client is None:
+        return None, "Failed to connect to voice channel."
 
     return voice_client, None
 
