@@ -280,6 +280,39 @@ async def soundboard_play():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/api/soundboard/join', methods=['POST'])
+async def soundboard_join():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    channel_id = data.get('channel_id')
+
+    if not guild_id or not channel_id:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    voice_client, error = await get_or_join_voice_channel(guild_id, channel_id)
+    if error:
+        return jsonify({"status": "error", "message": error}), 500
+
+    return jsonify({"status": "success"})
+
+@app.route('/api/soundboard/leave', methods=['POST'])
+async def soundboard_leave():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+
+    if not guild_id:
+        return jsonify({"status": "error", "message": "Missing guild_id"}), 400
+
+    guild = app.bot.get_guild(int(guild_id))
+    if guild and guild.voice_client:
+        await guild.voice_client.disconnect()
+
+    return jsonify({"status": "success"})
+
 @app.route('/api/soundboard/stop', methods=['POST'])
 async def soundboard_stop():
     if not is_admin(): return "Unauthorized", 401
