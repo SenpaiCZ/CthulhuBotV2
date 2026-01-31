@@ -53,6 +53,7 @@ async def main():
         config.bind = [f"0.0.0.0:{settings.get('dashboard_port', 5000)}"]
         # Run Hypercorn in the background
         asyncio.create_task(serve(app, config))
+        print(f"Dashboard accessible at http://127.0.0.1:{settings.get('dashboard_port', 5000)}")
     
     # Ensure token exists before starting
     if settings.get("token"):
