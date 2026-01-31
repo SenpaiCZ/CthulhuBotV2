@@ -7,10 +7,12 @@ from loadnsave import (
     load_player_stats, load_retired_characters_data, load_settings, save_settings,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
+from .audio_mixer import MixingAudioSource
 
 SOUNDBOARD_FOLDER = "soundboard"
 ALLOWED_EXTENSIONS = {'.mp3', '.wav', '.ogg', '.m4a', '.flac'}
 guild_volumes = {}
+guild_mixers = {} # guild_id (str) -> MixingAudioSource
 
 app = Quart(__name__)
 app.secret_key = os.urandom(24)
@@ -228,11 +230,28 @@ async def soundboard_data():
         })
 
         voice_client = guild.voice_client
+
+        # Get active tracks
+        mixer = guild_mixers.get(str(guild.id))
+        tracks = []
+        if mixer:
+            # Filter out finished tracks that might be lingering before cleanup
+            active_tracks = [t for t in mixer.tracks if not t.finished]
+            for t in active_tracks:
+                tracks.append({
+                    "id": t.id,
+                    "name": os.path.basename(t.file_path),
+                    "volume": int(t.volume * 100),
+                    "loop": t.loop,
+                    "paused": t.paused
+                })
+
         status = {
             "is_connected": voice_client is not None,
             "channel_id": str(voice_client.channel.id) if voice_client else None,
             "is_playing": voice_client.is_playing() if voice_client else False,
-            "volume": int(guild_volumes.get(str(guild.id), 0.5) * 100)
+            "volume": int(guild_volumes.get(str(guild.id), 0.5) * 100),
+            "tracks": tracks
         }
         status_data[str(guild.id)] = status
 
@@ -268,17 +287,33 @@ async def soundboard_play():
     if error:
         return jsonify({"status": "error", "message": error}), 500
 
-    if voice_client.is_playing():
-        voice_client.stop()
+    # Get or create mixer
+    mixer = guild_mixers.get(str(guild_id))
+    if not mixer:
+        mixer = MixingAudioSource()
+        guild_mixers[str(guild_id)] = mixer
 
-    try:
-        source = discord.FFmpegPCMAudio(full_path)
-        volume = guild_volumes.get(str(guild_id), 0.5)
-        transform_source = discord.PCMVolumeTransformer(source, volume=volume)
-        voice_client.play(transform_source)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    # Check if we are playing the mixer
+    is_playing_mixer = False
+    if voice_client.is_playing() and isinstance(voice_client.source, discord.PCMVolumeTransformer):
+         if voice_client.source.original == mixer:
+             is_playing_mixer = True
+
+    if not is_playing_mixer:
+        if voice_client.is_playing():
+            voice_client.stop()
+
+        # Wait a moment for stop to propagate?
+        # Usually fine.
+
+        master_vol = guild_volumes.get(str(guild_id), 0.5)
+        source = discord.PCMVolumeTransformer(mixer, volume=master_vol)
+        voice_client.play(source)
+
+    # Add track (default loop=True as per request)
+    mixer.add_track(full_path, volume=0.5, loop=True)
+
+    return jsonify({"status": "success"})
 
 @app.route('/api/soundboard/join', methods=['POST'])
 async def soundboard_join():
@@ -310,11 +345,15 @@ async def soundboard_leave():
     guild = app.bot.get_guild(int(guild_id))
     if guild and guild.voice_client:
         await guild.voice_client.disconnect()
+        # Clean up mixer
+        mixer = guild_mixers.pop(str(guild_id), None)
+        if mixer: mixer.cleanup()
 
     return jsonify({"status": "success"})
 
 @app.route('/api/soundboard/stop', methods=['POST'])
 async def soundboard_stop():
+    """Stops all sounds but keeps connection."""
     if not is_admin(): return "Unauthorized", 401
 
     data = await request.get_json()
@@ -323,14 +362,18 @@ async def soundboard_stop():
     if not guild_id:
         return jsonify({"status": "error", "message": "Missing guild_id"}), 400
 
-    guild = app.bot.get_guild(int(guild_id))
-    if guild and guild.voice_client and guild.voice_client.is_playing():
-        guild.voice_client.stop()
+    # Just clear the tracks in the mixer
+    mixer = guild_mixers.get(str(guild_id))
+    if mixer:
+        mixer.cleanup() # Clears tracks
+
+    # We don't need to stop voice_client if it's playing mixer (it will just play silence)
 
     return jsonify({"status": "success"})
 
 @app.route('/api/soundboard/volume', methods=['POST'])
 async def soundboard_volume():
+    """Master volume control"""
     if not is_admin(): return "Unauthorized", 401
 
     data = await request.get_json()
@@ -342,15 +385,92 @@ async def soundboard_volume():
 
     try:
         vol_float = float(volume) / 100.0
-        vol_float = max(0.0, min(1.0, vol_float)) # Clamp between 0 and 1
+        vol_float = max(0.0, min(1.0, vol_float))
         guild_volumes[str(guild_id)] = vol_float
 
         guild = app.bot.get_guild(int(guild_id))
         if guild and guild.voice_client and guild.voice_client.source:
-             # Check if it's a PCMVolumeTransformer
              if isinstance(guild.voice_client.source, discord.PCMVolumeTransformer):
                  guild.voice_client.source.volume = vol_float
 
         return jsonify({"status": "success"})
     except ValueError:
         return jsonify({"status": "error", "message": "Invalid volume"}), 400
+
+# --- Track Control Endpoints ---
+
+@app.route('/api/soundboard/track/volume', methods=['POST'])
+async def track_volume():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    track_id = data.get('track_id')
+    volume = data.get('volume') # 0-100
+
+    mixer = guild_mixers.get(str(guild_id))
+    if not mixer:
+        return jsonify({"status": "error", "message": "No active mixer"}), 404
+
+    track = mixer.get_track(track_id)
+    if not track:
+        return jsonify({"status": "error", "message": "Track not found"}), 404
+
+    try:
+        vol_float = float(volume) / 100.0
+        track.volume = max(0.0, min(1.0, vol_float))
+        return jsonify({"status": "success"})
+    except ValueError:
+        return jsonify({"status": "error", "message": "Invalid volume"}), 400
+
+@app.route('/api/soundboard/track/loop', methods=['POST'])
+async def track_loop():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    track_id = data.get('track_id')
+    loop = data.get('loop') # boolean
+
+    mixer = guild_mixers.get(str(guild_id))
+    if not mixer: return jsonify({"status": "error", "message": "No active mixer"}), 404
+
+    track = mixer.get_track(track_id)
+    if not track: return jsonify({"status": "error", "message": "Track not found"}), 404
+
+    track.loop = bool(loop)
+    return jsonify({"status": "success"})
+
+@app.route('/api/soundboard/track/pause', methods=['POST'])
+async def track_pause():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    track_id = data.get('track_id')
+    paused = data.get('paused') # boolean
+
+    mixer = guild_mixers.get(str(guild_id))
+    if not mixer: return jsonify({"status": "error", "message": "No active mixer"}), 404
+
+    track = mixer.get_track(track_id)
+    if not track: return jsonify({"status": "error", "message": "Track not found"}), 404
+
+    track.paused = bool(paused)
+    return jsonify({"status": "success"})
+
+@app.route('/api/soundboard/track/remove', methods=['POST'])
+async def track_remove():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    track_id = data.get('track_id')
+
+    mixer = guild_mixers.get(str(guild_id))
+    if not mixer: return jsonify({"status": "error", "message": "No active mixer"}), 404
+
+    if mixer.remove_track(track_id):
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"status": "error", "message": "Track not found"}), 404
