@@ -178,6 +178,13 @@ async def load_rss_data():
 async def save_rss_data(session_data):
     await _save_json_file(DATA_FOLDER, 'rss_data.json', session_data)
 
+# --- Soundboard Settings ---
+async def load_soundboard_settings():
+    return await _load_json_file(DATA_FOLDER, 'soundboard_settings.json')
+
+async def save_soundboard_settings(settings_data):
+    await _save_json_file(DATA_FOLDER, 'soundboard_settings.json', settings_data)
+
 # --- Reminder Data ---
 async def load_reminder_data():
     return await _load_json_file(DATA_FOLDER, 'reminder_data.json')

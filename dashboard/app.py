@@ -5,6 +5,7 @@ import asyncio
 from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort
 from loadnsave import (
     load_player_stats, load_retired_characters_data, load_settings, save_settings,
+    load_soundboard_settings, save_soundboard_settings,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -213,7 +214,7 @@ async def soundboard_data():
     if not is_admin(): return "Unauthorized", 401
 
     if not app.bot:
-        return jsonify({"guilds": [], "files": {}, "status": {}})
+        return jsonify({"guilds": [], "files": {}, "status": {}, "settings": {}})
 
     guilds_data = []
     status_data = {}
@@ -256,12 +257,34 @@ async def soundboard_data():
         status_data[str(guild.id)] = status
 
     files = get_soundboard_files()
+    settings = await load_soundboard_settings()
 
     return jsonify({
         "guilds": guilds_data,
         "files": files,
-        "status": status_data
+        "status": status_data,
+        "settings": settings
     })
+
+@app.route('/api/soundboard/folder/color', methods=['POST'])
+async def soundboard_folder_color():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    folder_name = data.get('folder_name')
+    color = data.get('color')
+
+    if not folder_name or not color:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    settings = await load_soundboard_settings()
+    if 'folder_colors' not in settings:
+        settings['folder_colors'] = {}
+
+    settings['folder_colors'][folder_name] = color
+    await save_soundboard_settings(settings)
+
+    return jsonify({"status": "success"})
 
 @app.route('/api/soundboard/play', methods=['POST'])
 async def soundboard_play():
