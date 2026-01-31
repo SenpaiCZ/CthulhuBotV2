@@ -30,7 +30,9 @@
         <div class="col-md-4">
             <label class="form-label">Controls</label>
             <div class="d-flex gap-2">
-                <button id="stopBtn" class="btn btn-danger w-100">Stop</button>
+                <button id="joinBtn" class="btn btn-success w-100">Connect</button>
+                <button id="stopBtn" class="btn btn-warning w-100">Stop</button>
+                <button id="leaveBtn" class="btn btn-danger w-100">Disconnect</button>
             </div>
             <div class="mt-2">
                  <label for="volumeRange" class="form-label d-flex justify-content-between">
@@ -53,6 +55,15 @@
 <script>
     let currentData = null;
     let selectedGuildId = null;
+
+    function showError(message) {
+        const errorDiv = document.getElementById('error');
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('d-none');
+        setTimeout(() => {
+            errorDiv.classList.add('d-none');
+        }, 5000);
+    }
 
     async function fetchData() {
         try {
@@ -200,14 +211,58 @@
         render(); // Re-render to update channels
     };
 
-    document.getElementById('stopBtn').onclick = async () => {
+    document.getElementById('joinBtn').onclick = async () => {
         if (!selectedGuildId) return;
-        await fetch('/api/soundboard/stop', {
+        const channelId = document.getElementById('channelSelect').value;
+        if (!channelId) {
+            showError("Please select a voice channel!");
+            return;
+        }
+
+        const res = await fetch('/api/soundboard/join', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                guild_id: selectedGuildId,
+                channel_id: channelId
+            })
+        });
+        const data = await res.json();
+        if (data.status === 'error') {
+            showError(data.message);
+        } else {
+             await fetchData();
+        }
+    };
+
+    document.getElementById('leaveBtn').onclick = async () => {
+        if (!selectedGuildId) return;
+        const res = await fetch('/api/soundboard/leave', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({guild_id: selectedGuildId})
         });
-        await fetchData(); // Refresh status
+        const data = await res.json();
+        if (data.status === 'error') {
+            showError(data.message);
+        } else {
+             await fetchData();
+        }
+    };
+
+    document.getElementById('stopBtn').onclick = async () => {
+        if (!selectedGuildId) return;
+        const res = await fetch('/api/soundboard/stop', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({guild_id: selectedGuildId})
+        });
+        const data = await res.json();
+        if (data.status === 'error') {
+            showError(data.message);
+        } else {
+             await fetchData();
+        }
     };
 
     document.getElementById('volumeRange').oninput = (e) => {
@@ -227,20 +282,29 @@
         if (!selectedGuildId) return;
         const channelId = document.getElementById('channelSelect').value;
         if (!channelId) {
-            alert("Please select a voice channel!");
+            showError("Please select a voice channel!");
             return;
         }
 
-        await fetch('/api/soundboard/play', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                guild_id: selectedGuildId,
-                channel_id: channelId,
-                file_path: filePath
-            })
-        });
-        await fetchData();
+        try {
+            const res = await fetch('/api/soundboard/play', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    guild_id: selectedGuildId,
+                    channel_id: channelId,
+                    file_path: filePath
+                })
+            });
+            const data = await res.json();
+            if (data.status === 'error') {
+                showError(data.message);
+            } else {
+                await fetchData();
+            }
+        } catch (e) {
+            showError("Failed to play sound: " + e);
+        }
     }
 
     // Initial load
