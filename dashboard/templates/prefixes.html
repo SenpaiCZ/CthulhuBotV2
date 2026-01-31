@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Server Prefixes{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Server Prefixes</h2>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Server Name</th>
+                        <th>Server ID</th>
+                        <th>Prefix</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for guild in guilds %}
+                    <tr>
+                        <td>{{ guild.name }}</td>
+                        <td>{{ guild.id }}</td>
+                        <td>
+                            <input type="text" class="form-control" id="prefix-{{ guild.id }}" value="{{ guild.prefix }}" style="max-width: 100px;">
+                        </td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="savePrefix('{{ guild.id }}')">Save</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+async function savePrefix(guildId) {
+    const input = document.getElementById(`prefix-${guildId}`);
+    const newPrefix = input.value;
+
+    if (!newPrefix) {
+        alert("Prefix cannot be empty.");
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/save_prefix', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                guild_id: guildId,
+                prefix: newPrefix
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            alert("Prefix updated successfully!");
+        } else {
+            alert("Error: " + data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert("An error occurred while saving the prefix.");
+    }
+}
+</script>
+{% endblock %}

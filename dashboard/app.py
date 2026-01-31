@@ -6,6 +6,7 @@ from quart import Quart, render_template, request, redirect, url_for, session, j
 from loadnsave import (
     load_player_stats, load_retired_characters_data, load_settings, save_settings,
     load_soundboard_settings, save_soundboard_settings, load_music_blacklist, save_music_blacklist,
+    load_server_stats, save_server_stats,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -201,6 +202,46 @@ async def save_file(folder_name, filename):
         return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+# --- Prefix Routes ---
+
+@app.route('/admin/prefixes')
+async def admin_prefixes():
+    if not is_admin(): return redirect(url_for('login'))
+
+    if not app.bot:
+        return "Bot not initialized", 500
+
+    server_stats = await load_server_stats()
+    guilds_data = []
+
+    for guild in app.bot.guilds:
+        guild_id_str = str(guild.id)
+        current_prefix = server_stats.get(guild_id_str, "!")
+        guilds_data.append({
+            "id": guild_id_str,
+            "name": guild.name,
+            "prefix": current_prefix
+        })
+
+    return await render_template('prefixes.html', guilds=guilds_data)
+
+@app.route('/api/save_prefix', methods=['POST'])
+async def save_prefix():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    prefix = data.get('prefix')
+
+    if not guild_id or not prefix:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    server_stats = await load_server_stats()
+    server_stats[str(guild_id)] = prefix
+    await save_server_stats(server_stats)
+
+    return jsonify({"status": "success"})
 
 # --- Soundboard Routes ---
 
