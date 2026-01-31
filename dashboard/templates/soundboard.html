@@ -31,12 +31,12 @@
             <label class="form-label">Controls</label>
             <div class="d-flex gap-2">
                 <button id="joinBtn" class="btn btn-success w-100">Connect</button>
-                <button id="stopBtn" class="btn btn-warning w-100">Stop</button>
+                <button id="stopBtn" class="btn btn-warning w-100">Stop All</button>
                 <button id="leaveBtn" class="btn btn-danger w-100">Disconnect</button>
             </div>
             <div class="mt-2">
                  <label for="volumeRange" class="form-label d-flex justify-content-between">
-                    <span>Volume</span> <span id="volumeValue">50%</span>
+                    <span>Master Volume</span> <span id="volumeValue">50%</span>
                 </label>
                 <input type="range" class="form-range" id="volumeRange" min="0" max="100">
             </div>
@@ -45,6 +45,14 @@
 
     <div class="alert alert-info" id="statusIndicator">
         Status: <span id="connectionStatus">Disconnected</span>
+    </div>
+
+    <!-- Now Playing Section -->
+    <div class="card mb-4 border-primary">
+        <div class="card-header bg-primary text-white">Now Playing</div>
+        <div class="card-body" id="now-playing-list">
+             <div class="text-muted fst-italic">No sounds playing.</div>
+        </div>
     </div>
 
     <div id="soundboard-files">
@@ -73,9 +81,7 @@
             render();
         } catch (e) {
             console.error(e);
-            document.getElementById('error').textContent = "Failed to load data. Ensure the bot is running.";
-            document.getElementById('error').classList.remove('d-none');
-            document.getElementById('loading').classList.add('d-none');
+            // Don't show error on every fetch fail to avoid spam, just log
         }
     }
 
@@ -89,6 +95,7 @@
         const connectionStatus = document.getElementById('connectionStatus');
         const volumeRange = document.getElementById('volumeRange');
         const volumeValue = document.getElementById('volumeValue');
+        const nowPlayingContainer = document.getElementById('now-playing-list');
 
         // Populate Guilds
         if (guildSelect.options.length === 0) {
@@ -102,7 +109,6 @@
                 selectedGuildId = currentData.guilds[0].id;
             }
         } else {
-             // Keep selected or update if none
              if (!selectedGuildId && guildSelect.value) selectedGuildId = guildSelect.value;
         }
 
@@ -111,10 +117,8 @@
              return;
         }
 
-        // Sync select with variable
         guildSelect.value = selectedGuildId;
 
-        // Find current guild data
         const guildData = currentData.guilds.find(g => g.id === selectedGuildId);
         const status = currentData.status[selectedGuildId];
 
@@ -122,53 +126,126 @@
 
         // Populate Channels
         const currentChannelId = channelSelect.value;
-
-        // Save current options to check if we need to rebuild (avoid flickering)
         const newOptions = guildData.channels.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
         if (channelSelect.innerHTML !== newOptions) {
              channelSelect.innerHTML = newOptions;
         }
 
-        // Select active channel if connected, otherwise keep selection or default
         if (status.is_connected && status.channel_id) {
             channelSelect.value = status.channel_id;
         } else if (currentChannelId) {
-             // Try to keep selection
              const exists = guildData.channels.find(c => c.id === currentChannelId);
              if (exists) channelSelect.value = currentChannelId;
         }
 
         // Update Status
         if (status.is_connected) {
-            connectionStatus.textContent = `Connected to ${status.channel_id} ${status.is_playing ? '(Playing)' : '(Idle)'}`;
+            connectionStatus.textContent = `Connected to ${status.channel_id} ${status.is_playing ? '(Active)' : '(Idle)'}`;
             connectionStatus.className = status.is_playing ? 'text-success fw-bold' : 'text-primary';
         } else {
             connectionStatus.textContent = 'Disconnected';
             connectionStatus.className = 'text-muted';
         }
 
-        // Update Volume UI if it hasn't been touched yet or if we just switched guilds
+        // Update Master Volume
         if (document.activeElement !== volumeRange) {
              volumeRange.value = status.volume;
              volumeValue.textContent = status.volume + '%';
         }
 
-        // Files Render
-        // Only re-render if empty to avoid destroying event listeners or extensive DOM updates
+        // --- Render Now Playing ---
+        const tracks = status.tracks || [];
+
+        if (tracks.length === 0) {
+            if (!nowPlayingContainer.querySelector('.text-muted')) {
+                nowPlayingContainer.innerHTML = '<div class="text-muted fst-italic">No sounds playing.</div>';
+            } else {
+                // Check if we need to clear zombie elements if any
+                 if (nowPlayingContainer.children.length > 1) nowPlayingContainer.innerHTML = '<div class="text-muted fst-italic">No sounds playing.</div>';
+            }
+        } else {
+            // Map existing
+            const existingMap = {};
+            nowPlayingContainer.querySelectorAll('[data-track-id]').forEach(el => {
+                existingMap[el.dataset.trackId] = el;
+            });
+
+            // Remove tracks not in list
+            const newIds = new Set(tracks.map(t => t.id));
+            Object.keys(existingMap).forEach(id => {
+                if (!newIds.has(id)) existingMap[id].remove();
+            });
+
+            // Remove placeholder if exists
+            if (nowPlayingContainer.querySelector('.text-muted')) {
+                nowPlayingContainer.innerHTML = '';
+            }
+
+            tracks.forEach(track => {
+                let el = existingMap[track.id];
+                if (!el) {
+                    el = document.createElement('div');
+                    el.className = 'd-flex justify-content-between align-items-center mb-2 border-bottom pb-2';
+                    el.dataset.trackId = track.id;
+                    el.innerHTML = `
+                        <div class="fw-bold text-truncate me-2" style="max-width: 200px;" title="${track.name}">${track.name}</div>
+                        <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
+                            <div class="d-flex align-items-center" title="Volume">
+                                <span class="small me-1">Vol</span>
+                                <input type="range" class="form-range mx-1 track-vol" style="width: 80px;" min="0" max="100">
+                            </div>
+
+                            <div class="form-check form-switch pt-1" title="Loop">
+                                 <input class="form-check-input track-loop" type="checkbox">
+                                 <label class="form-check-label small">Loop</label>
+                            </div>
+
+                            <button class="btn btn-sm btn-outline-warning track-pause" style="width: 40px;" title="Pause/Resume">
+                                ⏸
+                            </button>
+
+                            <button class="btn btn-sm btn-outline-danger track-remove" title="Stop">
+                                ❌
+                            </button>
+                        </div>
+                    `;
+                    nowPlayingContainer.appendChild(el);
+
+                    // Initial Listeners
+                    el.querySelector('.track-vol').onchange = (e) => updateTrackVolume(track.id, e.target.value);
+                    el.querySelector('.track-loop').onchange = (e) => updateTrackLoop(track.id, e.target.checked);
+                    el.querySelector('.track-remove').onclick = () => removeTrack(track.id);
+                }
+
+                // Update UI state
+                const volInput = el.querySelector('.track-vol');
+                if (document.activeElement !== volInput) {
+                    volInput.value = track.volume;
+                }
+
+                const loopInput = el.querySelector('.track-loop');
+                loopInput.checked = track.loop;
+
+                const pauseBtn = el.querySelector('.track-pause');
+                pauseBtn.innerText = track.paused ? '▶' : '⏸';
+                pauseBtn.onclick = () => updateTrackPause(track.id, !track.paused);
+                pauseBtn.className = track.paused ? 'btn btn-sm btn-outline-success track-pause' : 'btn btn-sm btn-outline-warning track-pause';
+            });
+        }
+
+
+        // --- Render Files ---
         if (filesContainer.childElementCount === 0) {
              filesContainer.innerHTML = '';
 
-             // Helper to create file button
             const createButton = (file) => {
                 const btn = document.createElement('button');
                 btn.className = 'btn btn-outline-primary m-1';
-                // btn.innerHTML = `<i class="bi bi-play-fill"></i> ${file.name}`;
                 btn.innerText = `▶ ${file.name}`;
                 btn.onclick = () => playSound(file.path);
                 return btn;
             };
 
-            // Render Root
             if (currentData.files.Root) {
                 const rootCard = document.createElement('div');
                 rootCard.className = 'card mb-3';
@@ -178,7 +255,6 @@
                 currentData.files.Root.forEach(f => rootBody.appendChild(createButton(f)));
             }
 
-            // Render Folders
             Object.keys(currentData.files).forEach(key => {
                 if (key === 'Root') return;
 
@@ -191,78 +267,38 @@
             });
 
             if (Object.keys(currentData.files).length === 0) {
-                 filesContainer.innerHTML = '<div class="alert alert-secondary">No sound files found in <code>soundboard/</code> folder.</div>';
+                 filesContainer.innerHTML = '<div class="alert alert-secondary">No sound files found.</div>';
             }
         }
     }
 
-    // Events
+    // --- Actions ---
+
     document.getElementById('guildSelect').onchange = (e) => {
         selectedGuildId = e.target.value;
-        // Reset files container to force re-render (though files are global, maybe not needed?
-        // Files are same for all guilds, so we don't need to re-render files.)
-
-        // Reset volume slider to server value immediately
         if (currentData && currentData.status[selectedGuildId]) {
              const vol = currentData.status[selectedGuildId].volume;
              document.getElementById('volumeRange').value = vol;
              document.getElementById('volumeValue').textContent = vol + '%';
         }
-        render(); // Re-render to update channels
+        render();
     };
 
     document.getElementById('joinBtn').onclick = async () => {
         if (!selectedGuildId) return;
         const channelId = document.getElementById('channelSelect').value;
-        if (!channelId) {
-            showError("Please select a voice channel!");
-            return;
-        }
-
-        const res = await fetch('/api/soundboard/join', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                guild_id: selectedGuildId,
-                channel_id: channelId
-            })
-        });
-        const data = await res.json();
-        if (data.status === 'error') {
-            showError(data.message);
-        } else {
-             await fetchData();
-        }
+        if (!channelId) { showError("Please select a voice channel!"); return; }
+        await apiCall('/api/soundboard/join', { guild_id: selectedGuildId, channel_id: channelId });
     };
 
     document.getElementById('leaveBtn').onclick = async () => {
         if (!selectedGuildId) return;
-        const res = await fetch('/api/soundboard/leave', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({guild_id: selectedGuildId})
-        });
-        const data = await res.json();
-        if (data.status === 'error') {
-            showError(data.message);
-        } else {
-             await fetchData();
-        }
+        await apiCall('/api/soundboard/leave', { guild_id: selectedGuildId });
     };
 
     document.getElementById('stopBtn').onclick = async () => {
         if (!selectedGuildId) return;
-        const res = await fetch('/api/soundboard/stop', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({guild_id: selectedGuildId})
-        });
-        const data = await res.json();
-        if (data.status === 'error') {
-            showError(data.message);
-        } else {
-             await fetchData();
-        }
+        await apiCall('/api/soundboard/stop', { guild_id: selectedGuildId });
     };
 
     document.getElementById('volumeRange').oninput = (e) => {
@@ -271,45 +307,60 @@
 
     document.getElementById('volumeRange').onchange = async (e) => {
         if (!selectedGuildId) return;
-        await fetch('/api/soundboard/volume', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({guild_id: selectedGuildId, volume: parseInt(e.target.value)})
-        });
+        await apiCall('/api/soundboard/volume', { guild_id: selectedGuildId, volume: parseInt(e.target.value) });
     };
 
     async function playSound(filePath) {
         if (!selectedGuildId) return;
         const channelId = document.getElementById('channelSelect').value;
-        if (!channelId) {
-            showError("Please select a voice channel!");
-            return;
-        }
+        if (!channelId) { showError("Please select a voice channel!"); return; }
+        await apiCall('/api/soundboard/play', {
+             guild_id: selectedGuildId,
+             channel_id: channelId,
+             file_path: filePath
+        });
+    }
 
+    // Track Actions
+    async function updateTrackVolume(trackId, vol) {
+        if (!selectedGuildId) return;
+        await apiCall('/api/soundboard/track/volume', { guild_id: selectedGuildId, track_id: trackId, volume: parseInt(vol) });
+    }
+
+    async function updateTrackLoop(trackId, loop) {
+        if (!selectedGuildId) return;
+        await apiCall('/api/soundboard/track/loop', { guild_id: selectedGuildId, track_id: trackId, loop: loop });
+    }
+
+    async function updateTrackPause(trackId, paused) {
+        if (!selectedGuildId) return;
+        await apiCall('/api/soundboard/track/pause', { guild_id: selectedGuildId, track_id: trackId, paused: paused });
+    }
+
+    async function removeTrack(trackId) {
+        if (!selectedGuildId) return;
+        await apiCall('/api/soundboard/track/remove', { guild_id: selectedGuildId, track_id: trackId });
+    }
+
+    async function apiCall(url, body) {
         try {
-            const res = await fetch('/api/soundboard/play', {
+            const res = await fetch(url, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    guild_id: selectedGuildId,
-                    channel_id: channelId,
-                    file_path: filePath
-                })
+                body: JSON.stringify(body)
             });
             const data = await res.json();
             if (data.status === 'error') {
                 showError(data.message);
             } else {
-                await fetchData();
+                fetchData();
             }
         } catch (e) {
-            showError("Failed to play sound: " + e);
+            showError("API Error: " + e);
         }
     }
 
-    // Initial load
     fetchData();
-    // Refresh every 3 seconds to keep status updated
     setInterval(fetchData, 3000);
 
 </script>
