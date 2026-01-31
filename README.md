@@ -12,6 +12,7 @@
 *   **Session Management:** Tools to start, track, and log game sessions.
 *   **Utility & Admin:** YouTube feed integration, auto-rooms, RSS feeds, and server administration tools.
 *   **Web Dashboard:** An optional web interface for easier management of data files and characters.
+*   **Soundboard:** Admin-controlled soundboard to play audio clips in voice channels.
 
 ## Installation
 
@@ -19,6 +20,9 @@
 
 *   **Python 3.8** or higher: [Download Python](https://www.python.org/downloads/)
 *   **Git**: [Download Git](https://git-scm.com/downloads)
+*   **FFmpeg**: Required for audio playback.
+    *   **Windows**: [Download FFmpeg](https://ffmpeg.org/download.html). Extract the archive and add the `bin` folder to your System PATH environment variable.
+    *   **Linux**: Install via your package manager (e.g., `sudo apt install ffmpeg`).
 
 ### 1. Installation on Linux
 
@@ -197,9 +201,9 @@ The bot prioritizes configuration in the following order:
 }
 ```
 
-## Web Dashboard
+## Web Dashboard & Soundboard
 
-The bot includes a web dashboard to help manage character data and edit configuration files easily.
+The bot includes a web dashboard to help manage character data, edit configuration files, and control the soundboard.
 
 ### Setup
 1.  Open your `data/settings.json` file.
@@ -223,6 +227,7 @@ The bot includes a web dashboard to help manage character data and edit configur
 ### Features
 *   **Character Viewer:** View details of active and retired investigators.
 *   **File Editor:** Browse and edit JSON files in the `data` and `infodata` directories directly from the browser (Admin only).
+*   **Soundboard:** Organize audio files in the `soundboard/` directory (supports 2-level structure) and play them in Discord voice channels via the dashboard.
 
 ## Usage
 
