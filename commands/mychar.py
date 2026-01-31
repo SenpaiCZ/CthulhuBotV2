@@ -57,6 +57,7 @@ class mychar(commands.Cog):
       if page == 1:  
         for i in player_stats[server_id][user_id]:
           stat_value = player_stats[server_id][user_id][i]
+          if isinstance(stat_value, dict): continue
           limiter = limiter + 1
           description = ""
           if i == "NAME":
@@ -154,6 +155,7 @@ class mychar(commands.Cog):
             embed.add_field(name=f"{i}{get_stat_emoji(i)}", value=f"{stat_value}\n {description}", inline=True)
       if page == 2:
         for i in player_stats[server_id][user_id]:
+          if isinstance(player_stats[server_id][user_id][i], dict): continue
           limiter = limiter + 1
           if i == "NAME":
             pass
@@ -167,6 +169,7 @@ class mychar(commands.Cog):
               embed.add_field(name=f"{i}{get_stat_emoji(i)}", value=f"**{stat_value}**/{stat_value//2}/{stat_value//5}\n{description}", inline=True)
       if page == 3:
         for i in player_stats[server_id][user_id]:
+          if isinstance(player_stats[server_id][user_id][i], dict): continue
           limiter = limiter + 1
           if i == "NAME":
             pass

@@ -85,7 +85,6 @@ class newinvestigator(commands.Cog):
             "Move": 0, "Build": 0, "Damage Bonus": 0,
             "Age": 0,
             "Credit Rating": 0,
-            "Skills": {}
         }
 
         # Populate default skills (Hardcoded to match original behavior)
