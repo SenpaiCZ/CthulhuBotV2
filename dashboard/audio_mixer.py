@@ -10,11 +10,15 @@ SAMPLE_WIDTH = 2 # 16-bit
 CHUNK_SIZE = 3840 # 20ms of audio: 48000 * 0.02 * 2 * 2
 
 class Track:
-    def __init__(self, file_path, volume=0.5, loop=False):
+    def __init__(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None):
         self.id = str(uuid.uuid4())
         self.file_path = file_path
         self.volume = volume
         self.loop = loop
+        self.is_url = is_url
+        self.metadata = metadata or {}
+        self.before_options = before_options
+        self.options = options
         self.paused = False
         self.finished = False
         self.source = self._create_source()
@@ -22,9 +26,14 @@ class Track:
     def _create_source(self):
         # We use FFmpegPCMAudio.
         # Note: We rely on the caller (bot) having ffmpeg installed.
-        if not os.path.exists(self.file_path):
+        if not self.is_url and not os.path.exists(self.file_path):
             raise FileNotFoundError(f"File not found: {self.file_path}")
-        return discord.FFmpegPCMAudio(self.file_path)
+
+        return discord.FFmpegPCMAudio(
+            self.file_path,
+            before_options=self.before_options,
+            options=self.options
+        )
 
     def read(self):
         if self.paused:
@@ -74,8 +83,8 @@ class MixingAudioSource(discord.AudioSource):
         self.tracks = []
         self._finished = False
 
-    def add_track(self, file_path, volume=0.5, loop=False):
-        track = Track(file_path, volume, loop)
+    def add_track(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None):
+        track = Track(file_path, volume, loop, is_url, metadata, before_options, options)
         self.tracks.append(track)
         return track
 
