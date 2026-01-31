@@ -34,8 +34,13 @@ async def load():
     # all files ending with .py
     if filename.endswith('.py') and not filename.startswith('_'):
       # load as extensions
-      await bot.load_extension(f"commands.{filename[:-3]}")
-      print(f"{filename[:-3]} is now LOADED! Yeah Baby!")
+      try:
+        await bot.load_extension(f"commands.{filename[:-3]}")
+        print(f"{filename[:-3]} is now LOADED! Yeah Baby!")
+      except commands.errors.NoEntryPointError:
+        print(f"Warning: {filename} has no 'setup' function. Skipping.")
+      except Exception as e:
+        print(f"Failed to load extension {filename}: {e}")
 
 async def main():
   async with bot:
