@@ -193,6 +193,28 @@ class Music(commands.Cog):
         else:
             await ctx.send("Nothing is playing.")
 
+    @commands.command(aliases=['leave', 'disconnect', 'dc'])
+    async def stop(self, ctx):
+        """Stops music, clears queue, and disconnects."""
+        guild_id = str(ctx.guild.id)
+
+        # Clear queue and current track
+        if guild_id in self.queue:
+            del self.queue[guild_id]
+        if guild_id in self.current_track:
+            del self.current_track[guild_id]
+
+        # Disconnect from voice
+        if ctx.voice_client:
+            await ctx.voice_client.disconnect()
+
+        # Cleanup mixer
+        if guild_id in guild_mixers:
+            mixer = guild_mixers.pop(guild_id)
+            mixer.cleanup()
+
+        await ctx.send("🛑 Stopped playing, cleared queue, and disconnected.")
+
     @commands.command(aliases=['vol'])
     async def volume(self, ctx, vol: int):
         """Sets the volume of the current song (0-100)."""
