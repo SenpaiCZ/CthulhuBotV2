@@ -71,7 +71,7 @@ class newroll(commands.Cog):
         # If not Success and not Fumble, it is Fail
         return "Fail :x:", 1
 
-    @commands.command(aliases=["roll", "diceroll", "d", "nd", "s"], guild_only=True)
+    @commands.command(aliases=["roll", "diceroll", "d", "nd"], guild_only=True)
     async def newroll(self, ctx, *, dice_expression):
         server_prefixes = await load_server_stats()
         server_id = str(ctx.guild.id)
