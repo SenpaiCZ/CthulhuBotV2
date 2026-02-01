@@ -2,6 +2,7 @@ import discord
 import audioop
 import uuid
 import os
+import threading
 
 # Constants for Discord Audio
 SAMPLE_RATE = 48000
@@ -42,15 +43,26 @@ class Track:
         if self.finished:
             return b''
 
-        data = self.source.read()
+        try:
+            data = self.source.read()
+        except Exception as e:
+            # Source might be cleaned up or closed
+            print(f"Error reading from source: {e}")
+            self.finished = True
+            return b''
 
         if not data:
             if self.loop:
                 # Restart the source
-                self.source.cleanup()
-                self.source = self._create_source()
-                data = self.source.read()
-                if not data: # Still empty? File might be empty/broken
+                try:
+                    self.source.cleanup()
+                    self.source = self._create_source()
+                    data = self.source.read()
+                    if not data: # Still empty? File might be empty/broken
+                        self.finished = True
+                        return b''
+                except Exception as e:
+                    print(f"Error restarting loop: {e}")
                     self.finished = True
                     return b''
             else:
@@ -82,62 +94,71 @@ class MixingAudioSource(discord.AudioSource):
     def __init__(self):
         self.tracks = []
         self._finished = False
+        self.lock = threading.Lock()
 
     def add_track(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None):
         track = Track(file_path, volume, loop, is_url, metadata, before_options, options)
-        self.tracks.append(track)
+        with self.lock:
+            self.tracks.append(track)
         return track
 
     def remove_track(self, track_id):
-        track_to_remove = next((t for t in self.tracks if t.id == track_id), None)
-        if track_to_remove:
-            track_to_remove.cleanup()
-            self.tracks.remove(track_to_remove)
-            return True
-        return False
+        with self.lock:
+            track_to_remove = next((t for t in self.tracks if t.id == track_id), None)
+            if track_to_remove:
+                track_to_remove.cleanup()
+                # Double check existence just in case, though lock should guarantee it
+                if track_to_remove in self.tracks:
+                    self.tracks.remove(track_to_remove)
+                return True
+            return False
 
     def get_track(self, track_id):
-        return next((t for t in self.tracks if t.id == track_id), None)
+        with self.lock:
+            return next((t for t in self.tracks if t.id == track_id), None)
 
     def read(self):
         # Start with silence
         mixed = bytearray(b'\x00' * CHUNK_SIZE)
 
-        # We need to iterate over a copy because tracks might finish and be removed (optional)
-        # For now, we just mark them finished.
+        with self.lock:
+            # We need to iterate over a copy because tracks might finish and be removed (optional)
+            # For now, we just mark them finished.
 
-        # Actually, let's filter out finished non-looping tracks first?
-        # Or just read and cleanup later.
+            # Actually, let's filter out finished non-looping tracks first?
+            # Or just read and cleanup later.
 
-        active_tracks = [t for t in self.tracks if not t.finished]
+            active_tracks = [t for t in self.tracks if not t.finished]
 
-        if not active_tracks:
-            # If no tracks playing, we return silence to keep the connection open?
-            # Or we return b'' to stop?
-            # If we return b'', Discord disconnects or stops playing.
-            # But we want the mixer to stay alive so we can add sounds later.
-            # So return silence.
-            return bytes(mixed)
+            if not active_tracks:
+                # If no tracks playing, we return silence to keep the connection open?
+                # Or we return b'' to stop?
+                # If we return b'', Discord disconnects or stops playing.
+                # But we want the mixer to stay alive so we can add sounds later.
+                # So return silence.
+                return bytes(mixed)
 
-        for track in active_tracks:
-            data = track.read()
-            if data:
-                # audioop.add returns bytes, we want to sum into our mixed accumulator
-                # But audioop.add takes two fragments.
-                # mixed = audioop.add(mixed, data, SAMPLE_WIDTH)
-                # Note: audioop.add handles wrapping.
-                # To minimize clipping, users should manage volume.
-                mixed = audioop.add(mixed, data, SAMPLE_WIDTH)
+            for track in active_tracks:
+                data = track.read()
+                if data:
+                    # audioop.add returns bytes, we want to sum into our mixed accumulator
+                    # But audioop.add takes two fragments.
+                    # mixed = audioop.add(mixed, data, SAMPLE_WIDTH)
+                    # Note: audioop.add handles wrapping.
+                    # To minimize clipping, users should manage volume.
+                    mixed = audioop.add(mixed, data, SAMPLE_WIDTH)
 
-        # Clean up finished tracks
-        for track in self.tracks[:]:
-            if track.finished:
-                track.cleanup()
-                self.tracks.remove(track)
+            # Clean up finished tracks
+            for track in self.tracks[:]:
+                if track.finished:
+                    track.cleanup()
+                    if track in self.tracks:
+                        self.tracks.remove(track)
 
         return bytes(mixed)
 
     def cleanup(self):
-        for track in self.tracks:
-            track.cleanup()
-        self.tracks.clear()
+        with self.lock:
+            for track in self.tracks:
+                track.cleanup()
+            self.tracks.clear()
