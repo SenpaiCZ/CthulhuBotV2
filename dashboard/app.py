@@ -6,7 +6,7 @@ from quart import Quart, render_template, request, redirect, url_for, session, j
 from loadnsave import (
     load_player_stats, load_retired_characters_data, load_settings, save_settings,
     load_soundboard_settings, save_soundboard_settings, load_music_blacklist, save_music_blacklist,
-    load_server_stats, save_server_stats,
+    load_server_stats, save_server_stats, load_karma_settings, save_karma_settings,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -247,6 +247,68 @@ async def save_prefix():
     server_stats = await load_server_stats()
     server_stats[str(guild_id)] = prefix
     await save_server_stats(server_stats)
+
+    return jsonify({"status": "success"})
+
+# --- Karma Routes ---
+
+@app.route('/admin/karma')
+async def admin_karma():
+    if not is_admin(): return redirect(url_for('login'))
+
+    if not app.bot:
+        return "Bot not initialized", 500
+
+    karma_settings = await load_karma_settings()
+    guilds_data = []
+
+    for guild in app.bot.guilds:
+        channels = []
+        for channel in guild.text_channels:
+             channels.append({"id": str(channel.id), "name": channel.name})
+
+        guild_id_str = str(guild.id)
+        current_settings = karma_settings.get(guild_id_str, {})
+
+        guilds_data.append({
+            "id": guild_id_str,
+            "name": guild.name,
+            "channels": channels,
+            "settings": current_settings
+        })
+
+    return await render_template('karma_settings.html', guilds=guilds_data)
+
+@app.route('/api/karma/save', methods=['POST'])
+async def save_karma():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    channel_id = data.get('channel_id')
+    upvote_emoji = data.get('upvote_emoji')
+    downvote_emoji = data.get('downvote_emoji')
+
+    if not guild_id:
+        return jsonify({"status": "error", "message": "Missing guild_id"}), 400
+
+    karma_settings = await load_karma_settings()
+
+    # If all fields are empty/null, maybe we should clear the settings?
+    # But for now, let's assume if they send data, they want to set it.
+    # If channel_id is "none" or empty, we could disable it.
+
+    if not channel_id or channel_id == "none":
+        if str(guild_id) in karma_settings:
+            del karma_settings[str(guild_id)]
+    else:
+        karma_settings[str(guild_id)] = {
+            "channel_id": int(channel_id),
+            "upvote_emoji": upvote_emoji if upvote_emoji else "👌",
+            "downvote_emoji": downvote_emoji if downvote_emoji else "🤏"
+        }
+
+    await save_karma_settings(karma_settings)
 
     return jsonify({"status": "success"})
 

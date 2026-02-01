@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Karma Settings{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Karma Settings</h2>
+<p class="text-muted">Configure the reaction channel and emojis for the Karma system.</p>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Server</th>
+                        <th style="width: 30%;">Karma Channel</th>
+                        <th style="width: 15%;">Upvote Emoji</th>
+                        <th style="width: 15%;">Downvote Emoji</th>
+                        <th style="width: 20%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for guild in guilds %}
+                    <tr>
+                        <td>
+                            <strong>{{ guild.name }}</strong><br>
+                            <small class="text-muted">{{ guild.id }}</small>
+                        </td>
+                        <td>
+                            <select class="form-select" id="channel-{{ guild.id }}">
+                                <option value="none">Disabled</option>
+                                {% for channel in guild.channels %}
+                                <option value="{{ channel.id }}" {% if guild.settings.get('channel_id')|string == channel.id %}selected{% endif %}>
+                                    #{{ channel.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control" id="upvote-{{ guild.id }}"
+                                   value="{{ guild.settings.get('upvote_emoji', '👌') }}" placeholder="👌">
+                        </td>
+                        <td>
+                            <input type="text" class="form-control" id="downvote-{{ guild.id }}"
+                                   value="{{ guild.settings.get('downvote_emoji', '🤏') }}" placeholder="🤏">
+                        </td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="saveKarma('{{ guild.id }}')">
+                                <i class="bi bi-save"></i> Save
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+async function saveKarma(guildId) {
+    const channelId = document.getElementById(`channel-${guildId}`).value;
+    const upvoteEmoji = document.getElementById(`upvote-${guildId}`).value;
+    const downvoteEmoji = document.getElementById(`downvote-${guildId}`).value;
+
+    if (!upvoteEmoji || !downvoteEmoji) {
+        alert("Please specify both emojis.");
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/karma/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                guild_id: guildId,
+                channel_id: channelId,
+                upvote_emoji: upvoteEmoji,
+                downvote_emoji: downvoteEmoji
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            alert("Karma settings updated successfully!");
+        } else {
+            alert("Error: " + data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert("An error occurred while saving karma settings.");
+    }
+}
+</script>
+{% endblock %}

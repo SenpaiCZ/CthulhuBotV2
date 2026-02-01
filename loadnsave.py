@@ -225,3 +225,16 @@ async def load_gamemode_stats():
 
 async def save_gamemode_stats(server_stats):
     await _save_json_file(DATA_FOLDER, 'gamemode.json', server_stats)
+
+# --- Karma System ---
+async def load_karma_settings():
+    return await _load_json_file(DATA_FOLDER, 'karma_settings.json')
+
+async def save_karma_settings(settings):
+    await _save_json_file(DATA_FOLDER, 'karma_settings.json', settings)
+
+async def load_karma_stats():
+    return await _load_json_file(DATA_FOLDER, 'karma_stats.json')
+
+async def save_karma_stats(stats):
+    await _save_json_file(DATA_FOLDER, 'karma_stats.json', stats)
