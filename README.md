@@ -201,6 +201,16 @@ The bot prioritizes configuration in the following order:
 }
 ```
 
+### YouTube Cookies Support
+
+To support age-restricted content or avoid rate limits, you can provide a cookies file for `yt-dlp`.
+
+1.  **Create Directory:** Create a folder named `cookies` in the root directory.
+2.  **Get Cookies:** Use a browser extension (like "Get cookies.txt LOCALLY") to export your YouTube cookies.
+3.  **Save File:** Save the exported cookies as `cookies.txt` inside the `cookies` folder.
+    *   Path: `cookies/cookies.txt`
+4.  **Restart:** Restart the bot if it's already running.
+
 ## Web Dashboard & Soundboard
 
 The bot includes a web dashboard to help manage character data, edit configuration files, and control the soundboard.
