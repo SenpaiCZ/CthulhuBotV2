@@ -238,21 +238,59 @@
         if (filesContainer.childElementCount === 0) {
              filesContainer.innerHTML = '';
 
-            const createButton = (file) => {
-                const btn = document.createElement('button');
-                btn.className = 'btn btn-outline-primary m-1';
-                btn.innerText = `▶ ${file.name}`;
-                btn.onclick = () => playSound(file.path);
-                return btn;
+            const createTable = (files) => {
+                const table = document.createElement('table');
+                table.className = 'table table-hover table-sm align-middle mb-0';
+
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr>
+                        <th style="width: 60%">File Name</th>
+                        <th style="width: 20%" class="text-center">Loop</th>
+                        <th style="width: 20%" class="text-center">Play Once</th>
+                    </tr>
+                `;
+                table.appendChild(thead);
+
+                const tbody = document.createElement('tbody');
+                files.forEach(file => {
+                    const tr = document.createElement('tr');
+                    // Escape single quotes for the onclick handler
+                    const safePath = file.path.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+                    const nameTd = document.createElement('td');
+                    nameTd.textContent = file.name;
+                    tr.appendChild(nameTd);
+
+                    const loopTd = document.createElement('td');
+                    loopTd.className = "text-center";
+                    loopTd.innerHTML = `
+                            <button class="btn btn-outline-primary btn-sm" onclick="playSound('${safePath}', true)">
+                                🔁
+                            </button>`;
+                    tr.appendChild(loopTd);
+
+                    const onceTd = document.createElement('td');
+                    onceTd.className = "text-center";
+                    onceTd.innerHTML = `
+                            <button class="btn btn-outline-secondary btn-sm" onclick="playSound('${safePath}', false)">
+                                ▶
+                            </button>`;
+                    tr.appendChild(onceTd);
+
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                return table;
             };
 
             if (currentData.files.Root) {
                 const rootCard = document.createElement('div');
                 rootCard.className = 'card mb-3';
-                rootCard.innerHTML = '<div class="card-header">Uncategorized</div><div class="card-body" id="root-files"></div>';
+                rootCard.innerHTML = '<div class="card-header">Uncategorized</div><div class="card-body p-0" id="root-files"></div>';
                 filesContainer.appendChild(rootCard);
                 const rootBody = rootCard.querySelector('#root-files');
-                currentData.files.Root.forEach(f => rootBody.appendChild(createButton(f)));
+                rootBody.appendChild(createTable(currentData.files.Root));
             }
 
             Object.keys(currentData.files).forEach((key, index) => {
@@ -274,7 +312,7 @@
                         <input type="color" class="form-control form-control-color form-control-sm" value="${folderColor || '#f8f9fa'}" title="Choose folder color">
                     </div>
                     <div id="${safeKey}" class="collapse">
-                        <div class="card-body" id="body-${safeKey}"></div>
+                        <div class="card-body p-0" id="body-${safeKey}"></div>
                     </div>
                 `;
                 filesContainer.appendChild(card);
@@ -290,7 +328,7 @@
                 colorInput.onclick = (e) => e.stopPropagation();
 
                 const body = card.querySelector(`#body-${safeKey}`);
-                currentData.files[key].forEach(f => body.appendChild(createButton(f)));
+                body.appendChild(createTable(currentData.files[key]));
             });
 
             if (Object.keys(currentData.files).length === 0) {
@@ -341,14 +379,15 @@
         await apiCall('/api/soundboard/volume', { guild_id: selectedGuildId, volume: parseInt(e.target.value) });
     };
 
-    async function playSound(filePath) {
+    async function playSound(filePath, loop) {
         if (!selectedGuildId) return;
         const channelId = document.getElementById('channelSelect').value;
         if (!channelId) { showError("Please select a voice channel!"); return; }
         await apiCall('/api/soundboard/play', {
              guild_id: selectedGuildId,
              channel_id: channelId,
-             file_path: filePath
+             file_path: filePath,
+             loop: loop
         });
     }
 

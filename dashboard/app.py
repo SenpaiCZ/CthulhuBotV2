@@ -381,8 +381,9 @@ async def soundboard_play():
         source = discord.PCMVolumeTransformer(mixer, volume=master_vol)
         voice_client.play(source)
 
-    # Add track (default loop=True as per request)
-    mixer.add_track(full_path, volume=0.5, loop=True)
+    # Add track
+    loop_setting = data.get('loop', True)
+    mixer.add_track(full_path, volume=0.5, loop=loop_setting)
 
     return jsonify({"status": "success"})
 
