@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 import asyncio
+import os
 import yt_dlp
 from functools import partial
 from dashboard.app import guild_mixers, guild_volumes
@@ -132,7 +133,12 @@ class Music(commands.Cog):
                 return
 
         async with ctx.typing():
-            with yt_dlp.YoutubeDL(YTDL_OPTIONS) as ydl:
+            # Check for cookies file
+            opts = YTDL_OPTIONS.copy()
+            if os.path.isfile('cookies/cookies.txt'):
+                opts['cookiefile'] = 'cookies/cookies.txt'
+
+            with yt_dlp.YoutubeDL(opts) as ydl:
                 try:
                     # Run blocking call in executor
                     info = await self.bot.loop.run_in_executor(
