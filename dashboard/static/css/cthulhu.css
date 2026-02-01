@@ -1,0 +1,100 @@
+:root, [data-bs-theme="dark"] {
+    /* Cthulhu Color Palette */
+    --cthulhu-green-dark: #1b4d3e;
+    --cthulhu-green-main: #2E8B57; /* SeaGreen */
+    --cthulhu-green-bright: #00ff7f; /* SpringGreen */
+    --cthulhu-bg-dark: #0a0a0a;
+    --cthulhu-bg-card: #151515;
+
+    /* Bootstrap Overrides */
+    --bs-primary: var(--cthulhu-green-main);
+    --bs-primary-rgb: 46, 139, 87;
+
+    --bs-body-bg: var(--cthulhu-bg-dark);
+    --bs-body-color: #e0e0e0;
+
+    --bs-link-color: #66cdaa; /* MediumAquamarine */
+    --bs-link-hover-color: var(--cthulhu-green-bright);
+
+    --bs-border-color: #333;
+    --bs-border-color-translucent: rgba(255, 255, 255, 0.15);
+}
+
+/* Navbar Customization */
+.navbar-dark.bg-dark {
+    background-color: #050505 !important; /* Even darker for navbar */
+    border-bottom: 1px solid var(--cthulhu-green-dark);
+}
+
+.navbar-brand {
+    color: var(--cthulhu-green-main) !important;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(46, 139, 87, 0.5);
+}
+
+.nav-link.active {
+    color: var(--cthulhu-green-bright) !important;
+}
+
+/* Card Customization */
+.card {
+    background-color: var(--cthulhu-bg-card);
+    border: 1px solid #333;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
+    background-color: #1a1a1a;
+    border-bottom: 1px solid #333;
+    color: var(--cthulhu-green-main);
+    font-weight: bold;
+}
+
+/* Primary buttons override to ensure they look good */
+.btn-primary {
+    --bs-btn-bg: var(--cthulhu-green-main);
+    --bs-btn-border-color: var(--cthulhu-green-main);
+    --bs-btn-hover-bg: #246b43;
+    --bs-btn-hover-border-color: #1f5c3a;
+    --bs-btn-active-bg: #1f5c3a;
+    --bs-btn-active-border-color: #1a4d31;
+}
+
+/* Specific component overrides for "Cthulhu" vibe */
+
+/* Soundboard specific overrides */
+.border-primary {
+    border-color: var(--cthulhu-green-dark) !important;
+}
+
+.bg-primary {
+    background-color: var(--cthulhu-green-dark) !important;
+}
+
+/* Range inputs */
+.form-range::-webkit-slider-thumb {
+    background: var(--cthulhu-green-main);
+}
+.form-range::-moz-range-thumb {
+    background: var(--cthulhu-green-main);
+}
+
+/* Table overrides */
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--bs-body-color);
+    --bs-table-border-color: #333;
+}
+
+.table-hover > tbody > tr:hover > * {
+    --bs-table-accent-bg: rgba(46, 139, 87, 0.1);
+    color: var(--cthulhu-green-bright);
+}
+
+/* Base.html existing styles moved here */
+body {
+    padding-top: 60px;
+}
+.editor-container {
+    height: 600px;
+}
