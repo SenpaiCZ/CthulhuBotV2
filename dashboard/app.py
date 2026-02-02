@@ -143,12 +143,16 @@ async def admin_dashboard():
 @app.route('/admin/settings')
 async def admin_settings():
     if not is_admin(): return redirect(url_for('login'))
-    # Direct to editing settings.json
-    return redirect(url_for('edit_file', folder_name='data', filename='settings.json'))
+    # Direct to editing config.json
+    return redirect(url_for('edit_file', folder_name='root', filename='config.json'))
 
 @app.route('/admin/browse/<folder_name>')
 async def browse_files(folder_name):
     if not is_admin(): return redirect(url_for('login'))
+
+    if folder_name == 'root':
+        files = ['config.json'] if os.path.exists('config.json') else []
+        return await render_template('file_browser.html', folder=folder_name, files=files)
 
     if folder_name == 'infodata':
         target_dir = INFODATA_FOLDER
@@ -173,6 +177,8 @@ async def edit_file(folder_name, filename):
         target_dir = INFODATA_FOLDER
     elif folder_name == 'data':
         target_dir = DATA_FOLDER
+    elif folder_name == 'root' and filename == 'config.json':
+        target_dir = '.'
     else:
         return "Invalid folder", 400
 
