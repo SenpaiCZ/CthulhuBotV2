@@ -362,10 +362,40 @@ class newinvestigator(commands.Cog):
     async def select_occupation(self, ctx, char_data, player_stats):
         occupations_data = await load_occupations_data()
 
+        # Calculate points for all occupations to provide suggestions
+        scored_occupations = []
+        for name, info in occupations_data.items():
+            pts = self.calculate_occupation_points(char_data, info)
+            if pts > 0:
+                scored_occupations.append((name, pts))
+
+        # Shuffle to randomize ties, then sort by points descending
+        random.shuffle(scored_occupations)
+        scored_occupations.sort(key=lambda x: x[1], reverse=True)
+
+        # Prepare top 5 suggestion string
+        top_5 = scored_occupations[:5]
+        suggestion_str = ""
+        if top_5:
+            suggestions = [f"{name} ({pts})" for name, pts in top_5]
+            suggestion_str = f"Best option for you is {', '.join(suggestions)}"
+
+            # Check for more with the same score as the 5th one (if 5 exist)
+            if len(top_5) == 5:
+                last_score = top_5[-1][1]
+                # Count remaining with same score
+                more_count = sum(1 for _, pts in scored_occupations[5:] if pts == last_score)
+                if more_count > 0:
+                    suggestion_str += f" and {more_count} more occupation{'s' if more_count > 1 else ''} with {last_score} points."
+            suggestion_str += "."
+
+        if suggestion_str:
+            await ctx.send(suggestion_str)
+
         while True:
             prompt = (
                 "Please select an **Occupation**.\n"
-                "Type `list` to see all options (spam warning!), or type a search term (e.g. `detective`, `soldier`).\n"
+                "Type `list` to see all options with points, or type a search term (e.g. `detective`, `soldier`).\n"
                 "Type the exact name to select."
             )
             user_input = await self.get_input(ctx, prompt)
@@ -373,11 +403,24 @@ class newinvestigator(commands.Cog):
 
             val = user_input.strip()
             if val.lower() == "list":
-                # Send list in chunks
-                keys = sorted(occupations_data.keys())
-                chunk_size = 50
-                for i in range(0, len(keys), chunk_size):
-                    chunk = keys[i:i + chunk_size]
+                # Send list in chunks with points
+                # Re-sort alphabetically for the list view or keep point order?
+                # User usually wants to find specific one, so alphabetical is better for 'list'.
+                # But knowing points is useful.
+                # Let's show: "Occupation (Points)"
+
+                # We can use the scored list but we need all of them?
+                # Scored list filtered out 0 points. We should probably show all but maybe 0 points are irrelevant?
+                # The user said "list all (with points player will have awailable)"
+
+                list_items = []
+                for name in sorted(occupations_data.keys()):
+                    pts = self.calculate_occupation_points(char_data, occupations_data[name])
+                    list_items.append(f"{name} ({pts})")
+
+                chunk_size = 30 # Reduced chunk size due to extra text
+                for i in range(0, len(list_items), chunk_size):
+                    chunk = list_items[i:i + chunk_size]
                     await ctx.send(", ".join(chunk))
             elif val in occupations_data:
                 occupation_name = val
@@ -393,45 +436,71 @@ class newinvestigator(commands.Cog):
                 else:
                     await ctx.send("No occupation found. Try again.")
 
-    async def assign_occupation_skills(self, ctx, char_data, occupation_name, info):
-        # Calculate Points
-        edu = char_data["EDU"]
-        dex = char_data["DEX"]
-        str_stat = char_data["STR"]
-        app = char_data["APP"]
-        pow_stat = char_data["POW"]
+    def calculate_occupation_points(self, char_data, info):
+        """Calculates occupation skill points based on character stats and occupation formula."""
+        edu = char_data.get("EDU", 0)
+        dex = char_data.get("DEX", 0)
+        str_stat = char_data.get("STR", 0)
+        app = char_data.get("APP", 0)
+        pow_stat = char_data.get("POW", 0)
 
         formula = info.get("skill_points", "EDU × 4")
-        points = 0
+
+        # Normalize formula
+        formula = formula.replace("x", "×").replace("X", "×").replace("*", "×").replace("–", "-")
+
+        if "Varies" in formula:
+            return 0
 
         try:
-            if "EDU × 4" in formula:
-                points = edu * 4
-            elif "EDU × 2" in formula:
-                base = edu * 2
-                extra = 0
-                if "DEX × 2" in formula and "STR × 2" in formula:
-                    extra = max(dex * 2, str_stat * 2)
-                elif "APP × 2" in formula and "POW × 2" in formula:
-                    extra = max(app * 2, pow_stat * 2)
-                elif "DEX × 2" in formula and "APP × 2" in formula: # Freelance Criminal
-                     extra = max(dex * 2, app * 2)
-                elif "DEX × 2" in formula:
-                    extra = dex * 2
-                elif "APP × 2" in formula:
-                    extra = app * 2
-                elif "STR × 2" in formula:
-                    extra = str_stat * 2
-                elif "POW × 2" in formula:
-                    extra = pow_stat * 2
-                points = base + extra
-            else:
-                # Fallback
-                points = edu * 4
-                await ctx.send(f"Could not parse formula `{formula}`. Defaulting to EDU x 4.")
+            # Simple Case
+            if formula == "EDU × 4":
+                return edu * 4
+
+            # Complex parsing
+            parts = formula.split("+")
+            total = 0
+
+            for part in parts:
+                part = part.strip()
+                if "or" in part:
+                    # (Option A or Option B)
+                    clean_part = part.replace("(", "").replace(")", "")
+                    options = clean_part.split("or")
+                    best_val = 0
+                    for opt in options:
+                        val = self.evaluate_term(opt.strip(), edu, dex, str_stat, app, pow_stat)
+                        if val > best_val:
+                            best_val = val
+                    total += best_val
+                else:
+                    total += self.evaluate_term(part, edu, dex, str_stat, app, pow_stat)
+
+            return total
         except Exception as e:
-            points = edu * 4
-            print(f"Error parsing formula: {e}")
+            print(f"Error parsing formula '{formula}': {e}")
+            return edu * 4
+
+    def evaluate_term(self, term, edu, dex, str_stat, app, pow_stat):
+        """Helper to evaluate a single term like 'EDU × 2'."""
+        try:
+            if "×" not in term: return 0
+            stat_name, mult_str = term.split("×")
+            stat_name = stat_name.strip()
+            mult = int(mult_str.strip())
+
+            if stat_name == "EDU": return edu * mult
+            if stat_name == "DEX": return dex * mult
+            if stat_name == "STR": return str_stat * mult
+            if stat_name == "APP": return app * mult
+            if stat_name == "POW": return pow_stat * mult
+        except:
+            return 0
+        return 0
+
+    async def assign_occupation_skills(self, ctx, char_data, occupation_name, info):
+        # Calculate Points
+        points = self.calculate_occupation_points(char_data, info)
 
         # Credit Rating
         cr_range = info.get("credit_rating", "0-99")
@@ -450,6 +519,35 @@ class newinvestigator(commands.Cog):
             f"**Credit Rating Range**: {min_cr} - {max_cr}\n"
             f"**Suggested Skills**: {info.get('skills', 'None')}"
         )
+
+        # Force Minimum Credit Rating
+        if min_cr > 0:
+            char_data["Credit Rating"] = min_cr
+            points -= min_cr
+            await ctx.send(f"**Minimum Credit Rating** of {min_cr} has been automatically assigned. {min_cr} points deducted.")
+
+        # Show all skills and default values
+        excluded_keys = [
+            "NAME", "STR", "DEX", "CON", "INT", "POW", "EDU", "SIZ", "APP",
+            "SAN", "HP", "MP", "LUCK", "Move", "Build", "Damage Bonus", "Age",
+            "Backstory"
+        ]
+
+        skills_output = []
+        for k in sorted(char_data.keys()):
+            if k not in excluded_keys and isinstance(char_data[k], int):
+                skills_output.append(f"{k}: {char_data[k]}")
+
+        # Send in chunks to avoid hitting character limits
+        chunk_str = ""
+        await ctx.send("**Current Skill Values (Defaults):**")
+        for s in skills_output:
+            if len(chunk_str) + len(s) > 1800:
+                await ctx.send(chunk_str)
+                chunk_str = ""
+            chunk_str += s + ", "
+        if chunk_str:
+            await ctx.send(chunk_str.strip(", "))
 
         # Skill Assignment Loop
         await self.skill_assignment_loop(ctx, char_data, points, min_cr, max_cr, is_occupation=True)
@@ -520,10 +618,26 @@ class newinvestigator(commands.Cog):
                         continue
 
                     current_val = char_data.get(skill_key, 0)
-                    if current_val + val > 99: # Cap check
-                        await ctx.send("Warning: Skill values over 90 are rare for starting characters.")
+                    new_val = current_val + val
 
-                    char_data[skill_key] = current_val + val
+                    if new_val > 90:
+                        warn_msg = await ctx.send(f"⚠️ **Warning**: Setting **{skill_key}** to **{new_val}** (over 90). This is rare for starting characters.\nAre you sure? React with ✅ to confirm or ❌ to cancel.")
+                        await warn_msg.add_reaction("✅")
+                        await warn_msg.add_reaction("❌")
+
+                        def reaction_check(reaction, user):
+                            return user == ctx.author and str(reaction.emoji) in ["✅", "❌"] and reaction.message.id == warn_msg.id
+
+                        try:
+                            reaction, _ = await self.bot.wait_for('reaction_add', timeout=60.0, check=reaction_check)
+                            if str(reaction.emoji) == "❌":
+                                await ctx.send("Cancelled.")
+                                continue
+                        except asyncio.TimeoutError:
+                            await ctx.send("Timed out. Cancelled.")
+                            continue
+
+                    char_data[skill_key] = new_val
                     remaining -= val
                     await ctx.send(f"Added {val} to **{skill_key}**. New Value: {char_data[skill_key]}. Remaining: {remaining}")
                 else:
