@@ -3,6 +3,7 @@ import asyncio
 import random
 import math
 import emojis
+import occupation_emoji
 from discord.ext import commands
 from loadnsave import (
     load_player_stats, save_player_stats,
@@ -404,25 +405,79 @@ class newinvestigator(commands.Cog):
 
             val = user_input.strip()
             if val.lower() == "list":
-                # Send list in chunks with points
-                # Re-sort alphabetically for the list view or keep point order?
-                # User usually wants to find specific one, so alphabetical is better for 'list'.
-                # But knowing points is useful.
-                # Let's show: "Occupation (Points)"
+                # 1. Filter and Score
+                valid_occupations = []
+                for name, info in occupations_data.items():
+                    pts = self.calculate_occupation_points(char_data, info)
+                    if pts > 0:
+                        valid_occupations.append((name, pts))
 
-                # We can use the scored list but we need all of them?
-                # Scored list filtered out 0 points. We should probably show all but maybe 0 points are irrelevant?
-                # The user said "list all (with points player will have awailable)"
+                # 2. Sort by points descending
+                valid_occupations.sort(key=lambda x: x[1], reverse=True)
 
-                list_items = []
-                for name in sorted(occupations_data.keys()):
-                    pts = self.calculate_occupation_points(char_data, occupations_data[name])
-                    list_items.append(f"{name} ({pts})")
+                if not valid_occupations:
+                    await ctx.send("No occupations available with current stats.")
+                    continue
 
-                chunk_size = 30 # Reduced chunk size due to extra text
-                for i in range(0, len(list_items), chunk_size):
-                    chunk = list_items[i:i + chunk_size]
-                    await ctx.send(", ".join(chunk))
+                # 3. Pagination Setup
+                items_per_page = 15
+                total_pages = math.ceil(len(valid_occupations) / items_per_page)
+                current_page = 1
+
+                # Reaction emojis for pages (1-9 supported directly)
+                page_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
+
+                async def send_page(page_num):
+                    start_idx = (page_num - 1) * items_per_page
+                    end_idx = start_idx + items_per_page
+                    page_items = valid_occupations[start_idx:end_idx]
+
+                    description = ""
+                    for name, pts in page_items:
+                        emojis_str = occupation_emoji.get_occupation_emoji(name)
+                        description += f"{emojis_str} **{name}** ({pts})\n"
+
+                    embed = discord.Embed(
+                        title=f"Available Occupations (Page {page_num}/{total_pages})",
+                        description=description,
+                        color=discord.Color.green()
+                    )
+                    return embed
+
+                msg = await ctx.send(embed=await send_page(current_page))
+
+                # Add reactions
+                if total_pages > 1:
+                    for i in range(total_pages):
+                        if i < len(page_emojis):
+                            await msg.add_reaction(page_emojis[i])
+
+                    # Pagination Loop
+                    def check(reaction, user):
+                        return user == ctx.author and reaction.message.id == msg.id and str(reaction.emoji) in page_emojis
+
+                    while True:
+                        try:
+                            reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+
+                            selected_page_idx = page_emojis.index(str(reaction.emoji))
+                            new_page = selected_page_idx + 1
+
+                            if new_page != current_page and new_page <= total_pages:
+                                current_page = new_page
+                                await msg.edit(embed=await send_page(current_page))
+
+                            try:
+                                await msg.remove_reaction(reaction, user)
+                            except:
+                                pass
+
+                        except asyncio.TimeoutError:
+                            try:
+                                await msg.clear_reactions()
+                            except:
+                                pass
+                            break
             elif val in occupations_data:
                 occupation_name = val
                 occupation_info = occupations_data[occupation_name]
