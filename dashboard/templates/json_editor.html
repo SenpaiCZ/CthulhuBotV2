@@ -11,24 +11,228 @@
   </ol>
 </nav>
 
-<h3>Editing: {{ filename }}</h3>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Editing: {{ filename }}</h3>
+    <div>
+        <span id="typeInfo" class="text-muted me-2 small"></span>
+        <button class="btn btn-outline-info" id="toggleViewBtn" style="display: none;">
+            Switch to Visual Editor
+        </button>
+    </div>
+</div>
 
 <div class="alert alert-success d-none" id="saveMessage">Saved successfully!</div>
 <div class="alert alert-danger d-none" id="errorMessage">Error saving file.</div>
 
-<div class="mb-3">
+<!-- Raw Editor -->
+<div class="mb-3" id="rawEditorContainer">
     <textarea class="form-control" id="jsonContent" rows="20" style="font-family: monospace;">{{ content }}</textarea>
 </div>
 
-<button class="btn btn-success" id="saveBtn">Save Changes</button>
-<a href="/admin/browse/{{ folder }}" class="btn btn-secondary">Cancel</a>
+<!-- Visual Editor -->
+<div class="mb-3 d-none" id="visualEditorContainer">
+    <div class="table-responsive border rounded p-2" style="max-height: 600px; overflow-y: auto;">
+        <table class="table table-dark table-striped table-hover mb-0" id="visualTable">
+            <thead class="sticky-top bg-dark">
+                <tr id="visualTheadRow">
+                    <!-- Headers injected by JS -->
+                </tr>
+            </thead>
+            <tbody id="visualTbody">
+                <!-- Rows injected by JS -->
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-2">
+        <button class="btn btn-outline-success btn-sm" id="addRowBtn">
+            ➕ Add Row
+        </button>
+    </div>
+</div>
+
+<div class="d-flex gap-2">
+    <button class="btn btn-success" id="saveBtn">Save Changes</button>
+    <a href="/admin/browse/{{ folder }}" class="btn btn-secondary">Cancel</a>
+</div>
 
 <script>
+    // State
+    let currentMode = 'raw'; // 'raw' | 'visual'
+    let structureType = null; // 'list' | 'dict' | 'complex'
+
+    // Elements
+    const rawContainer = document.getElementById('rawEditorContainer');
+    const visualContainer = document.getElementById('visualEditorContainer');
+    const textarea = document.getElementById('jsonContent');
+    const toggleBtn = document.getElementById('toggleViewBtn');
+    const typeInfo = document.getElementById('typeInfo');
+    const tbody = document.getElementById('visualTbody');
+    const theadRow = document.getElementById('visualTheadRow');
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+        checkStructure();
+    });
+
+    toggleBtn.addEventListener('click', () => {
+        if (currentMode === 'raw') {
+            switchToVisual();
+        } else {
+            switchToRaw();
+        }
+    });
+
+    document.getElementById('addRowBtn').addEventListener('click', addRow);
+
+    function checkStructure() {
+        try {
+            const content = textarea.value;
+            const data = JSON.parse(content);
+
+            if (Array.isArray(data)) {
+                // Check if simple list of strings
+                const isSimple = data.every(item => typeof item === 'string');
+                if (isSimple) {
+                    structureType = 'list';
+                    toggleBtn.style.display = 'inline-block';
+                    typeInfo.textContent = "List detected";
+                } else {
+                    structureType = 'complex';
+                    typeInfo.textContent = "Complex List (Visual Editor Disabled)";
+                }
+            } else if (typeof data === 'object' && data !== null) {
+                // Check if simple dict of strings
+                const values = Object.values(data);
+                const isSimple = values.every(item => typeof item === 'string');
+                if (isSimple) {
+                    structureType = 'dict';
+                    toggleBtn.style.display = 'inline-block';
+                    typeInfo.textContent = "Dictionary detected";
+                } else {
+                    structureType = 'complex';
+                    typeInfo.textContent = "Complex Object (Visual Editor Disabled)";
+                }
+            } else {
+                structureType = 'complex';
+            }
+        } catch (e) {
+            // Invalid JSON, keep button hidden
+            console.error("Initial JSON parse error:", e);
+        }
+    }
+
+    function switchToVisual() {
+        try {
+            const data = JSON.parse(textarea.value);
+            renderTable(data);
+
+            rawContainer.classList.add('d-none');
+            visualContainer.classList.remove('d-none');
+            toggleBtn.textContent = "Switch to Raw Editor";
+            currentMode = 'visual';
+        } catch (e) {
+            alert("Cannot switch to Visual Editor: Invalid JSON in Raw view.");
+        }
+    }
+
+    function switchToRaw() {
+        updateRawFromVisual();
+
+        visualContainer.classList.add('d-none');
+        rawContainer.classList.remove('d-none');
+        toggleBtn.textContent = "Switch to Visual Editor";
+        currentMode = 'raw';
+    }
+
+    function renderTable(data) {
+        tbody.innerHTML = '';
+        theadRow.innerHTML = '';
+
+        if (structureType === 'list') {
+            theadRow.innerHTML = '<th style="width: 90%">Value</th><th style="width: 10%">Action</th>';
+            data.forEach(val => addRowHTML(null, val));
+        } else if (structureType === 'dict') {
+            theadRow.innerHTML = '<th style="width: 30%">Key</th><th style="width: 60%">Value</th><th style="width: 10%">Action</th>';
+            // Sort keys for better UX?
+            const keys = Object.keys(data).sort();
+            keys.forEach(key => addRowHTML(key, data[key]));
+        }
+    }
+
+    function addRowHTML(key, val) {
+        const tr = document.createElement('tr');
+
+        let html = '';
+        if (structureType === 'dict') {
+            // Escape quotes in values for the input value attribute
+            const safeKey = key ? key.replace(/"/g, '&quot;') : '';
+            const safeVal = val ? val.replace(/"/g, '&quot;') : '';
+            html += `
+                <td><input type="text" class="form-control key-input" value="${safeKey}" placeholder="Key"></td>
+                <td><input type="text" class="form-control val-input" value="${safeVal}" placeholder="Value"></td>
+            `;
+        } else {
+            const safeVal = val ? val.replace(/"/g, '&quot;') : '';
+            html += `
+                <td><input type="text" class="form-control val-input" value="${safeVal}" placeholder="Value"></td>
+            `;
+        }
+
+        html += `
+            <td class="text-center">
+                <button class="btn btn-outline-danger btn-sm delete-row" title="Delete">🗑️</button>
+            </td>
+        `;
+
+        tr.innerHTML = html;
+        tbody.appendChild(tr);
+
+        // Bind delete event
+        tr.querySelector('.delete-row').addEventListener('click', () => {
+            tr.remove();
+        });
+    }
+
+    function addRow() {
+        addRowHTML('', '');
+        // Focus the new input
+        const rows = tbody.querySelectorAll('tr');
+        const lastRow = rows[rows.length - 1];
+        const firstInput = lastRow.querySelector('input');
+        if (firstInput) firstInput.focus();
+    }
+
+    function updateRawFromVisual() {
+        if (structureType === 'list') {
+            const inputs = tbody.querySelectorAll('.val-input');
+            const arr = Array.from(inputs).map(input => input.value);
+            textarea.value = JSON.stringify(arr, null, 4);
+        } else if (structureType === 'dict') {
+            const obj = {};
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const key = row.querySelector('.key-input').value;
+                const val = row.querySelector('.val-input').value;
+                if (key) { // Ignore empty keys? Or allow empty keys? JSON allows empty strings.
+                    obj[key] = val;
+                }
+            });
+            textarea.value = JSON.stringify(obj, null, 4);
+        }
+    }
+
+    // Save Handling
     document.getElementById('saveBtn').addEventListener('click', async () => {
-        const content = document.getElementById('jsonContent').value;
         const btn = document.getElementById('saveBtn');
         const saveMsg = document.getElementById('saveMessage');
         const errorMsg = document.getElementById('errorMessage');
+
+        // Sync if in visual mode
+        if (currentMode === 'visual') {
+            updateRawFromVisual();
+        }
+
+        const content = textarea.value;
 
         btn.disabled = true;
         saveMsg.classList.add('d-none');
@@ -56,6 +260,8 @@
             const result = await response.json();
             if (response.ok) {
                 saveMsg.classList.remove('d-none');
+                // Re-check structure in case user pasted something new in Raw mode
+                checkStructure();
             } else {
                 errorMsg.textContent = "Error: " + result.message;
                 errorMsg.classList.remove('d-none');
