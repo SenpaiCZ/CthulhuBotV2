@@ -15,6 +15,7 @@
     *   **File Editor**: Edit configuration and data files directly.
     *   **Soundboard**: Upload and play audio clips in voice channels.
     *   **Music Control**: Manage the music queue and blacklist songs.
+    *   **Game Settings**: Configure gameplay rules like Luck Threshold.
     *   **Reaction Roles**: easily configure self-assignable roles.
     *   **Karma Settings**: Configure community karma tracking.
 *   📈 **Karma System**: Track user reputation with custom upvote/downvote emojis.
@@ -66,7 +67,7 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 *   `reactionrole` (alias: `rr`): 🎭 Setup a reaction role on a message (Admin).
 
 ### 🧠 Keeper Resources
-*   `changeluck`: 🍀 Modify an investigator's luck.
+*   `changeluck`: 🍀 Modify the server's maximum luck spend threshold (Default: 10).
 *   `occupationinfo`: 💼 Lookup occupation details.
 *   `skillinfo`: 📚 Lookup skill details.
 *   `createnpc`: 👤 Generate an NPC.
