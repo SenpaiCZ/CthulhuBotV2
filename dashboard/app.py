@@ -7,6 +7,7 @@ from loadnsave import (
     load_player_stats, load_retired_characters_data, load_settings, save_settings,
     load_soundboard_settings, save_soundboard_settings, load_music_blacklist, save_music_blacklist,
     load_server_stats, save_server_stats, load_karma_settings, save_karma_settings,
+    load_reaction_roles, save_reaction_roles,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -608,6 +609,137 @@ async def track_remove():
         return jsonify({"status": "success"})
     else:
         return jsonify({"status": "error", "message": "Track not found"}), 404
+
+# --- Reaction Roles Routes ---
+
+@app.route('/admin/reactionroles')
+async def admin_reaction_roles():
+    if not is_admin(): return redirect(url_for('login'))
+    return await render_template('reaction_roles.html')
+
+@app.route('/api/reactionroles/data')
+async def reaction_roles_data():
+    if not is_admin(): return "Unauthorized", 401
+
+    if not app.bot:
+        return jsonify({"guilds": [], "rules": []})
+
+    data = await load_reaction_roles()
+    rules = []
+
+    # Iterate through data to build the rules list
+    for guild_id, messages in data.items():
+        guild = app.bot.get_guild(int(guild_id))
+        guild_name = guild.name if guild else f"Unknown Guild ({guild_id})"
+
+        for message_id, emojis in messages.items():
+            for emoji_str, role_id in emojis.items():
+                role_name = "Unknown Role"
+                if guild:
+                    role = guild.get_role(int(role_id))
+                    if role:
+                        role_name = role.name
+                    else:
+                         role_name = f"Deleted Role ({role_id})"
+
+                rules.append({
+                    "guild_id": guild_id,
+                    "guild_name": guild_name,
+                    "message_id": message_id,
+                    "emoji": emoji_str,
+                    "role_id": role_id,
+                    "role_name": role_name
+                })
+
+    # Build Guilds list for the Add form
+    guilds_data = []
+    for guild in app.bot.guilds:
+        roles = []
+        for role in guild.roles:
+            if not role.is_default() and not role.managed: # Filter out @everyone and bot integration roles if possible
+                 roles.append({"id": str(role.id), "name": role.name})
+        # Sort roles by name
+        roles.sort(key=lambda x: x['name'])
+
+        guilds_data.append({
+            "id": str(guild.id),
+            "name": guild.name,
+            "roles": roles
+        })
+
+    return jsonify({
+        "guilds": guilds_data,
+        "rules": rules
+    })
+
+@app.route('/api/reactionroles/add', methods=['POST'])
+async def reaction_roles_add():
+    if not is_admin(): return "Unauthorized", 401
+
+    data_in = await request.get_json()
+    guild_id = data_in.get('guild_id')
+    message_id = data_in.get('message_id')
+    role_id = data_in.get('role_id')
+    emoji_str = data_in.get('emoji')
+
+    if not all([guild_id, message_id, role_id, emoji_str]):
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    # Load, Update, Save
+    data = await load_reaction_roles()
+
+    if guild_id not in data:
+        data[guild_id] = {}
+    if message_id not in data[guild_id]:
+        data[guild_id][message_id] = {}
+
+    data[guild_id][message_id][emoji_str] = str(role_id)
+
+    await save_reaction_roles(data)
+
+    # Optional: Try to react to the message if the bot can find it
+    # We do this asynchronously without waiting or failing the request
+    try:
+        if app.bot:
+            guild = app.bot.get_guild(int(guild_id))
+            if guild:
+                # We don't know the channel, so we can't easily fetch the message to react.
+                # We would need to search all channels or store channel_id.
+                # For now, we skip the auto-react from dashboard add, user must react themselves or ensure bot reacts.
+                pass
+    except Exception:
+        pass
+
+    return jsonify({"status": "success"})
+
+@app.route('/api/reactionroles/delete', methods=['POST'])
+async def reaction_roles_delete():
+    if not is_admin(): return "Unauthorized", 401
+
+    data_in = await request.get_json()
+    guild_id = data_in.get('guild_id')
+    message_id = data_in.get('message_id')
+    emoji_str = data_in.get('emoji')
+
+    if not all([guild_id, message_id, emoji_str]):
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    data = await load_reaction_roles()
+
+    if guild_id in data and message_id in data[guild_id]:
+        if emoji_str in data[guild_id][message_id]:
+            del data[guild_id][message_id][emoji_str]
+
+            # Cleanup empty dicts
+            if not data[guild_id][message_id]:
+                del data[guild_id][message_id]
+            if not data[guild_id]:
+                del data[guild_id]
+
+            await save_reaction_roles(data)
+            return jsonify({"status": "success"})
+
+    return jsonify({"status": "error", "message": "Rule not found"}), 404
 
 # --- Music Routes ---
 

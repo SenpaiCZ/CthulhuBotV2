@@ -238,3 +238,10 @@ async def load_karma_stats():
 
 async def save_karma_stats(stats):
     await _save_json_file(DATA_FOLDER, 'karma_stats.json', stats)
+
+# --- Reaction Roles ---
+async def load_reaction_roles():
+    return await _load_json_file(DATA_FOLDER, 'reaction_roles.json')
+
+async def save_reaction_roles(roles_data):
+    await _save_json_file(DATA_FOLDER, 'reaction_roles.json', roles_data)
