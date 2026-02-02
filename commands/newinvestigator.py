@@ -2,6 +2,7 @@ import discord
 import asyncio
 import random
 import math
+import emojis
 from discord.ext import commands
 from loadnsave import (
     load_player_stats, save_player_stats,
@@ -237,7 +238,7 @@ class newinvestigator(commands.Cog):
     async def display_stats(self, ctx, char_data):
         embed = discord.Embed(title=f"Stats for {char_data['NAME']}", color=discord.Color.green())
         stats_list = ["STR", "DEX", "CON", "APP", "POW", "SIZ", "INT", "EDU", "LUCK"]
-        desc = "\n".join([f"**{s}**: {char_data.get(s, 0)}" for s in stats_list])
+        desc = "\n".join([f"{emojis.get_stat_emoji(s)} **{s}**: {char_data.get(s, 0)}" for s in stats_list])
         embed.description = desc
         await ctx.send(embed=embed)
 
@@ -530,24 +531,25 @@ class newinvestigator(commands.Cog):
         excluded_keys = [
             "NAME", "STR", "DEX", "CON", "INT", "POW", "EDU", "SIZ", "APP",
             "SAN", "HP", "MP", "LUCK", "Move", "Build", "Damage Bonus", "Age",
-            "Backstory"
+            "Backstory", "CustomSkill", "CustomSkills", "CustomSkillss"
         ]
 
         skills_output = []
         for k in sorted(char_data.keys()):
             if k not in excluded_keys and isinstance(char_data[k], int):
-                skills_output.append(f"{k}: {char_data[k]}")
+                skills_output.append(f"{emojis.get_stat_emoji(k)} {k}: {char_data[k]}")
 
         # Send in chunks to avoid hitting character limits
         chunk_str = ""
         await ctx.send("**Current Skill Values (Defaults):**")
         for s in skills_output:
-            if len(chunk_str) + len(s) > 1800:
+            line = s + "\n"
+            if len(chunk_str) + len(line) > 1800:
                 await ctx.send(chunk_str)
                 chunk_str = ""
-            chunk_str += s + ", "
+            chunk_str += line
         if chunk_str:
-            await ctx.send(chunk_str.strip(", "))
+            await ctx.send(chunk_str.strip())
 
         # Skill Assignment Loop
         await self.skill_assignment_loop(ctx, char_data, points, min_cr, max_cr, is_occupation=True)
@@ -639,7 +641,7 @@ class newinvestigator(commands.Cog):
 
                     char_data[skill_key] = new_val
                     remaining -= val
-                    await ctx.send(f"Added {val} to **{skill_key}**. New Value: {char_data[skill_key]}. Remaining: {remaining}")
+                    await ctx.send(f"{emojis.get_stat_emoji(skill_key)} Added {val} to **{skill_key}**. New Value: {char_data[skill_key]}. Remaining: {remaining}")
                 else:
                     await ctx.send("Skill not found in character sheet.")
             else:
