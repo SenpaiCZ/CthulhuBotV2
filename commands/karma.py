@@ -27,7 +27,7 @@ class Karma(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def setupkarma(self, ctx, channel: discord.TextChannel, upvote_emoji: str, downvote_emoji: str):
         """
-        Setup the Karma system for this server.
+        ⚙️ Setup the Karma system for this server.
         Usage: !setupkarma #channel <upvote_emoji> <downvote_emoji>
         """
         settings = await load_karma_settings()
@@ -45,7 +45,7 @@ class Karma(commands.Cog):
     @commands.command(aliases=['k'])
     async def karma(self, ctx, user: discord.User = None):
         """
-        Check karma for yourself or another user.
+        🌟 Check karma for yourself or another user.
         Usage: !karma [@user]
         """
         if user is None:
@@ -62,7 +62,7 @@ class Karma(commands.Cog):
     @commands.command(aliases=['karmatop', 'top'])
     async def leaderboard(self, ctx, page: int = 1):
         """
-        Show the Karma leaderboard.
+        🏆 Show the Karma leaderboard.
         Usage: !leaderboard [page]
         """
         if page < 1:

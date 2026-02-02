@@ -31,7 +31,7 @@ class newinvestigator(commands.Cog):
     @commands.command(aliases=["newInv", "newinv"])
     async def newinvestigator(self, ctx):
         """
-        `[p]newInv` - Starts the character creation wizard.
+        🕵️‍♂️ Starts the character creation wizard.
         """
         user_id = str(ctx.author.id)
         server_id = str(ctx.guild.id)

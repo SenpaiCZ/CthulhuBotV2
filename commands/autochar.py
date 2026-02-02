@@ -10,7 +10,7 @@ class autochar(commands.Cog):
   @commands.command(aliases=["autoChar"])
   async def autochar(self, ctx):
     """
-    `[p]autoChar` - Generates random stats for your investigator. You can re-roll, dismiss or save stats.
+    🤖 Generates random stats for your investigator. You can re-roll, dismiss or save stats.
     """
     user_id = str(ctx.author.id)
     server_id = str(ctx.guild.id)

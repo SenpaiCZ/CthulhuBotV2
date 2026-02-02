@@ -124,7 +124,7 @@ class Music(commands.Cog):
 
     @commands.command(aliases=['p'])
     async def play(self, ctx, *, query: str):
-        """Plays a song from YouTube."""
+        """🎵 Plays a song from YouTube."""
         if not ctx.voice_client:
             if ctx.author.voice:
                 await ctx.author.voice.channel.connect()
@@ -183,7 +183,7 @@ class Music(commands.Cog):
 
     @commands.command(aliases=['s'])
     async def skip(self, ctx):
-        """Skips the current song."""
+        """⏭️ Skips the current song."""
         guild_id = str(ctx.guild.id)
         track = self.current_track.get(guild_id)
         if track:
@@ -195,7 +195,7 @@ class Music(commands.Cog):
 
     @commands.command(aliases=['leave', 'disconnect', 'dc'])
     async def stop(self, ctx):
-        """Stops music, clears queue, and disconnects."""
+        """🛑 Stops music, clears queue, and disconnects."""
         guild_id = str(ctx.guild.id)
 
         # Clear queue and current track
@@ -217,7 +217,7 @@ class Music(commands.Cog):
 
     @commands.command(aliases=['vol'])
     async def volume(self, ctx, vol: int):
-        """Sets the volume of the current song (0-100)."""
+        """🔊 Sets the volume of the current song (0-100)."""
         guild_id = str(ctx.guild.id)
         track = self.current_track.get(guild_id)
         if track:
@@ -229,7 +229,7 @@ class Music(commands.Cog):
 
     @commands.command()
     async def loop(self, ctx):
-        """Toggles loop for the current song."""
+        """🔁 Toggles loop for the current song."""
         guild_id = str(ctx.guild.id)
         track = self.current_track.get(guild_id)
         if track:
@@ -241,7 +241,7 @@ class Music(commands.Cog):
 
     @commands.command(aliases=['q'])
     async def queue(self, ctx):
-        """Shows the current queue."""
+        """🎼 Shows the current queue."""
         guild_id = str(ctx.guild.id)
         q = self.queue.get(guild_id, [])
         if not q and not self.current_track.get(guild_id):
@@ -266,7 +266,7 @@ class Music(commands.Cog):
 
     @commands.command(aliases=['np'])
     async def nowplaying(self, ctx):
-        """Shows the currently playing song."""
+        """💿 Shows the currently playing song."""
         guild_id = str(ctx.guild.id)
         curr = self.current_track.get(guild_id)
         if curr:

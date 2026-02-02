@@ -73,6 +73,10 @@ class newroll(commands.Cog):
 
     @commands.command(aliases=["roll", "diceroll", "d", "nd"], guild_only=True)
     async def newroll(self, ctx, *, dice_expression):
+        """
+        🎲 Perform a dice roll or skill check.
+        Interactive interface allows for Bonus/Penalty dice and Luck spending.
+        """
         server_prefixes = await load_server_stats()
         server_id = str(ctx.guild.id)
         prefix = server_prefixes.get(server_id, "!") if server_id else "!"
