@@ -81,6 +81,9 @@ class newroll(commands.Cog):
         server_id = str(ctx.guild.id)
         prefix = server_prefixes.get(server_id, "!") if server_id else "!"
 
+        luck_stats = await load_luck_stats()
+        luck_threshold = luck_stats.get(server_id, 10)
+
         # 1. Try to evaluate as dice expression (e.g. 3d6)
         try:
             result, detail = self.evaluate_dice_expression(dice_expression)
@@ -248,21 +251,21 @@ class newroll(commands.Cog):
                         if result_tier == 1: # Fail -> Regular
                             target_val = current_value
                             luck_cost_temp = roll - target_val
-                            if player_luck >= luck_cost_temp:
+                            if player_luck >= luck_cost_temp and luck_cost_temp <= luck_threshold:
                                 can_luck = True
                                 luck_target_tier = 2
                                 luck_cost = luck_cost_temp
                         elif result_tier == 2: # Regular -> Hard
                             target_val = current_value // 2
                             luck_cost_temp = roll - target_val
-                            if player_luck >= luck_cost_temp:
+                            if player_luck >= luck_cost_temp and luck_cost_temp <= luck_threshold:
                                 can_luck = True
                                 luck_target_tier = 3
                                 luck_cost = luck_cost_temp
                         elif result_tier == 3: # Hard -> Extreme
                             target_val = current_value // 5
                             luck_cost_temp = roll - target_val
-                            if player_luck >= luck_cost_temp:
+                            if player_luck >= luck_cost_temp and luck_cost_temp <= luck_threshold:
                                 can_luck = True
                                 luck_target_tier = 4
                                 luck_cost = luck_cost_temp

@@ -8,6 +8,7 @@ from loadnsave import (
     load_soundboard_settings, save_soundboard_settings, load_music_blacklist, save_music_blacklist,
     load_server_stats, save_server_stats, load_karma_settings, save_karma_settings,
     load_reaction_roles, save_reaction_roles,
+    load_luck_stats, save_luck_stats,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -254,6 +255,58 @@ async def save_prefix():
     server_stats = await load_server_stats()
     server_stats[str(guild_id)] = prefix
     await save_server_stats(server_stats)
+
+    return jsonify({"status": "success"})
+
+# --- Game Settings Routes ---
+
+@app.route('/admin/game_settings')
+async def admin_game_settings():
+    if not is_admin(): return redirect(url_for('login'))
+    return await render_template('game_settings.html')
+
+@app.route('/api/game/settings/data')
+async def game_settings_data():
+    if not is_admin(): return "Unauthorized", 401
+
+    if not app.bot:
+        return jsonify({"guilds": []})
+
+    luck_stats = await load_luck_stats()
+    guilds_data = []
+
+    for guild in app.bot.guilds:
+        guild_id_str = str(guild.id)
+        current_luck = luck_stats.get(guild_id_str, 10)
+
+        guilds_data.append({
+            "id": guild_id_str,
+            "name": guild.name,
+            "luck_threshold": current_luck
+        })
+
+    return jsonify({"guilds": guilds_data})
+
+@app.route('/api/game/luck/save', methods=['POST'])
+async def save_luck_threshold():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    luck_value = data.get('luck_value')
+
+    if not guild_id or luck_value is None:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    try:
+        luck_val = int(luck_value)
+        if luck_val < 0: raise ValueError
+    except ValueError:
+        return jsonify({"status": "error", "message": "Invalid integer"}), 400
+
+    luck_stats = await load_luck_stats()
+    luck_stats[str(guild_id)] = luck_val
+    await save_luck_stats(luck_stats)
 
     return jsonify({"status": "success"})
 

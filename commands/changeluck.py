@@ -13,11 +13,12 @@ class changeluck(commands.Cog):
       `[p]changeluck newMaxLuckUsed` - Change how much luck can players spend to make a successful roll.
       If you set value to 0 you will disable spending luck for you players.
       """
-      if ctx.author != ctx.guild.owner:
-          await ctx.send("This command is limited to the server owner only.")
-          return
       if not isinstance(ctx.channel, discord.TextChannel):
           await ctx.send("This command is not allowed in DMs.")
+          return
+
+      if not ctx.author.guild_permissions.administrator:
+          await ctx.send("This command is limited to the server administrators only.")
           return
   
       if luck is None:
@@ -33,14 +34,10 @@ class changeluck(commands.Cog):
       server_id = str(ctx.guild.id)  # Get the server's ID as a string
       server_stats = await load_luck_stats()
   
-      # Check if the user is the server owner
-      if ctx.author == ctx.guild.owner:
-          # Set the custom luck for the server
-          server_stats[server_id] = luck
-          await save_luck_stats(server_stats)
-          await ctx.send(f"The server's luck threshold has been changed to `{luck}`.")
-      else:
-          await ctx.send("You must be the server owner to use this command.")
+      # Set the custom luck for the server
+      server_stats[server_id] = luck
+      await save_luck_stats(server_stats)
+      await ctx.send(f"The server's luck threshold has been changed to `{luck}`.")
         
   @commands.command()
   async def showluck(self, ctx):
