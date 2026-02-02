@@ -6,13 +6,104 @@
 
 ## Features
 
-*   **Character Management:** Create, update, and manage investigator sheets, including stats, skills, and backstories.
-*   **Dice Rolling:** Advanced dice rolling capabilities, including standard rolls, bonus/penalty dice, luck rolls, and skill checks.
-*   **Keeper Tools:** Extensive library of game information including firearms, inventions, madness tables, phobias/manias, and NPC generation.
-*   **Session Management:** Tools to start, track, and log game sessions.
-*   **Utility & Admin:** YouTube feed integration, auto-rooms, RSS feeds, and server administration tools.
-*   **Web Dashboard:** An optional web interface for easier management of data files and characters.
-*   **Soundboard:** Admin-controlled soundboard to play audio clips in voice channels.
+*   🕵️‍♂️ **Character Management**: Create, update, and manage investigator sheets, including stats, skills, and backstories.
+*   🎲 **Advanced Dice Rolling**: Interactive rolls with support for Bonus/Penalty dice, Luck spending, and Pushing rolls.
+*   🐙 **Keeper Tools**: Extensive library of game information including firearms, inventions, madness tables, phobias/manias, and NPC generation.
+*   📜 **Session Management**: Tools to start, track, and log game sessions.
+*   🎵 **Music Bot**: High-quality music playback from YouTube with queue management, looping, and volume control.
+*   💻 **Web Dashboard**: A powerful web interface to manage the bot:
+    *   **File Editor**: Edit configuration and data files directly.
+    *   **Soundboard**: Upload and play audio clips in voice channels.
+    *   **Music Control**: Manage the music queue and blacklist songs.
+    *   **Reaction Roles**: easily configure self-assignable roles.
+    *   **Karma Settings**: Configure community karma tracking.
+*   📈 **Karma System**: Track user reputation with custom upvote/downvote emojis.
+*   🎭 **Reaction Roles**: Allow users to assign roles to themselves by reacting to messages.
+*   🔊 **Soundboard**: Admin-controlled soundboard to play audio clips in voice channels.
+*   🛠️ **Utility & Admin**: Auto-rooms, auto-moderation, YouTube feed integration, and RSS feeds.
+
+## Commands
+
+The bot uses a dynamic prefix (default is `!`). Here is a list of available commands categorized by function:
+
+### 🐙 Cthulhu & Investigator Tools
+*   `newinvestigator` (alias: `newinv`): 🕵️‍♂️ Start the character creation wizard.
+*   `mychar`: 📜 View your character sheet.
+*   `autochar`: 🤖 Generate random stats for your investigator (Standard CoC 7e rules).
+*   `stat`: 📊 View or edit specific stats.
+*   `rename`: 🏷️ Rename your character.
+*   `renameskill`: ✏️ Rename a skill on your sheet.
+*   `deleteinvestigator`: 🗑️ Delete a character.
+*   `addbackstory`: 📖 Add backstory elements.
+*   `updatebackstory`: 🔄 Update backstory elements.
+*   `removebackstory`: ❌ Remove backstory elements.
+*   `generatebackstory`: 🎲 Generate a random backstory.
+*   `retire`: 👴 Retire an active character.
+*   `unretire`: 👶 Bring a retired character back.
+
+### 🎲 Dice Rolling & Session
+*   `newroll` (aliases: `roll`, `d`, `nd`): 🎲 Perform a dice roll or skill check. Interactive interface allows for Bonus/Penalty dice and Luck spending.
+*   `showluck`: 🍀 Display current luck.
+*   `startsession`: 🎬 Start a new game session.
+*   `showsession`: 📝 Show current session details.
+*   `wipesession`: 🧹 Clear session data.
+
+### 🎵 Music & Sound
+*   `play` (alias: `p`): 🎵 Play a song from YouTube.
+*   `skip` (alias: `s`): ⏭️ Skip the current song.
+*   `stop` (aliases: `leave`, `disconnect`): 🛑 Stop music, clear queue, and disconnect.
+*   `volume` (alias: `vol`): 🔊 Set playback volume (0-100).
+*   `loop`: 🔁 Toggle song looping.
+*   `queue` (alias: `q`): 🎼 View the current music queue.
+*   `nowplaying` (alias: `np`): 💿 Show the currently playing song.
+
+### 📈 Karma System
+*   `setupkarma`: ⚙️ Configure the karma channel and emojis (Admin).
+*   `karma` (alias: `k`): 🌟 Check karma for yourself or another user.
+*   `leaderboard` (aliases: `top`): 🏆 Show the Karma leaderboard.
+
+### 🎭 Reaction Roles
+*   `reactionrole` (alias: `rr`): 🎭 Setup a reaction role on a message (Admin).
+
+### 🧠 Keeper Resources
+*   `changeluck`: 🍀 Modify an investigator's luck.
+*   `occupationinfo`: 💼 Lookup occupation details.
+*   `skillinfo`: 📚 Lookup skill details.
+*   `createnpc`: 👤 Generate an NPC.
+*   `randomname`: 🏷️ Generate a random name (1920s).
+*   `macguffin`: 🏺 Generate a MacGuffin.
+*   `loot`: 💰 Generate random loot.
+*   `archetypeinfo`: 🦸‍♂️ Lookup archetype info (Pulp).
+*   `firearms`: 🔫 Lookup firearm statistics.
+*   `inventions`: 💡 Lookup invention details.
+*   `talents`: 🌟 Lookup talent info.
+*   `years`: 📅 Historical info for different years.
+*   `madness`: 🤪 Consult madness rules.
+*   `madnessAlone`: 🌑 Madness tables for solo investigators.
+*   `insaneTalents`: 🩸 Lookup insane talents.
+*   `phobia`: 😨 Random phobia.
+*   `mania`: 🤩 Random mania.
+*   `poisons`: 🧪 Lookup poison info.
+
+### 🛠️ General & Admin
+*   `autoroomkick`: 👢 Kick user from auto-room.
+*   `autoroomlock`: 🔒 Lock auto-room.
+*   `autoroomunlock`: 🔓 Unlock auto-room.
+*   `reportbug`: 🐛 Report a bug to the developer.
+*   `repeatafterme`: 🦜 Make the bot repeat a message.
+*   `uptime`: ⏱️ Check bot uptime.
+*   `autoroomset`: ⚙️ Configure auto-rooms.
+*   `changeprefix`: ❗ Change the bot's command prefix for the server.
+*   `ping`: 🏓 Check latency.
+*   `addreaction`: ➕ Add a smart reaction.
+*   `removereaction`: ➖ Remove a smart reaction.
+*   `listreactions`: 📋 List all smart reactions.
+*   `youtube`: 📺 Setup YouTube channel notifications.
+*   `unsubscribe`: 🔕 Unsubscribe from YouTube notifications.
+*   `deleter`: 🗑️ Setup auto-deletion for channels.
+*   `autodeleter`: 🤖 Configure auto-deleter.
+*   `stopdeleter`: 🛑 Stop auto-deletion.
+*   `rss`: 📰 Manage RSS feeds.
 
 ## Installation
 
@@ -233,89 +324,6 @@ The bot includes a web dashboard to help manage character data, edit configurati
 2.  Open your web browser and navigate to: `http://localhost:5000`
     *   If running on a remote server, replace `localhost` with the server's IP address. You may need to open port 5000 in your firewall.
 3.  Log in using the `admin_password` you set.
-
-### Features
-*   **Character Viewer:** View details of active and retired investigators.
-*   **File Editor:** Browse and edit JSON files in the `data` and `infodata` directories directly from the browser (Admin only).
-*   **Soundboard:** Organize audio files in the `soundboard/` directory (supports 2-level structure) and play them in Discord voice channels via the dashboard.
-
-## Usage
-
-To start the bot, run the `bot.py` script:
-
-```bash
-python bot.py
-```
-
-The bot should now be online and ready to use in your Discord server.
-
-## Commands
-
-The bot uses a dynamic prefix (default is `!`). Here is a list of available commands categorized by function:
-
-### Character Creation
-*   `newinvestigator`: Create a new investigator (Wizard).
-*   `mychar`: View your character sheet.
-*   `autochar`: Generate stats for your investigator (Standard CoC 7e rules).
-*   `stat`: View or edit specific stats.
-*   `rename`: Rename your character.
-*   `renameskill`: Rename a skill on your sheet.
-*   `deleteinvestigator`: Delete a character.
-*   `addbackstory`: Add backstory elements.
-*   `updatebackstory`: Update backstory elements.
-*   `removebackstory`: Remove backstory elements.
-*   `generatebackstory`: Generate a random backstory.
-*   `retire`: Retire an active character.
-*   `unretire`: Bring a retired character back.
-
-### Rolling Die and Session Management
-*   `newroll` (aliases: `roll`, `d`, `nd`, `s`): Perform a dice roll or skill check. Interactive interface allows for Bonus/Penalty dice and Luck spending.
-*   `showluck`: Display current luck.
-*   `startsession`: Start a new game session.
-*   `showsession`: Show current session details.
-*   `wipesession`: Clear session data.
-
-### For Keeper
-*   `changeluck`: Modify an investigator's luck.
-*   `occupationinfo`: Lookup occupation details.
-*   `skillinfo`: Lookup skill details.
-*   `createnpc`: Generate an NPC.
-*   `randomname`: Generate a random name (1920s).
-*   `macguffin`: Generate a MacGuffin.
-*   `loot`: Generate random loot.
-*   `archetypeinfo`: Lookup archetype info (Pulp).
-*   `firearms`: Lookup firearm statistics.
-*   `inventions`: Lookup invention details.
-*   `talents`: Lookup talent info.
-*   `years`: Historical info for different years.
-*   `madness`: Consult madness rules.
-*   `madnessAlone`: Madness tables for solo investigators.
-*   `insaneTalents`: Lookup insane talents.
-*   `phobia`: Random phobia.
-*   `mania`: Random mania.
-*   `poisons`: Lookup poison info.
-
-### Bot Functions
-*   `autoroomkick`: Kick user from auto-room.
-*   `autoroomlock`: Lock auto-room.
-*   `autoroomunlock`: Unlock auto-room.
-*   `reportbug`: Report a bug to the developer.
-*   `repeatafterme`: Make the bot repeat a message.
-*   `uptime`: Check bot uptime.
-
-### Admin
-*   `autoroomset`: Configure auto-rooms.
-*   `changeprefix`: Change the bot's command prefix for the server.
-*   `ping`: Check latency.
-*   `addreaction`: Add a smart reaction.
-*   `removereaction`: Remove a smart reaction.
-*   `listreactions`: List all smart reactions.
-*   `youtube`: Setup YouTube channel notifications.
-*   `unsubscribe`: Unsubscribe from YouTube notifications.
-*   `deleter`: Setup auto-deletion for channels.
-*   `autodeleter`: Configure auto-deleter.
-*   `stopdeleter`: Stop auto-deletion.
-*   `rss`: Manage RSS feeds.
 
 ## Contributing
 

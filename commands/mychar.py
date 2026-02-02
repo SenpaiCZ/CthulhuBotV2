@@ -12,7 +12,8 @@ class mychar(commands.Cog):
   @commands.command(aliases=["mcs", "char", "inv"])
   async def mychar(self, ctx, *, member: discord.Member = None):
     """
-    `[p]mcs` - Show your investigators stats, skills, backstory and inventory. With @ you can show other players stats (e.g. `[p]mcs @potato`)
+    📜 Show your investigator's stats, skills, backstory and inventory.
+    Usage: `[p]mychar` or `[p]mychar @User` to see others.
     """
     if not isinstance(ctx.channel, discord.TextChannel):
       await ctx.send("This command is not allowed in DMs.")

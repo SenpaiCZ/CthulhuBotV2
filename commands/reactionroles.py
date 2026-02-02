@@ -25,7 +25,7 @@ class ReactionRoles(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def reaction_role(self, ctx, message_id_or_link: str, role: discord.Role, emoji: str):
         """
-        Setup a reaction role.
+        🎭 Setup a reaction role.
         Usage: !reactionrole <message_id|link> <@role|role_id> <emoji>
         """
         # Determine Message
