@@ -58,11 +58,18 @@ async def save_settings(settings_data):
     await _save_json_file('.', 'config.json', settings_data)
 
 # --- Server Stats ---
+_SERVER_STATS_CACHE = None
+
 async def load_server_stats():
-    return await _load_json_file(DATA_FOLDER, 'server_stats.json')
+    global _SERVER_STATS_CACHE
+    if _SERVER_STATS_CACHE is None:
+        _SERVER_STATS_CACHE = await _load_json_file(DATA_FOLDER, 'server_stats.json')
+    return _SERVER_STATS_CACHE.copy()
 
 async def save_server_stats(server_stats):
+    global _SERVER_STATS_CACHE
     await _save_json_file(DATA_FOLDER, 'server_stats.json', server_stats)
+    _SERVER_STATS_CACHE = server_stats.copy()
 
 # --- Smart React ---
 async def smartreact_load():
