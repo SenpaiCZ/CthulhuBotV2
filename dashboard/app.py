@@ -4,6 +4,7 @@ import discord
 import asyncio
 import emoji
 import emojis
+import feedparser
 from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort
 from loadnsave import (
     load_player_stats, load_retired_characters_data, load_settings, save_settings,
@@ -11,6 +12,7 @@ from loadnsave import (
     load_server_stats, save_server_stats, load_karma_settings, save_karma_settings,
     load_reaction_roles, save_reaction_roles,
     load_luck_stats, save_luck_stats,
+    load_rss_data, save_rss_data,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -983,3 +985,130 @@ async def music_ban():
                  track.finished = True
 
     return jsonify({"status": "success"})
+
+# --- RSS Routes ---
+
+@app.route('/admin/rss')
+async def admin_rss():
+    if not is_admin(): return redirect(url_for('login'))
+    return await render_template('rss_dashboard.html')
+
+@app.route('/api/rss/data')
+async def rss_data():
+    if not is_admin(): return "Unauthorized", 401
+
+    if not app.bot:
+        return jsonify({"guilds": [], "feeds": []})
+
+    rss_data = await load_rss_data()
+    feeds = []
+
+    for guild_id, items in rss_data.items():
+        guild = app.bot.get_guild(int(guild_id))
+        guild_name = guild.name if guild else f"Unknown Guild ({guild_id})"
+
+        for item in items:
+            channel_id = item.get('channel_id')
+            channel = guild.get_channel(channel_id) if guild else None
+            channel_name = channel.name if channel else f"Unknown Channel ({channel_id})"
+
+            feeds.append({
+                "guild_id": guild_id,
+                "guild_name": guild_name,
+                "channel_id": str(channel_id),
+                "channel_name": channel_name,
+                "link": item.get('link'),
+                "last_message": item.get('last_message', 'N/A')
+            })
+
+    # Guilds for dropdown
+    guilds_data = []
+    for guild in app.bot.guilds:
+        channels = []
+        for channel in guild.text_channels:
+             channels.append({"id": str(channel.id), "name": channel.name})
+
+        guilds_data.append({
+            "id": str(guild.id),
+            "name": guild.name,
+            "channels": channels
+        })
+
+    return jsonify({
+        "guilds": guilds_data,
+        "feeds": feeds
+    })
+
+@app.route('/api/rss/add', methods=['POST'])
+async def rss_add():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    channel_id = data.get('channel_id')
+    link = data.get('link')
+
+    if not all([guild_id, channel_id, link]):
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    # Validate RSS
+    try:
+        # Run in executor to avoid blocking
+        feed = await asyncio.get_event_loop().run_in_executor(None, feedparser.parse, link)
+        if not feed.entries:
+            return jsonify({"status": "error", "message": "No items found in RSS feed"}), 400
+
+        latest_entry = feed.entries[0]
+        # Use same logic as rss.py for ID
+        entry_id = getattr(latest_entry, 'id', getattr(latest_entry, 'link', getattr(latest_entry, 'title', None)))
+        latest_title = latest_entry.title
+
+    except Exception as e:
+         return jsonify({"status": "error", "message": f"Failed to parse RSS: {str(e)}"}), 400
+
+    rss_data = await load_rss_data()
+
+    if str(guild_id) not in rss_data:
+        rss_data[str(guild_id)] = []
+
+    # Check duplicate
+    for sub in rss_data[str(guild_id)]:
+        if sub['link'] == link:
+             return jsonify({"status": "error", "message": "Feed already exists for this server"}), 400
+
+    rss_data[str(guild_id)].append({
+        "link": link,
+        "channel_id": int(channel_id),
+        "last_message": latest_title,
+        "last_id": entry_id
+    })
+
+    await save_rss_data(rss_data)
+    return jsonify({"status": "success"})
+
+@app.route('/api/rss/delete', methods=['POST'])
+async def rss_delete():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    link = data.get('link')
+
+    if not guild_id or not link:
+         return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    rss_data = await load_rss_data()
+
+    if str(guild_id) in rss_data:
+        original_len = len(rss_data[str(guild_id)])
+        rss_data[str(guild_id)] = [s for s in rss_data[str(guild_id)] if s['link'] != link]
+
+        if len(rss_data[str(guild_id)]) < original_len:
+            # Clean up empty
+            if not rss_data[str(guild_id)]:
+                del rss_data[str(guild_id)]
+
+            await save_rss_data(rss_data)
+            return jsonify({"status": "success"})
+
+    return jsonify({"status": "error", "message": "Feed not found"}), 404
