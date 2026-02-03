@@ -3,6 +3,7 @@ from discord.ext import commands
 from loadnsave import load_player_stats, save_player_stats, load_gamemode_stats
 from emojis import get_stat_emoji
 from descriptions import get_description
+import occupation_emoji
 
 class mychar(commands.Cog):
 
@@ -53,7 +54,7 @@ class mychar(commands.Cog):
 
     async def generate_stats_page(page):
       limiter = 0
-      limit = 17
+      limit = 18
       embed = discord.Embed(title=f"{name}'s stats and skills", description=f"Stats - {page}/{maxpage}", color=discord.Color.green())
       if page == 1:  
         for i in player_stats[server_id][user_id]:
@@ -63,6 +64,10 @@ class mychar(commands.Cog):
           description = ""
           if i == "NAME":
             pass
+          elif i == "Occupation":
+            stat_value = player_stats[server_id][user_id][i]
+            occ_emoji = occupation_emoji.get_occupation_emoji(stat_value)
+            stat_value = f"{stat_value} {occ_emoji}"
           elif i == "Move":
             if player_stats[server_id][user_id]["DEX"] != 0 and \
                 player_stats[server_id][user_id]["SIZ"] != 0 and \
@@ -135,7 +140,7 @@ class mychar(commands.Cog):
                   stat_value = f"{BONUSDMG}"
             else:
                 stat_value = "Fill your STR and SIZ."
-          elif i not in ["Age", "HP", "MP"] and limiter <= limit:
+          elif i not in ["Age", "HP", "MP", "Occupation"] and limiter <= limit:
             stat_value = player_stats[server_id][user_id][i]
             if i not in ["LUCK"]:
               description = get_description(i,stat_value)
@@ -161,7 +166,7 @@ class mychar(commands.Cog):
           if i == "NAME":
             pass
           else:
-            if 17 < limiter <= 41:
+            if 18 < limiter <= 42:
               stat_value = player_stats[server_id][user_id][i]
               if i not in ["Credit Rating"]:
                 description = get_description("skill",stat_value)
@@ -175,7 +180,7 @@ class mychar(commands.Cog):
           if i == "NAME":
             pass
           else:
-            if 41 < limiter <= 65:
+            if 42 < limiter <= 66:
               stat_value = player_stats[server_id][user_id][i]
               description = get_description("skill",stat_value)
               embed.add_field(name=f"{i}{get_stat_emoji(i)}", value=f"**{stat_value}**/{stat_value//2}/{stat_value//5}\n{description}", inline=True)

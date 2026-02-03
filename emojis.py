@@ -13,6 +13,7 @@ def get_stat_emoji(stat_name):
       "LUCK": ":four_leaf_clover:",
       "SAN": ":scales:",
       "Age": ":birthday:",
+      "Occupation": ":briefcase:",
       "Move": ":person_running:",
       "Build": ":restroom: ",
       "Damage Bonus": ":mending_heart:",
