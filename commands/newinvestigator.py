@@ -86,6 +86,7 @@ class newinvestigator(commands.Cog):
             "SAN": 0, "HP": 0, "MP": 0, "LUCK": 0,
             "Move": 0, "Build": 0, "Damage Bonus": 0,
             "Age": 0,
+            "Occupation": "Unknown",
             "Credit Rating": 0,
         }
 
@@ -609,6 +610,9 @@ class newinvestigator(commands.Cog):
         return 0
 
     async def assign_occupation_skills(self, ctx, char_data, occupation_name, info):
+        # Save Occupation Name
+        char_data["Occupation"] = occupation_name
+
         # Calculate Points
         points = self.calculate_occupation_points(char_data, info)
 

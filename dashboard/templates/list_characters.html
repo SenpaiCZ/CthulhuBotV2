@@ -119,6 +119,7 @@
                     <tr>
                         <th>Player</th>
                         <th>Character</th>
+                        <th>Occupation</th>
                         <th>View Sheet</th>
                     </tr>
                 </thead>
@@ -131,6 +132,7 @@
                             </span>
                         </td>
                         <td>{{ char.get('NAME', 'Unknown') }}</td>
+                        <td>{{ char.get('Occupation', 'Unknown') }}</td>
                         <td>
                             <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modal-{{server_id}}-{{user_id}}">
                                 <i class="bi bi-file-earmark-person"></i> View Sheet
@@ -317,6 +319,7 @@
             <tr>
                 <th>Player</th>
                 <th>Character</th>
+                <th>Occupation</th>
                 <th>View Sheet</th>
             </tr>
         </thead>
@@ -330,6 +333,7 @@
                         </span>
                     </td>
                     <td>{{ char.get('NAME', 'Unknown') }}</td>
+                    <td>{{ char.get('Occupation', 'Unknown') }}</td>
                     <td>
                         <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modal-ret-{{user_id}}-{{loop.index}}">
                             <i class="bi bi-file-earmark-person"></i> View Sheet
