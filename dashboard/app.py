@@ -183,6 +183,26 @@ async def retired():
         emoji_lib=emoji
     )
 
+@app.route('/render/character/<guild_id>/<user_id>')
+async def render_character_view(guild_id, user_id):
+    # This endpoint is intended for local bot use
+    stats = await load_player_stats()
+
+    guild_data = stats.get(str(guild_id))
+    if not guild_data:
+        return "Guild not found", 404
+
+    char_data = guild_data.get(str(user_id))
+    if not char_data:
+        return "Character not found", 404
+
+    return await render_template(
+        'render_character.html',
+        char=char_data,
+        emojis=emojis,
+        emoji_lib=emoji
+    )
+
 # --- Admin Routes ---
 
 @app.route('/admin')
