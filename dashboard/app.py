@@ -2,6 +2,8 @@ import os
 import json
 import discord
 import asyncio
+import emoji
+import emojis
 from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort
 from loadnsave import (
     load_player_stats, load_retired_characters_data, load_settings, save_settings,
@@ -126,13 +128,60 @@ async def logout():
 @app.route('/characters')
 async def characters():
     stats = await load_player_stats()
-    # stats is a dict, likely {user_id: {char_data...}}
-    return await render_template('list_characters.html', title="Active Characters", data=stats, type="active")
+
+    # Resolve display names
+    user_names = {}
+    if app.bot:
+        all_user_ids = set()
+        for guild_users in stats.values():
+            all_user_ids.update(guild_users.keys())
+
+        for user_id in all_user_ids:
+            try:
+                user = app.bot.get_user(int(user_id))
+                if user:
+                    user_names[user_id] = user.display_name
+                else:
+                    user_names[user_id] = f"User {user_id}"
+            except:
+                user_names[user_id] = f"User {user_id}"
+
+    return await render_template(
+        'list_characters.html',
+        title="Active Characters",
+        data=stats,
+        type="active",
+        user_names=user_names,
+        emojis=emojis,
+        emoji_lib=emoji
+    )
 
 @app.route('/retired')
 async def retired():
     stats = await load_retired_characters_data()
-    return await render_template('list_characters.html', title="Retired Characters", data=stats, type="retired")
+
+    # Resolve display names
+    user_names = {}
+    if app.bot:
+        for user_id in stats.keys():
+            try:
+                user = app.bot.get_user(int(user_id))
+                if user:
+                    user_names[user_id] = user.display_name
+                else:
+                    user_names[user_id] = f"User {user_id}"
+            except:
+                user_names[user_id] = f"User {user_id}"
+
+    return await render_template(
+        'list_characters.html',
+        title="Retired Characters",
+        data=stats,
+        type="retired",
+        user_names=user_names,
+        emojis=emojis,
+        emoji_lib=emoji
+    )
 
 # --- Admin Routes ---
 
