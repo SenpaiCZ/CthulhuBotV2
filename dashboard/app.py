@@ -213,12 +213,6 @@ async def admin_dashboard():
     if not is_admin(): return redirect(url_for('login'))
     return await render_template('admin_dashboard.html')
 
-@app.route('/admin/settings')
-async def admin_settings():
-    if not is_admin(): return redirect(url_for('login'))
-    # Direct to editing config.json
-    return redirect(url_for('edit_file', folder_name='root', filename='config.json'))
-
 @app.route('/admin/browse/<folder_name>')
 async def browse_files(folder_name):
     if not is_admin(): return redirect(url_for('login'))
