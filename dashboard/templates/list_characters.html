@@ -253,7 +253,7 @@
                                             {% set excluded = ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU',
                                                                'HP', 'MP', 'SAN', 'LUCK', 'Move', 'Build', 'Damage Bonus', 'Dodge',
                                                                'NAME', 'Occupation', 'Age', 'Sex', 'Residence', 'Birthplace',
-                                                               'Credit Rating', 'Archetype', 'Talent'] %}
+                                                               'Credit Rating', 'Archetype', 'Talent', 'Backstory'] %}
 
                                             <!-- Explicit Credit Rating first -->
                                             <div class="coc-skill-item">
@@ -284,6 +284,32 @@
                                         <!-- Background & Details -->
                                         <div class="coc-section-title">Background & Details</div>
                                         <div class="row">
+                                            {% set backstory_order = [
+                                                'My Story', 'Personal Description', 'Ideology and Beliefs',
+                                                'Significant People', 'Meaningful Locations', 'Treasured Possessions',
+                                                'Traits', 'Injuries and Scars', 'Phobias and Manias',
+                                                'Arcane Tome and Spells', 'Encounters with Strange Entities',
+                                                'Fellow Investigators', 'Gear and Possessions',
+                                                'Spending Level', 'Cash', 'Assets'
+                                            ] %}
+                                            {% set char_backstory = char.get('Backstory', {}) %}
+
+                                            {% for section in backstory_order %}
+                                                {% if section in char_backstory %}
+                                                    <div class="col-12 mb-3">
+                                                        <div class="coc-label" style="font-size: 1em; border-bottom: 1px solid #333; margin-bottom: 5px;">{{ section }}</div>
+                                                        {% set entries = char_backstory[section] %}
+                                                        {% if entries and entries|length > 0 %}
+                                                            {% for entry in entries %}
+                                                                <p class="text-white small mb-1">{{ entry }}</p>
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            <div class="text-white small" style="min-height: 1.2em;">&nbsp;</div>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+
                                             {% for key, val in char.items()|sort %}
                                                 {% if key not in excluded and key|length > 0 %}
                                                     {% if key.lower() not in ['customskill', 'customskills', 'customskillss'] %}
@@ -454,7 +480,7 @@
                                             {% set excluded = ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU',
                                                                'HP', 'MP', 'SAN', 'LUCK', 'Move', 'Build', 'Damage Bonus', 'Dodge',
                                                                'NAME', 'Occupation', 'Age', 'Sex', 'Residence', 'Birthplace',
-                                                               'Credit Rating', 'Archetype', 'Talent'] %}
+                                                               'Credit Rating', 'Archetype', 'Talent', 'Backstory'] %}
 
                                             <!-- Explicit Credit Rating first -->
                                             <div class="coc-skill-item">
@@ -485,6 +511,32 @@
                                         <!-- Background & Details -->
                                         <div class="coc-section-title">Background & Details</div>
                                         <div class="row">
+                                            {% set backstory_order = [
+                                                'My Story', 'Personal Description', 'Ideology and Beliefs',
+                                                'Significant People', 'Meaningful Locations', 'Treasured Possessions',
+                                                'Traits', 'Injuries and Scars', 'Phobias and Manias',
+                                                'Arcane Tome and Spells', 'Encounters with Strange Entities',
+                                                'Fellow Investigators', 'Gear and Possessions',
+                                                'Spending Level', 'Cash', 'Assets'
+                                            ] %}
+                                            {% set char_backstory = char.get('Backstory', {}) %}
+
+                                            {% for section in backstory_order %}
+                                                {% if section in char_backstory %}
+                                                    <div class="col-12 mb-3">
+                                                        <div class="coc-label" style="font-size: 1em; border-bottom: 1px solid #333; margin-bottom: 5px;">{{ section }}</div>
+                                                        {% set entries = char_backstory[section] %}
+                                                        {% if entries and entries|length > 0 %}
+                                                            {% for entry in entries %}
+                                                                <p class="text-white small mb-1">{{ entry }}</p>
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            <div class="text-white small" style="min-height: 1.2em;">&nbsp;</div>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+
                                             {% for key, val in char.items()|sort %}
                                                 {% if key not in excluded and key|length > 0 %}
                                                     {% if key.lower() not in ['customskill', 'customskills', 'customskillss'] %}
