@@ -394,103 +394,157 @@ class newinvestigator(commands.Cog):
         if suggestion_str:
             await ctx.send(suggestion_str)
 
-        while True:
-            prompt = (
-                "Please select an **Occupation**.\n"
-                "Type `list` to see all options with points, or type a search term (e.g. `detective`, `soldier`).\n"
-                "Type the exact name to select."
+        # Send initial prompt
+        await ctx.send(
+            "Please select an **Occupation**.\n"
+            "Type `list` to see all options with points, or type a search term (e.g. `detective`, `soldier`).\n"
+            "Type the name to select."
+        )
+
+        # Mapping for case-insensitive lookup
+        occupation_map = {k.lower(): k for k in occupations_data.keys()}
+
+        # Pagination State
+        list_msg = None
+        current_page = 1
+        valid_occupations = [] # List of (name, pts)
+        items_per_page = 15
+        page_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
+
+        async def send_page(page_num, total_pages, data):
+            start_idx = (page_num - 1) * items_per_page
+            end_idx = start_idx + items_per_page
+            page_items = data[start_idx:end_idx]
+
+            description = ""
+            for name, pts in page_items:
+                emojis_str = occupation_emoji.get_occupation_emoji(name)
+                description += f"{emojis_str} **{name}** ({pts})\n"
+
+            embed = discord.Embed(
+                title=f"Available Occupations (Page {page_num}/{total_pages})",
+                description=description,
+                color=discord.Color.green()
             )
-            user_input = await self.get_input(ctx, prompt)
-            if user_input is None: return
+            return embed
 
-            val = user_input.strip()
-            if val.lower() == "list":
-                # 1. Filter and Score
-                valid_occupations = []
-                for name, info in occupations_data.items():
-                    pts = self.calculate_occupation_points(char_data, info)
-                    if pts > 0:
-                        valid_occupations.append((name, pts))
+        while True:
+            # Prepare tasks
+            tasks = []
 
-                # 2. Sort by points descending
-                valid_occupations.sort(key=lambda x: x[1], reverse=True)
+            # 1. Message Listener
+            def msg_check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+            tasks.append(self.bot.wait_for('message', check=msg_check))
 
-                if not valid_occupations:
-                    await ctx.send("No occupations available with current stats.")
-                    continue
+            # 2. Reaction Listener (only if list is active)
+            if list_msg:
+                def reaction_check(reaction, user):
+                    return user == ctx.author and reaction.message.id == list_msg.id and str(reaction.emoji) in page_emojis
+                tasks.append(self.bot.wait_for('reaction_add', check=reaction_check))
 
-                # 3. Pagination Setup
-                items_per_page = 15
-                total_pages = math.ceil(len(valid_occupations) / items_per_page)
-                current_page = 1
+            try:
+                # Wait for FIRST interaction (Message OR Reaction)
+                done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED, timeout=300)
 
-                # Reaction emojis for pages (1-9 supported directly)
-                page_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
+                # Cancel pending tasks
+                for task in pending:
+                    task.cancel()
 
-                async def send_page(page_num):
-                    start_idx = (page_num - 1) * items_per_page
-                    end_idx = start_idx + items_per_page
-                    page_items = valid_occupations[start_idx:end_idx]
+                if not done:
+                    # Timeout
+                    await ctx.send("Character creation timed out during occupation selection.")
+                    return
 
-                    description = ""
-                    for name, pts in page_items:
-                        emojis_str = occupation_emoji.get_occupation_emoji(name)
-                        description += f"{emojis_str} **{name}** ({pts})\n"
+                result = done.pop().result()
 
-                    embed = discord.Embed(
-                        title=f"Available Occupations (Page {page_num}/{total_pages})",
-                        description=description,
-                        color=discord.Color.green()
-                    )
-                    return embed
+                # Handle Message Input
+                if isinstance(result, discord.Message):
+                    val = result.content.strip()
+                    lower_val = val.lower()
 
-                msg = await ctx.send(embed=await send_page(current_page))
+                    if lower_val == "list":
+                        # Generate/Reset List
+                        valid_occupations = []
+                        for name, info in occupations_data.items():
+                            pts = self.calculate_occupation_points(char_data, info)
+                            if pts > 0:
+                                valid_occupations.append((name, pts))
 
-                # Add reactions
-                if total_pages > 1:
-                    for i in range(total_pages):
-                        if i < len(page_emojis):
-                            await msg.add_reaction(page_emojis[i])
+                        valid_occupations.sort(key=lambda x: x[1], reverse=True)
 
-                    # Pagination Loop
-                    def check(reaction, user):
-                        return user == ctx.author and reaction.message.id == msg.id and str(reaction.emoji) in page_emojis
+                        if not valid_occupations:
+                            await ctx.send("No occupations available with current stats.")
+                            continue
 
-                    while True:
-                        try:
-                            reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+                        current_page = 1
+                        total_pages = math.ceil(len(valid_occupations) / items_per_page)
 
-                            selected_page_idx = page_emojis.index(str(reaction.emoji))
-                            new_page = selected_page_idx + 1
+                        embed = await send_page(current_page, total_pages, valid_occupations)
 
-                            if new_page != current_page and new_page <= total_pages:
-                                current_page = new_page
-                                await msg.edit(embed=await send_page(current_page))
-
+                        if list_msg:
                             try:
-                                await msg.remove_reaction(reaction, user)
-                            except:
-                                pass
+                                await list_msg.delete()
+                            except: pass
 
-                        except asyncio.TimeoutError:
-                            try:
-                                await msg.clear_reactions()
-                            except:
-                                pass
-                            break
-            elif val in occupations_data:
-                occupation_name = val
-                occupation_info = occupations_data[occupation_name]
-                await ctx.send(f"Selected **{occupation_name}**.")
-                await self.assign_occupation_skills(ctx, char_data, occupation_name, occupation_info)
+                        list_msg = await ctx.send(embed=embed)
+
+                        if total_pages > 1:
+                            for i in range(min(total_pages, len(page_emojis))):
+                                await list_msg.add_reaction(page_emojis[i])
+
+                    # Exact Match (Case Insensitive)
+                    elif lower_val in occupation_map:
+                        occupation_name = occupation_map[lower_val]
+                        occupation_info = occupations_data[occupation_name]
+                        await ctx.send(f"Selected **{occupation_name}**.")
+                        await self.assign_occupation_skills(ctx, char_data, occupation_name, occupation_info)
+                        return # Exit Loop
+
+                    # Partial Match
+                    else:
+                        matches = [k for k in occupations_data.keys() if lower_val in k.lower()]
+                        if len(matches) == 1:
+                            # Auto-select single match
+                            occupation_name = matches[0]
+                            occupation_info = occupations_data[occupation_name]
+                            await ctx.send(f"Found match: **{occupation_name}**.")
+                            await self.assign_occupation_skills(ctx, char_data, occupation_name, occupation_info)
+                            return # Exit Loop
+                        elif len(matches) > 1:
+                            # Show matches
+                            await ctx.send(f"Found multiple matches: {', '.join(matches)}. Please be more specific.")
+                        else:
+                            await ctx.send("No occupation found. Try again.")
+
+                # Handle Reaction Input
+                elif isinstance(result, tuple):
+                    # (reaction, user)
+                    reaction, user = result
+
+                    selected_page_idx = page_emojis.index(str(reaction.emoji))
+                    new_page = selected_page_idx + 1
+                    total_pages = math.ceil(len(valid_occupations) / items_per_page)
+
+                    if new_page != current_page and new_page <= total_pages:
+                        current_page = new_page
+                        await list_msg.edit(embed=await send_page(current_page, total_pages, valid_occupations))
+
+                    try:
+                        await list_msg.remove_reaction(reaction, user)
+                    except:
+                        pass
+
+            except asyncio.TimeoutError:
+                await ctx.send("Character creation timed out.")
+                if list_msg:
+                    try: await list_msg.clear_reactions()
+                    except: pass
                 return
-            else:
-                # Search
-                matches = [k for k in occupations_data.keys() if val.lower() in k.lower()]
-                if matches:
-                    await ctx.send(f"Found matches: {', '.join(matches)}")
-                else:
-                    await ctx.send("No occupation found. Try again.")
+            except Exception as e:
+                print(f"Error in select_occupation loop: {e}")
+                await ctx.send("An unexpected error occurred. Please try again.")
+                return
 
     def calculate_occupation_points(self, char_data, info):
         """Calculates occupation skill points based on character stats and occupation formula."""
