@@ -1084,6 +1084,22 @@ async def rss_add():
     })
 
     await save_rss_data(rss_data)
+
+    # Notify in channel
+    if app.bot:
+        guild = app.bot.get_guild(int(guild_id))
+        if guild:
+            channel = guild.get_channel(int(channel_id))
+            if channel:
+                try:
+                    feed_title = feed.feed.get('title', link)
+                    entry_link = getattr(latest_entry, 'link', link)
+                    await channel.send(f"New feed added: {feed_title}\n"
+                                       f"**Title:** {latest_title}\n"
+                                       f"**Link:** {entry_link}")
+                except Exception as e:
+                    print(f"Failed to send test message: {e}")
+
     return jsonify({"status": "success"})
 
 @app.route('/api/rss/delete', methods=['POST'])
