@@ -997,19 +997,22 @@ async def admin_rss():
 async def rss_data():
     if not is_admin(): return "Unauthorized", 401
 
-    if not app.bot:
-        return jsonify({"guilds": [], "feeds": []})
-
     rss_data = await load_rss_data()
     feeds = []
 
     for guild_id, items in rss_data.items():
-        guild = app.bot.get_guild(int(guild_id))
+        guild = None
+        if app.bot:
+            guild = app.bot.get_guild(int(guild_id))
+
         guild_name = guild.name if guild else f"Unknown Guild ({guild_id})"
 
         for item in items:
             channel_id = item.get('channel_id')
-            channel = guild.get_channel(channel_id) if guild else None
+            channel = None
+            if guild:
+                channel = guild.get_channel(channel_id)
+
             channel_name = channel.name if channel else f"Unknown Channel ({channel_id})"
 
             feeds.append({
@@ -1018,21 +1021,23 @@ async def rss_data():
                 "channel_id": str(channel_id),
                 "channel_name": channel_name,
                 "link": item.get('link'),
-                "last_message": item.get('last_message', 'N/A')
+                "last_message": item.get('last_message', 'N/A'),
+                "color": item.get('color', '#2E8B57')
             })
 
     # Guilds for dropdown
     guilds_data = []
-    for guild in app.bot.guilds:
-        channels = []
-        for channel in guild.text_channels:
-             channels.append({"id": str(channel.id), "name": channel.name})
+    if app.bot:
+        for guild in app.bot.guilds:
+            channels = []
+            for channel in guild.text_channels:
+                 channels.append({"id": str(channel.id), "name": channel.name})
 
-        guilds_data.append({
-            "id": str(guild.id),
-            "name": guild.name,
-            "channels": channels
-        })
+            guilds_data.append({
+                "id": str(guild.id),
+                "name": guild.name,
+                "channels": channels
+            })
 
     return jsonify({
         "guilds": guilds_data,
@@ -1047,6 +1052,7 @@ async def rss_add():
     guild_id = data.get('guild_id')
     channel_id = data.get('channel_id')
     link = data.get('link')
+    color = data.get('color', '#2E8B57')
 
     if not all([guild_id, channel_id, link]):
         return jsonify({"status": "error", "message": "Missing arguments"}), 400
@@ -1080,7 +1086,8 @@ async def rss_add():
         "link": link,
         "channel_id": int(channel_id),
         "last_message": latest_title,
-        "last_id": entry_id
+        "last_id": entry_id,
+        "color": color
     })
 
     await save_rss_data(rss_data)
@@ -1093,14 +1100,43 @@ async def rss_add():
             if channel:
                 try:
                     feed_title = feed.feed.get('title', link)
-                    entry_link = getattr(latest_entry, 'link', link)
-                    await channel.send(f"New feed added: {feed_title}\n"
-                                       f"**Title:** {latest_title}\n"
-                                       f"**Link:** {entry_link}")
+
+                    rss_cog = app.bot.get_cog('rss')
+                    if rss_cog:
+                        embed = rss_cog._create_rss_embed(latest_entry, feed_title, color)
+                        await channel.send(f"New feed added: {feed_title}", embed=embed)
+                    else:
+                        entry_link = getattr(latest_entry, 'link', link)
+                        await channel.send(f"New feed added: {feed_title}\n"
+                                           f"**Title:** {latest_title}\n"
+                                           f"**Link:** {entry_link}")
                 except Exception as e:
                     print(f"Failed to send test message: {e}")
 
     return jsonify({"status": "success"})
+
+@app.route('/api/rss/update_color', methods=['POST'])
+async def rss_update_color():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    link = data.get('link')
+    color = data.get('color')
+
+    if not all([guild_id, link, color]):
+         return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    rss_data = await load_rss_data()
+
+    if str(guild_id) in rss_data:
+        for sub in rss_data[str(guild_id)]:
+            if sub['link'] == link:
+                sub['color'] = color
+                await save_rss_data(rss_data)
+                return jsonify({"status": "success"})
+
+    return jsonify({"status": "error", "message": "Feed not found"}), 404
 
 @app.route('/api/rss/delete', methods=['POST'])
 async def rss_delete():

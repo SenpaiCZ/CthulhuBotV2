@@ -20,11 +20,15 @@
                             <option value="" selected disabled>Select Server...</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="rss-link" class="form-label">RSS Link</label>
                         <input type="url" class="form-control" id="rss-link" placeholder="https://example.com/feed.xml" required>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
+                        <label for="rss-color" class="form-label">Color</label>
+                        <input type="color" class="form-control form-control-color w-100" id="rss-color" value="#2E8B57" title="Choose your color">
+                    </div>
+                    <div class="col-md-2">
                         <label for="channel-select" class="form-label">Channel</label>
                         <select class="form-select" id="channel-select" required disabled>
                             <option value="" selected disabled>Select Channel...</option>
@@ -33,7 +37,7 @@
                     <div class="col-md-2 d-flex align-items-end">
                         <button type="submit" class="btn btn-success w-100" id="add-btn">
                             <span id="add-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                            Add Feed
+                            Add
                         </button>
                     </div>
                 </form>
@@ -54,6 +58,7 @@
                         <th>Server</th>
                         <th>Channel</th>
                         <th>RSS Link</th>
+                        <th>Color</th>
                         <th>Last Post</th>
                         <th>Action</th>
                     </tr>
@@ -164,6 +169,10 @@ function renderTable(feeds) {
             <td>${feed.guild_name} <br> <small class="text-muted">${feed.guild_id}</small></td>
             <td>${feed.channel_name} <br> <small class="text-muted">${feed.channel_id}</small></td>
             <td><a href="${feed.link}" target="_blank" title="${feed.link}">${displayLink}</a></td>
+            <td>
+                <input type="color" class="form-control form-control-color" value="${feed.color || '#2E8B57'}"
+                       onchange="updateColor('${feed.guild_id}', '${feed.link}', this.value)" title="Update Color">
+            </td>
             <td><small>${feed.last_message || 'None'}</small></td>
             <td>
                 <button class="btn btn-danger btn-sm" onclick="deleteFeed('${feed.guild_id}', '${feed.link}')">
@@ -179,6 +188,7 @@ async function addFeed() {
     const guildId = document.getElementById('guild-select').value;
     const link = document.getElementById('rss-link').value.trim();
     const channelId = document.getElementById('channel-select').value;
+    const color = document.getElementById('rss-color').value;
     const btn = document.getElementById('add-btn');
     const spinner = document.getElementById('add-spinner');
 
@@ -198,7 +208,8 @@ async function addFeed() {
             body: JSON.stringify({
                 guild_id: guildId,
                 link: link,
-                channel_id: channelId
+                channel_id: channelId,
+                color: color
             })
         });
 
@@ -217,6 +228,28 @@ async function addFeed() {
     } finally {
         btn.disabled = false;
         spinner.classList.add('d-none');
+    }
+}
+
+async function updateColor(guildId, link, newColor) {
+    try {
+        const response = await fetch('/api/rss/update_color', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                guild_id: guildId,
+                link: link,
+                color: newColor
+            })
+        });
+
+        const res = await response.json();
+        if (res.status !== 'success') {
+             alert("Error updating color: " + res.message);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Failed to update color.");
     }
 }
 

@@ -14,6 +14,57 @@ class rss(commands.Cog):
       # Try id (guid), then link, then title
       return getattr(entry, 'id', getattr(entry, 'link', getattr(entry, 'title', None)))
 
+  def _get_image_url(self, entry):
+      # 1. YouTube: media_thumbnail
+      if hasattr(entry, 'media_thumbnail') and entry.media_thumbnail:
+          return entry.media_thumbnail[0]['url']
+
+      # 2. Media Content (e.g. iDNES)
+      if hasattr(entry, 'media_content') and entry.media_content:
+          for item in entry.media_content:
+              if item.get('type', '').startswith('image/'):
+                  return item['url']
+              # Some feeds might not specify type but have url in media_content
+              if 'url' in item and (item['url'].endswith('.jpg') or item['url'].endswith('.png')):
+                   return item['url']
+
+      # 3. Links
+      if hasattr(entry, 'links'):
+          for link in entry.links:
+              if link.get('type', '').startswith('image/'):
+                  return link['href']
+
+      # 4. Enclosures
+      if hasattr(entry, 'enclosures'):
+            for enclosure in entry.enclosures:
+              if enclosure.get('type', '').startswith('image/'):
+                  return enclosure['href']
+      return None
+
+  def _create_rss_embed(self, entry, feed_title, color_hex):
+      # Parse color
+      try:
+          if color_hex.startswith('#'):
+              color_val = int(color_hex[1:], 16)
+          else:
+              color_val = int(color_hex, 16)
+      except:
+          color_val = 0x2E8B57 # Default SeaGreen
+
+      embed = discord.Embed(
+          title=entry.title,
+          url=entry.link,
+          color=color_val
+      )
+
+      embed.set_footer(text=feed_title)
+
+      image_url = self._get_image_url(entry)
+      if image_url:
+          embed.set_image(url=image_url)
+
+      return embed
+
   @commands.command()
   async def rss(self, ctx, link: str):
       """
@@ -51,7 +102,8 @@ class rss(commands.Cog):
                   "link": link,
                   "channel_id": ctx.channel.id,
                   "last_message": latest_title,
-                  "last_id": latest_id
+                  "last_id": latest_id,
+                  "color": "#2E8B57"
               })
           else:
               # Create a new RSS data entry for this server with the first subscription
@@ -59,17 +111,18 @@ class rss(commands.Cog):
                   "link": link,
                   "channel_id": ctx.channel.id,
                   "last_message": latest_title,
-                  "last_id": latest_id
+                  "last_id": latest_id,
+                  "color": "#2E8B57"
               }]
 
           # Save the updated RSS data
           await save_rss_data(rss_data)
 
-          # Send existing entries (limit to 5 to avoid spam, or just the latest one?)
-          # Previous code sent ALL. Let's limit to 5.
-          await ctx.send(f"Subscribed to {feed.feed.get('title', link)}. Here are the latest entries:")
+          feed_title = feed.feed.get('title', link)
+          await ctx.send(f"Subscribed to {feed_title}. Here are the latest entries:")
           for entry in feed.entries[:5]:
-              await ctx.send(f"**Title:** {entry.title}\n**Link:** {entry.link}")
+              embed = self._create_rss_embed(entry, feed_title, "#2E8B57")
+              await ctx.send(embed=embed)
 
       except Exception as e:
           await ctx.send(f"An error occurred: {e}")
@@ -93,6 +146,7 @@ class rss(commands.Cog):
               channel_id = subscription["channel_id"]
               last_message = subscription.get("last_message")
               last_id = subscription.get("last_id")
+              color = subscription.get("color", "#2E8B57")
 
               try:
                   # Parse the RSS feed
@@ -122,9 +176,11 @@ class rss(commands.Cog):
                   if new_items:
                       channel = self.bot.get_channel(channel_id)
                       if channel:
+                          feed_title = feed.feed.get('title', link)
                           # Send oldest new item first
                           for entry in reversed(new_items):
-                              await channel.send(f"**Title:** {entry.title}\n**Link:** {entry.link}")
+                              embed = self._create_rss_embed(entry, feed_title, color)
+                              await channel.send(embed=embed)
 
                       # Update markers
                       latest = feed.entries[0]
