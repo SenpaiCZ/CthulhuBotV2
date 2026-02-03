@@ -1,5 +1,6 @@
-import aiohttp
 import re
+import asyncio
+import yt_dlp
 
 async def get_youtube_rss_url(url, session=None):
     """
@@ -21,54 +22,28 @@ async def get_youtube_rss_url(url, session=None):
     if channel_id_match:
         return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id_match.group(1)}"
 
-    # 4. Fetch the page to find the RSS URL or Channel ID
-    # This handles handles (@user), custom URLs (/c/name), video pages, etc.
-    local_session = False
-    if session is None:
-        session = aiohttp.ClientSession()
-        local_session = True
+    # 4. Use yt-dlp to find channel ID (Robust method)
+    def fetch_channel_id_with_ytdlp(target_url):
+        ydl_opts = {
+            'quiet': True,
+            'extract_flat': True,
+            'dump_single_json': True,
+            'playlist_items': '0', # specific optimization to not fetch videos
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            try:
+                info = ydl.extract_info(target_url, download=False)
+                # info might be the channel info directly or a playlist
+                return info.get('channel_id') or info.get('id')
+            except Exception as e:
+                # print(f"yt-dlp error: {e}")
+                return None
 
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            "Accept-Language": "en-US,en;q=0.9"
-        }
-
-        async with session.get(url, headers=headers) as response:
-            if response.status == 200:
-                text = await response.text()
-
-                # Search for "rssUrl":"..."
-                # This is often found in the ytInitialData JSON in the source
-                rss_match = re.search(r'"rssUrl":"(https://www\.youtube\.com/feeds/videos\.xml\?channel_id=[^"]+)"', text)
-                if rss_match:
-                    return rss_match.group(1)
-
-                # Search for <link rel="alternate" type="application/rss+xml" ... href="...">
-                link_rel_match = re.search(r'<link rel="alternate" [^>]*href="(https://www\.youtube\.com/feeds/videos\.xml\?channel_id=[^"]+)"', text)
-                if link_rel_match:
-                    return link_rel_match.group(1)
-
-                # Fallback: Search for channelId in meta tags
-                # <meta itemprop="channelId" content="UC...">
-                channel_id_meta = re.search(r'<meta itemprop="channelId" content="(UC[\w-]+)">', text)
-                if channel_id_meta:
-                    return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id_meta.group(1)}"
-
-                # Fallback: Check og:url for channel ID
-                # <meta property="og:url" content="https://www.youtube.com/channel/UC...">
-                og_url_match = re.search(r'<meta property="og:url" content="([^"]+)">', text)
-                if og_url_match:
-                    og_url = og_url_match.group(1)
-                    # Check if it contains /channel/UC...
-                    channel_match = re.search(r'youtube\.com/channel/(UC[\w-]+)', og_url)
-                    if channel_match:
-                        return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_match.group(1)}"
-
+        channel_id = await asyncio.to_thread(fetch_channel_id_with_ytdlp, url)
+        if channel_id and channel_id.startswith("UC"):
+             return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
     except Exception as e:
-        print(f"Error extracting YouTube RSS from {url}: {e}")
-    finally:
-        if local_session:
-            await session.close()
+        print(f"Error extracting YouTube RSS with yt-dlp from {url}: {e}")
 
     return None
