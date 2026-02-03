@@ -48,8 +48,6 @@ def load_settings():
     # 2. Environment Variables
     if os.getenv("DISCORD_TOKEN"):
         settings["token"] = os.getenv("DISCORD_TOKEN")
-    if os.getenv("YOUTUBE_API_KEY"):
-        settings["youtubetoken"] = os.getenv("YOUTUBE_API_KEY")
 
     return settings
 
@@ -84,13 +82,6 @@ async def autoroom_load():
 
 async def autoroom_save(autorooms):
     await _save_json_file(DATA_FOLDER, 'autorooms.json', autorooms)
-
-# --- YouTube Feed ---
-async def youtube_load():
-    return await _load_json_file(DATA_FOLDER, 'youtube_feed.json')
-
-async def youtube_save(youtube_feed):
-    await _save_json_file(DATA_FOLDER, 'youtube_feed.json', youtube_feed)
 
 # --- Session Data ---
 async def load_session_data():

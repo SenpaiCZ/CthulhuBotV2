@@ -3,6 +3,7 @@ import feedparser
 from discord.ext import commands, tasks
 from loadnsave import load_rss_data, save_rss_data
 from asyncio import sleep
+from rss_utils import get_youtube_rss_url
 
 class rss(commands.Cog):
 
@@ -71,6 +72,11 @@ class rss(commands.Cog):
       `[p]rss link` - Add an RSS subscription to the channel where the command was sent from.
       """
       try:
+          # Check for YouTube RSS
+          rss_link = await get_youtube_rss_url(link)
+          if rss_link:
+              link = rss_link
+
           # Parse the RSS feed
           feed = feedparser.parse(link)
           if not feed.entries:

@@ -16,6 +16,7 @@ from loadnsave import (
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
+from rss_utils import get_youtube_rss_url
 
 SOUNDBOARD_FOLDER = "soundboard"
 ALLOWED_EXTENSIONS = {'.mp3', '.wav', '.ogg', '.m4a', '.flac'}
@@ -1056,6 +1057,14 @@ async def rss_add():
 
     if not all([guild_id, channel_id, link]):
         return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    # Check for YouTube RSS
+    try:
+        rss_link = await get_youtube_rss_url(link)
+        if rss_link:
+            link = rss_link
+    except Exception as e:
+        print(f"Error checking YouTube RSS: {e}")
 
     # Validate RSS
     try:
