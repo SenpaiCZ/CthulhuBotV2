@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Sheet Render</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/cthulhu.css') }}" rel="stylesheet">
+    <style>
+        .stat-icon {
+            font-size: 1.2em;
+            vertical-align: middle;
+        }
+
+        /* CoC Sheet Styles */
+        .coc-sheet {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace; /* Retro feel */
+            border: 2px solid var(--cthulhu-green-dark);
+            padding: 20px;
+            border-radius: 5px;
+            width: 800px; /* Fixed width for consistent screenshot */
+            margin: 0; /* No margin, we will screenshot the element */
+        }
+
+        .coc-header {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--cthulhu-green-dark);
+            padding-bottom: 10px;
+        }
+
+        .coc-label {
+            font-size: 0.8em;
+            color: var(--cthulhu-green-main);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .coc-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            border-bottom: 1px dotted #444;
+        }
+
+        .coc-section-title {
+            background-color: var(--cthulhu-green-dark);
+            color: #fff;
+            padding: 5px 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+
+        .coc-characteristics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .coc-stat-box {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .coc-stat-big {
+            font-size: 1.4em;
+            color: var(--cthulhu-green-bright);
+        }
+
+        .coc-status-bar {
+            display: flex;
+            justify-content: space-around;
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+
+        .coc-skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 5px 15px;
+        }
+
+        .coc-skill-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #333;
+            padding: 2px 0;
+            font-size: 0.9em;
+        }
+
+        .coc-skill-name { color: #bbb; }
+        .coc-skill-val { color: var(--cthulhu-green-bright); font-weight: bold; }
+
+        body {
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="coc-sheet">
+        <!-- Bio Header -->
+        <div class="coc-header">
+            <div>
+                <div class="coc-label">Name</div>
+                <div class="coc-value">{{ char.get('NAME', 'Unknown') }}</div>
+            </div>
+            <div>
+                <div class="coc-label">Occupation</div>
+                <div class="coc-value">{{ char.get('Occupation', 'Unknown') }}</div>
+            </div>
+            <div>
+                <div class="coc-label">Age</div>
+                <div class="coc-value">{{ char.get('Age', '') }}</div>
+            </div>
+            <div>
+                <div class="coc-label">Residence</div>
+                <div class="coc-value">{{ char.get('Residence', 'Unknown') }}</div>
+            </div>
+        </div>
+
+        <!-- Characteristics -->
+        <div class="coc-section-title">Characteristics</div>
+        <div class="coc-characteristics">
+            {% for stat in ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU'] %}
+            <div class="coc-stat-box">
+                <div class="coc-label">{{ stat }}</div>
+                <div class="coc-stat-big">
+                    {{ emoji_lib.emojize(emojis.get_stat_emoji(stat), language='alias') }}
+                    {{ char.get(stat, 0) }}
+                </div>
+                <div style="font-size:0.7em; color:#666;">{{ (char.get(stat,0)|int / 2)|round|int }} / {{ (char.get(stat,0)|int / 5)|round|int }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Status -->
+        <div class="coc-section-title">Status</div>
+        <div class="coc-status-bar">
+            <div class="text-center">
+                <div class="coc-label">Hit Points</div>
+                <div class="coc-stat-big text-danger">
+                    {{ emoji_lib.emojize(emojis.get_stat_emoji('HP'), language='alias') }} {{ char.get('HP') }}
+                </div>
+            </div>
+            <div class="text-center">
+                <div class="coc-label">Sanity</div>
+                <div class="coc-stat-big text-warning">
+                    {{ emoji_lib.emojize(emojis.get_stat_emoji('SAN'), language='alias') }} {{ char.get('SAN') }}
+                </div>
+            </div>
+            <div class="text-center">
+                <div class="coc-label">Magic Points</div>
+                <div class="coc-stat-big text-info">
+                    {{ emoji_lib.emojize(emojis.get_stat_emoji('MP'), language='alias') }} {{ char.get('MP') }}
+                </div>
+            </div>
+            <div class="text-center">
+                <div class="coc-label">Luck</div>
+                <div class="coc-stat-big text-success">
+                    {{ emoji_lib.emojize(emojis.get_stat_emoji('LUCK'), language='alias') }} {{ char.get('LUCK') }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Combat & Move -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <div class="coc-stat-box">
+                    <div class="coc-label">Move</div>
+                    <div>{{ char.get('Move') }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="coc-stat-box">
+                    <div class="coc-label">Build</div>
+                    <div>{{ char.get('Build') }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="coc-stat-box">
+                    <div class="coc-label">Dmg Bonus</div>
+                    <div>{{ char.get('Damage Bonus') }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="coc-stat-box">
+                    <div class="coc-label">Dodge</div>
+                    <div>{{ char.get('Dodge') }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skills -->
+        <div class="coc-section-title">Skills</div>
+        <div class="coc-skills-grid">
+            {% set excluded = ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU',
+                               'HP', 'MP', 'SAN', 'LUCK', 'Move', 'Build', 'Damage Bonus', 'Dodge',
+                               'NAME', 'Occupation', 'Age', 'Sex', 'Residence', 'Birthplace',
+                               'Credit Rating', 'Archetype', 'Talent', 'Backstory'] %}
+
+            <!-- Explicit Credit Rating first -->
+            <div class="coc-skill-item">
+                <span class="coc-skill-name">
+                    {{ emoji_lib.emojize(emojis.get_stat_emoji('Credit Rating'), language='alias') }} Credit Rating
+                </span>
+                <span class="coc-skill-val">{{ char.get('Credit Rating', 0) }}</span>
+            </div>
+
+            {% for key, val in char.items()|sort %}
+                {% if key not in excluded and key|length > 0 %}
+                    {% if key.lower() not in ['customskill', 'customskills', 'customskillss'] %}
+                        {# Filter out likely non-skills based on capitalization? CoC skills are usually Capitalized #}
+                        {# Also check if value is a number #}
+                        {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
+                        <div class="coc-skill-item">
+                            <span class="coc-skill-name">
+                                {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}
+                            </span>
+                            <span class="coc-skill-val">{{ val }}</span>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Background & Details -->
+        <div class="coc-section-title">Background & Details</div>
+        <div class="row">
+            {% set backstory_order = [
+                'My Story', 'Personal Description', 'Ideology and Beliefs',
+                'Significant People', 'Meaningful Locations', 'Treasured Possessions',
+                'Traits', 'Injuries and Scars', 'Phobias and Manias',
+                'Arcane Tome and Spells', 'Encounters with Strange Entities',
+                'Fellow Investigators', 'Gear and Possessions',
+                'Spending Level', 'Cash', 'Assets'
+            ] %}
+            {% set char_backstory = char.get('Backstory', {}) %}
+
+            {% for section in backstory_order %}
+                {% if section in char_backstory %}
+                    <div class="col-12 mb-3">
+                        <div class="coc-label" style="font-size: 1em; border-bottom: 1px solid #333; margin-bottom: 5px;">{{ section }}</div>
+                        {% set entries = char_backstory[section] %}
+                        {% if entries and entries|length > 0 %}
+                            {% for entry in entries %}
+                                <p class="text-white small mb-1">{{ entry }}</p>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-white small" style="min-height: 1.2em;">&nbsp;</div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            {% for key, val in char.items()|sort %}
+                {% if key not in excluded and key|length > 0 %}
+                    {% if key.lower() not in ['customskill', 'customskills', 'customskillss'] %}
+                        {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
+                        <div class="col-md-6 mb-2">
+                            <div class="coc-label">{{ key }}</div>
+                            <div class="text-white small" style="white-space: pre-wrap;">{{ val }}</div>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
