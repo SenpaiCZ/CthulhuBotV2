@@ -435,13 +435,13 @@ class newinvestigator(commands.Cog):
             # 1. Message Listener
             def msg_check(m):
                 return m.author == ctx.author and m.channel == ctx.channel
-            tasks.append(self.bot.wait_for('message', check=msg_check))
+            tasks.append(asyncio.create_task(self.bot.wait_for('message', check=msg_check)))
 
             # 2. Reaction Listener (only if list is active)
             if list_msg:
                 def reaction_check(reaction, user):
                     return user == ctx.author and reaction.message.id == list_msg.id and str(reaction.emoji) in page_emojis
-                tasks.append(self.bot.wait_for('reaction_add', check=reaction_check))
+                tasks.append(asyncio.create_task(self.bot.wait_for('reaction_add', check=reaction_check)))
 
             try:
                 # Wait for FIRST interaction (Message OR Reaction)
