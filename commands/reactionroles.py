@@ -7,7 +7,7 @@ class ReactionRoles(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def add_reaction_role(self, guild_id, message_id, emoji_str, role_id):
+    async def add_reaction_role(self, guild_id, message_id, emoji_str, role_id, channel_id=None):
         data = await load_reaction_roles()
         guild_id = str(guild_id)
         message_id = str(message_id)
@@ -19,7 +19,35 @@ class ReactionRoles(commands.Cog):
         if message_id not in data[guild_id]:
             data[guild_id][message_id] = {}
 
-        data[guild_id][message_id][emoji_str] = role_id
+        # Handle data structure (Old vs New)
+        message_data = data[guild_id][message_id]
+        if "roles" in message_data:
+             # Already new format
+             pass
+        elif message_data and not any(k in ["roles", "channel_id"] for k in message_data):
+             # Old format, migrate
+             old_roles = message_data.copy()
+             data[guild_id][message_id] = {"roles": old_roles}
+             message_data = data[guild_id][message_id]
+        elif not message_data:
+             # New entry
+             data[guild_id][message_id] = {"roles": {}}
+             message_data = data[guild_id][message_id]
+
+        # Save channel_id if provided
+        if channel_id:
+            message_data["channel_id"] = str(channel_id)
+
+        # Save role
+        if "roles" in message_data:
+             message_data["roles"][emoji_str] = role_id
+        else:
+             # Should be unreachable if logic above is correct, but fallback to old behavior just in case?
+             # If "roles" is not in message_data, then it must be old format that failed migration?
+             # But migration logic covers empty and non-empty.
+             # Just assume safe.
+             pass
+
         await save_reaction_roles(data)
 
     @commands.command(aliases=['rr', 'reactionrole'])
@@ -81,7 +109,7 @@ class ReactionRoles(commands.Cog):
             await ctx.send(f"I cannot react with {emoji_to_react}. Please make sure I have permission to use external emojis or that the emoji is valid.")
             return
 
-        await self.add_reaction_role(ctx.guild.id, message.id, str(resolved_emoji_str), role.id)
+        await self.add_reaction_role(ctx.guild.id, message.id, str(resolved_emoji_str), role.id, message.channel.id)
         await ctx.send(f"Reaction role setup! Reacting with {emoji_to_react} on that message will give the role **{role.name}**.")
 
     @commands.Cog.listener()
@@ -95,8 +123,15 @@ class ReactionRoles(commands.Cog):
         emoji_str = str(payload.emoji)
 
         if guild_id in data and message_id in data[guild_id]:
-            if emoji_str in data[guild_id][message_id]:
-                role_id = int(data[guild_id][message_id][emoji_str])
+            message_data = data[guild_id][message_id]
+            roles = {}
+            if "roles" in message_data:
+                roles = message_data["roles"]
+            else:
+                roles = message_data
+
+            if emoji_str in roles:
+                role_id = int(roles[emoji_str])
                 guild = self.bot.get_guild(payload.guild_id)
                 if guild:
                     role = guild.get_role(role_id)
@@ -119,8 +154,15 @@ class ReactionRoles(commands.Cog):
         emoji_str = str(payload.emoji)
 
         if guild_id in data and message_id in data[guild_id]:
-            if emoji_str in data[guild_id][message_id]:
-                role_id = int(data[guild_id][message_id][emoji_str])
+            message_data = data[guild_id][message_id]
+            roles = {}
+            if "roles" in message_data:
+                roles = message_data["roles"]
+            else:
+                roles = message_data
+
+            if emoji_str in roles:
+                role_id = int(roles[emoji_str])
                 guild = self.bot.get_guild(payload.guild_id)
                 if guild:
                     role = guild.get_role(role_id)

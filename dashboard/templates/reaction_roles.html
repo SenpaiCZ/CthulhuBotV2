@@ -185,10 +185,22 @@ function renderTable(rules) {
     rules.forEach(rule => {
         const tr = document.createElement('tr');
 
+        // Parse emoji for display
+        let emojiDisplay = rule.emoji;
+        // Regex for custom emojis: <:name:id> or <a:name:id>
+        const customEmojiMatch = rule.emoji.match(/^<a?:.*:(\d+)>$/);
+
+        if (customEmojiMatch) {
+            const emojiId = customEmojiMatch[1];
+            const isAnimated = rule.emoji.startsWith('<a:');
+            const ext = isAnimated ? 'gif' : 'png';
+            emojiDisplay = `<img src="https://cdn.discordapp.com/emojis/${emojiId}.${ext}" alt="${rule.emoji}" title="${rule.emoji}" style="width: 32px; height: 32px; object-fit: contain;">`;
+        }
+
         tr.innerHTML = `
             <td>${rule.guild_name} <br> <small class="text-muted">${rule.guild_id}</small></td>
             <td>${rule.message_id}</td>
-            <td>${rule.emoji}</td>
+            <td>${emojiDisplay}</td>
             <td>${rule.role_name} <br> <small class="text-muted">${rule.role_id}</small></td>
             <td>
                 <button class="btn btn-danger btn-sm" onclick="deleteRule('${rule.guild_id}', '${rule.message_id}', '${rule.emoji}')">
