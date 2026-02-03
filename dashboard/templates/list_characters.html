@@ -119,8 +119,7 @@
                     <tr>
                         <th>Player</th>
                         <th>Character</th>
-                        <th>Stats</th>
-                        <th>Actions</th>
+                        <th>View Sheet</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -132,12 +131,6 @@
                             </span>
                         </td>
                         <td>{{ char.get('NAME', 'Unknown') }}</td>
-                        <td>
-                            <span title="Strength" data-bs-toggle="tooltip">{{ emoji_lib.emojize(emojis.get_stat_emoji('STR'), language='alias') }} {{ char.get('STR') }}</span> /
-                            <span title="Dexterity" data-bs-toggle="tooltip">{{ emoji_lib.emojize(emojis.get_stat_emoji('DEX'), language='alias') }} {{ char.get('DEX') }}</span> /
-                            <span title="Power" data-bs-toggle="tooltip">{{ emoji_lib.emojize(emojis.get_stat_emoji('POW'), language='alias') }} {{ char.get('POW') }}</span> /
-                            <span title="Luck" data-bs-toggle="tooltip">{{ emoji_lib.emojize(emojis.get_stat_emoji('LUCK'), language='alias') }} {{ char.get('LUCK') }}</span>
-                        </td>
                         <td>
                             <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modal-{{server_id}}-{{user_id}}">
                                 <i class="bi bi-file-earmark-person"></i> View Sheet
@@ -270,15 +263,17 @@
 
                                             {% for key, val in char.items()|sort %}
                                                 {% if key not in excluded and key|length > 0 %}
-                                                    {# Filter out likely non-skills based on capitalization? CoC skills are usually Capitalized #}
-                                                    {# Also check if value is a number #}
-                                                    {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
-                                                    <div class="coc-skill-item">
-                                                        <span class="coc-skill-name">
-                                                            {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}
-                                                        </span>
-                                                        <span class="coc-skill-val">{{ val }}</span>
-                                                    </div>
+                                                    {% if key.lower() not in ['customskill', 'customskills', 'customskillss'] %}
+                                                        {# Filter out likely non-skills based on capitalization? CoC skills are usually Capitalized #}
+                                                        {# Also check if value is a number #}
+                                                        {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
+                                                        <div class="coc-skill-item">
+                                                            <span class="coc-skill-name">
+                                                                {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}
+                                                            </span>
+                                                            <span class="coc-skill-val">{{ val }}</span>
+                                                        </div>
+                                                        {% endif %}
                                                     {% endif %}
                                                 {% endif %}
                                             {% endfor %}
@@ -289,11 +284,13 @@
                                         <div class="row">
                                             {% for key, val in char.items()|sort %}
                                                 {% if key not in excluded and key|length > 0 %}
-                                                    {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
-                                                    <div class="col-md-6 mb-2">
-                                                        <div class="coc-label">{{ key }}</div>
-                                                        <div class="text-white small" style="white-space: pre-wrap;">{{ val }}</div>
-                                                    </div>
+                                                    {% if key.lower() not in ['customskill', 'customskills', 'customskillss'] %}
+                                                        {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
+                                                        <div class="col-md-6 mb-2">
+                                                            <div class="coc-label">{{ key }}</div>
+                                                            <div class="text-white small" style="white-space: pre-wrap;">{{ val }}</div>
+                                                        </div>
+                                                        {% endif %}
                                                     {% endif %}
                                                 {% endif %}
                                             {% endfor %}
@@ -320,8 +317,7 @@
             <tr>
                 <th>Player</th>
                 <th>Character</th>
-                <th>Stats</th>
-                <th>Actions</th>
+                <th>View Sheet</th>
             </tr>
         </thead>
         <tbody>
@@ -334,12 +330,6 @@
                         </span>
                     </td>
                     <td>{{ char.get('NAME', 'Unknown') }}</td>
-                    <td>
-                        <span title="Strength" data-bs-toggle="tooltip">{{ emoji_lib.emojize(emojis.get_stat_emoji('STR'), language='alias') }} {{ char.get('STR') }}</span> /
-                        <span title="Dexterity" data-bs-toggle="tooltip">{{ emoji_lib.emojize(emojis.get_stat_emoji('DEX'), language='alias') }} {{ char.get('DEX') }}</span> /
-                        <span title="Power" data-bs-toggle="tooltip">{{ emoji_lib.emojize(emojis.get_stat_emoji('POW'), language='alias') }} {{ char.get('POW') }}</span> /
-                        <span title="Luck" data-bs-toggle="tooltip">{{ emoji_lib.emojize(emojis.get_stat_emoji('LUCK'), language='alias') }} {{ char.get('LUCK') }}</span>
-                    </td>
                     <td>
                         <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modal-ret-{{user_id}}-{{loop.index}}">
                             <i class="bi bi-file-earmark-person"></i> View Sheet
@@ -361,60 +351,150 @@
                             <div class="modal-body">
                                  <!-- Sheet View -->
                                  <div id="sheet-ret-{{user_id}}-{{loop.index}}" class="char-sheet-container coc-sheet">
-                                    <!-- Bio Header -->
-                                    <div class="coc-header">
-                                        <div>
-                                            <div class="coc-label">Name</div>
-                                            <div class="coc-value">{{ char.get('NAME', 'Unknown') }}</div>
-                                        </div>
-                                        <div>
-                                            <div class="coc-label">Occupation</div>
-                                            <div class="coc-value">{{ char.get('Occupation', 'Unknown') }}</div>
-                                        </div>
-                                    </div>
 
-                                    <div class="coc-section-title">Characteristics</div>
-                                    <div class="coc-characteristics">
-                                        {% for stat in ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU'] %}
-                                        <div class="coc-stat-box">
-                                            <div class="coc-label">{{ stat }}</div>
-                                            <div class="coc-stat-big">
-                                                {{ emoji_lib.emojize(emojis.get_stat_emoji(stat), language='alias') }}
-                                                {{ char.get(stat, 0) }}
+                                        <!-- Bio Header -->
+                                        <div class="coc-header">
+                                            <div>
+                                                <div class="coc-label">Name</div>
+                                                <div class="coc-value">{{ char.get('NAME', 'Unknown') }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="coc-label">Occupation</div>
+                                                <div class="coc-value">{{ char.get('Occupation', 'Unknown') }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="coc-label">Age</div>
+                                                <div class="coc-value">{{ char.get('Age', '') }}</div>
+                                            </div>
+                                            <div>
+                                                <div class="coc-label">Residence</div>
+                                                <div class="coc-value">{{ char.get('Residence', '') }}</div>
                                             </div>
                                         </div>
-                                        {% endfor %}
-                                    </div>
 
-                                    <div class="coc-section-title">Skills & Stats</div>
-                                    <div class="coc-skills-grid">
-                                        {% set excluded_ret = ['NAME', 'Occupation', 'STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU'] %}
-                                        {% for key, val in char.items()|sort %}
-                                            {% if key not in excluded_ret %}
-                                                {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
-                                                <div class="coc-skill-item">
-                                                    <span class="coc-skill-name">{{ key }}</span>
-                                                    <span class="coc-skill-val">{{ val }}</span>
+                                        <!-- Characteristics -->
+                                        <div class="coc-section-title">Characteristics</div>
+                                        <div class="coc-characteristics">
+                                            {% for stat in ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU'] %}
+                                            <div class="coc-stat-box">
+                                                <div class="coc-label">{{ stat }}</div>
+                                                <div class="coc-stat-big">
+                                                    {{ emoji_lib.emojize(emojis.get_stat_emoji(stat), language='alias') }}
+                                                    {{ char.get(stat, 0) }}
                                                 </div>
-                                                {% endif %}
-                                            {% endif %}
-                                        {% endfor %}
-                                    </div>
+                                                <div style="font-size:0.7em; color:#666;">{{ (char.get(stat,0)|int / 2)|round|int }} / {{ (char.get(stat,0)|int / 5)|round|int }}</div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
 
-                                    <div class="coc-section-title">Details</div>
-                                    <div class="row">
-                                        {% for key, val in char.items()|sort %}
-                                            {% if key not in excluded_ret %}
-                                                {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
-                                                <div class="col-md-6 mb-2">
-                                                    <div class="coc-label">{{ key }}</div>
-                                                    <div class="text-white small" style="white-space: pre-wrap;">{{ val }}</div>
+                                        <!-- Status -->
+                                        <div class="coc-section-title">Status</div>
+                                        <div class="coc-status-bar">
+                                            <div class="text-center">
+                                                <div class="coc-label">Hit Points</div>
+                                                <div class="coc-stat-big text-danger">
+                                                    {{ emoji_lib.emojize(emojis.get_stat_emoji('HP'), language='alias') }} {{ char.get('HP') }}
                                                 </div>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="coc-label">Sanity</div>
+                                                <div class="coc-stat-big text-warning">
+                                                    {{ emoji_lib.emojize(emojis.get_stat_emoji('SAN'), language='alias') }} {{ char.get('SAN') }}
+                                                </div>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="coc-label">Magic Points</div>
+                                                <div class="coc-stat-big text-info">
+                                                    {{ emoji_lib.emojize(emojis.get_stat_emoji('MP'), language='alias') }} {{ char.get('MP') }}
+                                                </div>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="coc-label">Luck</div>
+                                                <div class="coc-stat-big text-success">
+                                                    {{ emoji_lib.emojize(emojis.get_stat_emoji('LUCK'), language='alias') }} {{ char.get('LUCK') }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Combat & Move -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
+                                                <div class="coc-stat-box">
+                                                    <div class="coc-label">Move</div>
+                                                    <div>{{ char.get('Move') }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="coc-stat-box">
+                                                    <div class="coc-label">Build</div>
+                                                    <div>{{ char.get('Build') }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="coc-stat-box">
+                                                    <div class="coc-label">Dmg Bonus</div>
+                                                    <div>{{ char.get('Damage Bonus') }}</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="coc-stat-box">
+                                                    <div class="coc-label">Dodge</div>
+                                                    <div>{{ char.get('Dodge') }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Skills -->
+                                        <div class="coc-section-title">Skills</div>
+                                        <div class="coc-skills-grid">
+                                            {% set excluded = ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU',
+                                                               'HP', 'MP', 'SAN', 'LUCK', 'Move', 'Build', 'Damage Bonus', 'Dodge',
+                                                               'NAME', 'Occupation', 'Age', 'Sex', 'Residence', 'Birthplace',
+                                                               'Credit Rating', 'Archetype', 'Talent'] %}
+
+                                            <!-- Explicit Credit Rating first -->
+                                            <div class="coc-skill-item">
+                                                <span class="coc-skill-name">
+                                                    {{ emoji_lib.emojize(emojis.get_stat_emoji('Credit Rating'), language='alias') }} Credit Rating
+                                                </span>
+                                                <span class="coc-skill-val">{{ char.get('Credit Rating', 0) }}</span>
+                                            </div>
+
+                                            {% for key, val in char.items()|sort %}
+                                                {% if key not in excluded and key|length > 0 %}
+                                                    {% if key.lower() not in ['customskill', 'customskills', 'customskillss'] %}
+                                                        {# Filter out likely non-skills based on capitalization? CoC skills are usually Capitalized #}
+                                                        {# Also check if value is a number #}
+                                                        {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
+                                                        <div class="coc-skill-item">
+                                                            <span class="coc-skill-name">
+                                                                {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}
+                                                            </span>
+                                                            <span class="coc-skill-val">{{ val }}</span>
+                                                        </div>
+                                                        {% endif %}
+                                                    {% endif %}
                                                 {% endif %}
-                                            {% endif %}
-                                        {% endfor %}
+                                            {% endfor %}
+                                        </div>
+
+                                        <!-- Background & Details -->
+                                        <div class="coc-section-title">Background & Details</div>
+                                        <div class="row">
+                                            {% for key, val in char.items()|sort %}
+                                                {% if key not in excluded and key|length > 0 %}
+                                                    {% if key.lower() not in ['customskill', 'customskills', 'customskillss'] %}
+                                                        {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
+                                                        <div class="col-md-6 mb-2">
+                                                            <div class="coc-label">{{ key }}</div>
+                                                            <div class="text-white small" style="white-space: pre-wrap;">{{ val }}</div>
+                                                        </div>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
                                     </div>
-                                </div>
 
                                 <!-- JSON View -->
                                 <div id="json-ret-{{user_id}}-{{loop.index}}" style="display: none;">
