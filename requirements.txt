@@ -8,3 +8,4 @@ quart
 hypercorn
 PyNaCl
 yt-dlp
+emoji
