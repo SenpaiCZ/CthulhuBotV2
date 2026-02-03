@@ -147,6 +147,7 @@
                                 <div class="modal-header">
                                     <h5 class="modal-title">{{ char.get('NAME') }}</h5>
                                     <div class="ms-auto">
+                                        <button class="btn btn-sm btn-outline-success me-2" id="btn-copy-{{server_id}}-{{user_id}}" style="display:none;" onclick="copyJson('{{server_id}}-{{user_id}}')"><i class="bi bi-clipboard"></i> Copy JSON</button>
                                         <button class="btn btn-sm btn-outline-secondary me-2" id="btn-toggle-{{server_id}}-{{user_id}}" onclick="toggleJson('{{server_id}}-{{user_id}}')">Show JSON</button>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
@@ -374,6 +375,7 @@
                             <div class="modal-header">
                                 <h5 class="modal-title">{{ char.get('NAME') }} (Retired)</h5>
                                 <div class="ms-auto">
+                                    <button class="btn btn-sm btn-outline-success me-2" id="btn-copy-ret-{{user_id}}-{{loop.index}}" style="display:none;" onclick="copyJson('ret-{{user_id}}-{{loop.index}}')"><i class="bi bi-clipboard"></i> Copy JSON</button>
                                     <button class="btn btn-sm btn-outline-secondary me-2" id="btn-toggle-ret-{{user_id}}-{{loop.index}}" onclick="toggleJson('ret-{{user_id}}-{{loop.index}}')">Show JSON</button>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
@@ -571,15 +573,40 @@
         var sheet = document.getElementById('sheet-' + id);
         var json = document.getElementById('json-' + id);
         var btn = document.getElementById('btn-toggle-' + id);
+        var btnCopy = document.getElementById('btn-copy-' + id);
+
         if (sheet.style.display === 'none') {
             sheet.style.display = 'block';
             json.style.display = 'none';
             btn.innerText = 'Show JSON';
+            if (btnCopy) btnCopy.style.display = 'none';
         } else {
             sheet.style.display = 'none';
             json.style.display = 'block';
             btn.innerText = 'Show Sheet';
+            if (btnCopy) btnCopy.style.display = 'inline-block';
         }
+    }
+
+    function copyJson(id) {
+        var jsonContent = document.querySelector('#json-' + id + ' pre').innerText;
+        navigator.clipboard.writeText(jsonContent).then(function() {
+            var btn = document.getElementById('btn-copy-' + id);
+            var originalHtml = btn.innerHTML;
+
+            btn.classList.remove('btn-outline-success');
+            btn.classList.add('btn-success');
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
+
+            setTimeout(function() {
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-outline-success');
+                btn.innerHTML = originalHtml;
+            }, 2000);
+        }, function(err) {
+            console.error('Async: Could not copy text: ', err);
+            alert('Failed to copy JSON to clipboard.');
+        });
     }
 
     // Initialize Tooltips
