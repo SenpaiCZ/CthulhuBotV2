@@ -44,13 +44,26 @@ async def get_youtube_rss_url(url, session=None):
                 if rss_match:
                     return rss_match.group(1)
 
+                # Search for <link rel="alternate" type="application/rss+xml" ... href="...">
+                link_rel_match = re.search(r'<link rel="alternate" [^>]*href="(https://www\.youtube\.com/feeds/videos\.xml\?channel_id=[^"]+)"', text)
+                if link_rel_match:
+                    return link_rel_match.group(1)
+
                 # Fallback: Search for channelId in meta tags
                 # <meta itemprop="channelId" content="UC...">
-                # <meta property="og:url" content="https://www.youtube.com/channel/UC...">
-
                 channel_id_meta = re.search(r'<meta itemprop="channelId" content="(UC[\w-]+)">', text)
                 if channel_id_meta:
                     return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_id_meta.group(1)}"
+
+                # Fallback: Check og:url for channel ID
+                # <meta property="og:url" content="https://www.youtube.com/channel/UC...">
+                og_url_match = re.search(r'<meta property="og:url" content="([^"]+)">', text)
+                if og_url_match:
+                    og_url = og_url_match.group(1)
+                    # Check if it contains /channel/UC...
+                    channel_match = re.search(r'youtube\.com/channel/(UC[\w-]+)', og_url)
+                    if channel_match:
+                        return f"https://www.youtube.com/feeds/videos.xml?channel_id={channel_match.group(1)}"
 
     except Exception as e:
         print(f"Error extracting YouTube RSS from {url}: {e}")
