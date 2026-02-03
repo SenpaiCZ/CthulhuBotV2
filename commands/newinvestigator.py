@@ -79,9 +79,14 @@ class newinvestigator(commands.Cog):
         name = await self.get_input(ctx, "Please enter the **Name** of your new investigator:")
         if name is None: return
 
+        # Step 2: Residence
+        residence = await self.get_input(ctx, "Please enter the **Residence** of your new investigator (e.g. Arkham, Boston):")
+        if residence is None: return
+
         # Initialize basic character structure
         new_char = {
             "NAME": name,
+            "Residence": residence,
             "STR": 0, "DEX": 0, "CON": 0, "INT": 0, "POW": 0, "EDU": 0, "SIZ": 0, "APP": 0,
             "SAN": 0, "HP": 0, "MP": 0, "LUCK": 0,
             "Move": 0, "Build": 0, "Damage Bonus": 0,
@@ -642,7 +647,7 @@ class newinvestigator(commands.Cog):
 
         # Show all skills and default values
         excluded_keys = [
-            "NAME", "STR", "DEX", "CON", "INT", "POW", "EDU", "SIZ", "APP",
+            "NAME", "Residence", "STR", "DEX", "CON", "INT", "POW", "EDU", "SIZ", "APP",
             "SAN", "HP", "MP", "LUCK", "Move", "Build", "Damage Bonus", "Age",
             "Backstory", "CustomSkill", "CustomSkills", "CustomSkillss"
         ]

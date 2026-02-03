@@ -58,6 +58,7 @@ class mychar(commands.Cog):
       embed = discord.Embed(title=f"{name}'s stats and skills", description=f"Stats - {page}/{maxpage}", color=discord.Color.green())
       if page == 1:  
         for i in player_stats[server_id][user_id]:
+          if i == "Residence": continue
           stat_value = player_stats[server_id][user_id][i]
           if isinstance(stat_value, dict): continue
           limiter = limiter + 1
@@ -68,6 +69,12 @@ class mychar(commands.Cog):
             stat_value = player_stats[server_id][user_id][i]
             occ_emoji = occupation_emoji.get_occupation_emoji(stat_value)
             stat_value = f"{stat_value} {occ_emoji}"
+            embed.add_field(name=f"{i}{get_stat_emoji(i)}", value=f"{stat_value}\n ", inline=True)
+
+            residence = player_stats[server_id][user_id].get("Residence", "Unknown")
+            embed.add_field(name=f"Residence{get_stat_emoji('Residence')}", value=f"{residence}\n ", inline=True)
+            limiter += 1
+            continue
           elif i == "Move":
             if player_stats[server_id][user_id]["DEX"] != 0 and \
                 player_stats[server_id][user_id]["SIZ"] != 0 and \
@@ -161,6 +168,7 @@ class mychar(commands.Cog):
             embed.add_field(name=f"{i}{get_stat_emoji(i)}", value=f"{stat_value}\n {description}", inline=True)
       if page == 2:
         for i in player_stats[server_id][user_id]:
+          if i == "Residence": continue
           if isinstance(player_stats[server_id][user_id][i], dict): continue
           limiter = limiter + 1
           if i == "NAME":
@@ -175,6 +183,7 @@ class mychar(commands.Cog):
               embed.add_field(name=f"{i}{get_stat_emoji(i)}", value=f"**{stat_value}**/{stat_value//2}/{stat_value//5}\n{description}", inline=True)
       if page == 3:
         for i in player_stats[server_id][user_id]:
+          if i == "Residence": continue
           if isinstance(player_stats[server_id][user_id][i], dict): continue
           limiter = limiter + 1
           if i == "NAME":
