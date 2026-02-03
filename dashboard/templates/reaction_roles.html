@@ -14,17 +14,23 @@
             </div>
             <div class="card-body">
                 <form id="add-rr-form" class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="guild-select" class="form-label">Server</label>
                         <select class="form-select" id="guild-select" required>
                             <option value="" selected disabled>Select Server...</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
+                        <label for="channel-select" class="form-label">Channel</label>
+                        <select class="form-select" id="channel-select" required disabled>
+                            <option value="" selected disabled>Select Channel...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
                         <label for="message-id" class="form-label">Message ID</label>
                         <input type="text" class="form-control" id="message-id" placeholder="123456789..." required>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="role-select" class="form-label">Role</label>
                         <select class="form-select" id="role-select" required disabled>
                             <option value="" selected disabled>Select Role...</option>
@@ -34,7 +40,7 @@
                         <label for="emoji-input" class="form-label">Emoji</label>
                         <input type="text" class="form-control" id="emoji-input" placeholder="👍" required>
                     </div>
-                    <div class="col-md-1 d-flex align-items-end">
+                    <div class="col-md-2 d-flex align-items-end">
                         <button type="submit" class="btn btn-success w-100">Add</button>
                     </div>
                 </form>
@@ -83,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('guild-select').addEventListener('change', (e) => {
         updateRoleSelect(e.target.value);
+        updateChannelSelect(e.target.value);
     });
 
     document.getElementById('add-rr-form').addEventListener('submit', async (e) => {
@@ -145,6 +152,25 @@ function updateRoleSelect(guildId) {
     }
 }
 
+function updateChannelSelect(guildId) {
+    const channelSelect = document.getElementById('channel-select');
+    channelSelect.innerHTML = '<option value="" selected disabled>Select Channel...</option>';
+    channelSelect.disabled = true;
+
+    if (!guildId || !globalData) return;
+
+    const guild = globalData.guilds.find(g => g.id === guildId);
+    if (guild && guild.channels) {
+        guild.channels.forEach(channel => {
+            const option = document.createElement('option');
+            option.value = channel.id;
+            option.textContent = channel.name;
+            channelSelect.appendChild(option);
+        });
+        channelSelect.disabled = false;
+    }
+}
+
 function renderTable(rules) {
     const tbody = document.querySelector('#rules-table tbody');
     tbody.innerHTML = '';
@@ -176,11 +202,12 @@ function renderTable(rules) {
 
 async function addRule() {
     const guildId = document.getElementById('guild-select').value;
+    const channelId = document.getElementById('channel-select').value;
     const messageId = document.getElementById('message-id').value.trim();
     const roleId = document.getElementById('role-select').value;
     const emoji = document.getElementById('emoji-input').value.trim();
 
-    if (!guildId || !messageId || !roleId || !emoji) {
+    if (!guildId || !channelId || !messageId || !roleId || !emoji) {
         alert("Please fill in all fields.");
         return;
     }
@@ -191,6 +218,7 @@ async function addRule() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 guild_id: guildId,
+                channel_id: channelId,
                 message_id: messageId,
                 role_id: roleId,
                 emoji: emoji

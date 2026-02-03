@@ -1,3 +1,4 @@
+import re
 import discord
 from discord.ext import commands
 from loadnsave import load_reaction_roles, save_reaction_roles
@@ -56,18 +57,32 @@ class ReactionRoles(commands.Cog):
         # If the user passed a custom emoji string like <:name:id>, discord.py might have already parsed it?
         # No, emoji is str here.
 
-        # If the user reacts to the bot message with the emoji, we can capture it?
-        # But here we are passing it as an argument.
+        resolved_emoji_str = emoji
+        emoji_to_react = emoji
+
+        # Check for custom ID format :12345: or just 12345 (if interpreted as string)
+        custom_id_match = re.match(r'^:?(\d+):?$', emoji)
+        if custom_id_match:
+            emoji_id = int(custom_id_match.group(1))
+            custom_emoji = self.bot.get_emoji(emoji_id)
+            if custom_emoji:
+                resolved_emoji_str = str(custom_emoji)
+                emoji_to_react = custom_emoji
+            else:
+                # Can't find it, maybe try to use it as is if it's a valid ID for another server?
+                # But we can't react with it if we don't have it.
+                await ctx.send(f"I cannot find the emoji with ID {emoji_id}. Make sure I am in the server where this emoji is from.")
+                return
 
         # We need to ensure the bot can use the emoji to react.
         try:
-            await message.add_reaction(emoji)
+            await message.add_reaction(emoji_to_react)
         except discord.HTTPException:
-            await ctx.send(f"I cannot react with {emoji}. Please make sure I have permission to use external emojis or that the emoji is valid.")
+            await ctx.send(f"I cannot react with {emoji_to_react}. Please make sure I have permission to use external emojis or that the emoji is valid.")
             return
 
-        await self.add_reaction_role(ctx.guild.id, message.id, str(emoji), role.id)
-        await ctx.send(f"Reaction role setup! Reacting with {emoji} on that message will give the role **{role.name}**.")
+        await self.add_reaction_role(ctx.guild.id, message.id, str(resolved_emoji_str), role.id)
+        await ctx.send(f"Reaction role setup! Reacting with {emoji_to_react} on that message will give the role **{role.name}**.")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):

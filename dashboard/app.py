@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import discord
 import asyncio
 import emoji
@@ -786,10 +787,15 @@ async def reaction_roles_data():
         # Sort roles by name
         roles.sort(key=lambda x: x['name'])
 
+        channels = []
+        for channel in guild.text_channels:
+             channels.append({"id": str(channel.id), "name": channel.name})
+
         guilds_data.append({
             "id": str(guild.id),
             "name": guild.name,
-            "roles": roles
+            "roles": roles,
+            "channels": channels
         })
 
     return jsonify({
@@ -806,9 +812,27 @@ async def reaction_roles_add():
     message_id = data_in.get('message_id')
     role_id = data_in.get('role_id')
     emoji_str = data_in.get('emoji')
+    channel_id = data_in.get('channel_id')
 
     if not all([guild_id, message_id, role_id, emoji_str]):
         return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    resolved_emoji = emoji_str
+    emoji_to_react = emoji_str
+
+    # Resolve Emoji
+    # Check for custom ID format :12345: or just 12345
+    custom_id_match = re.match(r'^:?(\d+):?$', emoji_str)
+    if custom_id_match:
+        emoji_id = int(custom_id_match.group(1))
+        if app.bot:
+            custom_emoji = app.bot.get_emoji(emoji_id)
+            if custom_emoji:
+                resolved_emoji = str(custom_emoji) # <:name:id>
+                emoji_to_react = custom_emoji
+            else:
+                # If bot doesn't have it, we can't really verify it or use it easily
+                pass
 
     # Load, Update, Save
     data = await load_reaction_roles()
@@ -818,22 +842,26 @@ async def reaction_roles_add():
     if message_id not in data[guild_id]:
         data[guild_id][message_id] = {}
 
-    data[guild_id][message_id][emoji_str] = str(role_id)
+    data[guild_id][message_id][resolved_emoji] = str(role_id)
 
     await save_reaction_roles(data)
 
-    # Optional: Try to react to the message if the bot can find it
-    # We do this asynchronously without waiting or failing the request
+    # Try to react to the message
     try:
-        if app.bot:
+        if app.bot and channel_id:
             guild = app.bot.get_guild(int(guild_id))
             if guild:
-                # We don't know the channel, so we can't easily fetch the message to react.
-                # We would need to search all channels or store channel_id.
-                # For now, we skip the auto-react from dashboard add, user must react themselves or ensure bot reacts.
-                pass
-    except Exception:
-        pass
+                channel = guild.get_channel(int(channel_id))
+                if channel:
+                    try:
+                        message = await channel.fetch_message(int(message_id))
+                        await message.add_reaction(emoji_to_react)
+                    except discord.NotFound:
+                        print(f"Message {message_id} not found in channel {channel_id}")
+                    except discord.HTTPException as e:
+                        print(f"Failed to add reaction: {e}")
+    except Exception as e:
+        print(f"Error in reaction role setup: {e}")
 
     return jsonify({"status": "success"})
 
