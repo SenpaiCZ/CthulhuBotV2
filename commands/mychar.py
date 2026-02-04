@@ -215,6 +215,11 @@ class mychar(commands.Cog):
               embed.add_field(name=f"{i}{get_stat_emoji(i)}", value=f"**{stat_value}**/{stat_value//2}/{stat_value//5}\n{description}", inline=True)
       if page == 4:
         backstory_data = char_data["Backstory"]
+
+        # Display Archetype first if present
+        if "Archetype" in char_data:
+             embed.add_field(name="Archetype", value=char_data["Archetype"], inline=False)
+
         # Ensure Pulp Talents are shown first if present, assuming insertion order or explicit check
         # Explicit check to be safe
         if "Pulp Talents" in backstory_data:
