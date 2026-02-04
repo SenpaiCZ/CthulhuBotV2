@@ -9,7 +9,8 @@ from discord.ui import View, Button, Select
 from loadnsave import (
     load_player_stats, save_player_stats,
     load_retired_characters_data, save_retired_characters_data,
-    load_occupations_data, load_pulp_talents_data
+    load_occupations_data, load_pulp_talents_data,
+    load_archetype_data
 )
 
 class GameModeView(View):
@@ -153,6 +154,60 @@ class TalentOptionView(View):
             return False
         return True
 
+class ArchetypeSelect(Select):
+    def __init__(self, archetypes_data):
+        options = []
+        for name in sorted(archetypes_data.keys()):
+            options.append(discord.SelectOption(label=name, value=name))
+
+        super().__init__(placeholder="Choose a Pulp Archetype...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        self.view.selected_archetype = self.values[0]
+        await self.view.update_info(interaction)
+
+class ArchetypeSelectView(View):
+    def __init__(self, ctx, archetypes_data):
+        super().__init__(timeout=300)
+        self.ctx = ctx
+        self.archetypes_data = archetypes_data
+        self.selected_archetype = None
+        self.message = None
+        self.add_item(ArchetypeSelect(archetypes_data))
+
+    @discord.ui.button(label="Confirm Selection", style=discord.ButtonStyle.success, row=1)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("Not your session!", ephemeral=True)
+
+        if not self.selected_archetype:
+             return await interaction.response.send_message("Please select an archetype first.", ephemeral=True)
+
+        self.stop()
+
+    async def update_info(self, interaction):
+        if not self.selected_archetype:
+            return
+
+        info = self.archetypes_data[self.selected_archetype]
+        embed = discord.Embed(title=f"Archetype: {self.selected_archetype}", description=info.get("description", ""), color=discord.Color.blue())
+
+        if "link" in info and info["link"]:
+            embed.set_thumbnail(url=info["link"])
+
+        adjustments = info.get("adjustments", [])
+        if adjustments:
+            embed.add_field(name="Adjustments", value="\n".join(adjustments), inline=False)
+
+        await self.message.edit(embed=embed, view=self)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message("Not your session!", ephemeral=True)
+            return False
+        return True
+
 class newinvestigator(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -248,80 +303,11 @@ class newinvestigator(commands.Cog):
         new_char["Game Mode"] = view.mode
         await msg.edit(content=f"Selected Game Mode: **{view.mode}**", view=None)
 
-        # Step 1.6: Pulp Talents (if applicable)
-        pulp_talents_list = []
+        # Step 1.6: Pulp Archetype (if applicable)
+        pulp_talents_list = [] # Initialize for later
         if view.mode == "Pulp of Cthulhu":
-            await ctx.send("As a Pulp Hero, you must select **two Pulp Talents**.")
-            pulp_data = await load_pulp_talents_data()
-
-            # Display all talents first
-            await self.display_pulp_talents(ctx, pulp_data)
-
-            # Map Name -> Full String for easier lookup
-            # Assume unique names
-            full_map = {}
-            for cat, t_list in pulp_data.items():
-                for t in t_list:
-                    if "**" in t:
-                        n = t.split("**")[1]
-                        full_map[n] = t
-
-            while True:
-                pulp_talents_list = []
-                for i in range(2):
-                    while True:
-                        # Select Category
-                        cat_view = CategoryView(ctx, pulp_data)
-                        cat_msg = await ctx.send(f"Select category for Talent #{i+1}:", view=cat_view)
-                        await cat_view.wait()
-
-                        if not cat_view.selected_category:
-                            await ctx.send("Talent selection timed out.")
-                            return
-
-                        category = cat_view.selected_category
-                        await cat_msg.delete()
-
-                        # Select Talent
-                        talents_in_cat = pulp_data[category]
-                        talent_view = TalentOptionView(ctx, talents_in_cat, pulp_talents_list, full_map)
-                        t_msg = await ctx.send(f"Select a talent from **{category.capitalize()}**:", view=talent_view)
-                        await talent_view.wait()
-
-                        if not talent_view.selected_talent_name:
-                            await ctx.send("Talent selection timed out.")
-                            return
-
-                        if talent_view.selected_talent_name == "BACK":
-                            await t_msg.delete()
-                            continue
-
-                        selected_name = talent_view.selected_talent_name
-                        selected_full = full_map.get(selected_name, selected_name)
-                        pulp_talents_list.append(selected_full)
-
-                        await t_msg.edit(content=f"Selected Talent #{i+1}: **{selected_name}**", view=None)
-                        break
-
-                # Confirmation
-                confirm_view = TalentConfirmationView(ctx)
-                talents_display = "\n".join([f"{idx+1}. {t}" for idx, t in enumerate(pulp_talents_list)])
-                confirm_msg = await ctx.send(
-                    f"You have selected:\n{talents_display}\n\nAre you happy with these choices?",
-                    view=confirm_view
-                )
-
-                await confirm_view.wait()
-
-                if confirm_view.confirmed is None:
-                    await ctx.send("Confirmation timed out.")
-                    return
-
-                if confirm_view.confirmed:
-                    await confirm_msg.edit(view=None)
-                    break
-                else:
-                    await confirm_msg.edit(content="Restarting talent selection...", view=None)
+             if not await self.select_pulp_archetype(ctx, new_char):
+                 return # Timeout
 
         # Step 2: Residence
         residence = await self.get_input(ctx, "Please enter the **Residence** of your new investigator (e.g. Arkham, Boston):")
@@ -382,8 +368,44 @@ class newinvestigator(commands.Cog):
             await ctx.send("Invalid mode selected. Please try `!newinv` again.")
             return
 
+        # Pulp Core Characteristic Adjustment
+        if char_data.get("Game Mode") == "Pulp of Cthulhu" and "Archetype Info" in char_data:
+             await self.apply_archetype_core_stat(ctx, char_data)
+
         # Proceed to Age Selection
         await self.select_age(ctx, char_data, player_stats)
+
+    async def apply_archetype_core_stat(self, ctx, char_data):
+        info = char_data["Archetype Info"]
+        adjustments = info.get("adjustments", [])
+        options = self.get_archetype_core_options(adjustments)
+
+        if not options:
+            return
+
+        selected_stat = options[0]
+        if len(options) > 1:
+            # User choice
+            while True:
+                prompt = f"Your Archetype ({char_data['Archetype']}) allows you to choose a **Core Characteristic** from: **{', '.join(options)}**.\nType the name of the stat you want to boost."
+                val = await self.get_input(ctx, prompt)
+                if val is None: return # Timeout
+                val = val.upper()
+                if val in options:
+                    selected_stat = val
+                    break
+                else:
+                    await ctx.send("Invalid choice.")
+
+        # Calculate new value: (1D6 + 13) * 5
+        roll = random.randint(1, 6)
+        new_val = (roll + 13) * 5
+
+        # Apply
+        old_val = char_data.get(selected_stat, 0)
+        char_data[selected_stat] = new_val
+
+        await ctx.send(f"**Core Characteristic Adjustment**:\nRolled (1D6+13)*5 -> ({roll}+13)*5 = **{new_val}**.\n**{selected_stat}** changed from {old_val} to **{new_val}**.")
 
     async def mode_full_auto(self, ctx, char_data):
         char_data["STR"] = 5 * sum([random.randint(1, 6) for _ in range(3)])
@@ -496,8 +518,11 @@ class newinvestigator(commands.Cog):
 
         await self.apply_age_modifiers(ctx, char_data, age)
 
-        # Proceed to Occupation Selection
-        await self.select_occupation(ctx, char_data, player_stats)
+        # Proceed to Occupation Selection (or Pulp Talents first)
+        if char_data.get("Game Mode") == "Pulp of Cthulhu":
+             await self.select_pulp_talents(ctx, char_data, player_stats)
+        else:
+             await self.select_occupation(ctx, char_data, player_stats)
 
     async def apply_age_modifiers(self, ctx, char_data, age):
         # EDU Improvement Checks
@@ -786,6 +811,135 @@ class newinvestigator(commands.Cog):
                 await ctx.send("An unexpected error occurred. Please try again.")
                 return
 
+    async def select_pulp_archetype(self, ctx, char_data):
+        archetypes_data = await load_archetype_data()
+
+        view = ArchetypeSelectView(ctx, archetypes_data)
+        msg = await ctx.send("Please select a **Pulp Archetype**:", view=view)
+        view.message = msg
+
+        await view.wait()
+
+        if view.selected_archetype:
+             char_data["Archetype"] = view.selected_archetype
+             char_data["Archetype Info"] = archetypes_data[view.selected_archetype]
+             await msg.edit(content=f"Selected Archetype: **{view.selected_archetype}**", view=None, embed=None)
+             return True
+        else:
+             await msg.edit(content="Archetype selection timed out.", view=None)
+             return False
+
+    async def select_pulp_talents(self, ctx, char_data, player_stats):
+        await ctx.send("As a Pulp Hero, you must determine your **Pulp Talents**.")
+        pulp_data = await load_pulp_talents_data()
+
+        # Display all talents first
+        await self.display_pulp_talents(ctx, pulp_data)
+
+        # Map Name -> Full String
+        full_map = {}
+        for cat, t_list in pulp_data.items():
+            for t in t_list:
+                if "**" in t:
+                    n = t.split("**")[1]
+                    full_map[n] = t
+
+        # Check Requirements
+        required_talents = []
+        if "Archetype Info" in char_data:
+            reqs = self.get_archetype_talent_reqs(char_data["Archetype Info"]["adjustments"])
+            for r in reqs:
+                # Find full string for requirement
+                full = full_map.get(r)
+                if full:
+                    required_talents.append(full)
+                else:
+                    # Fallback search if exact name mismatch
+                    for k, v in full_map.items():
+                         if r.lower() in k.lower():
+                             required_talents.append(v)
+                             break
+
+        pulp_talents_list = list(required_talents)
+
+        if required_talents:
+            req_names = [t.split("**")[1] for t in required_talents if "**" in t]
+            await ctx.send(f"**Archetype Requirement**: You automatically gain the following talent(s): **{', '.join(req_names)}**.")
+
+        slots_total = 2
+        slots_remaining = slots_total - len(pulp_talents_list)
+
+        if slots_remaining <= 0:
+             await ctx.send("You have all your talents assigned via Archetype.")
+        else:
+             await ctx.send(f"You have **{slots_remaining}** talent choice(s) remaining.")
+
+             while True:
+                current_selection = []
+                for i in range(slots_remaining):
+                    while True:
+                        # Select Category
+                        cat_view = CategoryView(ctx, pulp_data)
+                        cat_msg = await ctx.send(f"Select category for Talent #{i+1}:", view=cat_view)
+                        await cat_view.wait()
+
+                        if not cat_view.selected_category:
+                            await ctx.send("Talent selection timed out.")
+                            return
+
+                        category = cat_view.selected_category
+                        await cat_msg.delete()
+
+                        # Select Talent
+                        talents_in_cat = pulp_data[category]
+                        # Merge required into already_selected so they can't pick them again
+                        talent_view = TalentOptionView(ctx, talents_in_cat, pulp_talents_list + current_selection, full_map)
+                        t_msg = await ctx.send(f"Select a talent from **{category.capitalize()}**:", view=talent_view)
+                        await talent_view.wait()
+
+                        if not talent_view.selected_talent_name:
+                            await ctx.send("Talent selection timed out.")
+                            return
+
+                        if talent_view.selected_talent_name == "BACK":
+                            await t_msg.delete()
+                            continue
+
+                        selected_name = talent_view.selected_talent_name
+                        selected_full = full_map.get(selected_name, selected_name)
+                        current_selection.append(selected_full)
+
+                        await t_msg.edit(content=f"Selected Talent: **{selected_name}**", view=None)
+                        break
+
+                # Confirmation
+                full_list = pulp_talents_list + current_selection
+                confirm_view = TalentConfirmationView(ctx)
+                talents_display = "\n".join([f"{idx+1}. {t}" for idx, t in enumerate(full_list)])
+                confirm_msg = await ctx.send(
+                    f"You have selected:\n{talents_display}\n\nAre you happy with these choices?",
+                    view=confirm_view
+                )
+
+                await confirm_view.wait()
+
+                if confirm_view.confirmed is None:
+                    await ctx.send("Confirmation timed out.")
+                    return
+
+                if confirm_view.confirmed:
+                    pulp_talents_list = full_list
+                    await confirm_msg.edit(view=None)
+                    break
+                else:
+                    await confirm_msg.edit(content="Restarting talent selection...", view=None)
+
+        # Save to char_data
+        char_data["Backstory"]["Pulp Talents"] = pulp_talents_list
+
+        # Proceed
+        await self.select_occupation(ctx, char_data, player_stats)
+
     async def display_pulp_talents(self, ctx, pulp_data):
         emoji_map = {
             "physical": "💪",
@@ -807,6 +961,48 @@ class newinvestigator(commands.Cog):
 
             embed.description = "\n".join(desc_lines)
             await ctx.send(embed=embed)
+
+    def get_archetype_core_options(self, adjustments):
+        for line in adjustments:
+            if "Core characteristic" in line:
+                # Typically format: ":emoji: **Core characteristic:** Choose either DEX or APP"
+                # Split by the second colon to skip the emoji part if present, or just find the text
+                parts = line.split(":", 2)
+                if len(parts) > 2:
+                    content = parts[2].strip()
+                else:
+                    content = line # Fallback
+
+                content = content.replace("**", "").replace(".", "")
+                stats = ["STR", "DEX", "CON", "APP", "POW", "SIZ", "INT", "EDU"]
+                found = []
+                for s in stats:
+                    if s in content:
+                        found.append(s)
+                return found
+        return []
+
+    def get_archetype_skills(self, adjustments):
+        for line in adjustments:
+            if "100 bonus points" in line:
+                parts = line.split("skills:**")
+                if len(parts) > 1:
+                    skill_str = parts[1]
+                else:
+                    parts_col = line.split(":", 2)
+                    skill_str = parts_col[2] if len(parts_col) > 2 else line
+
+                skill_str = skill_str.strip().rstrip(".")
+                raw_skills = [s.strip() for s in skill_str.split(",")]
+                return raw_skills
+        return []
+
+    def get_archetype_talent_reqs(self, adjustments):
+        for line in adjustments:
+            if "Talents" in line:
+                if "must take the Hardened talent" in line:
+                    return ["Hardened"]
+        return []
 
     def calculate_occupation_points(self, char_data, info):
         """Calculates occupation skill points based on character stats and occupation formula."""
@@ -928,6 +1124,10 @@ class newinvestigator(commands.Cog):
         # Skill Assignment Loop
         await self.skill_assignment_loop(ctx, char_data, points, min_cr, max_cr, is_occupation=True)
 
+        # Archetype Bonus Points
+        if char_data.get("Game Mode") == "Pulp of Cthulhu":
+             await self.assign_archetype_bonus_points(ctx, char_data)
+
         # Personal Interest
         pi_points = char_data["INT"] * 2
         await ctx.send(f"**Personal Interest Points**: {pi_points}. Assign to any skill (except Cthulhu Mythos).")
@@ -935,6 +1135,104 @@ class newinvestigator(commands.Cog):
 
         # Finalization
         await self.finalize_character(ctx, char_data)
+
+    def is_skill_allowed_for_archetype(self, skill_name, allowed_list):
+        skill_name_lower = skill_name.lower()
+        for allowed in allowed_list:
+            allowed_lower = allowed.lower()
+
+            # Exact match
+            if skill_name_lower == allowed_lower:
+                return True
+
+            # Handle (any)
+            if "(any)" in allowed_lower:
+                prefix = allowed_lower.replace("(any)", "").strip()
+                if skill_name_lower.startswith(prefix):
+                    return True
+
+            # Handle Language (other)
+            if "language (other)" in allowed_lower:
+                if skill_name_lower.startswith("language") and "own" not in skill_name_lower:
+                    return True
+
+            # Handle Survival (any) -> Survival
+            if "survival (any)" in allowed_lower:
+                 if skill_name_lower.startswith("survival"):
+                     return True
+
+        return False
+
+    async def assign_archetype_bonus_points(self, ctx, char_data):
+        if "Archetype Info" not in char_data:
+            return
+
+        allowed_skills = self.get_archetype_skills(char_data["Archetype Info"]["adjustments"])
+        if not allowed_skills:
+            return
+
+        remaining = 100
+        await ctx.send(f"**Archetype Bonus**: You have **100 bonus points** to spend on the following skills:\n{', '.join(allowed_skills)}")
+
+        while remaining > 0:
+            await ctx.send(f"Bonus Points remaining: **{remaining}**.")
+            val_input = await self.get_input(ctx, "Type `SkillName Value` (e.g. `Stealth 20`).")
+            if val_input is None: return
+
+            parts = val_input.split()
+            if len(parts) >= 2 and parts[-1].isdigit():
+                val = int(parts[-1])
+                skill_name_input = " ".join(parts[:-1])
+
+                # Resolve Skill Name
+                skill_key = None
+                for k in char_data.keys():
+                    if k.lower() == skill_name_input.lower():
+                        skill_key = k
+                        break
+
+                if not skill_key:
+                     matches = [k for k in char_data.keys() if skill_name_input.lower() in k.lower()]
+                     if len(matches) == 1: skill_key = matches[0]
+
+                if not skill_key:
+                    await ctx.send("Skill not found.")
+                    continue
+
+                # Check Allowed
+                if not self.is_skill_allowed_for_archetype(skill_key, allowed_skills):
+                    await ctx.send(f"**{skill_key}** is not in the allowed list for your Archetype.")
+                    continue
+
+                if val > remaining:
+                    await ctx.send("Not enough points.")
+                    continue
+
+                # Check > 90
+                current_val = char_data.get(skill_key, 0)
+                new_val = current_val + val
+
+                if new_val > 90:
+                    warn_msg = await ctx.send(f"⚠️ **Warning**: Setting **{skill_key}** to **{new_val}** (over 90).\nConfirm? (✅/❌)")
+                    await warn_msg.add_reaction("✅")
+                    await warn_msg.add_reaction("❌")
+
+                    def reaction_check(reaction, user):
+                         return user == ctx.author and str(reaction.emoji) in ["✅", "❌"] and reaction.message.id == warn_msg.id
+
+                    try:
+                        reaction, _ = await self.bot.wait_for('reaction_add', timeout=60.0, check=reaction_check)
+                        if str(reaction.emoji) == "❌":
+                             await ctx.send("Cancelled.")
+                             continue
+                    except asyncio.TimeoutError:
+                        continue
+
+                char_data[skill_key] = new_val
+                remaining -= val
+                await ctx.send(f"Added {val} to **{skill_key}** (Total: {new_val}).")
+            else:
+                await ctx.send("Invalid format.")
 
     async def skill_assignment_loop(self, ctx, char_data, total_points, min_cr, max_cr, is_occupation):
         remaining = total_points
