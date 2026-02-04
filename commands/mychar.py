@@ -66,6 +66,7 @@ class mychar(commands.Cog):
         for i in char_data:
           if i == "Residence": continue
           if i == "Game Mode": continue # Skip internal field
+          if i == "Archetype": continue
           stat_value = char_data[i]
           if isinstance(stat_value, dict): continue
 
@@ -188,6 +189,7 @@ class mychar(commands.Cog):
         for i in char_data:
           if i == "Residence": continue
           if i == "Game Mode": continue
+          if i == "Archetype": continue
           if isinstance(char_data[i], dict): continue
           limiter = limiter + 1
           if i == "NAME":
@@ -204,6 +206,7 @@ class mychar(commands.Cog):
         for i in char_data:
           if i == "Residence": continue
           if i == "Game Mode": continue
+          if i == "Archetype": continue
           if isinstance(char_data[i], dict): continue
           limiter = limiter + 1
           if i == "NAME":
