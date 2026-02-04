@@ -32,84 +32,95 @@ class mychar(commands.Cog):
         await ctx.send(f"{member.display_name if member else ctx.author.display_name} doesn't have an investigator. Use `!newInv` for creating a new investigator.")
         return
       
-    #loading game mode
+    # loading game mode
     server_stats = await load_gamemode_stats()
-    
     if server_id not in server_stats:
         server_stats[server_id] = {}
-
     if 'game_mode' not in server_stats[server_id]:
-        server_stats[server_id]['game_mode'] = 'Call of Cthulhu'  # Default to Call of Cthulhu
-        
-    current_mode = server_stats[server_id]['game_mode'] 
+        server_stats[server_id]['game_mode'] = 'Call of Cthulhu'
+
+    # Determine Character Game Mode
+    # Priority: Character Sheet > Server Default
+    char_data = player_stats[server_id][user_id]
+    current_mode = char_data.get("Game Mode", server_stats[server_id]['game_mode'])
+
+    # Normalize mode string just in case
+    if "pulp" in current_mode.lower():
+        current_mode = "Pulp of Cthulhu"
+        mode_label = "Pulp of Cthulhu character"
+    else:
+        current_mode = "Call of Cthulhu"
+        mode_label = "Call of Cthulhu character"
          
-    name = player_stats[server_id][user_id]["NAME"]
+    name = char_data["NAME"]
     page = 1
     maxpage = 4
-    embed = discord.Embed(
-            title=name,
-            description="Investigator statistics:",
-            color=discord.Color.green()
-        )
 
     async def generate_stats_page(page):
       limiter = 0
       limit = 18
-      embed = discord.Embed(title=f"{name}'s stats and skills", description=f"Stats - {page}/{maxpage}", color=discord.Color.green())
+      # Add Mode Label to Title or Description
+      embed = discord.Embed(title=f"{name}'s stats and skills", description=f"**{mode_label}**\nStats - {page}/{maxpage}", color=discord.Color.green())
+
       if page == 1:  
-        for i in player_stats[server_id][user_id]:
+        for i in char_data:
           if i == "Residence": continue
-          stat_value = player_stats[server_id][user_id][i]
+          if i == "Game Mode": continue # Skip internal field
+          stat_value = char_data[i]
           if isinstance(stat_value, dict): continue
+
           limiter = limiter + 1
           description = ""
+
           if i == "NAME":
             pass
           elif i == "Occupation":
-            stat_value = player_stats[server_id][user_id][i]
+            stat_value = char_data[i]
             occ_emoji = occupation_emoji.get_occupation_emoji(stat_value)
             stat_value = f"{stat_value} {occ_emoji}"
             embed.add_field(name=f"{i}{get_stat_emoji(i)}", value=f"{stat_value}\n ", inline=True)
 
-            residence = player_stats[server_id][user_id].get("Residence", "Unknown")
+            residence = char_data.get("Residence", "Unknown")
             embed.add_field(name=f"Residence{get_stat_emoji('Residence')}", value=f"{residence}\n ", inline=True)
             limiter += 1
             continue
           elif i == "Move":
-            if player_stats[server_id][user_id]["DEX"] != 0 and \
-                player_stats[server_id][user_id]["SIZ"] != 0 and \
-                player_stats[server_id][user_id]["STR"] != 0 and \
-                player_stats[server_id][user_id]["Age"] != 0:
-                if  player_stats[server_id][user_id]["DEX"] <  player_stats[server_id][user_id]["SIZ"] and \
-                    player_stats[server_id][user_id]["STR"] <  player_stats[server_id][user_id]["SIZ"]:
+            if char_data.get("DEX", 0) != 0 and \
+                char_data.get("SIZ", 0) != 0 and \
+                char_data.get("STR", 0) != 0 and \
+                char_data.get("Age", 0) != 0:
+
+                dex = char_data["DEX"]
+                siz = char_data["SIZ"]
+                str_stat = char_data["STR"]
+                age = char_data["Age"]
+
+                if dex < siz and str_stat < siz:
                     MOV = 7                            
-                elif player_stats[server_id][user_id]["DEX"] <  player_stats[server_id][user_id]["SIZ"] or \
-                    player_stats[server_id][user_id]["STR"] <  player_stats[server_id][user_id]["SIZ"]:
+                elif dex < siz or str_stat < siz:
                     MOV = 8
-                elif player_stats[server_id][user_id]["DEX"] ==  player_stats[server_id][user_id]["SIZ"] and \
-                    player_stats[server_id][user_id]["STR"] ==  player_stats[server_id][user_id]["SIZ"]:
+                elif dex == siz and str_stat == siz:
                     MOV = 8                           
                 else:
                     MOV = 9
 
-                if 40 <= player_stats[server_id][user_id]["Age"] < 50:
-                    MOV -= 1
-                elif 50 <= player_stats[server_id][user_id]["Age"] < 60:
-                    MOV -= 2
-                elif 60 <= player_stats[server_id][user_id]["Age"] < 70:
-                    MOV -= 3
-                elif 70 <= player_stats[server_id][user_id]["Age"] < 80:
-                    MOV -= 4
-                elif player_stats[server_id][user_id]["Age"] >= 80:
-                    MOV -= 5
+                if 40 <= age < 50: MOV -= 1
+                elif 50 <= age < 60: MOV -= 2
+                elif 60 <= age < 70: MOV -= 3
+                elif 70 <= age < 80: MOV -= 4
+                elif age >= 80: MOV -= 5
     
-                stat_value = f"{MOV}"
+                stat_value = f"{max(0, MOV)}"
             else:
                 stat_value = "Fill your DEX, STR, SIZ and Age."
             
           elif i in ["Build","Damage Bonus"]:
-            if player_stats[server_id][user_id]["STR"] != 0 and player_stats[server_id][user_id]["SIZ"] != 0:
-                STRSIZ = player_stats[server_id][user_id]["STR"] + player_stats[server_id][user_id]["SIZ"]
+             # These are pre-calculated in finalize_character usually,
+             # but legacy code recalculates here if STR/SIZ exist.
+             # We'll trust the stored value if present, else calc?
+             # The existing code logic calculated it. Let's keep it for robustness.
+            if char_data.get("STR", 0) != 0 and char_data.get("SIZ", 0) != 0:
+                STRSIZ = char_data["STR"] + char_data["SIZ"]
                 if 2 <= STRSIZ <= 64:
                     BUILD = -2
                     BONUSDMG = -2
@@ -138,7 +149,6 @@ class mychar(commands.Cog):
                     BUILD = 6
                     BONUSDMG = "5D6"
                 else:
-                    #Not posible if used correctly!
                     BUILD = "You are CHONKER! (7+)"
                     BONUSDMG = "You are too strong! (6D6+)"
                 if i == "Build":
@@ -147,55 +157,74 @@ class mychar(commands.Cog):
                   stat_value = f"{BONUSDMG}"
             else:
                 stat_value = "Fill your STR and SIZ."
+
           elif i not in ["Age", "HP", "MP", "Occupation"] and limiter <= limit:
-            stat_value = player_stats[server_id][user_id][i]
+            stat_value = char_data[i]
             if i not in ["LUCK"]:
               description = get_description(i,stat_value)
             stat_value = f"**{stat_value}**/{stat_value//2}/{stat_value//5}"
           else:
             if limiter <= limit:
-              if current_mode == 'Call of Cthulhu' and i == "HP":
-                stat_value = f"{player_stats[server_id][user_id][i]}/{(player_stats[server_id][user_id]['CON']+player_stats[server_id][user_id]['SIZ'])//10}"
-              elif current_mode == 'Pulp of Cthulhu' and i == "HP":
-                stat_value = f"{player_stats[server_id][user_id][i]}/{(player_stats[server_id][user_id]['CON']+player_stats[server_id][user_id]['SIZ'])//5}"
+              if i == "HP":
+                con = char_data.get('CON', 0)
+                siz = char_data.get('SIZ', 0)
+                if current_mode == 'Call of Cthulhu':
+                     max_hp = (con + siz) // 10
+                else: # Pulp
+                     max_hp = (con + siz) // 5
+                stat_value = f"{char_data[i]}/{max_hp}"
+
               elif i == "MP":
-                stat_value = f"{player_stats[server_id][user_id][i]}/{player_stats[server_id][user_id]['POW']//5}"
+                stat_value = f"{char_data[i]}/{char_data['POW']//5}"
               elif i == "Age":
-                stat_value = f"{player_stats[server_id][user_id][i]} years old."
+                stat_value = f"{char_data[i]} years old."
               else:
-                stat_value = player_stats[server_id][user_id][i]
+                stat_value = char_data[i]
+
           if i != "NAME" and limiter <= limit:
             embed.add_field(name=f"{i}{get_stat_emoji(i)}", value=f"{stat_value}\n {description}", inline=True)
+
       if page == 2:
-        for i in player_stats[server_id][user_id]:
+        for i in char_data:
           if i == "Residence": continue
-          if isinstance(player_stats[server_id][user_id][i], dict): continue
+          if i == "Game Mode": continue
+          if isinstance(char_data[i], dict): continue
           limiter = limiter + 1
           if i == "NAME":
             pass
           else:
             if 18 < limiter <= 42:
-              stat_value = player_stats[server_id][user_id][i]
+              stat_value = char_data[i]
               if i not in ["Credit Rating"]:
                 description = get_description("skill",stat_value)
               else:
                 description = get_description("Credit Rating",stat_value)
               embed.add_field(name=f"{i}{get_stat_emoji(i)}", value=f"**{stat_value}**/{stat_value//2}/{stat_value//5}\n{description}", inline=True)
       if page == 3:
-        for i in player_stats[server_id][user_id]:
+        for i in char_data:
           if i == "Residence": continue
-          if isinstance(player_stats[server_id][user_id][i], dict): continue
+          if i == "Game Mode": continue
+          if isinstance(char_data[i], dict): continue
           limiter = limiter + 1
           if i == "NAME":
             pass
           else:
             if 42 < limiter <= 66:
-              stat_value = player_stats[server_id][user_id][i]
+              stat_value = char_data[i]
               description = get_description("skill",stat_value)
               embed.add_field(name=f"{i}{get_stat_emoji(i)}", value=f"**{stat_value}**/{stat_value//2}/{stat_value//5}\n{description}", inline=True)
       if page == 4:
-        backstory_data = player_stats[server_id][user_id]["Backstory"]
+        backstory_data = char_data["Backstory"]
+        # Ensure Pulp Talents are shown first if present, assuming insertion order or explicit check
+        # Explicit check to be safe
+        if "Pulp Talents" in backstory_data:
+             entries = backstory_data["Pulp Talents"]
+             if entries:
+                formatted_entries = "\n".join([f"{index + 1}. {entry}" for index, entry in enumerate(entries)])
+                embed.add_field(name="Pulp Talents", value=formatted_entries, inline=False)
+
         for category, entries in backstory_data.items():
+            if category == "Pulp Talents": continue # Already handled
             formatted_entries = "\n".join([f"{index + 1}. {entry}" for index, entry in enumerate(entries)])
             embed.add_field(name=category, value=formatted_entries, inline=False)
       return embed  # Return the embed
@@ -205,7 +234,7 @@ class mychar(commands.Cog):
     await message.add_reaction("➡️")
     
     async def check(reaction, user):
-        return user == ctx.author and reaction.message == message and reaction.emoji in ["⬅️", "➡️"]
+        return user == ctx.author and reaction.message.id == message.id and reaction.emoji in ["⬅️", "➡️"]
     
     while True:
         try:
@@ -216,9 +245,12 @@ class mychar(commands.Cog):
                 page = 1 if page == maxpage else page + 1  # Move to first page if on the last
     
             await message.edit(embed=await generate_stats_page(page))
-            await message.remove_reaction(reaction, ctx.author)
+            try:
+                await message.remove_reaction(reaction, ctx.author)
+            except: pass
         except asyncio.TimeoutError:
-            await message.clear_reactions()
+            try: await message.clear_reactions()
+            except: pass
             break
 
 async def setup(bot):
