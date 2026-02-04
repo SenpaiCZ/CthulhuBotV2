@@ -138,6 +138,10 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
     ```bash
     pip install -r requirements.txt
     ```
+6.  Install Playwright browsers:
+    ```bash
+    playwright install chromium
+    ```
 
 **B. Configuration**
 
@@ -225,6 +229,10 @@ To keep the bot running in the background and start automatically on boot:
 5.  Install dependencies:
     ```bash
     pip install -r requirements.txt
+    ```
+6.  Install Playwright browsers:
+    ```bash
+    playwright install chromium
     ```
 
 **B. Configuration**
