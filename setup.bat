@@ -6,7 +6,7 @@ echo Starting CthulhuBotV2 Setup for Windows...
 REM Check for Python
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Error: Python is not installed or not in PATH. Please install Python 3.8 or higher.
+    echo Error: Python is not installed or not in PATH. Please install Python 3.11 or higher.
     pause
     exit /b 1
 )
