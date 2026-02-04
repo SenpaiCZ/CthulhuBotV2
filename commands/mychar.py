@@ -238,7 +238,7 @@ class mychar(commands.Cog):
     await message.add_reaction("⬅️")
     await message.add_reaction("➡️")
     
-    async def check(reaction, user):
+    def check(reaction, user):
         return user == ctx.author and reaction.message.id == message.id and reaction.emoji in ["⬅️", "➡️"]
     
     while True:
