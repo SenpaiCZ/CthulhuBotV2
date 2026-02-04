@@ -110,7 +110,7 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 
 ### Prerequisites
 
-*   **Python 3.8** or higher: [Download Python](https://www.python.org/downloads/)
+*   **Python 3.11** or higher: [Download Python](https://www.python.org/downloads/)
 *   **Git**: [Download Git](https://git-scm.com/downloads)
 *   **FFmpeg**: Required for audio playback.
     *   **Windows**: [Download FFmpeg](https://ffmpeg.org/download.html). Extract the archive and add the `bin` folder to your System PATH environment variable.
