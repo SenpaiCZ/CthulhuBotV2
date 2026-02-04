@@ -5,11 +5,123 @@ import math
 import emojis
 import occupation_emoji
 from discord.ext import commands
+from discord.ui import View, Button, Select
 from loadnsave import (
     load_player_stats, save_player_stats,
     load_retired_characters_data, save_retired_characters_data,
-    load_occupations_data
+    load_occupations_data, load_pulp_talents_data
 )
+
+class GameModeView(View):
+    def __init__(self, ctx):
+        super().__init__(timeout=300)
+        self.ctx = ctx
+        self.mode = None
+        self.message = None
+
+    @discord.ui.button(label="Call of Cthulhu", style=discord.ButtonStyle.success, custom_id="mode_coc")
+    async def coc_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("This isn't your character creation session!", ephemeral=True)
+        self.mode = "Call of Cthulhu"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Pulp Cthulhu", style=discord.ButtonStyle.danger, custom_id="mode_pulp")
+    async def pulp_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("This isn't your character creation session!", ephemeral=True)
+        self.mode = "Pulp of Cthulhu"
+        await interaction.response.defer()
+        self.stop()
+
+    async def on_timeout(self):
+        if self.message:
+            try:
+                await self.message.edit(view=None, content="Character creation timed out during mode selection.")
+            except:
+                pass
+
+class TalentCategorySelect(Select):
+    def __init__(self, talents_data):
+        options = [
+            discord.SelectOption(label=cat.capitalize(), value=cat)
+            for cat in talents_data.keys()
+        ]
+        super().__init__(placeholder="Choose a Talent Category...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        self.view.selected_category = self.values[0]
+        self.view.stop()
+
+class TalentSelect(Select):
+    def __init__(self, talents_list, already_selected):
+        # Filter out already selected talents
+        # Talent strings are long, we might need to truncate for label/value or handle it carefully.
+        # SelectOption label max length is 100. Value max 100.
+        # The talents strings in JSON are like "**Name**: Description".
+        # We should parse the name.
+        options = []
+        for t in talents_list:
+            # Extract name: "**Name**: Description" -> "Name"
+            # Assuming format is always "**Name**: ..."
+            if "**" in t:
+                name = t.split("**")[1]
+            else:
+                name = t[:20]
+
+            # Check if full string is already selected
+            if t in already_selected:
+                continue
+
+            # Truncate description for description field if needed
+            # description max length 100
+            desc = t.split(":", 1)[1].strip() if ":" in t else ""
+            if len(desc) > 100:
+                desc = desc[:97] + "..."
+
+            options.append(discord.SelectOption(label=name, description=desc, value=name)) # Use Name as value to identify, map back later?
+            # Actually, reusing the full string is safer if we can map it back.
+            # But the value limit is 100 chars. The full string is longer.
+            # So I will map Name -> Full String in the View.
+
+        if not options:
+            options.append(discord.SelectOption(label="No talents available", value="none"))
+
+        super().__init__(placeholder="Choose a Talent...", min_values=1, max_values=1, options=options[:25]) # Max 25 options
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        self.view.selected_talent_name = self.values[0]
+        self.view.stop()
+
+class CategoryView(View):
+    def __init__(self, ctx, talents_data):
+        super().__init__(timeout=300)
+        self.ctx = ctx
+        self.selected_category = None
+        self.add_item(TalentCategorySelect(talents_data))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message("Not your session!", ephemeral=True)
+            return False
+        return True
+
+class TalentOptionView(View):
+    def __init__(self, ctx, talents_list, already_selected, full_map):
+        super().__init__(timeout=300)
+        self.ctx = ctx
+        self.selected_talent_name = None
+        self.full_map = full_map
+        self.add_item(TalentSelect(talents_list, already_selected))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message("Not your session!", ephemeral=True)
+            return False
+        return True
 
 class newinvestigator(commands.Cog):
     def __init__(self, bot):
@@ -79,21 +191,81 @@ class newinvestigator(commands.Cog):
         name = await self.get_input(ctx, "Please enter the **Name** of your new investigator:")
         if name is None: return
 
-        # Step 2: Residence
-        residence = await self.get_input(ctx, "Please enter the **Residence** of your new investigator (e.g. Arkham, Boston):")
-        if residence is None: return
-
-        # Initialize basic character structure
+        # Initialize basic character structure (early init to store Name)
         new_char = {
             "NAME": name,
-            "Residence": residence,
+            "Residence": "Unknown", # Placeholder
             "STR": 0, "DEX": 0, "CON": 0, "INT": 0, "POW": 0, "EDU": 0, "SIZ": 0, "APP": 0,
             "SAN": 0, "HP": 0, "MP": 0, "LUCK": 0,
             "Move": 0, "Build": 0, "Damage Bonus": 0,
             "Age": 0,
             "Occupation": "Unknown",
             "Credit Rating": 0,
+            "Game Mode": "Call of Cthulhu", # Default
         }
+
+        # Step 1.5: Game Mode Selection
+        view = GameModeView(ctx)
+        msg = await ctx.send("Are you playing **Call of Cthulhu** (Normal) or **Pulp Cthulhu**?", view=view)
+        view.message = msg
+
+        await view.wait()
+
+        if view.mode is None:
+            # Timed out or cancelled
+            return # Message already handled in on_timeout or simply stop
+
+        new_char["Game Mode"] = view.mode
+        await msg.edit(content=f"Selected Game Mode: **{view.mode}**", view=None)
+
+        # Step 1.6: Pulp Talents (if applicable)
+        pulp_talents_list = []
+        if view.mode == "Pulp of Cthulhu":
+            await ctx.send("As a Pulp Hero, you must select **two Pulp Talents**.")
+            pulp_data = await load_pulp_talents_data()
+
+            # Map Name -> Full String for easier lookup
+            # Assume unique names
+            full_map = {}
+            for cat, t_list in pulp_data.items():
+                for t in t_list:
+                    if "**" in t:
+                        n = t.split("**")[1]
+                        full_map[n] = t
+
+            for i in range(2):
+                # Select Category
+                cat_view = CategoryView(ctx, pulp_data)
+                cat_msg = await ctx.send(f"Select category for Talent #{i+1}:", view=cat_view)
+                await cat_view.wait()
+
+                if not cat_view.selected_category:
+                    await ctx.send("Talent selection timed out.")
+                    return
+
+                category = cat_view.selected_category
+                await cat_msg.delete()
+
+                # Select Talent
+                talents_in_cat = pulp_data[category]
+                talent_view = TalentOptionView(ctx, talents_in_cat, pulp_talents_list, full_map)
+                t_msg = await ctx.send(f"Select a talent from **{category.capitalize()}**:", view=talent_view)
+                await talent_view.wait()
+
+                if not talent_view.selected_talent_name:
+                    await ctx.send("Talent selection timed out.")
+                    return
+
+                selected_name = talent_view.selected_talent_name
+                selected_full = full_map.get(selected_name, selected_name)
+                pulp_talents_list.append(selected_full)
+
+                await t_msg.edit(content=f"Selected Talent #{i+1}: **{selected_name}**", view=None)
+
+        # Step 2: Residence
+        residence = await self.get_input(ctx, "Please enter the **Residence** of your new investigator (e.g. Arkham, Boston):")
+        if residence is None: return
+        new_char["Residence"] = residence
 
         # Populate default skills (Hardcoded to match original behavior)
         default_skills = {
@@ -108,6 +280,7 @@ class newinvestigator(commands.Cog):
             "Sleight of Hand": 10, "Spot Hidden": 25, "Stealth": 20, "Survival": 10, "Swim": 20,
             "Throw": 20, "Track": 10, "CustomSkill": 0, "CustomSkills": 0, "CustomSkillss": 0,
             "Backstory": {
+                'Pulp Talents': pulp_talents_list, # Add Pulp Talents here
                 'My Story': [], 'Personal Description': [], 'Ideology and Beliefs': [],
                 'Significant People': [], 'Meaningful Locations': [], 'Treasured Possessions': [],
                 'Traits': [], 'Injuries and Scars': [], 'Phobias and Manias': [],
@@ -649,7 +822,7 @@ class newinvestigator(commands.Cog):
         excluded_keys = [
             "NAME", "Residence", "STR", "DEX", "CON", "INT", "POW", "EDU", "SIZ", "APP",
             "SAN", "HP", "MP", "LUCK", "Move", "Build", "Damage Bonus", "Age",
-            "Backstory", "CustomSkill", "CustomSkills", "CustomSkillss"
+            "Backstory", "CustomSkill", "CustomSkills", "CustomSkillss", "Game Mode"
         ]
 
         skills_output = []
@@ -773,7 +946,13 @@ class newinvestigator(commands.Cog):
         dex = char_data["DEX"]
         pow_stat = char_data["POW"]
 
-        char_data["HP"] = (con + siz) // 10
+        # Calculate HP based on Game Mode
+        game_mode = char_data.get("Game Mode", "Call of Cthulhu")
+        if game_mode == "Pulp of Cthulhu":
+             char_data["HP"] = (con + siz) // 5
+        else:
+             char_data["HP"] = (con + siz) // 10
+
         char_data["MP"] = pow_stat // 5
         char_data["SAN"] = pow_stat
 

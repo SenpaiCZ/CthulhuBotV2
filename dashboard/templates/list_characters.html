@@ -156,6 +156,17 @@
                                     <!-- Sheet View -->
                                     <div id="sheet-{{server_id}}-{{user_id}}" class="char-sheet-container coc-sheet">
 
+                                        <!-- Game Mode Header -->
+                                        <div class="text-center mb-3" style="border-bottom: 2px solid var(--cthulhu-green-dark); padding-bottom: 10px;">
+                                            <h4 style="color: var(--cthulhu-green-bright); font-family: 'Courier New', Courier, monospace; text-transform: uppercase;">
+                                                {% if char.get('Game Mode') == 'Pulp of Cthulhu' or 'pulp' in (char.get('Game Mode')|default('')|lower) %}
+                                                    Pulp of Cthulhu Character
+                                                {% else %}
+                                                    Call of Cthulhu Character
+                                                {% endif %}
+                                            </h4>
+                                        </div>
+
                                         <!-- Bio Header -->
                                         <div class="coc-header">
                                             <div>
@@ -286,6 +297,7 @@
                                         <div class="coc-section-title">Background & Details</div>
                                         <div class="row">
                                             {% set backstory_order = [
+                                                'Pulp Talents',
                                                 'My Story', 'Personal Description', 'Ideology and Beliefs',
                                                 'Significant People', 'Meaningful Locations', 'Treasured Possessions',
                                                 'Traits', 'Injuries and Scars', 'Phobias and Manias',
@@ -384,6 +396,17 @@
                                  <!-- Sheet View -->
                                  <div id="sheet-ret-{{user_id}}-{{loop.index}}" class="char-sheet-container coc-sheet">
 
+                                        <!-- Game Mode Header -->
+                                        <div class="text-center mb-3" style="border-bottom: 2px solid var(--cthulhu-green-dark); padding-bottom: 10px;">
+                                            <h4 style="color: var(--cthulhu-green-bright); font-family: 'Courier New', Courier, monospace; text-transform: uppercase;">
+                                                {% if char.get('Game Mode') == 'Pulp of Cthulhu' or 'pulp' in (char.get('Game Mode')|default('')|lower) %}
+                                                    Pulp of Cthulhu Character
+                                                {% else %}
+                                                    Call of Cthulhu Character
+                                                {% endif %}
+                                            </h4>
+                                        </div>
+
                                         <!-- Bio Header -->
                                         <div class="coc-header">
                                             <div>
@@ -514,6 +537,7 @@
                                         <div class="coc-section-title">Background & Details</div>
                                         <div class="row">
                                             {% set backstory_order = [
+                                                'Pulp Talents',
                                                 'My Story', 'Personal Description', 'Ideology and Beliefs',
                                                 'Significant People', 'Meaningful Locations', 'Treasured Possessions',
                                                 'Traits', 'Injuries and Scars', 'Phobias and Manias',

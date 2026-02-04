@@ -100,6 +100,9 @@ async def load_madness_solo_data():
 async def load_madness_insane_talent_data():
     return await _load_json_file(INFODATA_FOLDER, 'insane_talents.json')
 
+async def load_pulp_talents_data():
+    return await _load_json_file(INFODATA_FOLDER, 'pulp_talents.json')
+
 async def load_phobias_data():
     return await _load_json_file(INFODATA_FOLDER, 'phobias.json')
 
