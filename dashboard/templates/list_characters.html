@@ -296,6 +296,13 @@
                                         <!-- Background & Details -->
                                         <div class="coc-section-title">Background & Details</div>
                                         <div class="row">
+                                            {% if char.get('Archetype') %}
+                                                <div class="col-12 mb-3">
+                                                    <div class="coc-label" style="font-size: 1em; border-bottom: 1px solid #333; margin-bottom: 5px;">Archetype</div>
+                                                    <p class="text-white small mb-1">{{ char.get('Archetype') }}</p>
+                                                </div>
+                                            {% endif %}
+
                                             {% set backstory_order = [
                                                 'Pulp Talents',
                                                 'My Story', 'Personal Description', 'Ideology and Beliefs',
@@ -536,6 +543,13 @@
                                         <!-- Background & Details -->
                                         <div class="coc-section-title">Background & Details</div>
                                         <div class="row">
+                                            {% if char.get('Archetype') %}
+                                                <div class="col-12 mb-3">
+                                                    <div class="coc-label" style="font-size: 1em; border-bottom: 1px solid #333; margin-bottom: 5px;">Archetype</div>
+                                                    <p class="text-white small mb-1">{{ char.get('Archetype') }}</p>
+                                                </div>
+                                            {% endif %}
+
                                             {% set backstory_order = [
                                                 'Pulp Talents',
                                                 'My Story', 'Personal Description', 'Ideology and Beliefs',
