@@ -109,6 +109,28 @@ class CategoryView(View):
             return False
         return True
 
+class TalentConfirmationView(View):
+    def __init__(self, ctx):
+        super().__init__(timeout=300)
+        self.ctx = ctx
+        self.confirmed = None
+
+    @discord.ui.button(label="Confirm", style=discord.ButtonStyle.success)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("Not your session!", ephemeral=True)
+        self.confirmed = True
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Choose different talents", style=discord.ButtonStyle.danger)
+    async def retry(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("Not your session!", ephemeral=True)
+        self.confirmed = False
+        await interaction.response.defer()
+        self.stop()
+
 class TalentOptionView(View):
     def __init__(self, ctx, talents_list, already_selected, full_map):
         super().__init__(timeout=300)
@@ -116,6 +138,14 @@ class TalentOptionView(View):
         self.selected_talent_name = None
         self.full_map = full_map
         self.add_item(TalentSelect(talents_list, already_selected))
+
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary, row=1)
+    async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("Not your session!", ephemeral=True)
+        self.selected_talent_name = "BACK"
+        await interaction.response.defer()
+        self.stop()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user != self.ctx.author:
@@ -224,6 +254,9 @@ class newinvestigator(commands.Cog):
             await ctx.send("As a Pulp Hero, you must select **two Pulp Talents**.")
             pulp_data = await load_pulp_talents_data()
 
+            # Display all talents first
+            await self.display_pulp_talents(ctx, pulp_data)
+
             # Map Name -> Full String for easier lookup
             # Assume unique names
             full_map = {}
@@ -233,34 +266,62 @@ class newinvestigator(commands.Cog):
                         n = t.split("**")[1]
                         full_map[n] = t
 
-            for i in range(2):
-                # Select Category
-                cat_view = CategoryView(ctx, pulp_data)
-                cat_msg = await ctx.send(f"Select category for Talent #{i+1}:", view=cat_view)
-                await cat_view.wait()
+            while True:
+                pulp_talents_list = []
+                for i in range(2):
+                    while True:
+                        # Select Category
+                        cat_view = CategoryView(ctx, pulp_data)
+                        cat_msg = await ctx.send(f"Select category for Talent #{i+1}:", view=cat_view)
+                        await cat_view.wait()
 
-                if not cat_view.selected_category:
-                    await ctx.send("Talent selection timed out.")
+                        if not cat_view.selected_category:
+                            await ctx.send("Talent selection timed out.")
+                            return
+
+                        category = cat_view.selected_category
+                        await cat_msg.delete()
+
+                        # Select Talent
+                        talents_in_cat = pulp_data[category]
+                        talent_view = TalentOptionView(ctx, talents_in_cat, pulp_talents_list, full_map)
+                        t_msg = await ctx.send(f"Select a talent from **{category.capitalize()}**:", view=talent_view)
+                        await talent_view.wait()
+
+                        if not talent_view.selected_talent_name:
+                            await ctx.send("Talent selection timed out.")
+                            return
+
+                        if talent_view.selected_talent_name == "BACK":
+                            await t_msg.delete()
+                            continue
+
+                        selected_name = talent_view.selected_talent_name
+                        selected_full = full_map.get(selected_name, selected_name)
+                        pulp_talents_list.append(selected_full)
+
+                        await t_msg.edit(content=f"Selected Talent #{i+1}: **{selected_name}**", view=None)
+                        break
+
+                # Confirmation
+                confirm_view = TalentConfirmationView(ctx)
+                talents_display = "\n".join([f"{idx+1}. {t}" for idx, t in enumerate(pulp_talents_list)])
+                confirm_msg = await ctx.send(
+                    f"You have selected:\n{talents_display}\n\nAre you happy with these choices?",
+                    view=confirm_view
+                )
+
+                await confirm_view.wait()
+
+                if confirm_view.confirmed is None:
+                    await ctx.send("Confirmation timed out.")
                     return
 
-                category = cat_view.selected_category
-                await cat_msg.delete()
-
-                # Select Talent
-                talents_in_cat = pulp_data[category]
-                talent_view = TalentOptionView(ctx, talents_in_cat, pulp_talents_list, full_map)
-                t_msg = await ctx.send(f"Select a talent from **{category.capitalize()}**:", view=talent_view)
-                await talent_view.wait()
-
-                if not talent_view.selected_talent_name:
-                    await ctx.send("Talent selection timed out.")
-                    return
-
-                selected_name = talent_view.selected_talent_name
-                selected_full = full_map.get(selected_name, selected_name)
-                pulp_talents_list.append(selected_full)
-
-                await t_msg.edit(content=f"Selected Talent #{i+1}: **{selected_name}**", view=None)
+                if confirm_view.confirmed:
+                    await confirm_msg.edit(view=None)
+                    break
+                else:
+                    await confirm_msg.edit(content="Restarting talent selection...", view=None)
 
         # Step 2: Residence
         residence = await self.get_input(ctx, "Please enter the **Residence** of your new investigator (e.g. Arkham, Boston):")
@@ -724,6 +785,28 @@ class newinvestigator(commands.Cog):
                 print(f"Error in select_occupation loop: {e}")
                 await ctx.send("An unexpected error occurred. Please try again.")
                 return
+
+    async def display_pulp_talents(self, ctx, pulp_data):
+        emoji_map = {
+            "physical": "💪",
+            "mental": "🧠",
+            "combat": "⚔️",
+            "miscellaneous": "🎒"
+        }
+
+        for category, talents in pulp_data.items():
+            cat_emoji = emoji_map.get(category.lower(), "✨")
+            embed = discord.Embed(
+                title=f"{cat_emoji} {category.capitalize()} Talents",
+                color=discord.Color.gold()
+            )
+
+            desc_lines = []
+            for t in talents:
+                desc_lines.append(f"• {t}")
+
+            embed.description = "\n".join(desc_lines)
+            await ctx.send(embed=embed)
 
     def calculate_occupation_points(self, char_data, info):
         """Calculates occupation skill points based on character stats and occupation formula."""
