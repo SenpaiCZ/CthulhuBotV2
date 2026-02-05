@@ -238,35 +238,53 @@ class Karma(commands.Cog):
 
         # Temp stats
         new_stats = {}
+        message_count = 0
 
         try:
             # Iterate history (scan all messages)
             async for message in channel.history(limit=None):
-                if message.author.bot:
-                    continue # Do not count karma FOR bots
+                message_count += 1
+                if message_count % 500 == 0:
+                    print(f"Recalculating Karma... Scanned {message_count} messages so far.")
 
-                # We need to iterate over all reactions
-                for reaction in message.reactions:
-                    emoji_str = str(reaction.emoji)
-                    change = 0
-                    if emoji_str == up_emoji:
-                        change = 1
-                    elif emoji_str == down_emoji:
-                        change = -1
-
-                    if change == 0:
+                try:
+                    # Check if author exists
+                    if not message.author:
                         continue
 
-                    # Fetch users who reacted (required to filter self-votes)
-                    async for user in reaction.users():
-                        if user.bot:
-                            continue # Ignore votes FROM bots
+                    if message.author.bot:
+                        continue # Do not count karma FOR bots
 
-                        if user.id == message.author.id:
-                            continue # Ignore self-votes
+                    # We need to iterate over all reactions
+                    for reaction in message.reactions:
+                        emoji_str = str(reaction.emoji)
+                        change = 0
+                        if emoji_str == up_emoji:
+                            change = 1
+                        elif emoji_str == down_emoji:
+                            change = -1
 
-                        author_id = str(message.author.id)
-                        new_stats[author_id] = new_stats.get(author_id, 0) + change
+                        if change == 0:
+                            continue
+
+                        # Fetch users who reacted (required to filter self-votes)
+                        async for user in reaction.users():
+                            if user.bot:
+                                continue # Ignore votes FROM bots
+
+                            if user.id == message.author.id:
+                                continue # Ignore self-votes
+
+                            author_id = str(message.author.id)
+                            new_stats[author_id] = new_stats.get(author_id, 0) + change
+
+                except Exception as msg_error:
+                    # Log error but continue processing other messages
+                    # This handles deleted users or malformed data issues gracefully
+                    print(f"Error processing message {message.id} during recalculation: {msg_error}")
+                    continue
+
+            print(f"Recalculation finished. Total messages scanned: {message_count}")
 
             # Save new stats
             all_stats = await load_karma_stats()
