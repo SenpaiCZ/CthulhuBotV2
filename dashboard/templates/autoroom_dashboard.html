@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}Auto Rooms{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Auto Rooms</h2>
+<p class="text-muted">Configure automatic voice channel creation for your servers.</p>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <strong>Select Server</strong>
+            </div>
+            <div class="card-body">
+                <select class="form-select" id="guild-select">
+                    <option value="" selected disabled>Select Server...</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="config-section" class="d-none">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Configuration</strong>
+            <span id="current-guild-name" class="badge bg-secondary"></span>
+        </div>
+        <div class="card-body">
+            <form id="autoroom-form">
+                <div class="mb-3">
+                    <label for="source-channel" class="form-label">Source Voice Channel (Entry)</label>
+                    <select class="form-select" id="source-channel">
+                        <option value="" selected disabled>Select Voice Channel...</option>
+                    </select>
+                    <div class="form-text">Users joining this channel will trigger a new room creation.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="target-category" class="form-label">Target Category</label>
+                    <select class="form-select" id="target-category">
+                        <option value="" selected disabled>Select Category...</option>
+                    </select>
+                    <div class="form-text">New voice channels will be created in this category.</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="save-btn">
+                    <span id="save-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    Save Configuration
+                </button>
+                <button type="button" class="btn btn-danger float-end" id="disable-btn">
+                    Disable Auto Room
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let globalData = null;
+let currentGuildId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchData();
+
+    document.getElementById('guild-select').addEventListener('change', (e) => {
+        loadGuildConfig(e.target.value);
+    });
+
+    document.getElementById('autoroom-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await saveConfig();
+    });
+
+    document.getElementById('disable-btn').addEventListener('click', async () => {
+        if(confirm("Are you sure you want to disable Auto Room for this server?")) {
+            await saveConfig(true); // true = disable/clear
+        }
+    });
+});
+
+async function fetchData() {
+    try {
+        const response = await fetch('/api/autorooms/data');
+        const data = await response.json();
+        globalData = data;
+        populateGuildSelect(data.guilds);
+    } catch (error) {
+        console.error("Error loading data:", error);
+        alert("Failed to load Auto Room data.");
+    }
+}
+
+function populateGuildSelect(guilds) {
+    const select = document.getElementById('guild-select');
+    select.innerHTML = '<option value="" selected disabled>Select Server...</option>';
+    guilds.forEach(guild => {
+        const option = document.createElement('option');
+        option.value = guild.id;
+        option.textContent = guild.name;
+        select.appendChild(option);
+    });
+}
+
+function loadGuildConfig(guildId) {
+    currentGuildId = guildId;
+    const guild = globalData.guilds.find(g => g.id === guildId);
+    if (!guild) return;
+
+    document.getElementById('current-guild-name').textContent = guild.name;
+    document.getElementById('config-section').classList.remove('d-none');
+
+    // Populate Source Channels
+    const sourceSelect = document.getElementById('source-channel');
+    sourceSelect.innerHTML = '<option value="" selected disabled>Select Voice Channel...</option>';
+    guild.voice_channels.forEach(ch => {
+        const option = document.createElement('option');
+        option.value = ch.id;
+        option.textContent = ch.name;
+        sourceSelect.appendChild(option);
+    });
+
+    // Populate Target Categories
+    const targetSelect = document.getElementById('target-category');
+    targetSelect.innerHTML = '<option value="" selected disabled>Select Category...</option>';
+    guild.categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.id;
+        option.textContent = cat.name;
+        targetSelect.appendChild(option);
+    });
+
+    // Set Current Values
+    if (guild.config.channel_id) {
+        sourceSelect.value = guild.config.channel_id;
+    }
+    if (guild.config.category_id) {
+        targetSelect.value = guild.config.category_id;
+    }
+}
+
+async function saveConfig(disable = false) {
+    if (!currentGuildId) return;
+
+    const sourceId = document.getElementById('source-channel').value;
+    const categoryId = document.getElementById('target-category').value;
+    const btn = document.getElementById('save-btn');
+    const spinner = document.getElementById('save-spinner');
+
+    if (!disable && (!sourceId || !categoryId)) {
+        alert("Please select both a source channel and a target category.");
+        return;
+    }
+
+    btn.disabled = true;
+    spinner.classList.remove('d-none');
+
+    try {
+        const payload = {
+            guild_id: currentGuildId,
+            channel_id: disable ? null : sourceId,
+            category_id: disable ? null : categoryId
+        };
+
+        const response = await fetch('/api/autorooms/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        const res = await response.json();
+        if (res.status === 'success') {
+            alert(disable ? "Auto Room disabled." : "Configuration saved!");
+            // Refresh data to keep local state in sync
+            await fetchData();
+            // Re-load the current guild to update UI (though values should remain mostly same)
+            loadGuildConfig(currentGuildId);
+        } else {
+            alert("Error: " + res.message);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Failed to save configuration.");
+    } finally {
+        btn.disabled = false;
+        spinner.classList.add('d-none');
+    }
+}
+</script>
+{% endblock %}
