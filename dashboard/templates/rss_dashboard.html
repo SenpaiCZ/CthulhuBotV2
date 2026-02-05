@@ -46,13 +46,13 @@
     </div>
 </div>
 
-<div class="card">
+<div class="card mb-4">
     <div class="card-header">
-        <strong>Active Feeds</strong>
+        <strong>Active RSS Feeds</strong>
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle" id="feeds-table">
+            <table class="table table-striped table-hover align-middle" id="rss-feeds-table">
                 <thead>
                     <tr>
                         <th>Server</th>
@@ -68,13 +68,46 @@
                 </tbody>
             </table>
         </div>
-        <div id="loading-spinner" class="text-center py-3">
+        <div id="rss-loading-spinner" class="text-center py-3">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>
-        <div id="no-data-message" class="text-center py-3 d-none">
+        <div id="rss-no-data-message" class="text-center py-3 d-none">
             <p class="text-muted">No RSS feeds configured.</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <strong>YouTube Subscriptions</strong>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle" id="youtube-feeds-table">
+                <thead>
+                    <tr>
+                        <th>Server</th>
+                        <th>Channel</th>
+                        <th>RSS Link</th>
+                        <th>Color</th>
+                        <th>Last Post</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated via JS -->
+                </tbody>
+            </table>
+        </div>
+        <div id="youtube-loading-spinner" class="text-center py-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div id="youtube-no-data-message" class="text-center py-3 d-none">
+            <p class="text-muted">No YouTube subscriptions configured.</p>
         </div>
     </div>
 </div>
@@ -102,9 +135,15 @@ async function fetchData() {
         globalData = data;
 
         populateGuildSelect(data.guilds);
-        renderTable(data.feeds);
 
-        document.getElementById('loading-spinner').classList.add('d-none');
+        const rssFeeds = data.feeds.filter(f => !f.link.includes('youtube.com'));
+        const youtubeFeeds = data.feeds.filter(f => f.link.includes('youtube.com'));
+
+        renderFeedTable(rssFeeds, 'rss-feeds-table', 'rss-no-data-message');
+        renderFeedTable(youtubeFeeds, 'youtube-feeds-table', 'youtube-no-data-message');
+
+        document.getElementById('rss-loading-spinner').classList.add('d-none');
+        document.getElementById('youtube-loading-spinner').classList.add('d-none');
     } catch (error) {
         console.error("Error loading data:", error);
         alert("Failed to load RSS data.");
@@ -148,15 +187,16 @@ function updateChannelSelect(guildId) {
     }
 }
 
-function renderTable(feeds) {
-    const tbody = document.querySelector('#feeds-table tbody');
+function renderFeedTable(feeds, tableId, noDataMsgId) {
+    const tbody = document.querySelector(`#${tableId} tbody`);
     tbody.innerHTML = '';
+    const noDataMsg = document.getElementById(noDataMsgId);
 
     if (feeds.length === 0) {
-        document.getElementById('no-data-message').classList.remove('d-none');
+        noDataMsg.classList.remove('d-none');
         return;
     } else {
-        document.getElementById('no-data-message').classList.add('d-none');
+        noDataMsg.classList.add('d-none');
     }
 
     feeds.forEach(feed => {
