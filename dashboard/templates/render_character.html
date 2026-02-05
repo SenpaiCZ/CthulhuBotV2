@@ -226,7 +226,7 @@
             {% set excluded = ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU',
                                'HP', 'MP', 'SAN', 'LUCK', 'Move', 'Build', 'Damage Bonus', 'Dodge',
                                'NAME', 'Occupation', 'Age', 'Sex', 'Residence', 'Birthplace',
-                               'Credit Rating', 'Archetype', 'Talent', 'Backstory'] %}
+                               'Credit Rating', 'Archetype', 'Archetype Info', 'Talent', 'Backstory'] %}
 
             <!-- Explicit Credit Rating first -->
             <div class="coc-skill-item">
@@ -261,6 +261,16 @@
                 <div class="col-12 mb-3">
                     <div class="coc-label" style="font-size: 1em; border-bottom: 1px solid #333; margin-bottom: 5px;">Archetype</div>
                     <p class="text-white small mb-1">{{ char.get('Archetype') }}</p>
+                    {% if char.get('Archetype Info') %}
+                        {% set a_info = char.get('Archetype Info') %}
+                        {% if a_info.get('adjustments') %}
+                            <div class="mt-2">
+                            {% for adj in a_info.get('adjustments') %}
+                                <p class="text-white small mb-0">• {{ adj | format_bold | safe }}</p>
+                            {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endif %}
                 </div>
             {% endif %}
 
@@ -282,7 +292,7 @@
                         {% set entries = char_backstory[section] %}
                         {% if entries and entries|length > 0 %}
                             {% for entry in entries %}
-                                <p class="text-white small mb-1">{{ entry }}</p>
+                                <p class="text-white small mb-1">{{ entry | format_bold | safe }}</p>
                             {% endfor %}
                         {% else %}
                             <div class="text-white small" style="min-height: 1.2em;">&nbsp;</div>
