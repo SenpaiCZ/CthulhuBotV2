@@ -9,15 +9,19 @@
 *   🕵️‍♂️ **Character Management**: Create, update, and manage investigator sheets, including stats, skills, and backstories.
 *   🎲 **Advanced Dice Rolling**: Interactive rolls with support for Bonus/Penalty dice, Luck spending, and Pushing rolls.
 *   🐙 **Keeper Tools**: Extensive library of game information including firearms, inventions, madness tables, phobias/manias, and NPC generation.
+*   👊 **Pulp Cthulhu Support**: Includes Pulp Archetypes, Talents, and modified character creation rules.
 *   📜 **Session Management**: Tools to start, track, and log game sessions.
 *   🎵 **Music Bot**: High-quality music playback from YouTube with queue management, looping, and volume control.
 *   💻 **Web Dashboard**: A powerful web interface to manage the bot:
+    *   **Karma System**: Configure roles, emojis, and notifications.
+    *   **Auto Rooms**: Easy setup for voice channel generation.
+    *   **RSS Feeds**: Manage subscriptions and settings.
+    *   **Server Prefixes**: Manage bot prefixes.
     *   **File Editor**: Edit configuration and data files directly.
     *   **Soundboard**: Upload and play audio clips in voice channels.
     *   **Music Control**: Manage the music queue and blacklist songs.
     *   **Game Settings**: Configure gameplay rules like Luck Threshold.
     *   **Reaction Roles**: easily configure self-assignable roles.
-    *   **Karma Settings**: Configure community karma tracking.
 *   📈 **Karma System**: Track user reputation with custom upvote/downvote emojis.
 *   🎭 **Reaction Roles**: Allow users to assign roles to themselves by reacting to messages.
 *   🔊 **Soundboard**: Admin-controlled soundboard to play audio clips in voice channels.
@@ -41,6 +45,7 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 *   `generatebackstory`: 🎲 Generate a random backstory.
 *   `retire`: 👴 Retire an active character.
 *   `unretire`: 👶 Bring a retired character back.
+*   `printcharacter` (aliases: `pchar`, `printchar`): 🖼️ Generate an image of your character sheet.
 
 ### 🎲 Dice Rolling & Session
 *   `newroll` (aliases: `roll`, `d`, `nd`): 🎲 Perform a dice roll or skill check. Interactive interface allows for Bonus/Penalty dice and Luck spending.
@@ -59,7 +64,8 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 *   `nowplaying` (alias: `np`): 💿 Show the currently playing song.
 
 ### 📈 Karma System
-*   `setupkarma`: ⚙️ Configure the karma channel and emojis (Admin).
+*   `setupkarma`: ⚙️ Interactive setup wizard for the karma system.
+*   `setupkarmaroles`: 🧙 Interactive wizard to manage rank roles.
 *   `karma` (alias: `k`): 🌟 Check karma for yourself or another user.
 *   `leaderboard` (aliases: `top`): 🏆 Show the Karma leaderboard.
 
@@ -93,7 +99,8 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 *   `reportbug`: 🐛 Report a bug to the developer.
 *   `repeatafterme`: 🦜 Make the bot repeat a message.
 *   `uptime`: ⏱️ Check bot uptime.
-*   `autoroomset`: ⚙️ Configure auto-rooms.
+*   `autoroomsetup`: ⚙️ Interactive setup wizard for Auto Rooms.
+*   `autoroomset`: ⚙️ Configure auto-rooms (Legacy).
 *   `changeprefix`: ❗ Change the bot's command prefix for the server.
 *   `ping`: 🏓 Check latency.
 *   `addreaction`: ➕ Add a smart reaction.
@@ -104,7 +111,8 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 *   `deleter`: 🗑️ Setup auto-deletion for channels.
 *   `autodeleter`: 🤖 Configure auto-deleter.
 *   `stopdeleter`: 🛑 Stop auto-deletion.
-*   `rss`: 📰 Manage RSS feeds.
+*   `rss`: 📰 Add a specific RSS feed manually.
+*   `rsssetup`: 📰 Interactive setup wizard for RSS feeds.
 
 ## Installation
 
@@ -116,7 +124,30 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
     *   **Windows**: [Download FFmpeg](https://ffmpeg.org/download.html). Extract the archive and add the `bin` folder to your System PATH environment variable.
     *   **Linux**: Install via your package manager (e.g., `sudo apt install ffmpeg`).
 
-### 1. Installation on Linux
+### Quick Start (Auto-Install)
+
+The repository comes with automated setup scripts for both Linux/macOS and Windows. These scripts handle virtual environment creation, dependency installation, and initial configuration.
+
+**Linux/macOS:**
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+**Windows:**
+```batch
+setup.bat
+```
+
+After running the setup script, edit the `config.json` file in the root directory to add your bot token and API keys.
+
+---
+
+### Manual Installation
+
+If you prefer to install manually, follow these steps.
+
+#### 1. Installation on Linux
 
 **A. Clone and Setup**
 
@@ -145,20 +176,14 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 
 **B. Configuration**
 
-1.  Create the `data` directory and `settings.json` file:
-    ```bash
-    mkdir -p data
-    touch data/settings.json
-    ```
-2.  Edit `data/settings.json` using nano or your preferred editor:
-    ```bash
-    nano data/settings.json
-    ```
-3.  Add your configuration (see [Configuration Details](#configuration-details) below for more info):
+1.  The bot uses `config.json` in the root directory.
+2.  Create `config.json` and add your configuration (see [Configuration Details](#configuration-details)):
     ```json
     {
         "token": "YOUR_DISCORD_BOT_TOKEN",
-        "youtubetoken": "YOUR_YOUTUBE_API_KEY"
+        "youtubetoken": "YOUR_YOUTUBE_API_KEY",
+        "enable_dashboard": true,
+        "admin_password": "SetAStrongPasswordHere"
     }
     ```
 
@@ -208,7 +233,7 @@ To keep the bot running in the background and start automatically on boot:
 
 ---
 
-### 2. Installation on Windows
+#### 2. Installation on Windows
 
 **A. Clone and Setup**
 
@@ -237,13 +262,14 @@ To keep the bot running in the background and start automatically on boot:
 
 **B. Configuration**
 
-1.  Create a new folder named `data` inside the project folder.
-2.  Inside `data`, create a text file named `settings.json`.
-3.  Open it with Notepad and add your configuration (see [Configuration Details](#configuration-details)):
+1.  The bot uses `config.json` in the root directory.
+2.  Create `config.json` and add your configuration (see [Configuration Details](#configuration-details)):
     ```json
     {
         "token": "YOUR_DISCORD_BOT_TOKEN",
-        "youtubetoken": "YOUR_YOUTUBE_API_KEY"
+        "youtubetoken": "YOUR_YOUTUBE_API_KEY",
+        "enable_dashboard": true,
+        "admin_password": "SetAStrongPasswordHere"
     }
     ```
 
@@ -288,10 +314,9 @@ To make the bot start automatically when you log in:
 
 The bot prioritizes configuration in the following order:
 1.  **Environment Variables** (Highest priority)
-2.  `data/settings.json` (Local overrides)
-3.  `config.json` (Default values)
+2.  `config.json`
 
-**Common Settings (`data/settings.json`):**
+**Common Settings (`config.json`):**
 ```json
 {
     "token": "YOUR_DISCORD_BOT_TOKEN",
@@ -300,6 +325,10 @@ The bot prioritizes configuration in the following order:
     "admin_password": "your_secure_password"
 }
 ```
+
+### Updating the Bot
+
+You can easily update the bot using the included `update.bat` script (Windows only). This script will back up your data, download the latest version from GitHub, and apply updates while preserving your `config.json`.
 
 ### YouTube Cookies Support
 
@@ -316,7 +345,7 @@ To support age-restricted content or avoid rate limits, you can provide a cookie
 The bot includes a web dashboard to help manage character data, edit configuration files, and control the soundboard.
 
 ### Setup
-1.  Open your `data/settings.json` file.
+1.  Open your `config.json` file.
 2.  Add or update the following keys:
     ```json
     {
