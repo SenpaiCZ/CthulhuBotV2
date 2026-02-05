@@ -2,7 +2,10 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Select
 import asyncio
-from loadnsave import load_karma_settings, save_karma_settings, load_karma_stats, save_karma_stats
+import io
+import urllib.parse
+from playwright.async_api import async_playwright
+from loadnsave import load_karma_settings, save_karma_settings, load_karma_stats, save_karma_stats, load_settings
 
 class Karma(commands.Cog):
     def __init__(self, bot):
@@ -11,6 +14,35 @@ class Karma(commands.Cog):
     async def get_guild_settings(self, guild_id):
         settings = await load_karma_settings()
         return settings.get(str(guild_id))
+
+    async def generate_notification_image(self, guild_id, user_id, rank_name, change_type):
+        settings = load_settings()
+        port = settings.get('dashboard_port', 5000)
+
+        encoded_rank = urllib.parse.quote(rank_name)
+        url = f"http://127.0.0.1:{port}/render/karma/{guild_id}/{user_id}?rank={encoded_rank}&type={change_type}"
+
+        try:
+            async with async_playwright() as p:
+                browser = await p.chromium.launch()
+                try:
+                    page = await browser.new_page(viewport={'width': 800, 'height': 400})
+                    await page.goto(url, timeout=10000)
+
+                    try:
+                        element = await page.wait_for_selector('.karma-card', timeout=5000)
+                    except:
+                        element = None
+
+                    if element:
+                        return await element.screenshot()
+                    else:
+                        return await page.screenshot()
+                finally:
+                    await browser.close()
+        except Exception as e:
+            print(f"Error generating karma image: {e}")
+            return None
 
     async def update_karma(self, guild_id, user_id, amount):
         stats = await load_karma_stats()
@@ -70,6 +102,13 @@ class Karma(commands.Cog):
         # Check current roles
         current_role_ids = {r.id for r in member.roles}
 
+        # Determine previous managed role
+        previous_role_id = None
+        for r_id in managed_role_ids:
+            if r_id in current_role_ids:
+                previous_role_id = r_id
+                break
+
         # 1. If we have a target role, add it if missing
         if target_role_id:
             if target_role_id not in current_role_ids:
@@ -91,10 +130,63 @@ class Karma(commands.Cog):
                 await member.remove_roles(*roles_to_remove, reason="Karma Threshold Change")
             if roles_to_add:
                 await member.add_roles(*roles_to_add, reason="Karma Threshold Reached")
+
+            # Check for rank change and notify
+            if target_role_id != previous_role_id:
+                # Determine type
+                change_type = "up"
+                new_rank_name = "None"
+
+                # Get threshold values for comparison
+                prev_thresh = -1
+                curr_thresh = -1
+
+                for t, rid in thresholds:
+                    if rid == previous_role_id: prev_thresh = t
+                    if rid == target_role_id: curr_thresh = t
+
+                if target_role_id is None:
+                    change_type = "down"
+                    new_rank_name = "Unranked"
+                elif previous_role_id is None:
+                    change_type = "up"
+                    role_obj = member.guild.get_role(target_role_id)
+                    new_rank_name = role_obj.name if role_obj else "Unknown"
+                else:
+                    if curr_thresh > prev_thresh:
+                        change_type = "up"
+                    else:
+                        change_type = "down"
+                    role_obj = member.guild.get_role(target_role_id)
+                    new_rank_name = role_obj.name if role_obj else "Unknown"
+
+                # Notification
+                notify_channel_id = settings.get("notification_channel_id")
+                if notify_channel_id:
+                    channel = member.guild.get_channel(int(notify_channel_id))
+                    if channel:
+                         # Run in background to not block
+                         self.bot.loop.create_task(self.send_rank_notification(channel, member, new_rank_name, change_type))
+
         except discord.Forbidden:
             print(f"Failed to update roles for {member} in {member.guild}: Missing Permissions")
         except Exception as e:
             print(f"Error updating roles for {member}: {e}")
+
+    async def send_rank_notification(self, channel, member, rank_name, change_type):
+        try:
+            img_bytes = await self.generate_notification_image(member.guild.id, member.id, rank_name, change_type)
+            if img_bytes:
+                file = discord.File(io.BytesIO(img_bytes), filename="rank_update.png")
+
+                if change_type == "up":
+                        msg_content = f"📈 **LEVEL UP!** {member.mention} has reached **{rank_name}**!"
+                else:
+                        msg_content = f"📉 **DERANKED...** {member.mention} dropped to **{rank_name}**."
+
+                await channel.send(content=msg_content, file=file)
+        except Exception as e:
+            print(f"Error sending rank notification: {e}")
 
     async def run_guild_karma_update(self, guild_id):
         """
@@ -121,28 +213,12 @@ class Karma(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def setupkarma(self, ctx, channel: discord.TextChannel, upvote_emoji: str, downvote_emoji: str):
+    async def setupkarma(self, ctx):
         """
-        ⚙️ Setup the Karma system for this server.
-        Usage: !setupkarma #channel <upvote_emoji> <downvote_emoji>
+        ⚙️ Setup the Karma system for this server (Wizard).
         """
-        settings = await load_karma_settings()
-        guild_id = str(ctx.guild.id)
-
-        # Preserve existing roles if any
-        existing_roles = {}
-        if guild_id in settings and "roles" in settings[guild_id]:
-            existing_roles = settings[guild_id]["roles"]
-
-        settings[guild_id] = {
-            "channel_id": channel.id,
-            "upvote_emoji": upvote_emoji,
-            "downvote_emoji": downvote_emoji,
-            "roles": existing_roles
-        }
-
-        await save_karma_settings(settings)
-        await ctx.send(f"Karma system setup!\nChannel: {channel.mention}\nUpvote: {upvote_emoji}\nDownvote: {downvote_emoji}")
+        await ctx.send("Let's set up the Karma system! First, select the channel where reactions should count.",
+                       view=KarmaSetupChannelView(self.bot, ctx))
 
     @commands.command(aliases=['k'])
     async def karma(self, ctx, user: discord.User = None):
@@ -466,6 +542,89 @@ class KarmaRoleRemoveSelect(Select):
                 return
 
         await interaction.response.send_message("❌ Error finding threshold.", ephemeral=True)
+
+# --- UI Classes for setupkarma (Main Setup) ---
+
+class KarmaSetupChannelView(View):
+    def __init__(self, bot, ctx):
+        super().__init__(timeout=120)
+        self.bot = bot
+        self.ctx = ctx
+        self.channel_id = None
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.ctx.author.id
+
+    @discord.ui.select(cls=discord.ui.ChannelSelect, channel_types=[discord.ChannelType.text], placeholder="Select Reaction Channel")
+    async def select_channel(self, interaction: discord.Interaction, select: discord.ui.ChannelSelect):
+        self.channel_id = select.values[0].id
+        await interaction.response.send_modal(KarmaSetupEmojiModal(self.bot, self.ctx, self.channel_id))
+
+class KarmaSetupEmojiModal(discord.ui.Modal, title="Karma Emojis"):
+    upvote = discord.ui.TextInput(label="Upvote Emoji", placeholder="e.g. 👌 or :custom:", required=True, max_length=50)
+    downvote = discord.ui.TextInput(label="Downvote Emoji", placeholder="e.g. 🤏 or :custom:", required=True, max_length=50)
+
+    def __init__(self, bot, ctx, channel_id):
+        super().__init__()
+        self.bot = bot
+        self.ctx = ctx
+        self.channel_id = channel_id
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # Move to next step: Notification Channel
+        await interaction.response.send_message(
+            f"Emojis set: {self.upvote.value} / {self.downvote.value}.\n"
+            "Now, select a **Notification Channel** for rank updates (or skip to disable).",
+            view=KarmaSetupNotifyView(self.bot, self.ctx, self.channel_id, self.upvote.value, self.downvote.value),
+            ephemeral=True
+        )
+
+class KarmaSetupNotifyView(View):
+    def __init__(self, bot, ctx, channel_id, up, down):
+        super().__init__(timeout=120)
+        self.bot = bot
+        self.ctx = ctx
+        self.data = {
+            "channel_id": channel_id,
+            "upvote_emoji": up,
+            "downvote_emoji": down
+        }
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.ctx.author.id
+
+    @discord.ui.select(cls=discord.ui.ChannelSelect, channel_types=[discord.ChannelType.text], placeholder="Select Notification Channel")
+    async def select_channel(self, interaction: discord.Interaction, select: discord.ui.ChannelSelect):
+        notify_id = select.values[0].id
+        await self.finish_setup(interaction, notify_id)
+
+    @discord.ui.button(label="Skip (No Notifications)", style=discord.ButtonStyle.grey)
+    async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.finish_setup(interaction, None)
+
+    async def finish_setup(self, interaction: discord.Interaction, notify_id):
+        settings = await load_karma_settings()
+        guild_id = str(self.ctx.guild.id)
+
+        existing_roles = {}
+        if guild_id in settings and "roles" in settings[guild_id]:
+            existing_roles = settings[guild_id]["roles"]
+
+        settings[guild_id] = {
+            "channel_id": self.data["channel_id"],
+            "notification_channel_id": notify_id,
+            "upvote_emoji": self.data["upvote_emoji"],
+            "downvote_emoji": self.data["downvote_emoji"],
+            "roles": existing_roles
+        }
+
+        await save_karma_settings(settings)
+
+        notify_text = f"<#{notify_id}>" if notify_id else "Disabled"
+        await interaction.response.edit_message(content=f"✅ **Karma Setup Complete!**\n"
+                                             f"Reaction Channel: <#{self.data['channel_id']}>\n"
+                                             f"Notification Channel: {notify_text}\n"
+                                             f"Emojis: {self.data['upvote_emoji']} / {self.data['downvote_emoji']}", view=None)
 
 async def setup(bot):
     await bot.add_cog(Karma(bot))
