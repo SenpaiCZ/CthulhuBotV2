@@ -32,6 +32,13 @@ app.bot = None  # Placeholder for the Discord bot instance
 def is_admin():
     return session.get('logged_in', False)
 
+def format_bold(text):
+    if not isinstance(text, str):
+        return text
+    return re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
+
+app.add_template_filter(format_bold, 'format_bold')
+
 def get_soundboard_files():
     structure = {}
     if not os.path.exists(SOUNDBOARD_FOLDER):
