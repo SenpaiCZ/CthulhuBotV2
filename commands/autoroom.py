@@ -1,21 +1,70 @@
 import discord
 from discord.ext import commands, tasks
+from discord.ui import View, Select, ChannelSelect
 from loadnsave import autoroom_load, autoroom_save
+
+class AutoroomSetupView(View):
+    def __init__(self):
+        super().__init__(timeout=120)
+        self.selected_channel = None
+        self.selected_category = None
+
+    @discord.ui.select(cls=ChannelSelect, channel_types=[discord.ChannelType.voice], placeholder="Select Source Voice Channel", min_values=1, max_values=1)
+    async def select_channel(self, interaction: discord.Interaction, select: ChannelSelect):
+        self.selected_channel = select.values[0]
+        await interaction.response.defer()
+
+    @discord.ui.select(cls=ChannelSelect, channel_types=[discord.ChannelType.category], placeholder="Select Target Category", min_values=1, max_values=1)
+    async def select_category(self, interaction: discord.Interaction, select: ChannelSelect):
+        self.selected_category = select.values[0]
+        await interaction.response.defer()
+
+    @discord.ui.button(label="Save Configuration", style=discord.ButtonStyle.green, row=2)
+    async def save_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.selected_channel or not self.selected_category:
+            await interaction.response.send_message("Please select both a Voice Channel and a Category first.", ephemeral=True)
+            return
+
+        server_id = str(interaction.guild.id)
+        autorooms = await autoroom_load()
+        if server_id not in autorooms:
+            autorooms[server_id] = {}
+
+        autorooms[server_id]["channel_id"] = self.selected_channel.id
+        autorooms[server_id]["category_id"] = self.selected_category.id
+        await autoroom_save(autorooms)
+
+        await interaction.response.send_message(
+            f"**Auto Room Setup Complete!**\n"
+            f"Source Channel: {self.selected_channel.mention}\n"
+            f"Target Category: {self.selected_category.mention}",
+            ephemeral=False
+        )
+        self.stop()
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, row=2)
+    async def cancel_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Setup cancelled.", ephemeral=True)
+        self.stop()
 
 class autoroom(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
+  @commands.command(aliases=['ars'])
+  @commands.has_permissions(administrator=True)
+  async def autoroomsetup(self, ctx):
+      """
+      `[p]autoroomsetup` - Interactive setup wizard for Auto Rooms.
+      """
+      view = AutoroomSetupView()
+      await ctx.send("Select the Source Voice Channel and the Target Category for Auto Rooms below:", view=view)
+
   @commands.command()
   async def autoroomset(self, ctx, channel_id: int, category_id: int):
     """
-    `[p]autoroomset entry_channel category_channel` - This command allows users to create personalized voice channels in the specified category when they join the designated entry channel.
-    
-    Use this command to set up an automatic voice channel system.
-    entry_channel is the channel where users join to create their own voice channels.
-    category_channel is the category where new voice channels will be created for users.
-    
-    `[p]autoroomset 123456789123 123456789123`
+    `[p]autoroomset entry_channel category_channel` - Legacy setup command.
+    Consider using `[p]autoroomsetup` instead.
     """
     if ctx.author != ctx.guild.owner:
         await ctx.send("This command is limited to the server owner only.")
@@ -46,7 +95,14 @@ class autoroom(commands.Cog):
       if server_id not in autorooms:
           return
   
-      if before.channel is None and after.channel is not None and after.channel.id == autorooms[server_id].get("channel_id"):
+      # Trigger if user joins the configured channel (even if switching from another)
+      target_channel_id = autorooms[server_id].get("channel_id")
+
+      if after.channel is not None and after.channel.id == target_channel_id:
+          # Check if they just moved within the same channel (mute/deaf update)
+          if before.channel and before.channel.id == target_channel_id:
+               return
+
           # Create a new voice channel in the specified category
           category_id = autorooms[server_id].get("category_id")
           if category_id:
@@ -54,24 +110,34 @@ class autoroom(commands.Cog):
               category = guild.get_channel(category_id)
   
               if category and isinstance(category, discord.CategoryChannel):
+                  # Ensure permissions are synced with category (public by default usually)
+                  overwrites = category.overwrites
                   new_channel_name = f"{member.display_name}'s Channel"
-                  new_channel = await guild.create_voice_channel(new_channel_name, category=category)
-                  autorooms[server_id][user_id] = new_channel.id
-                  await member.move_to(new_channel)
-                  await autoroom_save(autorooms)
+
+                  try:
+                      new_channel = await guild.create_voice_channel(new_channel_name, category=category, overwrites=overwrites)
+                      autorooms[server_id][user_id] = new_channel.id
+                      await member.move_to(new_channel)
+                      await autoroom_save(autorooms)
+                  except Exception as e:
+                      print(f"Error creating autoroom: {e}")
   
       # Check if the user left their own created channel
       if (
           user_id in autorooms[server_id]
+          and before.channel
           and before.channel.id == autorooms[server_id][user_id]  # Compare channel IDs
-          and after.channel is None
+          and (after.channel is None or after.channel.id != before.channel.id)
       ):
           # Get the user's created channel ID and delete it
           created_channel_id = autorooms[server_id][user_id]
           created_channel = member.guild.get_channel(created_channel_id)
   
           if created_channel:
-              await created_channel.delete()
+              try:
+                  await created_channel.delete()
+              except:
+                  pass # Already deleted?
               del autorooms[server_id][user_id]
               await autoroom_save(autorooms)
 
@@ -86,18 +152,28 @@ class autoroom(commands.Cog):
   
           channel_id_to_keep = autorooms[server_id].get("channel_id")
           category_id_to_keep = autorooms[server_id].get("category_id")
-  
-          for user_id, channel_id in autorooms[server_id].items():
-              # Skip the channel and category you want to keep
-              if channel_id == channel_id_to_keep or channel_id == category_id_to_keep:
+
+          # Iterate over a copy of items to allow modification during iteration
+          for user_id, channel_id in list(autorooms[server_id].items()):
+              # Skip the configuration keys
+              if user_id in ["channel_id", "category_id"]:
                   continue
-  
-              # Check if the user's channel exists and is empty
-              user_channel = guild.get_channel(channel_id)
-  
-              if user_channel and len(user_channel.members) == 0:
-                  await user_channel.delete()
-                  del autorooms[server_id][user_id]
+
+              # Ensure channel_id is int
+              if isinstance(channel_id, int):
+                  # Check if the user's channel exists and is empty
+                  user_channel = guild.get_channel(channel_id)
+
+                  if user_channel:
+                      if len(user_channel.members) == 0:
+                          try:
+                              await user_channel.delete()
+                          except:
+                              pass
+                          del autorooms[server_id][user_id]
+                  else:
+                      # Channel doesn't exist anymore, cleanup
+                      del autorooms[server_id][user_id]
   
           await autoroom_save(autorooms)
         
@@ -120,16 +196,18 @@ class autoroom(commands.Cog):
 
       user_channel_id = autorooms[server_id][user_id]
 
-      if user_channel_id == ctx.voice_client.channel.id:
-          # The user who issued the command is in their own room
+      if not ctx.author.voice or ctx.author.voice.channel.id != user_channel_id:
+           await ctx.send("You must be in your own autoroom to use this command.")
+           return
+
+      if member.voice and member.voice.channel and member.voice.channel.id == user_channel_id:
           try:
-              member_channel = ctx.voice_client.channel
-              await member.move_to(None)  # Disconnect the mentioned user from the room
+              await member.move_to(None)  # Disconnect
               await ctx.send(f"{member.display_name} has been kicked from your room.")
           except discord.errors.Forbidden:
               await ctx.send("I don't have permission to move that user.")
       else:
-          await ctx.send("You can only kick users from your own room.")  
+          await ctx.send("That user is not in your room.")
 
   @commands.command()
   async def autoroomlock(self, ctx):
@@ -152,13 +230,12 @@ class autoroom(commands.Cog):
 
       user_channel_id = autorooms[server_id][user_id]
 
-      if user_channel_id == ctx.author.voice.channel.id:
-          # The user who issued the command is in their own room
+      if ctx.author.voice and ctx.author.voice.channel.id == user_channel_id:
           user_channel = ctx.author.voice.channel
           await user_channel.set_permissions(ctx.guild.default_role, connect=False)
           await ctx.send("Your room has been locked. No one can join now.")
       else:
-          await ctx.send("You can only lock your own room.")
+          await ctx.send("You need to be in your autoroom to lock it.")
 
   @commands.command()
   async def autoroomunlock(self, ctx):
@@ -181,15 +258,12 @@ class autoroom(commands.Cog):
 
       user_channel_id = autorooms[server_id][user_id]
 
-      if user_channel_id == ctx.author.voice.channel.id:
-          # The user who issued the command is in their own room
+      if ctx.author.voice and ctx.author.voice.channel.id == user_channel_id:
           user_channel = ctx.author.voice.channel
           await user_channel.set_permissions(ctx.guild.default_role, connect=True)
           await ctx.send("Your room has been unlocked. Anyone can join now.")
       else:
-          await ctx.send("You can only unlock your own room.")
-
-
+          await ctx.send("You need to be in your autoroom to unlock it.")
 
 async def setup(bot):
   await bot.add_cog(autoroom(bot))
