@@ -57,6 +57,19 @@
             text-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
         }
 
+        /* Status Styles */
+        .type-status {
+            border-color: #9b59b6;
+            background: linear-gradient(135deg, #1a1a1a 0%, #1a0f2e 100%);
+        }
+        .type-status .accent-bg {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+        }
+        .type-status .rank-title {
+            color: #9b59b6;
+            text-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
+        }
+
         .avatar-container {
             width: 250px;
             height: 100%;
@@ -141,7 +154,13 @@
     </style>
 </head>
 <body>
-    {% set type_class = 'type-up' if change_type == 'up' else 'type-down' %}
+    {% if change_type == 'up' %}
+        {% set type_class = 'type-up' %}
+    {% elif change_type == 'down' %}
+        {% set type_class = 'type-down' %}
+    {% else %}
+        {% set type_class = 'type-status' %}
+    {% endif %}
 
     <div class="karma-card {{ type_class }}">
         <div class="accent-bg bg-shape"></div>
@@ -155,8 +174,10 @@
             <div class="header">
                 {% if change_type == 'up' %}
                 LEVEL UP!
-                {% else %}
+                {% elif change_type == 'down' %}
                 RANK DOWN
+                {% else %}
+                CURRENT RANK
                 {% endif %}
             </div>
 

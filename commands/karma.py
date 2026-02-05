@@ -15,6 +15,31 @@ class Karma(commands.Cog):
         settings = await load_karma_settings()
         return settings.get(str(guild_id))
 
+    def _get_rank_name(self, karma, settings, guild):
+        if "roles" not in settings or not settings["roles"]:
+            return "Unranked"
+
+        # Parse thresholds: { "10": 12345, "50": 67890 }
+        try:
+            thresholds = []
+            for k, r_id in settings["roles"].items():
+                thresholds.append((int(k), int(r_id)))
+            thresholds.sort(key=lambda x: x[0], reverse=True)
+        except ValueError:
+            return "Error"
+
+        target_role_id = None
+        for thresh, r_id in thresholds:
+            if karma >= thresh:
+                target_role_id = r_id
+                break
+
+        if target_role_id:
+            role = guild.get_role(target_role_id)
+            return role.name if role else "Unknown Rank"
+
+        return "Unranked"
+
     async def generate_notification_image(self, guild_id, user_id, rank_name, change_type):
         settings = load_settings()
         port = settings.get('dashboard_port', 5000)
@@ -236,6 +261,38 @@ class Karma(commands.Cog):
         karma_score = stats.get(guild_id, {}).get(user_id, 0)
 
         await ctx.send(f"{user.display_name} has {karma_score} karma.")
+
+    @commands.command(aliases=['level'])
+    async def memelevel(self, ctx, user: discord.Member = None):
+        """
+        🔮 Show your current rank card.
+        Usage: !memelevel [@user]
+        """
+        if user is None:
+            user = ctx.author
+
+        stats = await load_karma_stats()
+        guild_id = str(ctx.guild.id)
+        user_id = str(user.id)
+
+        karma = stats.get(guild_id, {}).get(user_id, 0)
+        settings = await self.get_guild_settings(guild_id)
+
+        if not settings:
+             await ctx.send("Karma system is not set up on this server.")
+             return
+
+        rank_name = self._get_rank_name(karma, settings, ctx.guild)
+
+        # Generate image
+        async with ctx.typing():
+            img_bytes = await self.generate_notification_image(ctx.guild.id, user.id, rank_name, "status")
+
+        if img_bytes:
+            file = discord.File(io.BytesIO(img_bytes), filename="rank_status.png")
+            await ctx.send(file=file)
+        else:
+            await ctx.send("Failed to generate rank card.")
 
     @commands.command(aliases=['karmatop', 'top'])
     async def leaderboard(self, ctx, page: int = 1):
