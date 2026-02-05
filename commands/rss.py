@@ -21,7 +21,6 @@ COLORS = {
     "Dark Blue": "#00008B",
     "Dark Green": "#006400",
     "Cyan": "#00FFFF",
-    "Lime": "#00FF00",
     "Pink": "#FFC0CB",
     "Yellow": "#FFFF00",
     "Brown": "#A52A2A",
