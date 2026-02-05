@@ -34,18 +34,18 @@ if [ ! -d "data" ]; then
     mkdir data
 fi
 
-# Create settings.json if it doesn't exist
-if [ ! -f "data/settings.json" ]; then
-    echo "Creating data/settings.json template..."
+# Create config.json if it doesn't exist
+if [ ! -f "config.json" ]; then
+    echo "Creating config.json template..."
     echo '{
     "token": "YOUR_DISCORD_BOT_TOKEN",
     "youtubetoken": "YOUR_YOUTUBE_API_KEY",
     "enable_dashboard": true,
     "admin_password": "your_secure_password"
-}' > data/settings.json
-    echo "Please edit data/settings.json with your bot token and API keys."
+}' > config.json
+    echo "Please edit config.json with your bot token and API keys."
 else
-    echo "data/settings.json already exists. Skipping creation."
+    echo "config.json already exists. Skipping creation."
 fi
 
 echo "Setup complete! To run the bot, use: source venv/bin/activate && python bot.py"

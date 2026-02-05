@@ -37,18 +37,18 @@ if not exist "data" (
     mkdir data
 )
 
-REM Create settings.json if it doesn't exist
-if not exist "data\settings.json" (
-    echo Creating data\settings.json template...
-    echo {> data\settings.json
-    echo     "token": "YOUR_DISCORD_BOT_TOKEN",>> data\settings.json
-    echo     "youtubetoken": "YOUR_YOUTUBE_API_KEY",>> data\settings.json
-    echo     "enable_dashboard": true,>> data\settings.json
-    echo     "admin_password": "your_secure_password">> data\settings.json
-    echo }>> data\settings.json
-    echo Please edit data\settings.json with your bot token and API keys.
+REM Create config.json if it doesn't exist
+if not exist "config.json" (
+    echo Creating config.json template...
+    echo {> config.json
+    echo     "token": "YOUR_DISCORD_BOT_TOKEN",>> config.json
+    echo     "youtubetoken": "YOUR_YOUTUBE_API_KEY",>> config.json
+    echo     "enable_dashboard": true,>> config.json
+    echo     "admin_password": "your_secure_password">> config.json
+    echo }>> config.json
+    echo Please edit config.json with your bot token and API keys.
 ) else (
-    echo data\settings.json already exists. Skipping creation.
+    echo config.json already exists. Skipping creation.
 )
 
 echo Setup complete! To run the bot, use: venv\Scripts\activate && python bot.py
