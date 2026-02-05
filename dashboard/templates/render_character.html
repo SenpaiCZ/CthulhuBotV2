@@ -158,7 +158,7 @@
                     {{ emoji_lib.emojize(emojis.get_stat_emoji(stat), language='alias') }}
                     {{ char.get(stat, 0) }}
                 </div>
-                <div style="font-size:0.7em; color:#666;">{{ (char.get(stat,0)|int / 2)|round|int }} / {{ (char.get(stat,0)|int / 5)|round|int }}</div>
+                <div style="font-size:0.7em; color:#666;">{{ char.get(stat,0)|int // 2 }} / {{ char.get(stat,0)|int // 5 }}</div>
             </div>
             {% endfor %}
         </div>
@@ -233,7 +233,7 @@
                 <span class="coc-skill-name">
                     {{ emoji_lib.emojize(emojis.get_stat_emoji('Credit Rating'), language='alias') }} Credit Rating
                 </span>
-                <span class="coc-skill-val">{{ char.get('Credit Rating', 0) }}</span>
+                <span class="coc-skill-val">{{ char.get('Credit Rating', 0) }} <span style="font-size:0.8em; color:#888; font-weight:normal;">({{ char.get('Credit Rating', 0)|int // 2 }}/{{ char.get('Credit Rating', 0)|int // 5 }})</span></span>
             </div>
 
             {% for key, val in char.items()|sort %}
@@ -246,7 +246,7 @@
                             <span class="coc-skill-name">
                                 {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}
                             </span>
-                            <span class="coc-skill-val">{{ val }}</span>
+                            <span class="coc-skill-val">{{ val }} <span style="font-size:0.8em; color:#888; font-weight:normal;">({{ val|int // 2 }}/{{ val|int // 5 }})</span></span>
                         </div>
                         {% endif %}
                     {% endif %}
@@ -292,7 +292,7 @@
                         {% set entries = char_backstory[section] %}
                         {% if entries and entries|length > 0 %}
                             {% for entry in entries %}
-                                <p class="text-white small mb-1">{{ entry | format_bold | safe }}</p>
+                                <p class="text-white small mb-1">{{ emoji_lib.emojize(entry, language='alias') | format_bold | safe }}</p>
                             {% endfor %}
                         {% else %}
                             <div class="text-white small" style="min-height: 1.2em;">&nbsp;</div>
