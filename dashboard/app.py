@@ -585,6 +585,41 @@ async def save_karma_roles():
 
     return jsonify({"status": "success"})
 
+@app.route('/api/karma/users/<guild_id>')
+async def get_karma_users(guild_id):
+    if not is_admin(): return "Unauthorized", 401
+
+    if not app.bot:
+        return jsonify([])
+
+    cog = app.bot.get_cog("Karma")
+    if cog:
+        data = await cog.get_guild_leaderboard_data(guild_id)
+        return jsonify(data)
+
+    return jsonify([])
+
+@app.route('/api/karma/recalculate', methods=['POST'])
+async def recalculate_karma():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+
+    if not guild_id:
+        return jsonify({"status": "error", "message": "Missing guild_id"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    cog = app.bot.get_cog("Karma")
+    if cog:
+        # Run in background
+        app.bot.loop.create_task(cog.recalculate_karma(guild_id))
+        return jsonify({"status": "success", "message": "Recalculation started in background."})
+
+    return jsonify({"status": "error", "message": "Karma Cog not loaded"}), 500
+
 # --- Soundboard Routes ---
 
 @app.route('/admin/soundboard')

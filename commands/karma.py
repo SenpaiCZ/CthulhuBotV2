@@ -213,6 +213,102 @@ class Karma(commands.Cog):
         except Exception as e:
             print(f"Error sending rank notification: {e}")
 
+    async def recalculate_karma(self, guild_id):
+        """
+        Wipes existing karma stats for the guild and rescans the entire history
+        of the configured karma channel to recalculate scores.
+        Ignores self-votes.
+        """
+        guild_id = str(guild_id)
+        settings = await self.get_guild_settings(guild_id)
+        if not settings or not settings.get("channel_id"):
+            print(f"Recalculate failed for {guild_id}: No channel configured.")
+            return
+
+        channel_id = int(settings["channel_id"])
+        guild = self.bot.get_guild(int(guild_id))
+        if not guild: return
+        channel = guild.get_channel(channel_id)
+        if not channel: return
+
+        up_emoji = settings.get("upvote_emoji")
+        down_emoji = settings.get("downvote_emoji")
+
+        print(f"Starting karma recalculation for {guild.name} in #{channel.name}...")
+
+        # Temp stats
+        new_stats = {}
+
+        try:
+            # Iterate history (scan all messages)
+            async for message in channel.history(limit=None):
+                if message.author.bot:
+                    continue # Do not count karma FOR bots
+
+                # We need to iterate over all reactions
+                for reaction in message.reactions:
+                    emoji_str = str(reaction.emoji)
+                    change = 0
+                    if emoji_str == up_emoji:
+                        change = 1
+                    elif emoji_str == down_emoji:
+                        change = -1
+
+                    if change == 0:
+                        continue
+
+                    # Fetch users who reacted (required to filter self-votes)
+                    async for user in reaction.users():
+                        if user.bot:
+                            continue # Ignore votes FROM bots
+
+                        if user.id == message.author.id:
+                            continue # Ignore self-votes
+
+                        author_id = str(message.author.id)
+                        new_stats[author_id] = new_stats.get(author_id, 0) + change
+
+            # Save new stats
+            all_stats = await load_karma_stats()
+            all_stats[guild_id] = new_stats
+            await save_karma_stats(all_stats)
+
+            print(f"Karma recalculation for {guild.name} complete. Updating roles...")
+
+            # Trigger retroactive role updates
+            await self.run_guild_karma_update(guild_id)
+
+        except Exception as e:
+            print(f"Error during karma recalculation for {guild.name}: {e}")
+
+    async def get_guild_leaderboard_data(self, guild_id):
+        stats = await load_karma_stats()
+        guild_id = str(guild_id)
+
+        if guild_id not in stats:
+            return []
+
+        # Sort users by karma (descending)
+        sorted_users = sorted(stats[guild_id].items(), key=lambda item: item[1], reverse=True)
+
+        results = []
+        guild = self.bot.get_guild(int(guild_id))
+
+        for user_id, score in sorted_users:
+            user_name = f"Unknown User ({user_id})"
+            if guild:
+                member = guild.get_member(int(user_id))
+                if member:
+                    user_name = member.display_name
+
+            results.append({
+                "user_id": user_id,
+                "name": user_name,
+                "score": score
+            })
+
+        return results
+
     async def run_guild_karma_update(self, guild_id):
         """
         Iterates over all members in a guild and updates their roles.
