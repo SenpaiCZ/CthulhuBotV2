@@ -43,6 +43,77 @@ class GameModeView(View):
             except:
                 pass
 
+class RetireCharacterView(View):
+    def __init__(self, ctx):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.value = False
+        self.message = None
+
+    @discord.ui.button(label="Retire", style=discord.ButtonStyle.danger)
+    async def retire(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("Not your session!", ephemeral=True)
+        self.value = True
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("Not your session!", ephemeral=True)
+        self.value = False
+        await interaction.response.defer()
+        self.stop()
+
+    async def on_timeout(self):
+        self.value = False # Default to cancel
+
+class StatGenerationView(View):
+    def __init__(self, ctx):
+        super().__init__(timeout=300)
+        self.ctx = ctx
+        self.value = None
+        self.message = None
+
+    @discord.ui.button(label="Full Auto", style=discord.ButtonStyle.success)
+    async def auto(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("Not your session!", ephemeral=True)
+        self.value = "auto"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Quick Fire", style=discord.ButtonStyle.primary)
+    async def quick(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("Not your session!", ephemeral=True)
+        self.value = "quick"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Assisted", style=discord.ButtonStyle.primary)
+    async def assisted(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("Not your session!", ephemeral=True)
+        self.value = "assisted"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Forced", style=discord.ButtonStyle.secondary)
+    async def forced(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("Not your session!", ephemeral=True)
+        self.value = "forced"
+        await interaction.response.defer()
+        self.stop()
+
+    async def on_timeout(self):
+        if self.message:
+            try:
+                await self.message.edit(view=None, content="Timed out.")
+            except: pass
+
 class TalentCategorySelect(Select):
     def __init__(self, talents_data):
         options = [
@@ -243,15 +314,20 @@ class newinvestigator(commands.Cog):
             existing_char = player_stats[server_id][user_id]
             char_name = existing_char.get("NAME", "Unknown")
 
-            response = await self.get_input(
-                ctx,
+            view = RetireCharacterView(ctx)
+            msg = await ctx.send(
                 f"You already have an investigator named **{char_name}**. \n"
-                "Do you want to **retire** this character to create a new one? (yes/no)"
+                "Do you want to **retire** this character to create a new one?",
+                view=view
             )
+            view.message = msg
+            await view.wait()
 
-            if response is None: return
+            try:
+                await msg.edit(view=None)
+            except: pass
 
-            if response.lower() in ["yes", "y"]:
+            if view.value:
                 # Retirement logic
                 retired_characters = await load_retired_characters_data()
                 if user_id not in retired_characters:
@@ -349,24 +425,31 @@ class newinvestigator(commands.Cog):
             "1. **Full Auto**: Completely random rolls.\n"
             "2. **Quick Fire**: Assign standard values (40, 50, 50, 50, 60, 60, 70, 80).\n"
             "3. **Assisted**: Roll each stat one by one with one reroll allowed.\n"
-            "4. **Forced**: Manually enter specific values.\n\n"
-            "Type the **name** or **number** of the mode."
+            "4. **Forced**: Manually enter specific values."
         )
-        mode_input = await self.get_input(ctx, prompt)
-        if mode_input is None: return
 
-        mode = mode_input.lower()
-        if "1" in mode or "auto" in mode:
-            await self.mode_full_auto(ctx, char_data)
-        elif "2" in mode or "quick" in mode:
-            await self.mode_quick_fire(ctx, char_data)
-        elif "3" in mode or "assist" in mode:
-            await self.mode_assisted(ctx, char_data)
-        elif "4" in mode or "force" in mode:
-            await self.mode_forced(ctx, char_data)
-        else:
-            await ctx.send("Invalid mode selected. Please try `!newinv` again.")
+        view = StatGenerationView(ctx)
+        msg = await ctx.send(prompt, view=view)
+        view.message = msg
+
+        await view.wait()
+
+        if view.value is None:
+            # Timeout
             return
+
+        try:
+             await msg.edit(view=None)
+        except: pass
+
+        if view.value == "auto":
+            await self.mode_full_auto(ctx, char_data)
+        elif view.value == "quick":
+            await self.mode_quick_fire(ctx, char_data)
+        elif view.value == "assisted":
+            await self.mode_assisted(ctx, char_data)
+        elif view.value == "forced":
+            await self.mode_forced(ctx, char_data)
 
         # Pulp Core Characteristic Adjustment
         if char_data.get("Game Mode") == "Pulp of Cthulhu" and "Archetype Info" in char_data:
