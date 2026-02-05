@@ -1,9 +1,78 @@
 import discord
 import feedparser
+import asyncio
 from discord.ext import commands, tasks
+from discord.ui import View, Select
 from loadnsave import load_rss_data, save_rss_data
-from asyncio import sleep
 from rss_utils import get_youtube_rss_url
+
+# Predefined colors for the selector
+COLORS = {
+    "SeaGreen (Default)": "#2E8B57",
+    "Red": "#FF0000",
+    "Green": "#00FF00",
+    "Blue": "#0000FF",
+    "Orange": "#FFA500",
+    "Purple": "#800080",
+    "Gold": "#FFD700",
+    "Magenta": "#FF00FF",
+    "Teal": "#008080",
+    "Dark Red": "#8B0000",
+    "Dark Blue": "#00008B",
+    "Dark Green": "#006400",
+    "Cyan": "#00FFFF",
+    "Lime": "#00FF00",
+    "Pink": "#FFC0CB",
+    "Yellow": "#FFFF00",
+    "Brown": "#A52A2A",
+    "Black": "#000000",
+    "White": "#FFFFFF",
+    "Gray": "#808080",
+    "Silver": "#C0C0C0",
+    "Maroon": "#800000",
+    "Olive": "#808000",
+    "Navy": "#000080",
+}
+
+class ChannelSelect(Select):
+    def __init__(self, channels):
+        options = []
+        # Discord allows max 25 options
+        for channel in channels[:25]:
+            options.append(discord.SelectOption(label=channel.name, value=str(channel.id), emoji="#️⃣"))
+
+        super().__init__(placeholder="Select channel to send feed to", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        self.view.selected_channel_id = int(self.values[0])
+        self.view.stop()
+
+class ColorSelect(Select):
+    def __init__(self):
+        options = []
+        for name, hex_val in list(COLORS.items())[:24]: # Leave room for custom
+             options.append(discord.SelectOption(label=name, description=hex_val, value=hex_val))
+
+        options.append(discord.SelectOption(label="Custom Hex", description="Type your own hex code", value="custom", emoji="🎨"))
+
+        super().__init__(placeholder="Select accent color", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        self.view.selected_color = self.values[0]
+        self.view.stop()
+
+class RSSSetupView(View):
+    def __init__(self, channels=None, type="channel"):
+        super().__init__(timeout=60.0)
+        self.selected_channel_id = None
+        self.selected_color = None
+
+        if type == "channel" and channels:
+            self.add_item(ChannelSelect(channels))
+        elif type == "color":
+            self.add_item(ColorSelect())
 
 class rss(commands.Cog):
 
@@ -78,7 +147,7 @@ class rss(commands.Cog):
               link = rss_link
 
           # Parse the RSS feed
-          feed = feedparser.parse(link)
+          feed = await self.bot.loop.run_in_executor(None, feedparser.parse, link)
           if not feed.entries:
               await ctx.send("No items found in the RSS feed.")
               return
@@ -133,6 +202,178 @@ class rss(commands.Cog):
       except Exception as e:
           await ctx.send(f"An error occurred: {e}")
 
+  @commands.command()
+  async def rsssetup(self, ctx):
+      """
+      Wizard to setup a new RSS feed subscription.
+      """
+
+      def check(m):
+          return m.author == ctx.author and m.channel == ctx.channel
+
+      # --- Step 1: Link ---
+      await ctx.send("Send link to RSS, YT channel or YT video")
+
+      try:
+          msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+          link = msg.content.strip()
+      except asyncio.TimeoutError:
+          await ctx.send("Timed out. Please start over.")
+          return
+
+      # Validate Link
+      try:
+          rss_link = await get_youtube_rss_url(link)
+          if rss_link:
+              link = rss_link
+      except Exception as e:
+          pass # Fallback to raw link if error
+
+      # Test parse
+      try:
+          feed = await self.bot.loop.run_in_executor(None, feedparser.parse, link)
+          if not feed.entries:
+               # If no entries, it might be invalid or just empty.
+               # We'll allow empty if feed.feed has data (title), otherwise error.
+               if not hasattr(feed, 'feed') or not feed.feed.get('title'):
+                   await ctx.send("Could not parse RSS feed or feed is invalid/empty. Please check the link.")
+                   return
+      except Exception as e:
+          await ctx.send(f"Error parsing feed: {e}")
+          return
+
+      # --- Step 2: Channel Selector ---
+      # Filter for text channels only
+      text_channels = [c for c in ctx.guild.text_channels]
+      text_channels.sort(key=lambda x: x.position) # Sort by position
+
+      target_channel_id = None
+
+      if len(text_channels) <= 25:
+          view = RSSSetupView(channels=text_channels, type="channel")
+          prompt_msg = await ctx.send("Select channel to send feed to:", view=view)
+
+          timeout = await view.wait()
+          if timeout:
+              await ctx.send("Timed out.")
+              return
+
+          if view.selected_channel_id:
+              target_channel_id = view.selected_channel_id
+              await prompt_msg.delete()
+          else:
+              await ctx.send("Selection cancelled.")
+              return
+      else:
+          await ctx.send("Select channel to send feed to:\n(Too many channels for selector, please enter the **Channel ID** manually)")
+          try:
+              msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+              try:
+                  target_channel_id = int(msg.content.strip())
+                  # Validate channel exists and is text channel
+                  channel = ctx.guild.get_channel(target_channel_id)
+                  if not channel or not isinstance(channel, discord.TextChannel):
+                      await ctx.send("Invalid Channel ID or not a text channel.")
+                      return
+              except ValueError:
+                  await ctx.send("Invalid ID format.")
+                  return
+          except asyncio.TimeoutError:
+              await ctx.send("Timed out.")
+              return
+
+      # --- Step 3: Color Selector ---
+      view = RSSSetupView(type="color")
+      prompt_msg = await ctx.send("What accent color you want for embed?", view=view)
+
+      timeout = await view.wait()
+      if timeout:
+           await ctx.send("Timed out.")
+           return
+
+      final_color = "#2E8B57" # Default
+
+      if view.selected_color:
+          await prompt_msg.delete()
+          if view.selected_color == "custom":
+              await ctx.send("Please enter the Hex Color Code (e.g. #FF0000):")
+              try:
+                  msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                  input_color = msg.content.strip()
+                  # Basic validation
+                  if not input_color.startswith('#'):
+                      input_color = '#' + input_color
+
+                  # Verify it is hex
+                  try:
+                      int(input_color[1:], 16)
+                      final_color = input_color
+                  except ValueError:
+                      await ctx.send("Invalid Hex Code. Using default.")
+
+              except asyncio.TimeoutError:
+                  await ctx.send("Timed out. Using default color.")
+          else:
+              final_color = view.selected_color
+      else:
+           await ctx.send("No selection made. Using default color.")
+           await prompt_msg.delete()
+
+      # --- Step 4: Save & Confirm ---
+      try:
+          # Get the server ID
+          server_id = str(ctx.guild.id)
+
+          # Get latest entry info
+          latest_entry = feed.entries[0] if feed.entries else None
+          latest_id = self.get_entry_id(latest_entry) if latest_entry else None
+          latest_title = latest_entry.title if latest_entry else "No Title"
+
+          # Create an empty RSS data dictionary for this server
+          rss_data = await load_rss_data()
+
+          # Check if RSS data already exists for this server
+          if server_id in rss_data:
+              # Check if the link already exists for this server
+              existing_subscriptions = rss_data[server_id]
+              for subscription in existing_subscriptions:
+                  if subscription["link"] == link:
+                      await ctx.send(f"RSS feed is already subscribed! (Channel: <#{subscription['channel_id']}>)")
+                      return
+
+              # Add a new RSS subscription for this server
+              rss_data[server_id].append({
+                  "link": link,
+                  "channel_id": target_channel_id,
+                  "last_message": latest_title,
+                  "last_id": latest_id,
+                  "color": final_color
+              })
+          else:
+              # Create a new RSS data entry for this server with the first subscription
+              rss_data[server_id] = [{
+                  "link": link,
+                  "channel_id": target_channel_id,
+                  "last_message": latest_title,
+                  "last_id": latest_id,
+                  "color": final_color
+              }]
+
+          # Save the updated RSS data
+          await save_rss_data(rss_data)
+
+          feed_title = feed.feed.get('title', link)
+          await ctx.send(f"Successfully subscribed to **{feed_title}** in <#{target_channel_id}>!")
+
+          if latest_entry:
+              target_channel = ctx.guild.get_channel(target_channel_id)
+              if target_channel:
+                  embed = self._create_rss_embed(latest_entry, feed_title, final_color)
+                  await target_channel.send(f"New subscription added!", embed=embed)
+
+      except Exception as e:
+          await ctx.send(f"An error occurred while saving: {e}")
+
   @tasks.loop(minutes=5)
   async def check_rss_feed(self):
       # Load RSS data
@@ -156,7 +397,7 @@ class rss(commands.Cog):
 
               try:
                   # Parse the RSS feed
-                  feed = feedparser.parse(link)
+                  feed = await self.bot.loop.run_in_executor(None, feedparser.parse, link)
                   if not feed.entries:
                       continue
 
