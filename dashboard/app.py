@@ -436,14 +436,37 @@ async def admin_karma():
         for channel in guild.text_channels:
              channels.append({"id": str(channel.id), "name": channel.name})
 
+        # Fetch roles for dropdown
+        roles_list = []
+        for role in guild.roles:
+            if not role.is_default() and not role.managed:
+                roles_list.append({"id": str(role.id), "name": role.name})
+        roles_list.sort(key=lambda x: x['name'])
+
         guild_id_str = str(guild.id)
         current_settings = karma_settings.get(guild_id_str, {})
+
+        # Resolve existing roles
+        resolved_roles = []
+        if "roles" in current_settings:
+            for thresh, role_id in current_settings["roles"].items():
+                role_obj = guild.get_role(int(role_id))
+                role_name = role_obj.name if role_obj else f"Unknown Role ({role_id})"
+                resolved_roles.append({
+                    "threshold": thresh,
+                    "role_id": str(role_id),
+                    "role_name": role_name
+                })
+            # Sort by threshold
+            resolved_roles.sort(key=lambda x: int(x['threshold']))
 
         guilds_data.append({
             "id": guild_id_str,
             "name": guild.name,
             "channels": channels,
-            "settings": current_settings
+            "roles_list": roles_list,
+            "settings": current_settings,
+            "resolved_roles": resolved_roles
         })
 
     return await render_template('karma_settings.html', guilds=guilds_data)
@@ -471,13 +494,55 @@ async def save_karma():
         if str(guild_id) in karma_settings:
             del karma_settings[str(guild_id)]
     else:
+        # Preserve existing roles
+        existing_roles = {}
+        if str(guild_id) in karma_settings and "roles" in karma_settings[str(guild_id)]:
+            existing_roles = karma_settings[str(guild_id)]["roles"]
+
         karma_settings[str(guild_id)] = {
             "channel_id": int(channel_id),
             "upvote_emoji": upvote_emoji if upvote_emoji else "👌",
-            "downvote_emoji": downvote_emoji if downvote_emoji else "🤏"
+            "downvote_emoji": downvote_emoji if downvote_emoji else "🤏",
+            "roles": existing_roles
         }
 
     await save_karma_settings(karma_settings)
+
+    return jsonify({"status": "success"})
+
+@app.route('/api/karma/roles/save', methods=['POST'])
+async def save_karma_roles():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    roles_data = data.get('roles') # List of {threshold: x, role_id: y}
+
+    if not guild_id:
+        return jsonify({"status": "error", "message": "Missing guild_id"}), 400
+
+    karma_settings = await load_karma_settings()
+
+    if str(guild_id) not in karma_settings:
+        # Should initiate base settings first ideally, but we can create empty dict
+        karma_settings[str(guild_id)] = {}
+
+    # Convert list to dict format for storage: {"10": 123, "50": 456}
+    new_roles_map = {}
+    if roles_data:
+        for item in roles_data:
+            thresh = str(item.get('threshold'))
+            r_id = int(item.get('role_id'))
+            new_roles_map[thresh] = r_id
+
+    karma_settings[str(guild_id)]["roles"] = new_roles_map
+    await save_karma_settings(karma_settings)
+
+    # Trigger Update
+    if app.bot:
+        cog = app.bot.get_cog("Karma")
+        if cog:
+            app.bot.loop.create_task(cog.run_guild_karma_update(guild_id))
 
     return jsonify({"status": "success"})
 

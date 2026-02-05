@@ -4,7 +4,7 @@
 
 {% block content %}
 <h2 class="mb-4">Karma Settings</h2>
-<p class="text-muted">Configure the reaction channel and emojis for the Karma system.</p>
+<p class="text-muted">Configure the reaction channel, emojis, and role thresholds for the Karma system.</p>
 
 <div class="card">
     <div class="card-body">
@@ -13,9 +13,10 @@
                 <thead>
                     <tr>
                         <th style="width: 20%;">Server</th>
-                        <th style="width: 30%;">Karma Channel</th>
-                        <th style="width: 15%;">Upvote Emoji</th>
-                        <th style="width: 15%;">Downvote Emoji</th>
+                        <th style="width: 25%;">Karma Channel</th>
+                        <th style="width: 10%;">Upvote</th>
+                        <th style="width: 10%;">Downvote</th>
+                        <th style="width: 15%;">Roles</th>
                         <th style="width: 20%;">Action</th>
                     </tr>
                 </thead>
@@ -45,8 +46,16 @@
                                    value="{{ guild.settings.get('downvote_emoji', '🤏') }}" placeholder="🤏">
                         </td>
                         <td>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="openRolesModal('{{ guild.id }}')">
+                                <i class="bi bi-person-badge"></i> Manage Roles
+                            </button>
+                            <small class="d-block text-muted mt-1">
+                                {{ guild.resolved_roles|length }} thresholds
+                            </small>
+                        </td>
+                        <td>
                             <button class="btn btn-primary btn-sm" onclick="saveKarma('{{ guild.id }}')">
-                                <i class="bi bi-save"></i> Save
+                                <i class="bi bi-save"></i> Save Config
                             </button>
                         </td>
                     </tr>
@@ -57,7 +66,215 @@
     </div>
 </div>
 
+<!-- Roles Modal -->
+<div class="modal fade" id="rolesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Karma Roles</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalGuildId">
+                <div class="alert alert-info">
+                    <small>Users will be granted the role corresponding to the highest threshold they have surpassed. If they drop below, they are demoted to the previous tier.</small>
+                </div>
+
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Karma Threshold</th>
+                            <th style="width: 50%;">Role</th>
+                            <th style="width: 20%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rolesTableBody">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+
+                <hr>
+                <h6>Add New Threshold</h6>
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-3">
+                        <input type="number" id="newThreshold" class="form-control" placeholder="Karma Amount">
+                    </div>
+                    <div class="col-md-6">
+                        <select id="newRole" class="form-select">
+                            <option value="">Select a role...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-success w-100" onclick="addRoleRow()">
+                            <i class="bi bi-plus-lg"></i> Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveRoles()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Injection -->
 <script>
+    const guildData = {
+        {% for guild in guilds %}
+        "{{ guild.id }}": {
+            "name": {{ guild.name | tojson }},
+            "roles": {{ guild.roles_list | tojson }},
+            "current": {{ guild.resolved_roles | tojson }}
+        },
+        {% endfor %}
+    };
+</script>
+
+<script>
+let currentRoleList = []; // Helper to track state in modal
+
+function openRolesModal(guildId) {
+    const data = guildData[guildId];
+    if (!data) return;
+
+    document.getElementById('modalGuildId').value = guildId;
+    document.querySelector('.modal-title').innerText = `Manage Karma Roles - ${data.name}`;
+
+    // Populate Dropdown
+    const select = document.getElementById('newRole');
+    select.innerHTML = '<option value="">Select a role...</option>';
+    data.roles.forEach(role => {
+        const option = document.createElement('option');
+        option.value = role.id;
+        option.text = role.name;
+        select.appendChild(option);
+    });
+
+    // Populate Table
+    currentRoleList = JSON.parse(JSON.stringify(data.current)); // Deep copy
+    renderRoleTable();
+
+    // Show Modal
+    const modal = new bootstrap.Modal(document.getElementById('rolesModal'));
+    modal.show();
+}
+
+function renderRoleTable() {
+    const tbody = document.getElementById('rolesTableBody');
+    tbody.innerHTML = '';
+
+    // Sort by threshold desc
+    currentRoleList.sort((a, b) => parseInt(b.threshold) - parseInt(a.threshold));
+
+    currentRoleList.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${item.threshold}</strong></td>
+            <td>${item.role_name} <span class="text-muted" style="font-size: 0.8em">(${item.role_id})</span></td>
+            <td>
+                <button class="btn btn-danger btn-sm" onclick="removeRoleRow(${index})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function addRoleRow() {
+    const thresholdInput = document.getElementById('newThreshold');
+    const roleSelect = document.getElementById('newRole');
+
+    const threshold = parseInt(thresholdInput.value);
+    const roleId = roleSelect.value;
+    const roleName = roleSelect.options[roleSelect.selectedIndex]?.text;
+
+    if (!threshold || isNaN(threshold)) {
+        alert("Please enter a valid karma amount.");
+        return;
+    }
+    if (!roleId) {
+        alert("Please select a role.");
+        return;
+    }
+
+    // Check duplicate threshold
+    if (currentRoleList.some(r => parseInt(r.threshold) === threshold)) {
+        alert("A rule for this karma threshold already exists. Remove it first.");
+        return;
+    }
+
+    currentRoleList.push({
+        threshold: threshold,
+        role_id: roleId,
+        role_name: roleName
+    });
+
+    renderRoleTable();
+
+    // Reset inputs
+    thresholdInput.value = '';
+    roleSelect.value = '';
+}
+
+function removeRoleRow(index) {
+    currentRoleList.splice(index, 1);
+    renderRoleTable();
+}
+
+async function saveRoles() {
+    const guildId = document.getElementById('modalGuildId').value;
+    const saveBtn = document.querySelector('#rolesModal .btn-primary');
+
+    // Prepare payload
+    // Server expects list of {threshold, role_id}
+    const payload = {
+        guild_id: guildId,
+        roles: currentRoleList.map(item => ({
+            threshold: item.threshold,
+            role_id: item.role_id
+        }))
+    };
+
+    try {
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Saving...";
+
+        const response = await fetch('/api/karma/roles/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            alert("Roles updated successfully! The bot is now updating user roles in the background.");
+            // Update local data so re-opening modal shows new state without reload
+            guildData[guildId].current = currentRoleList;
+
+            // Close modal
+            const modalEl = document.getElementById('rolesModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            modalInstance.hide();
+
+            // Optional: Refresh page to update the "X thresholds" count, or just update it via DOM
+            location.reload();
+        } else {
+            alert("Error: " + data.message);
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert("Failed to save roles.");
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = "Save Changes";
+    }
+}
+
 async function saveKarma(guildId) {
     const channelId = document.getElementById(`channel-${guildId}`).value;
     const upvoteEmoji = document.getElementById(`upvote-${guildId}`).value;
