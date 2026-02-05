@@ -250,6 +250,42 @@ async def render_character_view(guild_id, user_id):
         emoji_lib=emoji
     )
 
+@app.route('/render/karma/<guild_id>/<user_id>')
+async def render_karma_notification(guild_id, user_id):
+    # Fetch User data
+    username = "Unknown User"
+    avatar_url = "https://cdn.discordapp.com/embed/avatars/0.png"
+
+    if app.bot:
+        try:
+            guild = app.bot.get_guild(int(guild_id))
+            if guild:
+                member = guild.get_member(int(user_id))
+                if not member:
+                    # Try fetching user if not in cache (though member implies in guild)
+                    try:
+                         member = await guild.fetch_member(int(user_id))
+                    except:
+                         pass
+
+                if member:
+                    username = member.display_name
+                    if member.display_avatar:
+                        avatar_url = str(member.display_avatar.url)
+        except Exception as e:
+            print(f"Error fetching user for karma render: {e}")
+
+    rank_name = request.args.get('rank', 'New Rank')
+    change_type = request.args.get('type', 'up')
+
+    return await render_template(
+        'karma_notification.html',
+        username=username,
+        avatar_url=avatar_url,
+        rank_name=rank_name,
+        change_type=change_type
+    )
+
 # --- Admin Routes ---
 
 @app.route('/admin')
@@ -479,6 +515,7 @@ async def save_karma():
     data = await request.get_json()
     guild_id = data.get('guild_id')
     channel_id = data.get('channel_id')
+    notification_channel_id = data.get('notification_channel_id')
     upvote_emoji = data.get('upvote_emoji')
     downvote_emoji = data.get('downvote_emoji')
 
@@ -502,6 +539,7 @@ async def save_karma():
 
         karma_settings[str(guild_id)] = {
             "channel_id": int(channel_id),
+            "notification_channel_id": int(notification_channel_id) if notification_channel_id and notification_channel_id != "none" else None,
             "upvote_emoji": upvote_emoji if upvote_emoji else "👌",
             "downvote_emoji": downvote_emoji if downvote_emoji else "🤏",
             "roles": existing_roles
