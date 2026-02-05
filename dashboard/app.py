@@ -7,6 +7,7 @@ import emoji
 import emojis
 import feedparser
 from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort
+from markupsafe import escape
 from loadnsave import (
     load_player_stats, load_retired_characters_data, load_settings, save_settings,
     load_soundboard_settings, save_soundboard_settings, load_music_blacklist, save_music_blacklist,
@@ -38,6 +39,40 @@ def format_bold(text):
     return re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
 
 app.add_template_filter(format_bold, 'format_bold')
+
+def format_custom_emoji(text):
+    if not isinstance(text, str):
+        return text
+
+    # Escape text to prevent XSS, as this filter is used with | safe
+    text = str(escape(text))
+
+    # 1. Handle explicit Discord format <(a):name:id> (escaped as &lt;...&gt;)
+    def replace_discord_fmt(match):
+        animated = match.group(1) == 'a'
+        name = match.group(2)
+        emoji_id = match.group(3)
+        ext = 'gif' if animated else 'png'
+        return f'<img src="https://cdn.discordapp.com/emojis/{emoji_id}.{ext}" alt=":{name}:" title=":{name}:" class="discord-emoji" style="width: 1.5em; height: 1.5em; vertical-align: middle;">'
+
+    text = re.sub(r'&lt;([a]?):(\w+):(\d+)&gt;', replace_discord_fmt, text)
+
+    # 2. Handle shortcodes :name: via bot lookup
+    if app.bot:
+        def replace_shortcode(match):
+            name = match.group(1)
+            # Search in all guilds the bot is in
+            emoji_obj = discord.utils.get(app.bot.emojis, name=name)
+            if emoji_obj:
+                ext = 'gif' if emoji_obj.animated else 'png'
+                return f'<img src="https://cdn.discordapp.com/emojis/{emoji_obj.id}.{ext}" alt=":{name}:" title=":{name}:" class="discord-emoji" style="width: 1.5em; height: 1.5em; vertical-align: middle;">'
+            return match.group(0) # No change if not found
+
+        text = re.sub(r':(\w+):', replace_shortcode, text)
+
+    return text
+
+app.add_template_filter(format_custom_emoji, 'format_custom_emoji')
 
 def get_soundboard_files():
     structure = {}

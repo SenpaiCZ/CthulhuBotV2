@@ -98,14 +98,41 @@
 
     .coc-skill-item {
         display: flex;
-        justify-content: space-between;
-        border-bottom: 1px solid #333;
-        padding: 2px 0;
-        font-size: 0.9em;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid #333;
+        background: #111;
+        padding: 5px;
+        border-radius: 4px;
+        margin-bottom: 5px;
     }
 
-    .coc-skill-name { color: #bbb; }
-    .coc-skill-val { color: var(--cthulhu-green-bright); font-weight: bold; }
+    .coc-skill-row-1 {
+        color: #bbb;
+        font-size: 0.9em;
+        margin-bottom: 2px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+    }
+
+    .coc-skill-row-2 {
+        font-family: 'Courier New', monospace;
+    }
+
+    .coc-skill-val-big {
+        font-size: 1.2em;
+        color: var(--cthulhu-green-bright);
+        font-weight: bold;
+    }
+
+    .coc-skill-val-small {
+        font-size: 0.8em;
+        color: #666;
+    }
 
 </style>
 
@@ -269,10 +296,13 @@
 
                                             <!-- Explicit Credit Rating first -->
                                             <div class="coc-skill-item">
-                                                <span class="coc-skill-name">
+                                                <div class="coc-skill-row-1">
                                                     {{ emoji_lib.emojize(emojis.get_stat_emoji('Credit Rating'), language='alias') }} Credit Rating
-                                                </span>
-                                                <span class="coc-skill-val">{{ char.get('Credit Rating', 0) }} <span style="font-size:0.8em; color:#888; font-weight:normal;">({{ char.get('Credit Rating', 0)|int // 2 }}/{{ char.get('Credit Rating', 0)|int // 5 }})</span></span>
+                                                </div>
+                                                <div class="coc-skill-row-2">
+                                                    <span class="coc-skill-val-big">{{ char.get('Credit Rating', 0) }}</span>
+                                                    <span class="coc-skill-val-small">| {{ char.get('Credit Rating', 0)|int // 2 }} | {{ char.get('Credit Rating', 0)|int // 5 }}</span>
+                                                </div>
                                             </div>
 
                                             {% for key, val in char.items()|sort %}
@@ -282,10 +312,13 @@
                                                         {# Also check if value is a number #}
                                                         {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
                                                         <div class="coc-skill-item">
-                                                            <span class="coc-skill-name">
+                                                            <div class="coc-skill-row-1">
                                                                 {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}
-                                                            </span>
-                                                            <span class="coc-skill-val">{{ val }} <span style="font-size:0.8em; color:#888; font-weight:normal;">({{ val|int // 2 }}/{{ val|int // 5 }})</span></span>
+                                                            </div>
+                                                            <div class="coc-skill-row-2">
+                                                                <span class="coc-skill-val-big">{{ val }}</span>
+                                                                <span class="coc-skill-val-small">| {{ val|int // 2 }} | {{ val|int // 5 }}</span>
+                                                            </div>
                                                         </div>
                                                         {% endif %}
                                                     {% endif %}
@@ -305,7 +338,7 @@
                                                         {% if a_info.get('adjustments') %}
                                                             <div class="mt-2">
                                                             {% for adj in a_info.get('adjustments') %}
-                                                                <p class="text-white small mb-0">• {{ adj | format_bold | safe }}</p>
+                                                                <p class="text-white small mb-0">• {{ adj | format_custom_emoji | format_bold | safe }}</p>
                                                             {% endfor %}
                                                             </div>
                                                         {% endif %}
@@ -331,7 +364,7 @@
                                                         {% set entries = char_backstory[section] %}
                                                         {% if entries and entries|length > 0 %}
                                                             {% for entry in entries %}
-                                                                <p class="text-white small mb-1">{{ emoji_lib.emojize(entry, language='alias') | format_bold | safe }}</p>
+                                                                <p class="text-white small mb-1">{{ emoji_lib.emojize(entry, language='alias') | format_custom_emoji | format_bold | safe }}</p>
                                                             {% endfor %}
                                                         {% else %}
                                                             <div class="text-white small" style="min-height: 1.2em;">&nbsp;</div>
@@ -346,7 +379,7 @@
                                                         {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
                                                         <div class="col-md-6 mb-2">
                                                             <div class="coc-label">{{ key }}</div>
-                                                            <div class="text-white small" style="white-space: pre-wrap;">{{ val }}</div>
+                                                            <div class="text-white small" style="white-space: pre-wrap;">{{ val | format_custom_emoji | safe }}</div>
                                                         </div>
                                                         {% endif %}
                                                     {% endif %}
@@ -526,10 +559,13 @@
 
                                             <!-- Explicit Credit Rating first -->
                                             <div class="coc-skill-item">
-                                                <span class="coc-skill-name">
+                                                <div class="coc-skill-row-1">
                                                     {{ emoji_lib.emojize(emojis.get_stat_emoji('Credit Rating'), language='alias') }} Credit Rating
-                                                </span>
-                                                <span class="coc-skill-val">{{ char.get('Credit Rating', 0) }} <span style="font-size:0.8em; color:#888; font-weight:normal;">({{ char.get('Credit Rating', 0)|int // 2 }}/{{ char.get('Credit Rating', 0)|int // 5 }})</span></span>
+                                                </div>
+                                                <div class="coc-skill-row-2">
+                                                    <span class="coc-skill-val-big">{{ char.get('Credit Rating', 0) }}</span>
+                                                    <span class="coc-skill-val-small">| {{ char.get('Credit Rating', 0)|int // 2 }} | {{ char.get('Credit Rating', 0)|int // 5 }}</span>
+                                                </div>
                                             </div>
 
                                             {% for key, val in char.items()|sort %}
@@ -539,10 +575,13 @@
                                                         {# Also check if value is a number #}
                                                         {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
                                                         <div class="coc-skill-item">
-                                                            <span class="coc-skill-name">
+                                                            <div class="coc-skill-row-1">
                                                                 {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}
-                                                            </span>
-                                                            <span class="coc-skill-val">{{ val }} <span style="font-size:0.8em; color:#888; font-weight:normal;">({{ val|int // 2 }}/{{ val|int // 5 }})</span></span>
+                                                            </div>
+                                                            <div class="coc-skill-row-2">
+                                                                <span class="coc-skill-val-big">{{ val }}</span>
+                                                                <span class="coc-skill-val-small">| {{ val|int // 2 }} | {{ val|int // 5 }}</span>
+                                                            </div>
                                                         </div>
                                                         {% endif %}
                                                     {% endif %}
@@ -562,7 +601,7 @@
                                                         {% if a_info.get('adjustments') %}
                                                             <div class="mt-2">
                                                             {% for adj in a_info.get('adjustments') %}
-                                                                <p class="text-white small mb-0">• {{ adj | format_bold | safe }}</p>
+                                                                <p class="text-white small mb-0">• {{ adj | format_custom_emoji | format_bold | safe }}</p>
                                                             {% endfor %}
                                                             </div>
                                                         {% endif %}
@@ -588,7 +627,7 @@
                                                         {% set entries = char_backstory[section] %}
                                                         {% if entries and entries|length > 0 %}
                                                             {% for entry in entries %}
-                                                                <p class="text-white small mb-1">{{ emoji_lib.emojize(entry, language='alias') | format_bold | safe }}</p>
+                                                                <p class="text-white small mb-1">{{ emoji_lib.emojize(entry, language='alias') | format_custom_emoji | format_bold | safe }}</p>
                                                             {% endfor %}
                                                         {% else %}
                                                             <div class="text-white small" style="min-height: 1.2em;">&nbsp;</div>
@@ -603,7 +642,7 @@
                                                         {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
                                                         <div class="col-md-6 mb-2">
                                                             <div class="coc-label">{{ key }}</div>
-                                                            <div class="text-white small" style="white-space: pre-wrap;">{{ val }}</div>
+                                                            <div class="text-white small" style="white-space: pre-wrap;">{{ val | format_custom_emoji | safe }}</div>
                                                         </div>
                                                         {% endif %}
                                                     {% endif %}
