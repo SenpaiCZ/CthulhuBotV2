@@ -3176,6 +3176,398 @@
         "spells": "15% chance of knowing 1D10 spells.",
         "sanity_loss": "0/1D6"
       }
+    },
+    {
+      "monster_entry": {
+        "name": "Gla'aki, Servant of",
+        "subtitle": "Decaying Slaves",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Gla'aki",
+          "Undead"
+        ],
+        "description": "The servants of Gla'aki vary in appearance due to how fresh their servitude is, with newer converts able to pass as human while other, older, servants are more like walking skeletons. Each is bloodless and undead, with impossibly long, cracked nails. A gaping wound in their chest confirms their status; the wound derives from being pierced by Gla'aki's spines.",
+        "alternative_names": [
+          "Chosen of Gla'aki",
+          "Lake Ghouls",
+          "Strange Ones",
+          "Wrong People"
+        ],
+        "main_entry_text": "Humans are summoned or brought before Gla'aki to enter its service, whereupon they are harpooned by one of the Great Old One's metallic spines. The spine eventually breaks free but remains impaled long enough for Gla'aki's consciousness to enter and corrupt, killing them but imparting new undead life. Its slaves share a portion of Gla'aki's memories or thoughts, becoming almost an extension of the Great Old One.",
+        "characteristics": {
+          "STR": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "CON": {
+            "roll": "3D6*10",
+            "average": 105
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "1D6*5",
+            "average": 15
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "16-17",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 10,
+          "move": {
+            "base": 5
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "The Green Decay",
+            "description": "After six decades of undeath, servants become subject to Green Decay. Strong sunlight causes green mold to grow on their skin, rotting flesh away. Eventually, they dissolve into a bubbling liquid."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (unarmed or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D4+DB or weapon"
+            }
+          ],
+          "dodge": {
+            "success_chance": "10%",
+            "difficulty_hard": "5%",
+            "difficulty_extreme": "2%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Average skills based on previous life",
+            "value": "60-80%"
+          }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "None, though some may retain spells known in life.",
+        "sanity_loss": "No loss if fresh; 1/1D8 if corpse-like; 1/1D10 if dissolving from Green Decay."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Gnoph-Keh",
+        "subtitle": "Ice Fiends",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Ithaqua",
+          "Arctic"
+        ],
+        "description": "Something like a polar bear monstrosity, with six-limbs and covered in shaggy white hair. From its forehead rose a single horn, while its great mouth was filled with wicked and sharp teeth. Cunningly, it may walk upright on two legs or bear-like on four, other times it uses all six limbs to rip across the ice to find its prey.",
+        "alternative_names": [
+          "Bear Monsters",
+          "Nanruki",
+          "Ohto",
+          "Oon-T'keph",
+          "White Horns"
+        ],
+        "main_entry_text": "The gnoph-keh are a race of beings who appear to inhabit cold places, notably Greenland, northern Canada, and other isolated wintry wildernesses. Legend purports that the gnoph-keh are the remnants of a lost tribe who turned from earthly gods to serve the Great Wind-Walker, Ithaqua, and in so doing became something other than human. Whatever their true origin, gnoph-keh are territorial, individualistic, and rarely encountered.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+24)*5",
+            "average": 155
+          },
+          "CON": {
+            "roll": "(3D6+12)*5",
+            "average": "110-115"
+          },
+          "SIZ": {
+            "roll": "(2D6+24)*5",
+            "average": 155
+          },
+          "DEX": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "INT": {
+            "roll": "(1D6+12)*5",
+            "average": 75
+          },
+          "POW": {
+            "roll": "6D6*5",
+            "average": 105
+          }
+        },
+        "derived_stats": {
+          "hit_points": "26-27",
+          "damage_bonus": "+3D6",
+          "build": 4,
+          "magic_points": 21,
+          "move": {
+            "base": 9
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Blizzard",
+            "description": "Can summon a small blizzard (100-yard radius) to conceal appearance. Visibility restricted to 3 yards. Costs 1 MP per hour. Investigators in blizzard must make CON roll every 15 mins or lose 1 HP to freezing."
+          },
+          {
+            "name": "Generate Cold",
+            "description": "Can drop temperature by 20\u00b0F (approx 11\u00b0C) per 1 MP spent for one hour in a 100-yard radius."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "4 (claws, bash) or 1 (horn gore)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Horn Gore",
+              "success_chance": "65%",
+              "difficulty_hard": "32%",
+              "difficulty_extreme": "13%",
+              "damage": "1D10+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "35%",
+            "difficulty_hard": "17%",
+            "difficulty_extreme": "7%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Detect Prey",
+            "value": "45%"
+          },
+          {
+            "name": "Stealth",
+            "value": "60%"
+          }
+        ],
+        "armor": {
+          "rating": "9-point gristle, fur, and hide"
+        },
+        "spells": "75% chance of knowing 1D10 spells.",
+        "sanity_loss": "0/1D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Goatswood Gnome",
+        "subtitle": "Enchanted Servants",
+        "tags": [
+          "Mythos",
+          "Construct",
+          "Shub-Niggurath"
+        ],
+        "description": "You'll see them in gardens, ugly little things made of stone, pretending to be jolly gnomes or elves in pointed red hats... But some are more than that. Brought to life by old magic, they are quiet and still during the day but, come night, they go about their vile and wicked business and you see them for what they are: loathsome things, with hideous eyes and pointed teeth.",
+        "alternative_names": [
+          "Garden Gnome",
+          "Garden Grim",
+          "Little Folk",
+          "Night Comers",
+          "Red Caps"
+        ],
+        "main_entry_text": "These stone or concrete-created \"elves\" are, in the main, inanimate; however, some are in fact ugly little creatures brought to life by magic and alien design. Some believe the Dark Mother with a Thousand Young or her children imbue life into these vessels, which lie dormant during daylight hours but can spring to life at night to carry out vile and devious acts. Known as Goatswood Gnomes due to their first appearance in the Goatswood area of the Severn Valley.",
+        "characteristics": {
+          "STR": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "CON": {
+            "roll": "(4D6+3)*5",
+            "average": 85
+          },
+          "SIZ": {
+            "roll": "(1D3+2)*5",
+            "average": 20
+          },
+          "DEX": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "INT": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "10",
+          "damage_bonus": "-2",
+          "build": -2,
+          "magic_points": 13,
+          "move": {
+            "base": 9
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (claw, bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D4+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "70%"
+          },
+          {
+            "name": "Dig Tunnel",
+            "value": "70%"
+          },
+          {
+            "name": "Locksmith",
+            "value": "55%"
+          },
+          {
+            "name": "Stealth",
+            "value": "70%"
+          }
+        ],
+        "armor": {
+          "rating": "9-point stone (blades/impaling)",
+          "modifiers": "3-point armor against blunt weapons."
+        },
+        "spells": "50% chance to know 1D3 spells (Shub-Niggurath related).",
+        "sanity_loss": "0/1D3"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Gof'nn Hupadgh",
+        "subtitle": "Blessed of Shub-Niggurath",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Shub-Niggurath",
+          "Mutant"
+        ],
+        "description": "Found dwelling in wooded regions are folk born of Pan the Wood King. With their goatish features, hooved feet, and horns resplendent on their heads, no two seem completely alike. And, there are some whose form is a mockery of humanity, more beast than man, their blood strong with the taint of faery.",
+        "alternative_names": [
+          "Goat-Faced People",
+          "Goblins",
+          "Satyrs",
+          "Spawn of Shub-Niggurath"
+        ],
+        "main_entry_text": "Servants and priests of Shub-Niggurath, the Gof'nn Hupadgh are a mutant race, resembling satyrs of myth. Indeed, historically, they have been associated or mistaken for the hedonistic pagan god Pan. Communities of Gof'nn Hupadgh may be found hidden living apart from civilization. Separate but kin to the Gof'nn Hupadgh are those who were once human but who have been transformed by tasting of the milk of Shub-Niggurath; such changelings tend to be known as 'satyrs'.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "CON": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "(2D6+5)*5",
+            "average": 60
+          },
+          "POW": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          }
+        },
+        "derived_stats": {
+          "hit_points": "15",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 10,
+          "move": {
+            "base": 8
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (unarmed or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D4+DB to 1D6+DB"
+            },
+            {
+              "name": "Horn Gore",
+              "success_chance": "55%",
+              "difficulty_hard": "27%",
+              "difficulty_extreme": "11%",
+              "damage": "1D6+1+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "40%"
+          },
+          {
+            "name": "Jump",
+            "value": "40%"
+          },
+          {
+            "name": "Stealth",
+            "value": "50%"
+          },
+          {
+            "name": "Throw",
+            "value": "45%"
+          }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "30% chance to know 1D3 spells.",
+        "sanity_loss": "1/1D3 (increase to 1/1D6 for particularly horrific mutations)."
+      }
     }
   ]
 }
