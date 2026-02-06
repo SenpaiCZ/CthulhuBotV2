@@ -124,6 +124,17 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
     *   **Windows**: [Download FFmpeg](https://ffmpeg.org/download.html). Extract the archive and add the `bin` folder to your System PATH environment variable.
     *   **Linux**: Install via your package manager (e.g., `sudo apt install ffmpeg`).
 
+#### Discord Developer Portal Setup
+
+When creating your bot application in the [Discord Developer Portal](https://discord.com/developers/applications), please ensure the following:
+
+1.  **Permissions Integer**: Use the integer `288746576` to automatically select the required permissions.
+    *   *Includes*: Manage Channels, Add Reactions, View Channels, Send Messages, Manage Messages, Embed Links, Attach Files, Read Message History, Use External Emojis, Connect, Speak, Move Members, Manage Roles.
+2.  **Privileged Gateway Intents**: You **must** enable the following intents under the "Bot" tab for the bot to function correctly:
+    *   **Presence Intent**
+    *   **Server Members Intent**
+    *   **Message Content Intent**
+
 ### Quick Start (Auto-Install)
 
 The repository comes with automated setup scripts for both Linux/macOS and Windows. These scripts handle virtual environment creation, dependency installation, and initial configuration.
