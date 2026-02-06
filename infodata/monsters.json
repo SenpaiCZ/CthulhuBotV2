@@ -8705,6 +8705,584 @@
         "spells": "Varies; 1D3 to 1D6 (priests know min. 3 spells).",
         "sanity_loss": "No Sanity loss for seeing a tcho-tcho; 0/1D6 loss for realizing they are cannibals."
       }
+    },
+    {
+      "monster_entry": {
+        "name": "Terrors from Beyond",
+        "subtitle": "Astral Hunters",
+        "tags": [
+          "Mythos",
+          "Extra-Dimensional",
+          "Invisible",
+          "Parasite"
+        ],
+        "description": "Strange entities swam about us in the air, some pushing into one another and combining, others predatory... Many were inky, jellyfish-like monstrosities that resonated in harmony with some unknown vibration. They seemed semi-fluid and were never still... Putrescent, translucent bags of semisolid flesh, some trailing nests of writhing tendrils, while others possessed cruel fanged mouths.",
+        "alternative_names": [
+          "Astral Parasites",
+          "Devourers",
+          "Dimensional Swimmers"
+        ],
+        "main_entry_text": "These terrors exist in a dimension beyond human perception, in a realm that overlays normal reality. Normally, terrors from beyond and creatures on Earth are unaware of each other, although specific triggers (mechanical, psychical, or magical) allow humans to become aware of the terrors\u2014and the terrors to likewise become aware of their observers. These 'astral parasites' are normally invisible. Only when seen or otherwise sensed by a human may these parasites attack.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+6)*5 (Avg) / (6D6+4)*5 (Monstrous)",
+            "average": "65 / 125"
+          },
+          "CON": {
+            "roll": "(2D6+6)*5 (Avg) / (4D6+2)*5 (Monstrous)",
+            "average": "65 / 80"
+          },
+          "SIZ": {
+            "roll": "2D6*5 (Avg) / (6D6+1)*5 (Monstrous)",
+            "average": "35 / 110"
+          },
+          "DEX": {
+            "roll": "4D6*5 (Avg) / (2D6+4)*5 (Monstrous)",
+            "average": "70 / 55"
+          },
+          "INT": {
+            "roll": "4D6*5 (Avg) / (4D6+3)*5 (Monstrous)",
+            "average": "70 / 85"
+          },
+          "POW": {
+            "roll": "4D6*5 (Avg) / 4D6*5 (Monstrous)",
+            "average": "70 / 70"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "10 (Avg) / 19 (Monstrous)",
+          "damage_bonus": "0 (Avg) / +2D6 (Monstrous)",
+          "build": "0 (Avg) / 3 (Monstrous)",
+          "magic_points": 14,
+          "move": {
+            "base": "9 (Avg) / 7 (Monstrous)"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (bite, burrow)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D4+DB"
+            },
+            {
+              "name": "Burrow (Maneuver - Avg Form Only)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D6 + Drain",
+              "description": "Burrows into flesh (1D6 damage). Once embedded, drains 1D6 points from every characteristic (except SIZ) once per day. SIZ decreases by 1 point per day. Only removable surgically or via specific conditions."
+            }
+          ],
+          "dodge": {
+            "success_chance": "35%",
+            "difficulty_hard": "17%",
+            "difficulty_extreme": "7%"
+          }
+        },
+        "armor": {
+          "rating": "1-point (Avg) / 4-point (Monstrous)",
+          "modifiers": "Regenerates 2 hit points per round (death at zero hit points)."
+        },
+        "spells": "Average form knows no spells; Monstrous form may know 1D4 spells.",
+        "sanity_loss": "0/1D6 (Average); 1D4/1D10 (Monstrous)."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Tindalos, Hounds of",
+        "subtitle": "Strange-Angled Beasts",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Extra-Dimensional"
+        ],
+        "description": "They inhabit and move through the angles of time and space, able to materialize through physical angles... They assume differing forms, although most are comprised of many angles compressed into something akin to a Cubist nightmare and resembling a great hound or lizard dripping with a viscous blue fluid, with a maw filled with serrated teeth or reaching tongues.",
+        "alternative_names": [
+          "The Feasters",
+          "Hunting Beasts",
+          "Tindalosians",
+          "Unstoppable Ones"
+        ],
+        "main_entry_text": "The hounds of Tindalos inhabit the angles of time, while other beings (such as humanity and all common life) descend from curves. The hounds prowl the corridors of time, seeking those who would cross the angles to other worlds and times, hunting them down to devour them in a malicious frenzy. Able to follow their prey through time and space, they are immortal and relentless hunters. Because of their relationship with the angles of time, they can materialize through any 'sharp' corner (120 degrees or less).",
+        "characteristics": {
+          "STR": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "CON": {
+            "roll": "(3D6+20)*5",
+            "average": "150-155"
+          },
+          "SIZ": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "DEX": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "INT": {
+            "roll": "5D6*5",
+            "average": "85-90"
+          },
+          "POW": {
+            "roll": "7D6*5",
+            "average": "120-125"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "23-24",
+          "damage_bonus": "+1D4 to +1D6",
+          "build": "1 to 2",
+          "magic_points": 24,
+          "move": {
+            "base": 7,
+            "special": "20 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Hyper-Sight",
+            "description": "Able to see an area (10 to 50 feet) as if in the fourth dimension\u2014all directions, behind walls, inside containers. Grants a Dodge roll no matter the direction of the attack."
+          },
+          {
+            "name": "Step-Through",
+            "description": "As long as sharp angles are within 5 yards, can step through via hyperspace to another angle anywhere in the spacetime it currently inhabits."
+          },
+          {
+            "name": "Twist Space",
+            "description": "Costs 5 MP per round. Ripples local space-time. Those inside see themselves twisted (1/1D4 Sanity loss) and must make Extreme POW or CON roll or be incapacitated for 2D6 rounds."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (claw, bite, tongue)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "90%",
+              "difficulty_hard": "45%",
+              "difficulty_extreme": "18%",
+              "damage": "1D6+DB + Blue Ichor",
+              "special_effect": "Blue Ichor: Covered in bluish pus. Smears on victim dealing 2D6 damage per round until wiped off (DEX roll) or rinsed."
+            },
+            {
+              "name": "Tongue",
+              "success_chance": "90%",
+              "difficulty_hard": "45%",
+              "difficulty_extreme": "18%",
+              "damage": "3D6 POW drain",
+              "special_effect": "Creates a deep, painless hole-shaped wound. No physical damage, but permanently drains 3D6 POW."
+            }
+          ],
+          "dodge": {
+            "success_chance": "26%",
+            "difficulty_hard": "13%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "armor": {
+          "rating": "2-point hide",
+          "modifiers": "Regenerates 4 hit points per round (death at zero hit points); immune to mundane weapons (enchanted weapons/spells deal full damage); shatters into crystal fragments at zero HP."
+        },
+        "spells": "Knows 1D8 spells.",
+        "sanity_loss": "1D3/1D20"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Tindalos, Lords of",
+        "subtitle": "Masters of Angular Time",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Extra-Dimensional"
+        ],
+        "description": "They appeared in curls of dark smoke, out of the corners of the room... Alien and unwholesome, their forms seemed to continually shift as though unstable but took on something that was somewhat humanoid, yet bestial, and composed of many sharp angles. Light seemed to dance around them, giving them a multispectral hue that was most disconcerting.",
+        "alternative_names": [
+          "All-Beings",
+          "Masters of Time",
+          "Tindalosians"
+        ],
+        "main_entry_text": "The lords of Tindalos are creatures of otherworldly material rather than solid flesh. Their shapes appear sometimes humanoid and at others more wolf-like, but only wolf-like in that humans recognize their innate predaciousness. The lords of Tindalos are believed to the overseers of the hounds of Tindalos, although some claim they are one and the same. Rarely are the lords seen, visiting Earth only for significant reasons. Worshippers of Yog-Sothoth seem to abhor Tindalosians, as there appears to be a timeless war or struggle between these entities.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D10+20)*5",
+            "average": 210
+          },
+          "CON": {
+            "roll": "(4D10+20)*5",
+            "average": 210
+          },
+          "SIZ": {
+            "roll": "(4D10+20)*5",
+            "average": 210
+          },
+          "DEX": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "INT": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "POW": {
+            "roll": "(4D10+20)*5",
+            "average": 210
+          }
+        },
+        "derived_stats": {
+          "hit_points": "42",
+          "damage_bonus": "+4D6",
+          "build": 5,
+          "magic_points": 42,
+          "move": {
+            "base": 20,
+            "special": "60 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Tindalosian Powers",
+            "description": "Can use all Tindalosian powers including Charnel Odor, Hyper-Sight, Step-Through, and Twist Space."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (claw, bite, tongue)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "90%",
+              "difficulty_hard": "45%",
+              "difficulty_extreme": "18%",
+              "damage": "1D6+DB + Blue Ichor",
+              "special_effect": "Blue Ichor deals 2D6 damage per round."
+            },
+            {
+              "name": "Bite",
+              "success_chance": "70%",
+              "difficulty_hard": "35%",
+              "difficulty_extreme": "14%",
+              "damage": "1D4 + Drain",
+              "special_effect": "Swallows whole (up to SIZ 500). Victim takes 1D4 damage + 1D10 STR, DEX, CON, APP loss per round. Disintegrated in 1D10+6 rounds."
+            },
+            {
+              "name": "Tongue",
+              "success_chance": "90%",
+              "difficulty_hard": "45%",
+              "difficulty_extreme": "18%",
+              "damage": "3D6 POW and STR drain",
+              "special_effect": "Creates hole-shaped wound. Drains 3D6 POW (permanent) and 3D6 STR (temporary)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "50%",
+            "difficulty_hard": "25%",
+            "difficulty_extreme": "10%"
+          }
+        },
+        "armor": {
+          "rating": "4-point skin",
+          "modifiers": "Regenerates 8 hit points per round (death at zero hit points); immune to mundane weapons; shatters into crystal fragments at zero HP."
+        },
+        "spells": "Any, particularly those dealing with time and space.",
+        "sanity_loss": "1D6/2D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Tindalosian Hybrid",
+        "subtitle": "Multidimensional Killers",
+        "tags": [
+          "Mythos",
+          "Human Mutant",
+          "Tindalos"
+        ],
+        "description": "Soon, his face decayed and fell inward, resulting in the formation of wide and gaping maw equipped with crystalline fangs and a long blue-colored tongue. It is hard to define the final bodily shape... Wilson's physicality now resides partially in another dimension, as his form constantly changes and reshapes, with angular sections winking in and out of perception.",
+        "alternative_names": [
+          "Diamond Ones",
+          "Glowing Ones",
+          "Many Angled Ones",
+          "Visitors"
+        ],
+        "main_entry_text": "Tindalosian hybrids are not a naturally-occurring species and originate from magic, science, or accident. Humans who ingest the blue ichor that coats both the hounds and lords of Tindalos may become infected, with the substance provoking a dramatic transformation. While roughly humanoid in shape, hybrids have been known to hide their appearance beneath heavy coats... When not bothering to keep a facsimile of human shape, a hybrid's visible portions change radically: hands appear as conglomerates of triangular crystals reminiscent of wolfish claws, while the face is replaced by what seems to be a wide gaping mouth.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+8)*5",
+            "average": 110
+          },
+          "CON": {
+            "roll": "(4D6+8)*5",
+            "average": 110
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "POW": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          }
+        },
+        "derived_stats": {
+          "hit_points": "17",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 18,
+          "move": {
+            "base": 10
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Phasing",
+            "description": "At a cost of 4 MP per round, can phase into hyper-dimensional space, becoming immune to mundane weapons."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "2 (claw, bite) or 1 (tongue lash or bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D4+DB + Blue Ichor",
+              "special_effect": "Blue Ichor deals 2D6 damage per round."
+            },
+            {
+              "name": "Bite",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D4 + Drain",
+              "special_effect": "Swallows whole (up to SIZ 100). Victim takes 1D4 damage + 1D10 STR, DEX, CON, APP loss per round."
+            },
+            {
+              "name": "Tongue",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D10 POW + 3D10 CON drain",
+              "special_effect": "Creates hole-shaped wound. Drains POW (permanent) and CON (temporary)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Detect Humans",
+            "value": "85%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "75%"
+          },
+          {
+            "name": "Stealth",
+            "value": "80%"
+          }
+        ],
+        "armor": {
+          "rating": "2-point skin",
+          "modifiers": "Regenerates 3 hit points per round (death at zero hit points)."
+        },
+        "spells": "None.",
+        "sanity_loss": "1D4/1D8"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Tomb-Herd",
+        "subtitle": "Threshold Lurkers",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Yog-Sothoth"
+        ],
+        "description": "Arrayed before us was the tomb-herd, a mass of foulness combined of many individuals, each a semi-humanoid- half-crustacean thing. Horrible, gelatinous forms that rolled, flopped, and spread. All a vivid white color, like an unspeakable gathering of monstrous things united in blasphemy.",
+        "alternative_names": [
+          "Crypt Lurkers",
+          "Dead Feeders",
+          "Festering Ones",
+          "Tomb Leeches"
+        ],
+        "main_entry_text": "Insubstantial beings, they require vessels to interact on Earth... Said to be the progeny of Yog-Sothoth, the tomb-herd does not reside on Earth but rather in the curves of spacetime. Certain sites, tombs, and crypts are connected to Yog-Sothoth... Such places have stone effigies of the tomb-herd\u2014strange humanoid crustacean forms\u2014through which the tomb-herd manifests. The tomb-herd uses these horrific gargoylesque stone works as hosts to manifest in our world.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+6)*5 (Statue)",
+            "average": 65
+          },
+          "CON": {
+            "roll": "(2D6+4)*5 (Statue)",
+            "average": 55
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5 (Statue)",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "2D6*5 (Statue)",
+            "average": 35
+          },
+          "INT": {
+            "roll": "(2D6+4)*5 (Statue)",
+            "average": 55
+          },
+          "POW": {
+            "roll": "(4D6+2)*5 (Statue)",
+            "average": 80
+          }
+        },
+        "derived_stats": {
+          "hit_points": "12 (Statue)",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 16,
+          "move": {
+            "base": 7
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (bite, claw, smother)",
+          "attacks": [
+            {
+              "name": "Fighting (Statue)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D4+DB"
+            },
+            {
+              "name": "Smother (Statue Maneuver)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D6",
+              "description": "Mass group attack (requires 4+ tomb-herd). Opponents smothered and asphyxiate. 1D6 damage per round."
+            }
+          ],
+          "dodge": {
+            "success_chance": "20%",
+            "difficulty_hard": "10%",
+            "difficulty_extreme": "4%"
+          }
+        },
+        "armor": {
+          "rating": "3-point armor (Statue)",
+          "modifiers": "Natural form is immune to all attacks (except spells/artifacts). Statue form takes normal damage from mundane weapons."
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D6 (Natural); 0/1D3 (Uninhabited Statue); 1/1D6+2 (Possessed Statue)."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Tsathoggua, Scions of",
+        "subtitle": "Chittering Toad Things",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Tsathoggua"
+        ],
+        "description": "Enormous, it was a bloated and greasy toad-thing, possessing a great, jelly-like bulk. Four or more ugly-thick legs terminated in large hooves, while dozens of tentacles, and a pair of huge, tattered and membranous wings sprouted from its slimy back. Curving fangs extended from the bony ridges of a wide mouth below many unblinking and throbbing milky white eyes.",
+        "alternative_names": [
+          "Guardians",
+          "Many-Eyed Ones",
+          "Temple Spawn",
+          "Tittering Ones"
+        ],
+        "main_entry_text": "Tsathoggua's scions are innumerably old and are believed to have come from Saturn with that deity... These toad-like, winged beings may also have connections to (or worship) other Great Old Ones. These entities produce an unnerving, child-like tittering... They may be encountered dwelling in caverns and temples where their alien god is worshiped, accepting sacrifices and devotion, and acting as guardians.",
+        "characteristics": {
+          "STR": {
+            "roll": "(6D6+34)*5",
+            "average": 275
+          },
+          "CON": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "(6D6+42)*5",
+            "average": 315
+          },
+          "DEX": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          }
+        },
+        "derived_stats": {
+          "hit_points": "39",
+          "damage_bonus": "+6D6",
+          "build": 7,
+          "magic_points": 16,
+          "move": {
+            "base": 7,
+            "special": "10 flying"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2D6 (tentacles) or 1 (bite or trample)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "55%",
+              "difficulty_hard": "27%",
+              "difficulty_extreme": "11%",
+              "damage": "Half DB per tentacle",
+              "special_effect": "Can attack with 2D6 tentacles per round."
+            },
+            {
+              "name": "Bite",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D6 + Half DB"
+            },
+            {
+              "name": "Trample",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "26%",
+            "difficulty_hard": "13%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Minimum damage from mundane weapons due to mucous-like bodies."
+        },
+        "spells": "10% chance to know 1D6 spells (Contact Tsathoggua, Call Ossadagowah, Contact Formless Spawn).",
+        "sanity_loss": "1D4/1D8+2"
+      }
     }
   ]
 }
