@@ -4617,6 +4617,661 @@
         "spells": "None.",
         "sanity_loss": "0/1D6"
       }
+    },
+    {
+      "monster_entry": {
+        "name": "L'gy'hx, Inhabitants of",
+        "subtitle": "Multi-limbed Metal Aliens",
+        "tags": [
+          "Mythos",
+          "Alien",
+          "Servitor",
+          "Lrogg"
+        ],
+        "description": "Strange cuboid entities with numerous legs and limbs, who seemed to be metal made flesh. They stood about three feet in height and scuttled about, like strange bugs. Some limbs clutched bizarre devices or weapons... Eye to eye, I discerned an alien intelligence, cold and inquisitive.",
+        "alternative_names": [
+          "Box People of Uranus",
+          "Lroggians",
+          "Machine Bugs"
+        ],
+        "main_entry_text": "The inhabitants of L'gy'hx (the planet humans know as Uranus) worship a being they call Lrogg, a two-headed bat-like creature that may have some form of affinity with Nyarlathotep. L'gy'hxians appear industrious, working in a coordinated fashion across their society, much like a colony of ants on Earth... Not a spacefaring race, these entities were brought to Earth by the Shan (insects from Shaggai) who first visited Xiclotl... The Shan use the easily controlled Xiclotlans as a labor force.",
+        "characteristics": {
+          "STR": {
+            "roll": "6D6*5",
+            "average": 105
+          },
+          "CON": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "SIZ": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "DEX": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "INT": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "17",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 10,
+          "move": {
+            "base": 8
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (unarmed or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "1D4+DB"
+            },
+            {
+              "name": "L'gy'hx Knife",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "1D6+DB",
+              "special_effect": "Able to cut through metal as easily as through soft flesh."
+            },
+            {
+              "name": "L'gy'hx Whip",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "1D4 + 1D6 electrical",
+              "special_effect": "Emits electrical charge. Extreme success means the whip wraps around target (Hard STR or DEX to escape)."
+            },
+            {
+              "name": "L'gy'hx Energy Ray",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "1D6+2",
+              "special_effect": "Range 20 yards. Target must make CON roll or fall unconscious for 1D3 rounds."
+            }
+          ],
+          "dodge": {
+            "success_chance": "25%",
+            "difficulty_hard": "12%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Electrical Repair",
+            "value": "50%"
+          },
+          {
+            "name": "Mechanical Repair",
+            "value": "50%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "30%"
+          },
+          {
+            "name": "Stealth",
+            "value": "25%"
+          }
+        ],
+        "armor": {
+          "rating": "10-point metal skin"
+        },
+        "spells": "15% chance to know one spell; mostly Contact Lrogg.",
+        "sanity_loss": "0/1D8"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Lloigor",
+        "subtitle": "Gloom-mongers",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Invisible",
+          "Alien"
+        ],
+        "description": "These spirit entities are powerful vortices of power, invisible in their natural state. From time to time, they take on material forms, tangible and visible, with which to dominate and instill fear. Such forms are monstrous to behold, bearing resemblance to enormous reptiles or dragons of myth.",
+        "alternative_names": [
+          "Daemons",
+          "Dragons",
+          "Gloom Eaters",
+          "Misery Eaters",
+          "Silent Feasters",
+          "Wyverns"
+        ],
+        "main_entry_text": "It is believed that the lloigor originally came to Earth from the Andromeda galaxy... Lloigor minds are not divided into layers of consciousness... Their outlook of absolute pessimism results in a pervading atmosphere of gloom. Proximity or mind-contact with lloigor always leads to depression for humans, which may result in suicidal thoughts and actions. Lloigor appear to need humans to survive, as these immaterial entities must draw energy from intelligent beings to perform necessary tasks.",
+        "characteristics": {
+          "STR": {
+            "roll": "(6D6+19)*5 (reptile form)",
+            "average": "200 (reptile form)"
+          },
+          "CON": {
+            "roll": "8D6*5 (reptile form)",
+            "average": "140 (reptile form)"
+          },
+          "SIZ": {
+            "roll": "2D4*50 (reptile form)",
+            "average": "250 (reptile form)"
+          },
+          "DEX": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "INT": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "POW": {
+            "roll": "4D6*5",
+            "average": 70
+          }
+        },
+        "derived_stats": {
+          "hit_points": "39 (reptile form)",
+          "damage_bonus": "+5D6 (reptile form)",
+          "build": "6 (reptile form)",
+          "magic_points": "35 (varies, can be much higher)",
+          "move": {
+            "base": 7,
+            "special": "3 through stone (immaterial)"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Drain Magic Points",
+            "description": "Can drain 1D6 MP from a sleeping human (cost 1 MP). Can drain from multiple targets. Victim wakes with headache. Drained to 0 MP causes unconsciousness. Victims cannot recover MP until successful CON roll (once/day)."
+          },
+          {
+            "name": "Telekinetic Effects",
+            "description": "Can push people/objects (cost 1 MP per 1 STR of force). Must be within 50 yards."
+          },
+          {
+            "name": "Mind Contact",
+            "description": "Can send thoughts to humans (cost 1 MP). Causes 1/1D4 Sanity loss."
+          },
+          {
+            "name": "Manifestation",
+            "description": "To take reptile form, must expend MP equal to 1/5 SIZ (e.g. 50 MP for SIZ 250). If slain in reptile form, dies permanently."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (2 in reptile form)",
+          "attacks": [
+            {
+              "name": "Fighting (Reptile)",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Vortex Attack",
+              "success_chance": "Automatic (Area)",
+              "damage": "1D100",
+              "description": "Implosion blast. Cost 50 MP for 5-yard diameter, 100 MP for 10-yard diameter. Everything in area takes 1D100 damage."
+            }
+          ],
+          "dodge": {
+            "success_chance": "26%",
+            "difficulty_hard": "13%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Sense Humans",
+            "value": "40%"
+          }
+        ],
+        "armor": {
+          "rating": "8-point reptilian hide",
+          "modifiers": "While immaterial, cannot be harmed by mundane weapons."
+        },
+        "spells": "Knows at least 1D4 spells.",
+        "sanity_loss": "0/1D8 in reptile form; no loss for invisible form; 1/1D4 for mind contact."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Lurker",
+        "subtitle": "The Fruit of Yidhra",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Yidhra",
+          "Mutant"
+        ],
+        "description": "Aberrant shapes of twisted flesh and bone molded in nightmare and let loose upon the world. Some were mockeries of humanity, possessing additional limbs or heads, while others might pass for human in dim light. Common to all were their fanged teeth in overlarge mouths, used to bite down on their prey and open savage wounds through which they would sup the blood of the living.",
+        "alternative_names": [
+          "Children of Yidhra",
+          "Creeps",
+          "Vampires"
+        ],
+        "main_entry_text": "These horrors are the children of Yidhra. Once human, they have been consumed and rebirthed to serve the will of Yidhra. Each is somewhat different in appearance... Perhaps the original root of vampire myths, these creatures leech the blood of the living... Each lurker is linked to Yidhra and is, practically speaking, an extension of that greater entity.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "CON": {
+            "roll": "(4D6+3)*5",
+            "average": 85
+          },
+          "SIZ": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "DEX": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "(3D6+4)*5",
+            "average": "70-75"
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "16",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 10,
+          "move": {
+            "base": 9
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Lifeblood",
+            "description": "Must consume at least 2 HP of blood every 4 days. Failure leads to penalty dice and eventual torpor."
+          },
+          {
+            "name": "Psychic Link",
+            "description": "Connected to Yidhra, who can see through their eyes."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (claw, bite, weapon, or feed)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D4+DB or weapon"
+            },
+            {
+              "name": "Feed (Maneuver)",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D6 per round",
+              "description": "Latches onto wound and sups blood. Victim can break free with opposed STR/DEX roll. If half max HP drained, victim suffers penalty die to escape."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "60%"
+          },
+          {
+            "name": "Jump",
+            "value": "70%"
+          },
+          {
+            "name": "Sense Prey",
+            "value": "50%"
+          },
+          {
+            "name": "Stealth",
+            "value": "70%"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "For every 6 HP drained, gains 1 temporary HP."
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D6 (human-like); 1/1D6+2 (monstrous)."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Martense Kin",
+        "subtitle": "Once-human Horrors",
+        "tags": [
+          "Mythos",
+          "Mutant",
+          "Cannibal",
+          "Subterranean"
+        ],
+        "description": "The unwholesome descendants of a once great family. These humanoid cannibalistic creatures are the result of generations of inbreeding and seclusion from the outside world. Mockeries of humanity, they are small in stature and deformed, with pale and matted hair or fur covering their bodies. Misshapen mouths contain yellow fangs, while their hands and feet are bestial claws.",
+        "alternative_names": [
+          "The Corrupted",
+          "Decayed Ones",
+          "Monstrous Descendants",
+          "Once-Humans"
+        ],
+        "main_entry_text": "In the late seventeenth century, the wealthy New Amsterdam merchant Gerrit Martense built the Martense mansion high atop Tempest Mountain... Over time, the Martense family devolved into a horde of ghastly ape-like creatures more monstrously animal than human. Dwelling in the tunnels, caverns, and caves... these horrors consume their prey live... They work in groups, swarming and overpowering victims.",
+        "characteristics": {
+          "STR": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "CON": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "SIZ": {
+            "roll": "(2D4+1)*5",
+            "average": 30
+          },
+          "DEX": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "INT": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "8",
+          "damage_bonus": "-1",
+          "build": -1,
+          "magic_points": 10,
+          "move": {
+            "base": 9
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Dark Eyes",
+            "description": "Able to see in complete darkness."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (bite, claw)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "1D4-1"
+            }
+          ],
+          "dodge": {
+            "success_chance": "25%",
+            "difficulty_hard": "12%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "70%"
+          },
+          {
+            "name": "Jump",
+            "value": "60%"
+          },
+          {
+            "name": "Stealth",
+            "value": "30%"
+          }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D3 to encounter Martense kin; 1/1D6 to encounter a large swarm."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Mi-Go",
+        "subtitle": "Enigmatic Aliens from Beyond",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Alien",
+          "Fungi"
+        ],
+        "description": "Pinkish colored insectoid things with crustaceous bodies bearing vast pairs of dorsal fins or membranous wings, and equipped with several sets of articulated limbs, most ending in claw or pincers. Their heads are a sort of convoluted ellipsoid, covered with multitudes of short antennae.",
+        "alternative_names": [
+          "Abominable Snowmen",
+          "Fungi from Yuggoth",
+          "Nevermen",
+          "Ones from the Sky",
+          "Yuggothians"
+        ],
+        "main_entry_text": "The mi-go are poly-dimensional sentient fungi, an interstellar race from another world or dimension. Their nearest outpost or colony to Earth is Yuggoth (Pluto). Resource gatherers, the mi-go have been visiting Earth for centuries... They communicate by changing the colors of their brain-like heads; however, they can speak human tongues in buzzing, insect-like voices.",
+        "characteristics": {
+          "STR": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "CON": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "SIZ": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "DEX": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "10-11",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 13,
+          "move": {
+            "base": 7,
+            "special": "13 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Hypnosis",
+            "description": "By introducing ultra-high and low frequency tones, can put humans within 40 feet into a trance state. Opposed POW roll."
+          },
+          {
+            "name": "Void Light",
+            "description": "Creates a sink of blackness (1 MP per cubic yard) from which no light can escape."
+          },
+          {
+            "name": "Bio-Web Armor",
+            "description": "Some wear webs of green slime providing 8-point armor."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "2 (claws) or 1 (seize or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Seize (Maneuver)",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "Dropped",
+              "description": "Seizes target and flies into sky to drop them (1D6 damage per 10 feet)."
+            },
+            {
+              "name": "Mist Projector",
+              "success_chance": "25% (Base)",
+              "damage": "1D10 cold",
+              "description": "Cone of icy mist. 1D10 damage per round. Freezes engines."
+            }
+          ],
+          "dodge": {
+            "success_chance": "35%",
+            "difficulty_hard": "17%",
+            "difficulty_extreme": "7%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Extra-terrene body causes all impaling weapons to deal minimum damage."
+        },
+        "spells": "25% chance of knowing 1D3 spells.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Million Favored Ones (Swamp Lurker)",
+        "subtitle": "One of the Million Favored",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Nyarlathotep"
+        ],
+        "description": "A globular thing able to shoot out limbs ending in sharp pincers, which is said to lurk in the lonely and forgotten backwaters of Green Swamp, North Carolina, USA... a squid-headed thing with a beak, gangling limbs, and a bubbling gob.",
+        "alternative_names": [
+          "The Chosen",
+          "The Dead",
+          "Lurkers"
+        ],
+        "main_entry_text": "The Million Favored Ones are creatures and entities connected with Nyarlathotep... Each are unique beings or especially powerful members of their species. Being one of the million favored does not necessitate the worship of Nyarlathotep... Swamp Lurker: Not native to Earth, swamp lurkers may be summoned to undertake certain tasks; in addition, lurkers send forth their embryonic young through space.",
+        "characteristics": {
+          "STR": {
+            "roll": "(8D6+4)*5",
+            "average": 160
+          },
+          "CON": {
+            "roll": "8D6*5",
+            "average": 140
+          },
+          "SIZ": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          },
+          "DEX": {
+            "roll": "(2D6+1)*5",
+            "average": 40
+          },
+          "INT": {
+            "roll": "(2D6+1)*5",
+            "average": 40
+          },
+          "POW": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          }
+        },
+        "derived_stats": {
+          "hit_points": "23",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 10,
+          "move": {
+            "base": 6,
+            "special": "8 swimming"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Poison Skin",
+            "description": "Skin exudes poison. Contact requires Hard CON roll or suffer 1D4 acid-like damage."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "6 (tentacles, pincers, maw bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "2D8"
+            },
+            {
+              "name": "Maw Bite",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "1D6+4"
+            },
+            {
+              "name": "Grab (Maneuver)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D4, then 2D6 or bite",
+              "description": "Grab deals 1D4 damage. Following rounds deals 2D6 crush or 1D6+4 bite. Victim can escape with opposed STR/DEX roll."
+            }
+          ],
+          "dodge": {
+            "success_chance": "30%",
+            "difficulty_hard": "15%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Sense Prey",
+            "value": "60%"
+          },
+          {
+            "name": "Stealth",
+            "value": "70%"
+          }
+        ],
+        "armor": {
+          "rating": "1-point slimy skin",
+          "modifiers": "Mundane weapons cause half damage; resistant to fire; susceptible to salt (1D6 damage)."
+        },
+        "spells": "30% chance to know 1D4 spells.",
+        "sanity_loss": "1D4/1D8"
+      }
     }
   ]
 }
