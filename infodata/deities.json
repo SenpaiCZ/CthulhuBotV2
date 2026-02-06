@@ -5357,6 +5357,1655 @@
           }
         }
       }
+    },
+    {
+      "deity_entry": {
+        "name": "Shudde M'ell",
+        "classification": "Great Old One",
+        "other_names": [
+          "The Burrower Beneath",
+          "Lord of G'harne",
+          "Shadda-M'ull-el",
+          "Worm God"
+        ],
+        "description_quote": "The air stank with the smell of corrosion, acid, and death. It was immense, extending into the distance, perhaps a mile long and as tall as a tree. Its flesh was like rock, dark gray and pitted, its form a hybrid nightmare of worm-snake-squid. At one end, perhaps its head, bundles of tentacles emerged... Many of these tentacles possessed spikes (teeth?)... About the base of the tentacles, the skin rolled back to reveal huge saucer-like eyes...",
+        "main_entry_text": "Believed to be the god of the chthonians, Shudde M'ell is said to be a monstrously large specimen of that race... The G'harne Fragments of Sir Amery Wendy-Smith... reports that this entity stretches over a mile in length but otherwise is more or less of similar aspect to a chthonian... Shudde M'ell and its kin were encased below the fabled city of G'harne (Africa?)... Shudde M'ell is believed to remain ensconced at the Earth's core... Some have claimed that certain significant seismic events were caused by the movement of this entity...",
+        "cult": {
+          "text": "Shudde M'ell and the chthonians appear to receive little by the way of organized worship in modern times... The construction of G'harne was believed to have been undertaken by humans... Of a disquieting note, mentioned in G'harne Fragments, is a remark concerning a 'tribe of worm-men' said to still dwell in the now-hidden city.",
+          "possible_blessings": []
+        },
+        "encounters": "Those delving into the secrets of G'harne, perhaps seeking the fabled golden idol of Shudde M'ell, may come across cultists, worm-folk, and other horrors... Likewise, exploration of the subterranean worlds below the crust... may come across signs of this Old One's worship.",
+        "aura": "Given the fact that a manifestation of Shudde M'ell will come upward from the center of the planet, it would be prudent to consider where one stands lest all be swallowed... Toxic gases and noxious fumes from its acid-like sweat may cause humans to become nauseous and the ambient temperature to rise.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Bait Human, Bring Haboob, Contact Chthonian, The Red Sign; others as the Keeper desires."
+        },
+        "powers": [
+          {
+            "name": "Cause Earthquake",
+            "description": "Force determined by MP invested (2 MP = Level 1 Richter, 18 MP = Level 9). Max area 400 yards/meters."
+          },
+          {
+            "name": "Corrosion and Toxicity",
+            "description": "Flesh releases noxious fumes (Hard CON or nausea within 20 yards). Touching flesh causes 1 damage/round (1D4+2 if thrown against). Burns through clothing/equipment."
+          },
+          {
+            "name": "Hell Hole",
+            "description": "Creates a hole 1D10+10 yards wide from below. Anything over it is sucked down (10D10 damage)."
+          },
+          {
+            "name": "Telepathic Control",
+            "description": "Can control humans/others. Hard POW to resist (Extreme if 1 MP spent). Can contact known humans anywhere."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Shudde M'ell",
+          "characteristics": {
+            "STR": "450",
+            "CON": "400",
+            "SIZ": "600",
+            "DEX": "75",
+            "HP": "100",
+            "DB": "+12D6",
+            "Build": "13",
+            "Move": "8 / 10 burrowing"
+          },
+          "combat": {
+            "attacks_per_round": "1D4+4 (tentacles) or 1D4 (grab) or 1 (smash)",
+            "description": "Uses tentacles to bash or grab, or bulk to smash.",
+            "special_maneuvers": [
+              {
+                "name": "Grab",
+                "description": "Tentacle wraps target. Next round crushes (6D6) or drains fluids (3D10 CON permanent/round). Escape with Extreme STR or Hard DEX."
+              },
+              {
+                "name": "Smash",
+                "description": "Crushes foes in 12 yard/meter diameter area (12D6 damage)."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "6D6"
+              },
+              {
+                "name": "Grab (Maneuver)",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "Held (then crush/drain)"
+              },
+              {
+                "name": "Smash (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "12D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "8-point hide",
+            "notes": "Mundane weapons destroyed after first strike. Regenerates 5 HP per 1 MP. Water causes harm (1D6/round). If 0 HP, dissolves. Reforms in 1,000 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Tru'nembra",
+        "classification": "Outer God",
+        "other_names": [
+          "Angel of Music",
+          "Azathoth's Lullaby",
+          "The Discordance"
+        ],
+        "description_quote": "The music filled the air... the tempo increased and became a volatile and unpredictable capriccioso. The sounds grew discordant... a deep and pounding rhythm could be heard... The sounds confounded the senses, caused the floorboard and walls to tremble...",
+        "main_entry_text": "A curious and strange entity believed to possess no form and exist purely as living sound. According to the Necronomicon, Tru'nembra is chief among those whose sounds maintain the sleep of Azathoth by creating the Music of the Spheres... While most scholars claim it never leaves Azathoth's Court, a few have claimed to have discovered evidence suggesting that... it may temporarily take leave to manifest elsewhere... Certain scraps of musical notations have been produced... but such performances have tended to end in disaster...",
+        "cult": {
+          "text": "There appears to be no overarching and formalized cult of Tru'nembra. It would seem that worshippers are usually solo players, isolated and reclusive types... Often, such individuals are musical geniuses... Once hooked by this entity's sounds, a person either comes to worship it or descends into madness, or both.",
+          "possible_blessings": [
+            {
+              "name": "Inspiring Melodies",
+              "description": "Bestows new depths of musical knowledge... Such melodies may cause changes in listeners (violence, insight, etc.)."
+            },
+            {
+              "name": "Wake the Dead",
+              "description": "Ability to perform music that wakes the dead."
+            },
+            {
+              "name": "Sound Magic",
+              "description": "Grants ability to cast spells through music."
+            }
+          ]
+        },
+        "encounters": "Musical prodigies may attract the attention of Tru'nembra... Some may be driven to craft unusual musical instruments... As each day passes, the prodigy's mind is corrupted... Some may become so consumed that the music transforms them into horrific creatures...",
+        "aura": "Sound clearly plays a key role... The mind is filled with outré haunting music that washes away the distractions of everyday life. Such sounds may kill or transform... The entity's presence... may be felt as tremors in the air.",
+        "sanity_loss": "1D4/2D10",
+        "magic": {
+          "pow": "300",
+          "magic_points": "60",
+          "spells": "None."
+        },
+        "powers": [
+          {
+            "name": "Symphonic Manifestation",
+            "description": "Constant music. Heard up to 5 miles away. Sanity loss varies by distance (0/1D4 to 1D4/2D10)."
+          },
+          {
+            "name": "Sonic Wave",
+            "description": "Sends forth damaging sound (damage based on MP spent, 1 MP = 1 die). Affects all within 100 yards. 100 MP causes 1D100 damage and structural destruction."
+          },
+          {
+            "name": "Speed of Sound",
+            "description": "Able to move at the speed of sound."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Tru'nembra",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "n/a",
+            "SIZ": "n/a",
+            "DEX": "n/a",
+            "HP": "60",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "Speed of sound"
+          },
+          "combat": {
+            "attacks_per_round": "1 (sonic wave)",
+            "description": "May send forth a Sonic Wave once per round.",
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "Automatic",
+                "damage": "Based on MP (see above)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to physical attacks (incl. enchanted). Artifacts/spells/music may harm. If 0 HP, music ceases. Reforms in 24 hours."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Tsathoggua",
+        "classification": "Great Old One",
+        "other_names": [
+          "Sar-oogha",
+          "The Sleeper of N'kai",
+          "The Toad God",
+          "Zhothaqquah"
+        ],
+        "description_quote": "Before us was the formless mass of its body on which lolled the awful toad-like head. Its bulk was immense and covered in a glistening brownish fur... Two legs and two arms sprouted from the fleshy mass... Dire was its face, which possessed eye slits... and the great mouth... opening to display layers of crooked and sharp teeth and a huge and repulsive tongue.",
+        "main_entry_text": "Contradictory accounts suggest this entity originated within the light of Xoth... Consensus seems to be reached concerning Tsathoggua's contemporary whereabouts: said to be within the black gulfs of hidden N'kai deep within the Earth... Most accounts proffer that Tsathoggua is a slothful entity... preferring to remain deep within the bowels of the planet and rarely venturing physically forth.",
+        "cult": {
+          "text": "Human worship of Tsathoggua is relatively small scale... often a cult will form and begin a rapid phase of growth... and then disappear without a trace... Among the voormis still living are many who tend to Tsathoggua... It is among the serpent people where this Old One's worship is most formalized and organized.",
+          "possible_blessings": [
+            {
+              "name": "Divine Physicality",
+              "description": "Blessed with physical changes (furry skin, toad head, etc.)."
+            },
+            {
+              "name": "Mark of Tsathoggua",
+              "description": "Burned into skin, showing favor. Often grants psychic link."
+            },
+            {
+              "name": "Doorway to Divinity",
+              "description": "Grants Gate spell to Tsathoggua's lair (2 MP to create, 1 MP/1 SAN to use)."
+            }
+          ]
+        },
+        "encounters": "Many forgotten and hidden temples to Tsathoggua exist... most are guarded by at least one formless spawn... Those investigating the machinations of the serpent people may unexpectedly find they are facing worshippers of Tsathoggua...",
+        "aura": "The smell of death would be strong. The dust of millennia-old bones chokes the air while the decaying rot of partially eaten sacrifices lingers...",
+        "sanity_loss": "0/1D10 (psychic); 1D4/2D10 (physical)",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Animate Flesh Thing, Chasm to Hell, Compel Flesh, Dho Formula, Dominate, Grasp of Cthulhu, Mindblast, Send Dream, Sense Life, Wrack; others."
+        },
+        "powers": [
+          {
+            "name": "Coterie",
+            "description": "Accompanied by 1D4 formless spawn."
+          },
+          {
+            "name": "Implant Desire",
+            "description": "Idols compel humans to seek the Old One (POW roll)."
+          },
+          {
+            "name": "Psychic Form",
+            "description": "Sends semi-material projection (0/1D10 SAN). Can interact for 10 MP/round."
+          },
+          {
+            "name": "Shapeshift",
+            "description": "Change shape for 10 MP."
+          },
+          {
+            "name": "Sleeping Hunger",
+            "description": "May feed while asleep (Luck roll to target nearby)."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Tsathoggua",
+          "characteristics": {
+            "STR": "250",
+            "CON": "600",
+            "SIZ": "150",
+            "DEX": "135",
+            "HP": "75",
+            "DB": "+4D6",
+            "Build": "5",
+            "Move": "16"
+          },
+          "combat": {
+            "attacks_per_round": "1D4 (kick, strike, grab) or 1 (swallow or crush)",
+            "description": "Uses limbs/tongue to attack.",
+            "special_maneuvers": [
+              {
+                "name": "Grab",
+                "description": "Grabs target. Next round squeezes (3D6) or bites (3D6). May swallow."
+              },
+              {
+                "name": "Swallow",
+                "description": "Gobbles target. 1D6 damage first round, then 5 CON/APP per round. Escape requires 10 damage or making self indigestible."
+              },
+              {
+                "name": "Crush",
+                "description": "Rolls/hops on foes (4D6 damage)."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "2D6"
+              },
+              {
+                "name": "Grab (Maneuver)",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "Held, 3D6"
+              },
+              {
+                "name": "Crush (Maneuver)",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "4D6"
+              },
+              {
+                "name": "Swallow",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "1D6 + drain"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Regenerates 30 HP/round. If 0 HP, melts into viscid matter. Reforms in 1,000 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Tulzscha",
+        "classification": "Outer God",
+        "other_names": [
+          "The Green Flame",
+          "The Emerald Lord",
+          "Tula-cha",
+          "The Verdant Dancer"
+        ],
+        "description_quote": "It burst from the ground, a noxious blaze of green flame and light... Casting no shadows and releasing no heat, just an icy cold, this unearthly fire kissed the ground...",
+        "main_entry_text": "An unusual entity seemingly composed of living flame that burns a green-blue color... The Necronomicon makes mention of a Green Flame (which most assume to be Tulzscha) that dances around sleeping Azathoth... Tulzscha seems to feed upon or be invigorated by death and decay... Accounts of its visitations on this planet are rare...",
+        "cult": {
+          "text": "Organized human cults dedicated to Tulzscha are rare... Seemingly, most of these cults and practitioners gather in subterranean chambers... Some ghouls pay respect to this Outer God... While many believe the Kingsport cult to have died out around 200 years ago, the reports of more recent gatherings suggest this is either false or misinformation...",
+          "possible_blessings": [
+            {
+              "name": "Flaming Truth",
+              "description": "Detect lies (5 MP)."
+            },
+            {
+              "name": "Possessing Fire",
+              "description": "Creates green flame to hold individual (3 MP)."
+            },
+            {
+              "name": "Knowledge of Corruption",
+              "description": "Eat flesh to gain memories/spells."
+            }
+          ]
+        },
+        "encounters": "Encounters with Tulzscha are rare and most likely to come via its cultists or in the shape of those possessed by a portion of the Outer God... Ghouls worshipping Tulzscha may be at odds with others of their kind...",
+        "aura": "Most times, any encounters are liable to be connected to places of death and decay. Tulzscha's flames are cold, causing the temperature to drop... The pervading atmosphere is clammy despite the cold...",
+        "sanity_loss": "1D4/2D10",
+        "magic": {
+          "pow": "75",
+          "magic_points": "15",
+          "spells": "Animate Flesh Thing, Augury (variant), Bestow Glimpse of Truth, Call Forth the Worm, Contact Ghoul, Contact Human (variant), Death's Breath (variant), Embrace of Yog-Sothoth, Touch of Decay; others."
+        },
+        "powers": [
+          {
+            "name": "Enchant Item",
+            "description": "Items passed through flames imbued with magical properties."
+          },
+          {
+            "name": "Entrancing Fire",
+            "description": "Captivates humans (Hard POW) until damaged or god departs."
+          },
+          {
+            "name": "Malleable Form",
+            "description": "Can reshape flames. Immobile when summoned (free in space)."
+          },
+          {
+            "name": "Noxious",
+            "description": "Emits fumes (1D4 damage within 5 yards, 1 MP)."
+          },
+          {
+            "name": "Possession",
+            "description": "Shoots splinter into being (Hard POW to resist). Victim rots away in 1D6 weeks."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Tulzscha",
+          "characteristics": {
+            "STR": "300",
+            "CON": "180",
+            "SIZ": "390",
+            "DEX": "60",
+            "HP": "57",
+            "DB": "n/a",
+            "Build": "9",
+            "Move": "0 / 30 in space"
+          },
+          "combat": {
+            "attacks_per_round": "1 (strike or flame gout)",
+            "description": "Sends forth flaming tendrils (10 yards) or flame gout. Contact causes 1D6+2 cold burn.",
+            "special_maneuvers": [
+              {
+                "name": "Flame Gout",
+                "description": "3 MP. 15 yard range. 2D10 years aging + 2D10 APP/CON/POW loss."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "3D6"
+              },
+              {
+                "name": "Flame gout",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "Special (see above)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons, heat, cold, acid, electricity. Explosives min damage. If 0 HP, implodes to crystal ball. Reforms in 1D100 hours."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Ubbo-Sathla",
+        "classification": "Outer God",
+        "other_names": [
+          "The Demiurge",
+          "The Life-Giver",
+          "The Unbegotten Source"
+        ],
+        "description_quote": "For it is the source of all life! The formless jelloid mass, without limbs or organs yet able to produce organs and limbs at will... It lives! See how the fleshy substance quivers and ripples... See its many brood flow from its body!",
+        "main_entry_text": "A seemingly mindless entity composed of jelly-like liquid the consistency of thick mud... Certain scholars... state that Ubbo-Sathla was brought to Earth by the Old Ones... Others propose that Ubbo-Sathla was, in fact, the creation of the elder things... Ubbo-Sathla's whereabouts are equally confusing... What is agreed upon is that Ubbo-Sathla was the guardian of the Tablets of Life...",
+        "cult": {
+          "text": "No human cult is believed to exist, although both the mi-go and the sand-dwellers are said to hold Ubbo-Sathla in their devotions.",
+          "possible_blessings": []
+        },
+        "encounters": "It remains an outside possibility for humans to encounter Ubbo-Sathla... Those desirous of investigating pre-history and the work of the elder things may run into mentions... Seekers of the Tablets of Life may too uncover tales...",
+        "aura": "For those reaching Ubbo-Sathla's lair, this grotto may be something of a nightmare plain in which millions of strange and exotic lifeforms are birthed...",
+        "sanity_loss": "1D6/2D10",
+        "magic": {
+          "pow": "375",
+          "magic_points": "75",
+          "spells": "None."
+        },
+        "powers": [
+          {
+            "name": "Brood of Ubbo-Sathla",
+            "description": "Produces 1D10 offspring per round."
+          },
+          {
+            "name": "Leech Touch",
+            "description": "Touches leech lifeforce (1D6 damage/round)."
+          },
+          {
+            "name": "Unintelligent",
+            "description": "Insentient/primal. Attacks if threatened or randomly."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Ubbo-Sathla",
+          "characteristics": {
+            "STR": "300",
+            "CON": "1000",
+            "SIZ": "1000",
+            "DEX": "80",
+            "HP": "200",
+            "DB": "+15D6",
+            "Build": "16",
+            "Move": "0"
+          },
+          "combat": {
+            "attacks_per_round": "1 (lash or grab)",
+            "description": "Lashes or grabs with pseudopods. Strike damage random 1D4 to 15D6.",
+            "special_maneuvers": [
+              {
+                "name": "Grab",
+                "description": "Held (1D6 damage). Next round squeeze (7D6) or absorb (15D6). Escape with Extreme STR or Hard DEX."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "Varies"
+              },
+              {
+                "name": "Grab (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "Held (see above)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Impaling weapons min damage. Regenerates 25 HP/round. If 0 HP, liquifies. Reforms in 4D100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Ut'ulls-Hr'her",
+        "classification": "Great Old One/Avatar",
+        "other_names": [
+          "Black Glory of Creation",
+          "The Great Horned Mother",
+          "Nia-Ubb-Hr'gath"
+        ],
+        "description_quote": "I saw its scale-covered ovoid body and the crescent-shaped head that rose above it possessed of a beard of horn-like growths... Above these horns, no mouth nor eyes could be discerned... Amidst the lower torso were clumps of teats surrounded by small fish-like fins.",
+        "main_entry_text": "Much remains to be learned concerning this little-known entity... The majority class Ut'ulls-Hr'her as a Great Old One... said to dwell in the vicinity of Mira... Some regard Ut'ulls-Hr'her as an avatar of Shub-Niggurath... Much like the Dark Mother, the 'milk' said to be produced by Ut'ulls-Hr'her is claimed to have astounding properties...",
+        "cult": {
+          "text": "Seemingly, a number of earthly cults have changed their allegiances after unwittingly calling Ut'ulls-Hr'her... One faction of the cult, the Daughters of Isolation, has come to the foreground...",
+          "possible_blessings": [
+            {
+              "name": "Milk of the Mother",
+              "description": "Drinking milk heals and grants visions (Cthulhu Mythos). Side effect: flesh corruption/mutation."
+            },
+            {
+              "name": "Horned",
+              "description": "Grow horns (1D4/1D6 damage)."
+            }
+          ]
+        },
+        "encounters": "Encounters are likely linked to the Daughters of Isolation or miscast summonings.",
+        "aura": "Sickly sweet smell, sense of nausea. Feelings of insignificance.",
+        "sanity_loss": "1D8/1D20",
+        "magic": {
+          "pow": "200",
+          "magic_points": "40",
+          "spells": "Any."
+        },
+        "powers": [
+          {
+            "name": "Milk",
+            "description": "Produced from teats. Healing/Visions but causes mutation."
+          },
+          {
+            "name": "Scream",
+            "description": "Sonic blast (1D6 damage + deafness)."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Ut'ulls-Hr'her",
+          "characteristics": {
+            "STR": "250",
+            "CON": "400",
+            "SIZ": "300",
+            "DEX": "60",
+            "HP": "70",
+            "DB": "+5D6",
+            "Build": "6",
+            "Move": "8"
+          },
+          "combat": {
+            "attacks_per_round": "3 (tentacles/horns) or 1 (crush)",
+            "description": "Attacks with horns/tentacles or crushes.",
+            "special_maneuvers": [
+              {
+                "name": "Crush",
+                "description": "Rolls over targets (5D6 damage)."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "70%",
+                "difficulty_hard": "35%",
+                "difficulty_extreme": "14%",
+                "damage": "2D6"
+              },
+              {
+                "name": "Crush (Maneuver)",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "5D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "6-point scale/flesh",
+            "notes": "Regenerates 5 HP/round. If 0 HP, dissolves. Reforms in 100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Vulthoom",
+        "classification": "Great Old One",
+        "other_names": [
+          "G'sort-hotogga",
+          "The Sleeper of Ravormos",
+          "That Which Hears All"
+        ],
+        "description_quote": "For it is made of many strands, twisting and curling around one another like a plant's vines and roots. These limbs are swollen and bloated at points... The strands grow thicker as they weave together, forming a rounded bulb-like mass... Atop this spherical body... is a great vermillion cup-like orifice, as though a flower bursting forth...",
+        "main_entry_text": "Said to be a plant-like entity... better to describe it as a combination of vegetable and flesh... some scholars agree that there are layers or portions of it that exist only in higher dimensions... According to some, Vulthoom was begat by Yog-Sothoth, while others allege this Old One is the fruit of Shub-Niggurath... In prehistory, this entity was said to have arrived on Mars, where it 'took root' and had dominance over the Aihais... Vulthoom rests below the surface of Mars in the subterranean ghost city of Ravormos... A frightening prospect is the notion that Vulthoom may be able to reproduce itself via seed-like pods, which it is believed to cast out once every 10,000 years.",
+        "cult": {
+          "text": "The Martian Aihais worship of Vulthoom is considered to be dead... Beyond Mars, no organized cults (human or otherwise) appear to exist. Should the accounts of the wizard Sunda-lon fall into the wrong hands, one might suppose a knowledge of this Old One could inspire some to take up its worship.",
+          "possible_blessings": [
+            {
+              "name": "Seed of Vulthoom",
+              "description": "Possession of a seed pod which, if allowed to grow, could become connected to the deity's will. As the seed grows, it may release pheromones bestowing unusual abilities."
+            }
+          ]
+        },
+        "encounters": "Interplanetary explorers arriving on Mars and delving below the Red Planet's surface may discover the ancient tunnels of the Aihasi... leading to Ravormos. More possible may be the discovery of an ancient seed pod cast out by the entity... allowing Vulthoom to move all or part of its consciousness to Earth.",
+        "aura": "Appearing to be vegetable matter reveals itself to be a lifeform possessing cold intelligence and a terrifying hunger. Those in proximity... are liable to be affected by the entity's pheromones.",
+        "sanity_loss": "1D4/2D10",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Special—see Powers."
+        },
+        "powers": [
+          {
+            "name": "Great Sight",
+            "description": "Possesses the ability to extend its perception over great distances of space and time."
+          },
+          {
+            "name": "Mellifluous Voice",
+            "description": "Voice is incredibly sweet and sonorous... fostering goodwill in those hearing it unless they resist with a Hard POW roll."
+          },
+          {
+            "name": "Pheromones",
+            "description": "Releases pheromones causing spell-like effects (Cloud Memory, Command Animal, Dominate, Implant Fear, etc.). Effects diminish with distance. Cost 5 MP."
+          },
+          {
+            "name": "Hallucinogenic Fragrance",
+            "description": "Produces a sweet scent. Inhaling requires POW roll or experience vivid hallucinations. Fumble enslaves victim."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Vulthoom",
+          "characteristics": {
+            "STR": "150",
+            "CON": "375",
+            "SIZ": "425",
+            "DEX": "40",
+            "HP": "80",
+            "DB": "+6D6",
+            "Build": "7",
+            "Move": "2"
+          },
+          "combat": {
+            "attacks_per_round": "1D4+2 (strike or grab)",
+            "description": "May send forth its vine/root tendrils to strike or grab. Tends to rely upon its powers to use others to defend itself.",
+            "special_maneuvers": [
+              {
+                "name": "Grab",
+                "description": "Target is held and then strangled (1D6 damage/round) or pulled into mass to be crushed (6D6 damage)."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "65%",
+                "difficulty_hard": "32%",
+                "difficulty_extreme": "13%",
+                "damage": "1D6"
+              },
+              {
+                "name": "Grab (Maneuver)",
+                "success_chance": "65%",
+                "difficulty_hard": "32%",
+                "difficulty_extreme": "13%",
+                "damage": "Held (see above)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Mundane weapons (incl. bullets) deal minimum damage. Regenerates 2 HP per 1 MP. If 0 HP, withers to husk; regrows in 5D100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Y'golonac",
+        "classification": "Great Old One",
+        "other_names": [
+          "Bringer of Depravity and Perversion",
+          "Defiler",
+          "The Speaking Hand"
+        ],
+        "description_quote": "Our Lord made manifest, stood some ten to twelve feet high, towering and naked before us. The flesh was slick with sweat and blood as it raised its arms to reveal distended hands, the palms of which possessed slit-mouths containing sharp teeth and rolling bloody tongues. There was no head, just the bloated bulk...",
+        "main_entry_text": "Y'golonac's earthly manifestations present the entity as human-like in appearance (although possessing no head)... Speculation is that this deity is greatly connected to this planet and... imprisoned here within a walled-off chamber connected to a subterranean network of tunnels... below the Severn Valley city of Brichester. Y'golonac appears to exude and foster a moral decline in those it influences... preying on people at the fringes of society who easily absorb its demented and appalling creed. Unlike most others of its kind, the summoning of Y'golonac appears to be a simple (but horrifying) affair, with the summoner just required to read aloud the correct pronunciation of the name 'Y'golonac'.",
+        "cult": {
+          "text": "Y'golonac's brood is plentiful... These small creatives appear as deformed humanoids... Sometimes naked, sometimes cloaked in dirty and tattered rags... Most believe both Y'golonac and its servants are bound and imprisoned... Cults are often small, localized, and heavily involved in perversion and debauchery.",
+          "possible_blessings": [
+            {
+              "name": "Corrupting Influence",
+              "description": "Exposure to whispers for several days causes corruption. Countered by daily POW roll. Failure leads to consumption by vice and loss of Sanity."
+            }
+          ]
+        },
+        "encounters": "Reading forbidden texts (Revelations of Gla'aki), speaking the name, or entering the tunnels below Brichester. Often offered a choice: accept Y'golonac as master or be destroyed.",
+        "aura": "Sickly sweet smell of rotting fruit and sweat. A profound sense of dirtiness and shame.",
+        "sanity_loss": "1/2D10 to witness manifestation through possession; 1/1D10+1 for human-like form; 1D6/4D10 for true form.",
+        "magic": {
+          "pow": "140",
+          "magic_points": "28",
+          "spells": "Animate Flesh Thing, Circle of Nausea, Cloud Memory, Dominate, Grasp of Cthulhu, Mental Suggestion, Send Dream, Utterance of Bile; others."
+        },
+        "powers": [
+          {
+            "name": "Possession",
+            "description": "If a person consumes a portion of Y'golonac's flesh (or summons it), the Old One may take possession (Extreme POW to resist). Flesh corrupts over 7 days into the headless horror form."
+          },
+          {
+            "name": "Growth",
+            "description": "For every 100 points of SIZ consumed, increases SIZ by 1 point."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Y'golonac (Human-Like Host)",
+          "characteristics": {
+            "STR": "120",
+            "CON": "600",
+            "SIZ": "125 (600 True)",
+            "DEX": "30",
+            "HP": "72 (120 True)",
+            "DB": "+2D6 (+8D6 True)",
+            "Build": "3 (9 True)",
+            "Move": "5"
+          },
+          "combat": {
+            "attacks_per_round": "1 (smash, crush, eat)",
+            "description": "Uses great hands or body to smash and crush, or may attempt to eat opponents.",
+            "special_maneuvers": [
+              {
+                "name": "Eat",
+                "description": "Bites and chews for 3D6 damage. If reduced to zero hit points, victim is swallowed."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "2D6 (8D6)"
+              },
+              {
+                "name": "Bite",
+                "success_chance": "70%",
+                "difficulty_hard": "35%",
+                "difficulty_extreme": "14%",
+                "damage": "3D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Regenerates 1 HP per 10 points of SIZ consumed. If 0 HP, explodes in shower of offal. Reforms in 5D100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Yibb-Tstll",
+        "classification": "Great Old One/Outer God/Unique Entity",
+        "other_names": [
+          "Chuma",
+          "The Drowner",
+          "Mother of Nightgaunts",
+          "The Patient One",
+          "The Watcher"
+        ],
+        "description_quote": "I saw its enormous cloak open to reveal its glistening body... Its ovoid body sprouting hundreds of pendulous teats upon which a horde of 'gaunts supped upon its black milk. Betwixt were reams of curling tentacles... while its head sat atop—a hideous mess of animated flesh...",
+        "main_entry_text": "Yibb-Tstll causes great debate... considered a Great Old One by some, an Outer God by others... Said to watch over all things, Yibb-Tstll appears to some to be an immobile register of the cosmos... Others say it is a parasite-like creature that ventures forth occasionally to feast upon the blood of other cosmic beings... Yibb-Tstll appears to dwell in Earth's Dreamlands, apparently upon an unknown mountain beyond the Jungle of Kled... The entity's blood is believed to be semi-conscious or intelligent... known as the Black Milk or The Black.",
+        "cult": {
+          "text": "No remnants of ancient cults believed to exist. Most significant surviving cult is the Cult of Chuma in Africa/Near East. Solo practitioners use dreams/magic to commune.",
+          "possible_blessings": [
+            {
+              "name": "The Black Milk",
+              "description": "Ingesting a portion allows direct communication and sharing of thoughts."
+            },
+            {
+              "name": "Cosmic Wisdom",
+              "description": "Transference of knowledge (magic, events, Cthulhu Mythos skill)."
+            },
+            {
+              "name": "Faceless Servant",
+              "description": "Nightgaunt gifted to worshipper."
+            }
+          ]
+        },
+        "encounters": "Delving through forbidden tomes. Seeking answers via dream. Caught in warring wizards using The Black.",
+        "aura": "Nasty and sickly. Nightgaunts associated with it smell different. Pull-push reaction of temptation and revulsion.",
+        "sanity_loss": "1D6/2D10; 1D4/1D10 to encounter blood.",
+        "magic": {
+          "pow": "325",
+          "magic_points": "65",
+          "spells": "Ariadne's Twine, Bestow Glimpse of Truth, Contact Moon-Beast, Dominate, Explode Heart, Hunger of Kazan, Living Clothes, Summon/Bind Nightgaunt, The Ravening Madness; others."
+        },
+        "powers": [
+          {
+            "name": "The Black",
+            "description": "Blood forms a barrier or attacks. Flakes off to smother victims (suffocation/damage). Can possess victims (opposed POW)."
+          },
+          {
+            "name": "Touch of Wisdom",
+            "description": "Touch causes instant realization of cosmic reality. 1D10/1D100 Sanity loss. 1D10 Cthulhu Mythos gain."
+          },
+          {
+            "name": "Great Wisdom",
+            "description": "Grant insight to those who sup Black Milk."
+          },
+          {
+            "name": "Nightgaunts",
+            "description": "Accompanied by 1D100+10 nightgaunts."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Yibb-Tstll",
+          "characteristics": {
+            "STR": "240",
+            "CON": "400",
+            "SIZ": "400",
+            "DEX": "10",
+            "HP": "80",
+            "DB": "+7D6",
+            "Build": "8",
+            "Move": "0"
+          },
+          "combat": {
+            "attacks_per_round": "1D4 (tentacles) or 1 (The Black)",
+            "description": "Lashes out with tentacles or casts The Black.",
+            "special_maneuvers": [
+              {
+                "name": "The Black",
+                "description": "Blood flakes off to attack. Can smother (suffocation damage) or possess."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "4D6"
+              },
+              {
+                "name": "The Black",
+                "success_chance": "100%",
+                "damage": "Special (see Powers)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons. Regenerates 5 HP/round. If 0 HP, dissolves into pool of black blood. Reforms in 1D100 days."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Yidhra",
+        "classification": "Outer God/Great Old One",
+        "other_names": [
+          "The Dream-Witch",
+          "Mother of Woe",
+          "The Shroud",
+          "Yee-Tho-Rah"
+        ],
+        "description_quote": "Know Yidhra through the comely forms that disguise the corruption within, which no man can look upon and live.",
+        "main_entry_text": "It is said that Yidhra has been on Earth since the first life appeared... Over millennia, this entity grew and developed, learning to mimic earthly lifeforms by consumption... Yidhra self-divided itself, causing portions of itself to break free and assume separate and independent forms (avatars)... Yidhra constantly evolves and changes... It has been a constant need to consume fresh genetic material... Numerous texts... describe Yidhra in varying human or monstrous guises... Three most well-documented forms are Madam Yi, Y'hath, and Yolanda.",
+        "cult": {
+          "text": "Numerous groups and cults have come to worship Yidhra's differing forms over time... True followers... are often blessed with long (possibly immortal) lives, with almost all appearing to possess fangs... For a few followers, Yidhra may reveal its true form... This latter group is sometimes called the Children of Yidhra.",
+          "possible_blessings": [
+            {
+              "name": "Linked",
+              "description": "Mental/physical link to the avatar they follow."
+            },
+            {
+              "name": "Illusions",
+              "description": "Ability to fashion temporary illusions."
+            },
+            {
+              "name": "Immortality",
+              "description": "Merging with Yidhra to be reborn. Insane, immortal, possessing fangs and hunger."
+            }
+          ]
+        },
+        "encounters": "Begins with those touched by the entity/cultists. Tokens found around the world. Entity is active now.",
+        "aura": "Differing aspects offer divergent auras. Human forms use fear, power, sexuality. Monstrous forms use fear.",
+        "sanity_loss": "2D10/1D100 (True Form); Avatars vary.",
+        "magic": {
+          "pow": "300",
+          "magic_points": "60",
+          "spells": "Barrier of Pain, Bestow Glimpse of Truth, Bind Enemy, Blight/Bless Crop, Call Lightning, Cause Disease, Command Shoggoth, Curse, Deflect Harm, Dominate, Enthrall Victim, Levitate, Shrivelling, Siren's Song; others."
+        },
+        "powers": [
+          {
+            "name": "Absorption",
+            "description": "Consumes living creatures to gain memories/evolutionary distinctiveness. Can rebirth matter as lurkers."
+          },
+          {
+            "name": "Division and Change",
+            "description": "Can reform/shape itself in unlimited ways."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Yidhra's True Form",
+          "characteristics": {
+            "STR": "300",
+            "CON": "600",
+            "SIZ": "260",
+            "DEX": "200",
+            "HP": "86",
+            "DB": "+6D6",
+            "Build": "7",
+            "Move": "14"
+          },
+          "combat": {
+            "attacks_per_round": "6 (varied) or 1 (consume or roll)",
+            "description": "Revolting mass of protoplasm. Strikes with pseudopods/limbs/mouths.",
+            "special_maneuvers": [
+              {
+                "name": "Consume",
+                "description": "Absorbs target over 1D4 rounds. Escape with Extreme STR/DEX. 1D8 damage + 10 CON/APP loss if escaped. Absorbed = death."
+              },
+              {
+                "name": "Roll",
+                "description": "Crushing damage 6D6."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "3D6"
+              },
+              {
+                "name": "Consume (Maneuver)",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "Absorbed"
+              },
+              {
+                "name": "Roll (Maneuver)",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "6D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons. Regenerates 3 HP per 1 MP. If 0 HP, dissolves and cannot reform in true form."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Yig",
+        "classification": "Great Old One",
+        "other_names": [
+          "Coiled Lord",
+          "Father of Serpents",
+          "Scaled One",
+          "Snake God"
+        ],
+        "description_quote": "As an ancient serpent, you shall know Yig. Of scaled flesh, ophidian eyes and face, on a coiled tail or on two legs does Yig walk upon a bed of snakes. With two arms does Yig grasp this world, claiming dominion and ownership.",
+        "main_entry_text": "From between the stars came Yig to settle on this planet... Yig's connection to this planet appears to remain intact and strong, with the entity freely able to manifest... Recovered annals of the serpent people speak of Yig at first dwelling in Yoth or K'n-yan, but later moving to some secret place named Y'dethal... Yig is sometimes recorded as acting in a fashion that some would call benevolent toward humanity, encouraging and rewarding those humans who offer their worship and also to those who protect snakes from harm... It is clear that those who work against Yig's will and those who would harm a snake may find the Curse of Yig on their heads.",
+        "cult": {
+          "text": "Worshiped by serpent people and some humans. K'n-yanians also venerated Yig. Human cults often seek Yig's favor for protection or power over snakes.",
+          "possible_blessings": [
+            {
+              "name": "Snake Control",
+              "description": "Ability to command snakes."
+            }
+          ]
+        },
+        "encounters": "Deep wilderness, deserts, ancient ruins. Presence heralded by mass of snakes.",
+        "aura": "Ancient, reptilian, cold. A sense of the primal earth.",
+        "sanity_loss": "1/1D8+2 Sanity points.",
+        "magic": {
+          "pow": "140",
+          "magic_points": "28",
+          "spells": "Alter Weather, Blight/Bless Crop, Contact Chthonian, Deflect Harm, Dominate, Enthrall Victim, Send Dream, Sense Life, Wrack; others."
+        },
+        "powers": [
+          {
+            "name": "Command Snakes",
+            "description": "Calls/commands snakes to infest area. Includes Children of Yig."
+          },
+          {
+            "name": "Curse of Yig",
+            "description": "Transmutation into snake-monster (Extreme POW to avoid) or bloodline curse causing serpentine progeny."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Yig",
+          "characteristics": {
+            "STR": "150",
+            "CON": "600",
+            "SIZ": "100",
+            "DEX": "90",
+            "HP": "70",
+            "DB": "+2D6",
+            "Build": "3",
+            "Move": "10"
+          },
+          "combat": {
+            "attacks_per_round": "2 (claws, tail, bite) or 1 (grab and grasp)",
+            "description": "Strikes with claws/tail/bite or grabs.",
+            "special_maneuvers": [
+              {
+                "name": "Grab and Grasp",
+                "description": "Holds target firm. Next round crush (2D6) or bite (1D8+venom). Escape with Extreme STR/DEX."
+              },
+              {
+                "name": "Venom",
+                "description": "Extreme CON or die instantly. Success = 1D8 damage + delirium."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "90%",
+                "difficulty_hard": "45%",
+                "difficulty_extreme": "18%",
+                "damage": "2D6 (+venom if bitten)"
+              },
+              {
+                "name": "Grab and Grasp (Maneuver)",
+                "success_chance": "90%",
+                "difficulty_hard": "45%",
+                "difficulty_extreme": "18%",
+                "damage": "Held (see above)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "6-point scales",
+            "notes": "Critical hit ignores armor. Melee weapons break if Luck fail (corrosive blood). Regenerates 2 HP per 1 MP. If 0 HP, transforms into snake and flees. Reforms in 4D100 days."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Yog-Sothoth",
+        "classification": "Outer God",
+        "other_names": [
+          "All-In-One",
+          "The Key and the Gate",
+          "Lurker at the Threshold",
+          "Opener of the Way",
+          "Ramasekva",
+          "Un-Sos",
+          "Yo-Sotot"
+        ],
+        "description_quote": "From without it shall come, a frothing conglomeration of spheres of unearthly hue, each joined by threads of rippling and protoplasmic flesh... Ever-expanding and contracting, filling the sky.",
+        "main_entry_text": "An immense entity dwelling in the interstices between dimensions... Coterminous with all space and time... Yog-Sothoth appears more like connective tissue in which the knowledge of existence dwells... In certain texts, the entity is said to be 'locked' outside of our universe... Those of sorcerous pursuits are believed to consider Yog-Sothoth as a giver of divine wisdom... It is thought, that by joining with human flesh, Yog-Sothoth shall enjoy a permanency in this realm... Yog-Sothoth knows the gate. Yog-Sothoth is the gate. Yog-Sothoth is the key and guardian of the gate.",
+        "cult": {
+          "text": "Few large-scale cults. Recognized by many cults. Wizards seek commune. Cults include Followers of Yet, Convocation of Time, All-Seeing Ones, Whateley clan.",
+          "possible_blessings": [
+            {
+              "name": "All Knowing",
+              "description": "Inform cultists of future events (bonus die)."
+            },
+            {
+              "name": "Cosmic Knowledge",
+              "description": "Bestows +1D10 Cthulhu Mythos and equal Sanity loss per round of witnessing. Risk of turning to Mythos."
+            },
+            {
+              "name": "Resurrection",
+              "description": "Eternal life via Resurrection spell."
+            },
+            {
+              "name": "Travel",
+              "description": "Allow travel to other places/times (Gate spell)."
+            }
+          ]
+        },
+        "encounters": "Direct encounters rare. Manifestations often disastrous. Cultists magically well-armed.",
+        "aura": "Terrifying, alien, iridescent. Sensory assault.",
+        "sanity_loss": "1D10/1D100 Sanity points.",
+        "magic": {
+          "pow": "500",
+          "magic_points": "100",
+          "spells": "Augury, Bestow Glimpse of Truth, Chasm to Hell, Curse of the Rat-Thing, Dread Curse of Azathoth, Fist of Yog-Sothoth, Wrack; knows all spells."
+        },
+        "powers": [
+          {
+            "name": "Knowledge",
+            "description": "See Blessings. Can bestow any spell."
+          },
+          {
+            "name": "Monsters on Call",
+            "description": "Summon one monster per round (various)."
+          },
+          {
+            "name": "Travel",
+            "description": "Enable person to travel anywhere/when. May appear anywhere."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Yog-Sothoth",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "2000",
+            "SIZ": "varies (100-1000)",
+            "DEX": "05",
+            "HP": "400",
+            "DB": "n/a",
+            "Build": "varies",
+            "Move": "0 / 100 flying"
+          },
+          "combat": {
+            "attacks_per_round": "1 (sphere or bolt)",
+            "description": "Summon monsters, travel powers, spells, or Spheres/Bolts.",
+            "special_maneuvers": [
+              {
+                "name": "Bolts",
+                "description": "5 MP/bolt. Up to 5/round. 500 yards range. Destroys objects. 5D10 damage to person (reduced to essential salts if killed)."
+              },
+              {
+                "name": "Spheres",
+                "description": "Slimy sphere touches target (20 yards). Permanent loss 3D10 CON + 2D10 APP. Reduced to essential salts if CON 0."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Bolts",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "18%",
+                "damage": "5D10"
+              },
+              {
+                "name": "Spheres",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "18%",
+                "damage": "3D10 CON + 2D10 APP"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons. If 0 HP, departs. Undying."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Yog-Sothoth: Aforgomon",
+        "classification": "Avatar (Yog-Sothoth)",
+        "other_names": [
+          "Time Eater"
+        ],
+        "description_quote": "As like a ray or beam of crackling energy does Aforgomon appear, reaching from the angles of time to penetrate the barriers of our world.",
+        "main_entry_text": "A strange and rarely encountered avatar of Yog-Sothoth, Aforgomon appears to be concerned with time rather than space... appears only to those who have angered Yog-Sothoth by meddling with time... Aforgomon may be a personification of the Outer God's retribution... An opposing view sees Aforgomon as Yog-Sothoth's veins, that run through and connect differing dimensions of time.",
+        "cult": {
+          "text": "Little organized worship on Earth. Inhabitants of other dimensions pay devotion. Witches/wizards call upon it to change past/divine future.",
+          "possible_blessings": [
+            {
+              "name": "Perceive Time",
+              "description": "Glimpses of past/future."
+            },
+            {
+              "name": "Time Travel",
+              "description": "Limited travel (1 MP per month moved)."
+            }
+          ]
+        },
+        "encounters": "Caught in or meddling with time (Time Gate spell).",
+        "aura": "Ever-changing quality of time. Environment rapidly alters.",
+        "sanity_loss": "1D6/2D10 Sanity points.",
+        "magic": {
+          "pow": "500",
+          "magic_points": "100",
+          "spells": "Augury, Bestow Glimpse of Truth, Fist of Yog-Sothoth; others."
+        },
+        "powers": [
+          {
+            "name": "Chain of Aforgomon",
+            "description": "Transports victim to Dreamlands, chained to chair over abyss. Chains heat to incandescence. Permanent madness/death."
+          },
+          {
+            "name": "Manipulate Time",
+            "description": "Halt/manipulate time within 10 miles."
+          },
+          {
+            "name": "Time Travel",
+            "description": "Pass in/out of time at will."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Aforgomon",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "1000",
+            "SIZ": "200",
+            "DEX": "500",
+            "HP": "120",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "Infinite"
+          },
+          "combat": {
+            "attacks_per_round": "1 (bolt)",
+            "description": "Uses powers or bolt of fire.",
+            "attacks": [
+              {
+                "name": "Fighting (Bolt)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "1D10 + Age Adjustment"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons (50% chance they disintegrate). Undying."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Yog-Sothoth: Tawil at'Umr",
+        "classification": "Avatar (Yog-Sothoth)",
+        "other_names": [
+          "The Guide",
+          "He Who Prolongs Life",
+          "Most Ancient One"
+        ],
+        "description_quote": "A figure cloaked in shimmering, almost kaleidoscopic, fabrics that seemed to shift and change in the light. Where a head should be, a sphere of iridescence glowed...",
+        "main_entry_text": "This avatar... appears to be a more benign aspect... often acting as a guide to the Gates of the Silver Key... It is said Tawil at'Umr rewards those who show it respect... It has been known to grant longevity and travel to other dimensions.",
+        "cult": {
+          "text": "Worshipped by sorcerers seeking the Ultimate Gate. Cults are small, secretive.",
+          "possible_blessings": [
+            {
+              "name": "Prolong Life",
+              "description": "Halt aging."
+            },
+            {
+              "name": "Gate",
+              "description": "Knowledge of Gate spells."
+            }
+          ]
+        },
+        "encounters": "Summoned by ritual or found guarding the Ultimate Gate.",
+        "aura": "Sense of immense age and wisdom. Peacefulness masking infinite power.",
+        "sanity_loss": "1D4/1D8 Sanity points.",
+        "magic": {
+          "pow": "500",
+          "magic_points": "100",
+          "spells": "Gate, Contact/Summon Yog-Sothoth; others."
+        },
+        "powers": [
+          {
+            "name": "Telepathy",
+            "description": "Communicates mentally."
+          },
+          {
+            "name": "All Knowing",
+            "description": "Imparts info (past/present/future). May ask for offering."
+          },
+          {
+            "name": "Gateway",
+            "description": "Opens doorway to show scenes or allow travel."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Tawil at'Umr",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "500",
+            "SIZ": "100",
+            "DEX": "100",
+            "HP": "60",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "10"
+          },
+          "combat": {
+            "attacks_per_round": "1 (touch)",
+            "description": "Does not usually fight. Touch sends victim to another dimension.",
+            "attacks": [
+              {
+                "name": "Touch",
+                "success_chance": "100%",
+                "damage": "Displacement (no damage)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons. If 0 HP, fades away."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Zathog",
+        "classification": "Great Old One",
+        "other_names": [
+          "Lord of Hate",
+          "Lord of Vortices",
+          "Zarr-Roi"
+        ],
+        "description_quote": "A bubbling mass of ever-churning protoplasm, dripping slime and sprouting vestigial limbs... Demented eyes form and then burst... holes appear that take mouth-like shapes...",
+        "main_entry_text": "Little written concerning Zathog... Necronomicon suggests a large and amorphous entity, not unlike a greater cousin of the earthly shoggoths... Dwell within the core of Zarr, a planet in another galaxy... Zathog fled from the Elder Ones... Most convincing theory places Old One as a twin being to Ubbo-Sathla...",
+        "cult": {
+          "text": "Exclusively worshipped by inhabitants of Zarr (including Zarrian Robots). Human cults do not exist or are rare.",
+          "possible_blessings": []
+        },
+        "encounters": "Rare unless summoned (Prayer to Zathog). Zarrians may come to Earth.",
+        "aura": "Alien lair filled with exotic lifeforms.",
+        "sanity_loss": "1D6/2D10+4 Sanity points.",
+        "magic": {
+          "pow": "375",
+          "magic_points": "75",
+          "spells": "None."
+        },
+        "powers": [
+          {
+            "name": "Brood of Zathog",
+            "description": "Produces 1D6 offspring per round."
+          },
+          {
+            "name": "Leech Touch",
+            "description": "Absorbs 1D4 MP and 1D4 HP per round."
+          },
+          {
+            "name": "Intelligent",
+            "description": "Capable of communication."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Zathog",
+          "characteristics": {
+            "STR": "435",
+            "CON": "500",
+            "SIZ": "800",
+            "DEX": "80",
+            "HP": "130",
+            "DB": "+14D6",
+            "Build": "15",
+            "Move": "1"
+          },
+          "combat": {
+            "attacks_per_round": "1 (lash or grab)",
+            "description": "Lashes/grabs. Strike damage random 1D4 to 14D6.",
+            "special_maneuvers": [
+              {
+                "name": "Grab",
+                "description": "Held (1D4 damage). Next round squeeze (7D6) or absorb (14D6). Escape with Extreme STR or Hard DEX."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "Varies (see above)"
+              },
+              {
+                "name": "Grab (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "Held (see above)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Impaling weapons min damage. Regenerates 20 HP/round. If 0 HP, drains away. Reforms in 3D100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Zhar & Lloigor",
+        "classification": "Great Old Ones",
+        "other_names": [
+          "The Twin Obscenities",
+          "The Twofold God",
+          "Two-in-One",
+          "Zarr-Gorr"
+        ],
+        "description_quote": "Zhar as like a great number of eels, bound together, upright, and ever-moving in unison, while Lloigor resembled a mound of writhing worms. Separate, yet connected in body by strands...",
+        "main_entry_text": "Seemingly conjoined pairs of entities... thought to have once been separate beings... Current dwelling place is unclear, although most cite the mysterious Plateau of Sung... Zhar and Lloigor reside within a great body of water... Tcho-tcho peoples said to have been cursed by their association.",
+        "cult": {
+          "text": "Tcho-tcho who remained close to Plateau worship them. Cult of the Twins. Bound Ones (Pacific West).",
+          "possible_blessings": [
+            {
+              "name": "Joined",
+              "description": "Bind pairs of humans together (mentally/physically)."
+            }
+          ]
+        },
+        "encounters": "Cultists working in pairs. Recruitment of twins.",
+        "aura": "Strange pulling sensation compelling movement toward them.",
+        "sanity_loss": "1D6/3D10 Sanity points.",
+        "magic": {
+          "pow": "140",
+          "magic_points": "28",
+          "spells": "Clutch of Nyogtha, Contact Human (variant), Summon/Bind Byakhee, Contact Lloigor, Dominate; others."
+        },
+        "powers": [
+          {
+            "name": "Compulsion",
+            "description": "Compels those within 300 yards to move toward them (POW roll). Within 50 yards, Hard POW or throw self into mass."
+          },
+          {
+            "name": "Melding",
+            "description": "Prolonged contact causes melding into their flesh."
+          },
+          {
+            "name": "Mental Contact",
+            "description": "Telepathic transmissions."
+          },
+          {
+            "name": "Sinuous",
+            "description": "Supple and malleable bodies."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Zhar & Lloigor (Identical)",
+          "characteristics": {
+            "STR": "160",
+            "CON": "250",
+            "SIZ": "300",
+            "DEX": "80",
+            "HP": "80",
+            "DB": "+5D6",
+            "Build": "6",
+            "Move": "9"
+          },
+          "combat": {
+            "attacks_per_round": "1D4+1 (tentacles) or 1 (grab, crush)",
+            "description": "Uses tentacles to strike/grab or mass to crush.",
+            "special_maneuvers": [
+              {
+                "name": "Crush",
+                "description": "Envelopes and crushes (5D6 damage)."
+              },
+              {
+                "name": "Grab",
+                "description": "Held. Melding causes 1D6 damage + 10 CON loss/round. Escape Extreme STR/DEX (ripping skin)."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "2D6"
+              },
+              {
+                "name": "Crush (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "5D6"
+              },
+              {
+                "name": "Grab (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "1D6 + 10 CON (see above)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "22-point rubbery/sinuous flesh",
+            "notes": "If 0 HP, dissolves. Reforms in 4D100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Zoth-Ommog",
+        "classification": "Great Old One",
+        "other_names": [
+          "Deep Dweller",
+          "Ott'mogg"
+        ],
+        "description_quote": "It possessed a cone-shaped body that tapered to a flat, tail-like end... on land it used four great tentacular arms... to drag itself about... Head... a blunted triangular mass surrounded by a mane of coiling tentacles... Inset were two, possibly four, serpentine eyes...",
+        "main_entry_text": "Zoth-Ommog is believed to have been spawned by Great Cthulhu... Common to all is the belief that Zoth-Ommog dwells in the deep oceans... but whether it is bound within... R'lyeh or free to roam is uncertain. While primarily sea-based, Zoth-Ommog appears able to transport itself on land while also capable of levitation or flight... Stories from the Pacific Ocean regarding monstrous deep-sea dwellers... may have some currency as evidence of partial sightings.",
+        "cult": {
+          "text": "Cult of Cthulhu holds Zoth-Ommog within their thoughts... Some sub-sects... have become solely focused on Zoth-Ommog... Deep one communities offer sacrifices.",
+          "possible_blessings": [
+            {
+              "name": "Gills",
+              "description": "Gills to breathe underwater."
+            },
+            {
+              "name": "Tentacles",
+              "description": "Limbs transformed into tentacles."
+            }
+          ]
+        },
+        "encounters": "Seafaring folk. Divers. Deep one hybrids. Cthulhu Cult.",
+        "aura": "Idols feel cold and cause sensation of sinking/drowning. Presence brings deep loathing. Constant humming sound causes delusions.",
+        "sanity_loss": "1D6/2D10 Sanity points.",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Any dealing with Cthulhu, Ythogtha, Dagon, Hydra, Deep Ones, Star-Spawn."
+        },
+        "powers": [
+          {
+            "name": "Vibrating Hum",
+            "description": "Emits constant hum causing delusions/hallucinations (Sanity loss)."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Zoth-Ommog",
+          "characteristics": {
+            "STR": "200",
+            "CON": "600",
+            "SIZ": "300",
+            "DEX": "100",
+            "HP": "90",
+            "DB": "+5D6",
+            "Build": "6",
+            "Move": "9 / 25 swimming"
+          },
+          "combat": {
+            "attacks_per_round": "2 to 4 (tentacles) or 1 (ram or tail)",
+            "description": "Swipe/strike with tentacles or ram/tail smash.",
+            "special_maneuvers": [
+              {
+                "name": "Ram",
+                "description": "Targets group (within 2 yards). 5D6 damage."
+              },
+              {
+                "name": "Tail",
+                "description": "Targets group (within 5 yards). 3D6 damage."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "90%",
+                "difficulty_hard": "45%",
+                "difficulty_extreme": "18%",
+                "damage": "2D6"
+              },
+              {
+                "name": "Ram",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "5D6"
+              },
+              {
+                "name": "Tail",
+                "success_chance": "70%",
+                "difficulty_hard": "35%",
+                "difficulty_extreme": "14%",
+                "damage": "3D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "10-point rubbery hide",
+            "notes": "Regenerates 3 HP per 1 MP. If 0 HP, disintegrates. Reforms in 4D10 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Zu-Che-Quon",
+        "classification": "Great Old One",
+        "other_names": [
+          "The Ever Dark",
+          "Silent One",
+          "Zulchequon",
+          "Zu Shakon"
+        ],
+        "description_quote": "There was no light, just a cloying darkness enveloping everything... As the earth stirred beneath our feet and the temperature dropped, the darkness congregated and amassed into a swirling vortex.",
+        "main_entry_text": "Believed to inhabit the dark void of space beyond the Omega Nebula... Summoned to Earth but few times... Book of Iod presents Zu-che-quon as initially the offspring but later as the progenitor of Cyäegha... Worshiped in prehistorical Mu by a small sect, known as the Smothering Hand... Appears not to have been imprisoned... but rather brought to a state of continual torpor... Presence of Zu-che-quon is anathema to earthly life.",
+        "cult": {
+          "text": "Few humans worship. Cults are disparate. Smothering Hand (Virginia and Germany). Eyeless Ones (Utah). Opposed by Cthugha worshippers.",
+          "possible_blessings": [
+            {
+              "name": "Eyeless",
+              "description": "Pluck out own eyes for enhanced sensory faculties."
+            },
+            {
+              "name": "Dark Form",
+              "description": "Transform into incorporeal dark cloud (3 MP/round)."
+            }
+          ]
+        },
+        "encounters": "Cultist activity (kidnapping, blinding).",
+        "aura": "All light smothered. Temperature drop. Earth tremors. Darkness feels sticky and tangible. Sound of flapping.",
+        "sanity_loss": "1D6/2D10 Sanity points.",
+        "magic": {
+          "pow": "400",
+          "magic_points": "80",
+          "spells": "Clutch of Nyogtha, Fist of Yog-Sothoth, Mindblast, Possession (variant), Power Drain; others."
+        },
+        "powers": [
+          {
+            "name": "Summons",
+            "description": "Requires discordant bells. Manifests only if sound continues."
+          },
+          {
+            "name": "Enveloping Darkness",
+            "description": "All light sources go out. Thick darkness. Penalty die to skills. Tremors (DEX roll)."
+          },
+          {
+            "name": "Un-seeable",
+            "description": "Presence causes painful eye discomfort. Humans must make CON roll or scratch eyes (1D4 damage on fumble). Indefinite insanity causes self-blinding."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Zu-Che-Quon",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "500",
+            "SIZ": "300*",
+            "DEX": "n/a",
+            "HP": "100",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "n/a"
+          },
+          "combat": {
+            "attacks_per_round": "1 (action)",
+            "description": "Nebulous/semi-corporeal. Does not use physical attacks. Uses spells/powers.",
+            "attacks": []
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons, fire, electricity, chemical. Spells/Mythos powers may harm/dispel. If 0 HP, vanishes to space. Unable to manifest for 4D100+100 years."
+          }
+        }
+      }
     }
   ]
 }
