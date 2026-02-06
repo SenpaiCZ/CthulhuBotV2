@@ -9890,6 +9890,539 @@
         "spells": "None.",
         "sanity_loss": "0/1D4; 1/1D6+1 for a group."
       }
+    },
+    {
+      "monster_entry": {
+        "name": "Yig, Children of",
+        "subtitle": "Monstrous Snakes",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Yig",
+          "Animal"
+        ],
+        "description": "Know the children of Yig by the white crescent mark upon their heads... These monster snakes are directed by Yig's will or that of the god's servants and may be found guarding sacred sites or artifacts. Otherwise, they may be directed to seek and strike at those who have displeased Yig.",
+        "alternative_names": [
+          "Sacred of Yig"
+        ],
+        "main_entry_text": "The children of Yig are large snakes that bear Yig's mark on their heads, that of a white crescent. Usually, such snakes are above-average sized venomous members of their species common to the locale (e.g. diamondback rattlesnakes, copperheads, cottonmouths). They are relentless hunters who trail their target until able to strike. Having bitten the target, the chosen of Yig does not remain to fight but disappears as suddenly as it arrived.",
+        "characteristics": {
+          "STR": {
+            "roll": "varies (30-40)",
+            "average": 35
+          },
+          "CON": {
+            "roll": "40",
+            "average": 40
+          },
+          "SIZ": {
+            "roll": "varies (20-30)",
+            "average": 25
+          },
+          "DEX": {
+            "roll": "90",
+            "average": 90
+          },
+          "POW": {
+            "roll": "60",
+            "average": 60
+          }
+        },
+        "derived_stats": {
+          "hit_points": "6-7",
+          "damage_bonus": "n/a",
+          "build": -2,
+          "magic_points": 12,
+          "move": {
+            "base": 9
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (bite)",
+          "attacks": [
+            {
+              "name": "Bite",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D2 + venom",
+              "special_effect": "Venom is strong (2D10 damage), causes agony and usually death. Extreme CON roll halves damage."
+            }
+          ],
+          "dodge": {
+            "success_chance": "45%",
+            "difficulty_hard": "22%",
+            "difficulty_extreme": "9%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Stealth",
+            "value": "70%"
+          }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Yig, Spawn of",
+        "subtitle": "Blessed of the Snake God",
+        "tags": [
+          "Mythos",
+          "Hybrid",
+          "Yig",
+          "Mutant"
+        ],
+        "description": "Born of a human mother... his skin becoming dry and flaky before the scales started to appear... In the end, he looked like a walking snake, with talons instead of nails, a bifurcated tongue, and lidless black eyes.",
+        "alternative_names": [
+          "Blessed of Yig",
+          "Chosen of Yig",
+          "Snake Person"
+        ],
+        "main_entry_text": "The spawn of Yig are the hybrid offspring of Yig and a human or a serpent person. Those blessed/cursed usually transform over a matter of days. Hybrid humans tend to rapidly lose their sanity as the transformation reaches a conclusion. Most have a scaly skin, colored similarly to that of a snake, sometimes with shrunken or vestigial limbs that dangle uselessly from their sides.",
+        "characteristics": {
+          "STR": {
+            "roll": "(6D6+3)*5",
+            "average": 120
+          },
+          "CON": {
+            "roll": "(6D6+3)*5",
+            "average": 120
+          },
+          "SIZ": {
+            "roll": "(6D6+3)*5",
+            "average": 120
+          },
+          "DEX": {
+            "roll": "(6D6+3)*5",
+            "average": 120
+          },
+          "INT": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "POW": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          }
+        },
+        "derived_stats": {
+          "hit_points": "24",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 11,
+          "move": {
+            "base": 8
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (strike, rip, bite, crush) or 1 (swallow)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "DB"
+            },
+            {
+              "name": "Bite",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6 + venom",
+              "special_effect": "Venom causes 1D10 damage and unconsciousness (1D6 rounds). Extreme CON halves damage/time."
+            },
+            {
+              "name": "Swallow (Maneuver)",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D4+1 per 10 mins",
+              "description": "Swallows opponent whole (limit equal/under spawn's SIZ). Digests prey over 1D4+1 days."
+            }
+          ],
+          "dodge": {
+            "success_chance": "60%",
+            "difficulty_hard": "30%",
+            "difficulty_extreme": "12%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Sense Prey",
+            "value": "60%"
+          },
+          {
+            "name": "Stealth",
+            "value": "70%"
+          },
+          {
+            "name": "Swim",
+            "value": "70%"
+          }
+        ],
+        "armor": {
+          "rating": "2-point scaly skin"
+        },
+        "spells": "None.",
+        "sanity_loss": "1D4+2/2D4+2"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Yith, Great Race of (Beetle Form)",
+        "subtitle": "Future Hive Minds",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Alien",
+          "Swarm"
+        ],
+        "description": "A beetle-like species possessed of the minds of those called the Great Race. These entities, with jet-black shells and wings of brilliant blue, gold, and green hues, will be joined, working together as one to recreate the Great Race's splendor.",
+        "alternative_names": [
+          "Coleopterans",
+          "The Great Mind",
+          "Time Brains",
+          "Yithians"
+        ],
+        "main_entry_text": "Foreseeing their potential destruction by the flying polyps, the Great Race of Yith transferred their minds far into the future of Earth, well beyond the extinction of humanity, into swarms of intelligent beetle-like creatures that possess hive-minds. Each swarm (consisting of approximately 500 individual insects) operates as a single entity.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "CON": {
+            "roll": "(1D2+499)*10",
+            "average": 5000
+          },
+          "SIZ": {
+            "roll": "(1D2+49)*10",
+            "average": 500
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "(6D6+2)*5",
+            "average": 115
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "550 (Swarm)",
+          "damage_bonus": "n/a",
+          "build": "n/a",
+          "magic_points": 13,
+          "move": {
+            "base": 4,
+            "special": "10 flying"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (bite or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6+2"
+            },
+            {
+              "name": "Advanced Weapon",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "2D6"
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "9%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Area effect weapons must be deployed to successfully destroy a swarm."
+        },
+        "spells": "10% chance per swarm of knowing 1D4 spells.",
+        "sanity_loss": "0/1D4"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Yith, Great Race of (Cone Form)",
+        "subtitle": "Time Brains",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Alien",
+          "Time Traveler"
+        ],
+        "description": "Some ten feet high and ten feet in diameter at their base, they are cone-shaped entities with iridescent coarse and scaly skin. At the top of the cone, four tentacle-like limbs thrust forth... two of these ended with crab-like claws, the third terminated in four red colored trumpet-like growths... while the fourth limb carried a yellow orb... around which grew three eyes.",
+        "alternative_names": [
+          "Conical Ones",
+          "The Great Mind",
+          "Yithians"
+        ],
+        "main_entry_text": "Yithians are a race of incorporeal mind entities. They mastered time travel and fled their own world's destruction by migrating their minds to a race of cone-shaped entities living on Earth during the Devonian era. They value intelligence and scientific reasoning. A member of the race can send its mind forward or backward through time and across space to trade minds with a suitable subject.",
+        "characteristics": {
+          "STR": {
+            "roll": "(10D6+7)*5",
+            "average": 210
+          },
+          "CON": {
+            "roll": "(4D6+12)*5",
+            "average": 130
+          },
+          "SIZ": {
+            "roll": "(8D6+36)*5",
+            "average": 320
+          },
+          "DEX": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "INT": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "45",
+          "damage_bonus": "+6D6",
+          "build": 7,
+          "magic_points": 13,
+          "move": {
+            "base": 7
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (claws, slam, crush) or 1 (lightning gun)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "DB"
+            },
+            {
+              "name": "Lightning Gun",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "1D10 per charge",
+              "description": "Standard Model A fires bursts of electricity. Can fire multiple charges at once (risk of burnout)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "25%",
+            "difficulty_hard": "12%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Electrical Repair",
+            "value": "60%"
+          },
+          {
+            "name": "Science (Various)",
+            "value": "80-90%"
+          }
+        ],
+        "armor": {
+          "rating": "8-point tough skin"
+        },
+        "spells": "10% chance of knowing 1D3 spells.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Yog-Sothoth, Children of",
+        "subtitle": "Outer God Progeny",
+        "tags": [
+          "Mythos",
+          "Hybrid",
+          "Yog-Sothoth",
+          "Mutant"
+        ],
+        "description": "It was huge, bigger than a barn, and composed of a mass of squirming rope-like tubes. Its total shape was like a hen's egg, a great jelly with dozens of legs like hogsheads, and great bulging eyes all along the sides... Atop the jelly mass was a human-seeming face.",
+        "alternative_names": [
+          "Horrors",
+          "Festering Things",
+          "Spawn of the All-in-One"
+        ],
+        "main_entry_text": "The spawn of Yog-Sothoth are formed when the Outer God mates with or channels a part of itself into a human, creating a hybrid creature. Some may look mostly human with a goat-like face and possess some alien traits (like Wilbur Whateley) or be terribly alien, monstrous, and/or invisible. Most mature rapidly and require great quantities of fresh meat.",
+        "characteristics": {
+          "STR": {
+            "roll": "2D6*25 (Monstrous)",
+            "average": 175
+          },
+          "CON": {
+            "roll": "2D6*25 (Monstrous)",
+            "average": 175
+          },
+          "SIZ": {
+            "roll": "(4D6+30)*5 (Monstrous)",
+            "average": 220
+          },
+          "DEX": {
+            "roll": "(4D6+2)*5 (Monstrous)",
+            "average": 80
+          },
+          "INT": {
+            "roll": "6D6*5",
+            "average": 105
+          },
+          "POW": {
+            "roll": "6D6*5",
+            "average": 105
+          }
+        },
+        "derived_stats": {
+          "hit_points": "39 (Monstrous)",
+          "damage_bonus": "+4D6 (Monstrous)",
+          "build": 5,
+          "magic_points": 21,
+          "move": {
+            "base": 10
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (human-seeming) or 6 (monstrous)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "90%",
+              "difficulty_hard": "47%",
+              "difficulty_extreme": "18%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Grab (Maneuver)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "Crush (DB) or Suck Blood (1D10+1D10 CON)",
+              "description": "Tentacles grab and crush or suck blood."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Monstrous spawn cannot be harmed by mundane weapons; enchanted weapons deal minimum damage. Monstrous spawn are invisible."
+        },
+        "spells": "20% chance to know 1D6 spells.",
+        "sanity_loss": "1D4/1D8+2 (Monstrous)"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Yugg",
+        "subtitle": "Ocean Lurkers",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Aquatic",
+          "Alien"
+        ],
+        "description": "Bloated and swollen, some four feet in diameter and over twelve feet high, it reminded me of a great worm or slug, and had a large circular mouth, ringed with horn-like teeth that recalled a hagfish or lamprey eel. About its head and mouth were numerous tentacles.",
+        "alternative_names": [
+          "Giant Eels",
+          "Sea Lurkers",
+          "Yuggya"
+        ],
+        "main_entry_text": "These large, pale, and gray worm or slug-like creatures dwell almost exclusively in the depths of the Pacific Ocean. They are intelligent and have a society of sorts. Some believe they arrived from another planet to pay homage to the Great Old One known as Zoth-Ommog.",
+        "characteristics": {
+          "STR": {
+            "roll": "(6D6+4)*5",
+            "average": 125
+          },
+          "CON": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "8D6*5",
+            "average": 140
+          },
+          "DEX": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "INT": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "POW": {
+            "roll": "4D6*5",
+            "average": 70
+          }
+        },
+        "derived_stats": {
+          "hit_points": "22",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 14,
+          "move": {
+            "base": 2,
+            "special": "6 swimming"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (bite, hold)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Hold (Maneuver)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D6+1 + Drain",
+              "description": "Latches on. Drains blood (1D6+1 HP + 4D10 STR per round). Opposed STR to break free."
+            }
+          ],
+          "dodge": {
+            "success_chance": "17%",
+            "difficulty_hard": "8%",
+            "difficulty_extreme": "3%"
+          }
+        },
+        "armor": {
+          "rating": "3-point jelly-like hide"
+        },
+        "spells": "10% chance to know 1D3 spells.",
+        "sanity_loss": "0/1D6"
+      }
     }
   ]
 }
