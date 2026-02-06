@@ -5980,6 +5980,98 @@
     },
     {
       "monster_entry": {
+        "name": "Nyogtha, Spawn of (Variant)",
+        "subtitle": "Children of Darkness",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Nyogtha",
+          "Mutant"
+        ],
+        "description": "Nyogtha creates its spawn from vile unions, its progeny taking human seeming shape at first before coming to resemble a shapeless bloated thing with gray-black rotted flesh, squirming as though filled with large black worms... Hellish bulging eyes of crimson hue reveal little trace of humanity.",
+        "alternative_names": [
+          "Children of the Red Abyss",
+          "Envelopers",
+          "Pus Sacks",
+          "Spawn of the Thing That Should Not Be"
+        ],
+        "main_entry_text": "The spawn of Nyogtha issue from blasphemous unions between the Great Old One Nyogtha and humans or ghouls. Such spawn swiftly degenerate into shapeless abominations after three to six decades... The metamorphosis complete, the monstrous form is a shapeless horror. Serving the will of Nyogtha, the spawn appears to be tasked with inducting new recruits into the worship of their sire.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+12)*5",
+            "average": 130
+          },
+          "CON": {
+            "roll": "(2D6+9)*5",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "DEX": {
+            "roll": "(2D6+1)*5",
+            "average": 40
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(2D6+9)*5",
+            "average": 80
+          }
+        },
+        "derived_stats": {
+          "hit_points": "18 (Monstrous)",
+          "damage_bonus": "+2D6 (Monstrous)",
+          "build": 3,
+          "magic_points": 16,
+          "move": {
+            "base": 6
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Photosensitivity",
+            "description": "As a spawn matures, they become photosensitive; the mere touch of sunlight on their exposed flesh causes excruciating pain. They are easily blinded by bright light."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "2 (claw, bite) or 1 (enfold)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "65%",
+              "difficulty_hard": "32%",
+              "difficulty_extreme": "13%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Enfold (Maneuver)",
+              "success_chance": "65%",
+              "difficulty_hard": "32%",
+              "difficulty_extreme": "13%",
+              "damage": "1D6 + 1D4 suffocation",
+              "description": "Target is pulled into contact. Worm-like tendrils coil and force into body (1D6 damage + Sanity loss). Victim must also make Extreme CON roll or take 1D4 suffocation damage per round."
+            }
+          ],
+          "dodge": {
+            "success_chance": "20%",
+            "difficulty_hard": "10%",
+            "difficulty_extreme": "4%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "All impaling weapons (incl. bullets) deal minimum damage; immune to fire, chemical, radioactivity, and electrical based attacks."
+        },
+        "spells": "Monstrous spawn know 2D6 spells.",
+        "sanity_loss": "1/1D10 to encounter monstrous spawn."
+      }
+    },
+    {
+      "monster_entry": {
         "name": "Old Ones, Fosterlings of the",
         "subtitle": "Children of Alien Gods",
         "tags": [
@@ -6068,6 +6160,88 @@
     },
     {
       "monster_entry": {
+        "name": "Old Ones, Fosterlings of the (Variant)",
+        "subtitle": "Children of Alien Gods",
+        "tags": [
+          "Mythos",
+          "Human Mutant",
+          "Great Old Ones"
+        ],
+        "description": "It was unstable, a swollen bulk whose pale pink skin glistened as though flayed, with a bulb-like head possessing a lumpy forehead and covered in patches of hair-like strands of thin flesh. Despite its cursed origin, the taint of humanity could be seen.",
+        "alternative_names": [
+          "Chosen One",
+          "Dark Child",
+          "Strange One"
+        ],
+        "main_entry_text": "Fosterlings of the Old Ones are the offspring of magical unions between humans and Outer Gods or Great Old Ones. Each resultant child is unique, with some resembling more the form of its Mythos parent, while others appear human... In many cases, the genetic Mythos-alterations are passed from generation to generation; each successive generation becomes more like the parent deity.",
+        "characteristics": {
+          "STR": {
+            "roll": "(3D6+3D10)*5",
+            "average": 135
+          },
+          "CON": {
+            "roll": "(3D6+3D10)*5",
+            "average": 135
+          },
+          "SIZ": {
+            "roll": "(3D6+1D10+6)*5",
+            "average": 110
+          },
+          "DEX": {
+            "roll": "(3D6+1D10)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          },
+          "POW": {
+            "roll": "(3D6+1D10)*5",
+            "average": 80
+          }
+        },
+        "derived_stats": {
+          "hit_points": "24",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 16,
+          "move": {
+            "base": 8
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Unique Power",
+            "description": "Most fosterlings have one or two powers upon reaching adulthood (e.g., mind reading, mind control, prophetic visions, telekinesis, levitation)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (or 2 or 3, dependent on form)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "75%",
+              "difficulty_hard": "37%",
+              "difficulty_extreme": "15%",
+              "damage": "1D6+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Minimal damage from mundane weapons (incl. bullets)."
+        },
+        "spells": "All may Call parent deity and Summon/Bind allied races; INT 90+ knows at least 1D6 spells.",
+        "sanity_loss": "1/1D10"
+      }
+    },
+    {
+      "monster_entry": {
         "name": "Outer Gods, Larvae of the",
         "subtitle": "Spawn of Impossible Alien Forces",
         "tags": [
@@ -6141,6 +6315,83 @@
         },
         "spells": "1D6 spells.",
         "sanity_loss": "Varies dependent on form; from 0/1D10 to 1D8/5D10."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Outer Gods, Larvae of the (Variant)",
+        "subtitle": "Spawn of Impossible Alien Forces",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Alien",
+          "Outer God"
+        ],
+        "description": "A company of entities, they number among those who dance for Azathoth at the center of all things. They spawn monstrous larvae which may, in time, grow into new gods. Each is nameless for now and possessed of nameless hungers.",
+        "alternative_names": [
+          "Star Kin",
+          "Star Seeds"
+        ],
+        "main_entry_text": "The larvae of the Outer Gods (sometimes Other Gods) are among those beings that dance blindly and idiotically in the court of Azathoth at the center of space and time. Occasionally, portions of these beings are torn off or ejected into the depths of space, and sometimes become living beings unto themselves... These entities may be of any form: insectoid, metal, liquid, gaseous, crystalline, living machine, geometrical, amorphous, phosphorous, fiery, mammalian, living sound, living color, and so on.",
+        "characteristics": {
+          "STR": {
+            "roll": "6D10*5",
+            "average": 165
+          },
+          "CON": {
+            "roll": "10D10*5",
+            "average": 275
+          },
+          "SIZ": {
+            "roll": "8D10*5",
+            "average": 220
+          },
+          "DEX": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "INT": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "POW": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          }
+        },
+        "derived_stats": {
+          "hit_points": "49",
+          "damage_bonus": "+4D6",
+          "build": 5,
+          "magic_points": 20,
+          "move": {
+            "base": "1D10+1 (varies)"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1D10 (varies by form)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "90%",
+              "difficulty_hard": "45%",
+              "difficulty_extreme": "18%",
+              "damage": "DB",
+              "special_effect": "Attacks according to individual form (tentacle, poison gas, bite, smash, etc.)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "25%",
+            "difficulty_hard": "12%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Immune to cold and vacuum; certain forms may have other vulnerabilities."
+        },
+        "spells": "1D6 spells.",
+        "sanity_loss": "Varies; 0/1D10 to 1D8/5D10."
       }
     },
     {
@@ -6238,6 +6489,99 @@
     },
     {
       "monster_entry": {
+        "name": "Outer Gods, Servitor of the (Variant)",
+        "subtitle": "The Piping Ones",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Azathoth",
+          "Alien"
+        ],
+        "description": "These beings are best described as amorphous masses, fluid like and bubbling, yet sometimes taking on more solid forms resembling caricatures of toads, octopi, and squids. From them comes a ghastly ululation, a piping song which pleases Azathoth and ensures his unending sleep.",
+        "alternative_names": [
+          "Heralds",
+          "Piping Ones",
+          "Star Creatures",
+          "The Dancers"
+        ],
+        "main_entry_text": "These amorphous beings progress by rolling, slithering, or lurching... Servitors may be found accompanying Mythos deities, though they are most commonly found in Azathoth's Court. These are the \"demon flautists\" playing flute-like music for their masters. The noise is best described as a sort of background dirge rising to a maddening cacophony of piping.",
+        "characteristics": {
+          "STR": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "CON": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "DEX": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "(4D6+3)*5",
+            "average": 85
+          },
+          "POW": {
+            "roll": "(2D6+12)*5",
+            "average": 95
+          }
+        },
+        "derived_stats": {
+          "hit_points": "18",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 19,
+          "move": {
+            "base": 7
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Music of Madness",
+            "description": "The discordant music adversely affects human listeners, provoking a Sanity roll every two rounds (0/1D4 loss)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "4 (tentacles)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6 per tentacle",
+              "special_effect": "A mass of writhing tentacles batters and swipes. Roll for each of 4 attacks."
+            },
+            {
+              "name": "Tentacle Grab (Maneuver)",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6 (crush) or 2D6 (fling)",
+              "description": "Tentacles have 20 yard range. May grab up to 4 targets. Held targets may be crushed or flung."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Immune to mundane weapons (incl. bullets); regenerates 3 hit points per round (death at zero hit points)."
+        },
+        "spells": "Knows 1D10 spells, usually including Summon/Bind and Call.",
+        "sanity_loss": "1/1D10"
+      }
+    },
+    {
+      "monster_entry": {
         "name": "Petesouchi",
         "subtitle": "Crocodile People",
         "tags": [
@@ -6304,6 +6648,107 @@
               "difficulty_extreme": "12%",
               "damage": "1D8+DB",
               "description": "Bites victim and goes into classic crocodile roll to crush, twist, and snap."
+            }
+          ],
+          "dodge": {
+            "success_chance": "17%",
+            "difficulty_hard": "8%",
+            "difficulty_extreme": "3%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Overturn Boat",
+            "value": "70%"
+          },
+          {
+            "name": "Psychology",
+            "value": "40%"
+          },
+          {
+            "name": "Stealth",
+            "value": "60%"
+          },
+          {
+            "name": "Swim",
+            "value": "80%"
+          }
+        ],
+        "armor": {
+          "rating": "6-point hide"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D4 to encounter adult; 0/1D6 to encounter transforming."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Petesouchi (Variant)",
+        "subtitle": "Crocodile People",
+        "tags": [
+          "Mythos",
+          "Human Mutant",
+          "Aquatic"
+        ],
+        "description": "Look upon the basking crocodile you passed outside and note its eyes. See you the mind within, unable to converse, possessing a mouth through which human speech is impossible. What despair a man whose intellect is forever trapped in inhuman form.",
+        "alternative_names": [
+          "The Cursed",
+          "Crocodile Folk"
+        ],
+        "main_entry_text": "Differing opinions arise concerning the crocodile people known as petesouchi. Some are said to be transformed by dark spells perpetrated by vengeful sorcerers, while others are considered to have a tainted bloodline... For those possessing a tainted bloodline, they change in a manner similar to deep ones... the final mature form is that of an enormous crocodile with human intelligence.",
+        "characteristics": {
+          "STR": {
+            "roll": "(6D6+8)*5",
+            "average": 145
+          },
+          "CON": {
+            "roll": "(4D6+8)*5",
+            "average": 110
+          },
+          "SIZ": {
+            "roll": "(6D6+8)*5",
+            "average": 145
+          },
+          "DEX": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(2D6+1)*5",
+            "average": 40
+          }
+        },
+        "derived_stats": {
+          "hit_points": "25",
+          "damage_bonus": "+3D6",
+          "build": 4,
+          "magic_points": 8,
+          "move": {
+            "base": 7,
+            "special": "10 swimming"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (bite) or 1 (roll)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "DB"
+            },
+            {
+              "name": "Roll",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D8+DB",
+              "description": "Bites victim and then goes into a classic crocodile roll, crushing, twisting, and snapping."
             }
           ],
           "dodge": {
@@ -6432,6 +6877,99 @@
         },
         "spells": "30% chance of knowing 1D3 spells; humans transformed retain knowledge.",
         "sanity_loss": "0/1D6; 1/1D6+2 if the face is of a known human."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Rat-Thing (Variant)",
+        "subtitle": "Malevolent Spies",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Witch Familiar"
+        ],
+        "description": "It followed the witch like a pet, attentive and knowing. A familiar of sorts, it appeared as a large rat yet its face was that of a person, with human eyes, nose, and mouth. The face was one of malice and unkindness, and, when it opened its mouth it revealed sharp teeth. The body was in all other respects that of a rodent, with matted fur, four legs, and a long pinkish tail.",
+        "alternative_names": [
+          "Familiars",
+          "Scuttling Ones",
+          "Witch Kin"
+        ],
+        "main_entry_text": "Rat-things are small, hairy rodents with rat bodies, evil-looking human faces, and tiny human hands for paws... It is unknown whether they are a distinct race or the result of malign sorcery, as some have been encountered in the role of familiar to a witch or wizard... Sometimes, a witch's faithful servant may be transformed into a rat-thing, thereby enabled to continue to serve its mistress.",
+        "characteristics": {
+          "STR": {
+            "roll": "1D3*5",
+            "average": 10
+          },
+          "CON": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "SIZ": {
+            "roll": "05",
+            "average": 5
+          },
+          "DEX": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          },
+          "INT": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "POW": {
+            "roll": "2D6*5",
+            "average": 35
+          }
+        },
+        "derived_stats": {
+          "hit_points": "4",
+          "damage_bonus": "-2",
+          "build": -2,
+          "magic_points": 7,
+          "move": {
+            "base": 9
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Magical Assistance",
+            "description": "May aid a sorcerer, providing a bonus die to Cthulhu Mythos rolls. Can give up POW to aid spell casting (1 POW = 5 MP). May twist angles to open temporary Gates (cost 10 POW)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (bite, rake)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "1D4-2 (min 1)",
+              "special_effect": "Bites and clings on, raking and chewing (1D4-1 damage). Tearing away causes 1D3 additional damage."
+            }
+          ],
+          "dodge": {
+            "success_chance": "45%",
+            "difficulty_hard": "22%",
+            "difficulty_extreme": "9%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Stealth",
+            "value": "75%"
+          },
+          {
+            "name": "Listen",
+            "value": "50%"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Attacks to hit a running rat-thing are made with one penalty die."
+        },
+        "spells": "30% chance of knowing 1D3 spells; if a gift from a deity, knows 1D6+.",
+        "sanity_loss": "0/1D6; 1/1D6+2 if the face is known."
       }
     }
   ]
