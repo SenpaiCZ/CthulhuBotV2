@@ -72,6 +72,9 @@
                                 <button class="btn btn-info btn-sm text-white mb-1" onclick="openUsersModal('{{ guild.id }}')">
                                     <i class="bi bi-people"></i> Users
                                 </button>
+                                <button class="btn btn-secondary btn-sm mb-1" onclick="autoDetectKarma('{{ guild.id }}', this)">
+                                    <i class="bi bi-magic"></i> Auto Detect
+                                </button>
                                 <button class="btn btn-warning btn-sm" onclick="recalculateKarma('{{ guild.id }}')">
                                     <i class="bi bi-arrow-clockwise"></i> Recalc
                                 </button>
@@ -411,6 +414,48 @@ async function openUsersModal(guildId) {
     } catch (e) {
         tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error loading data.</td></tr>';
         console.error(e);
+    }
+}
+
+async function autoDetectKarma(guildId, btn) {
+    const channelId = document.getElementById(`channel-${guildId}`).value;
+    const notifyChannelId = document.getElementById(`notify-channel-${guildId}`).value;
+
+    if (channelId === "none" || notifyChannelId === "none") {
+        alert("Please select both a Karma Channel and a Notification Channel before using Auto Detect.");
+        return;
+    }
+
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Detecting...';
+
+    try {
+        const response = await fetch('/api/karma/detect_emojis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                guild_id: guildId,
+                channel_id: channelId
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            document.getElementById(`upvote-${guildId}`).value = data.upvote;
+            document.getElementById(`downvote-${guildId}`).value = data.downvote;
+            alert("✅ Detection successful!\n\nUpvote and Downvote fields have been populated with the most frequent emojis found.\n\nPlease verify them and click 'Save'.");
+        } else {
+            alert("❌ Detection failed: " + data.message);
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert("An error occurred during detection.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
 
