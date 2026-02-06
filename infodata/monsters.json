@@ -19,12 +19,30 @@
         ],
         "main_entry_text": "Abhoth's spawn are numerous and take many forms, each birthed from the Outer God's bulk, and each one unique in form and appearance. They are complex life forms, although some do not appear to be \"finished,\" with vestigial limbs and half-formed bodies, while others seem fully realized. Variously, they range in looks from juvenile prehistoric creatures and monstrous mutants to bothersome-looking humanoids and amorphous globs of living flesh. Some can walk or fly, while many simply crawl or glide slug-like.",
         "characteristics": {
-          "STR": { "roll": "4D10*5", "average": 110 },
-          "CON": { "roll": "6D6*5", "average": 105 },
-          "SIZ": { "roll": "3D10*5", "average": "80-85" },
-          "DEX": { "roll": "3D6*5", "average": "50-55" },
-          "INT": { "roll": "2D4*5", "average": 25 },
-          "POW": { "roll": "6D6*5", "average": 105 }
+          "STR": {
+            "roll": "4D10*5",
+            "average": 110
+          },
+          "CON": {
+            "roll": "6D6*5",
+            "average": 105
+          },
+          "SIZ": {
+            "roll": "3D10*5",
+            "average": "80-85"
+          },
+          "DEX": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "INT": {
+            "roll": "2D4*5",
+            "average": 25
+          },
+          "POW": {
+            "roll": "6D6*5",
+            "average": 105
+          }
         },
         "derived_stats": {
           "hit_points": "18-19",
@@ -62,9 +80,18 @@
           }
         },
         "skills": [
-          { "name": "Climb", "value": "45%" },
-          { "name": "Scent/Spot Prey", "value": "60%" },
-          { "name": "Stealth", "value": "50%" }
+          {
+            "name": "Climb",
+            "value": "45%"
+          },
+          {
+            "name": "Scent/Spot Prey",
+            "value": "60%"
+          },
+          {
+            "name": "Stealth",
+            "value": "50%"
+          }
         ],
         "armor": {
           "rating": "None",
@@ -95,12 +122,30 @@
         ],
         "main_entry_text": "The adherents are creatures who have accepted Hastur's Unspeakable Oath and been transformed into something other. While on earth such creatures tend to be of human origin, other species are lured by the Unspeakable Promise and so the adherents may come in many strange forms. Once the Oath is recited, Hastur's will is imposed upon the adherent, changing their physical form into to jelly-like substance, able to walk and squeeze itself through narrow places.",
         "characteristics": {
-          "STR": { "roll": "host x 2", "average": 100 },
-          "CON": { "roll": "host x 3", "average": 165 },
-          "SIZ": { "roll": "host x 1.5", "average": 97 },
-          "DEX": { "roll": "host x 2", "average": 110 },
-          "INT": { "roll": "75", "average": 75 },
-          "POW": { "roll": "175", "average": 175 }
+          "STR": {
+            "roll": "host x 2",
+            "average": 100
+          },
+          "CON": {
+            "roll": "host x 3",
+            "average": 165
+          },
+          "SIZ": {
+            "roll": "host x 1.5",
+            "average": 97
+          },
+          "DEX": {
+            "roll": "host x 2",
+            "average": 110
+          },
+          "INT": {
+            "roll": "75",
+            "average": 75
+          },
+          "POW": {
+            "roll": "175",
+            "average": 175
+          }
         },
         "derived_stats": {
           "hit_points": "24",
@@ -144,7 +189,10 @@
           }
         },
         "skills": [
-          { "name": "Retains those it had while human", "value": "Variable" }
+          {
+            "name": "Retains those it had while human",
+            "value": "Variable"
+          }
         ],
         "armor": {
           "rating": "6-point scales and rubbery flesh"
@@ -172,12 +220,30 @@
         ],
         "main_entry_text": "Ashen ones are magical creations, be they forged by a wizard's spell or the thought of a Mythos deity. Rumor holds that a secret spell, said to be hidden in the pages of the Necronomicon, provides the ritual to bring life to the ground down bones of the once-living. Once created, an ashen one is bound to service, although if their mortal creator dies, they are free to roam and devise havoc.",
         "characteristics": {
-          "STR": { "roll": "(2D6+2)*5", "average": 45 },
-          "CON": { "roll": "3D6*5", "average": "50-55" },
-          "SIZ": { "roll": "(2D6+2)*5", "average": 45 },
-          "DEX": { "roll": "(3D6+6)*5", "average": "80-85" },
-          "INT": { "roll": "(2D6+6)*5", "average": 65 },
-          "POW": { "roll": "(2D6+2)*5", "average": 45 }
+          "STR": {
+            "roll": "(2D6+2)*5",
+            "average": 45
+          },
+          "CON": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "SIZ": {
+            "roll": "(2D6+2)*5",
+            "average": 45
+          },
+          "DEX": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(2D6+2)*5",
+            "average": 45
+          }
         },
         "derived_stats": {
           "hit_points": "9-10",
@@ -224,7 +290,10 @@
           }
         },
         "skills": [
-          { "name": "Stealth", "value": "60%" }
+          {
+            "name": "Stealth",
+            "value": "60%"
+          }
         ],
         "armor": {
           "rating": "None",
@@ -253,12 +322,30 @@
         ],
         "main_entry_text": "Atlach-Nacha's daughters are enormous, venomous spider-like entities. Chosen by the Great Old One as worthy to serve, a human (or possibly another species) is \"rebirthed\" by Atlach-Nacha-the process transforming the worshipper into one of its children, known as \"daughters.\" Human devotees who bear the mark of a venomous spider bite are particularly revered by the god's cult priestesses, who regard the subject as \"favored.\"",
         "characteristics": {
-          "STR": { "roll": "(3D6+13)*5", "average": "115-120" },
-          "CON": { "roll": "(3D6+8)*5", "average": "90-95" },
-          "SIZ": { "roll": "(3D6+8)*5", "average": "90-95" },
-          "DEX": { "roll": "(2D6+6)*5", "average": 65 },
-          "INT": { "roll": "3D6*5", "average": "50-55" },
-          "POW": { "roll": "(2D6+6)*5", "average": 65 }
+          "STR": {
+            "roll": "(3D6+13)*5",
+            "average": "115-120"
+          },
+          "CON": {
+            "roll": "(3D6+8)*5",
+            "average": "90-95"
+          },
+          "SIZ": {
+            "roll": "(3D6+8)*5",
+            "average": "90-95"
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
         },
         "derived_stats": {
           "hit_points": "18-19",
@@ -312,9 +399,18 @@
           }
         },
         "skills": [
-          { "name": "Climb", "value": "80%" },
-          { "name": "Spin Web", "value": "60%" },
-          { "name": "Stealth", "value": "50%" }
+          {
+            "name": "Climb",
+            "value": "80%"
+          },
+          {
+            "name": "Spin Web",
+            "value": "60%"
+          },
+          {
+            "name": "Stealth",
+            "value": "50%"
+          }
         ],
         "armor": {
           "rating": "5-point hard shell"
@@ -343,12 +439,30 @@
         ],
         "main_entry_text": "Brought to earth by the mi-go, this parasitic fungus devours earthly matter, establishing itself and spreading outward to overgrow an area. The spores are best avoided as inhalation may cause a human or animal to succumb to infection. The spores act parasitically, attaching themselves and multiplying, a process that alters the DNA of the host, mutating them into a blighted one, a mindless walking fungus, driven to infect others.",
         "characteristics": {
-          "STR": { "roll": "host x 2", "average": "100-110" },
-          "CON": { "roll": "4D6*5", "average": 70 },
-          "SIZ": { "roll": "host", "average": 65 },
-          "DEX": { "roll": "host x 2", "average": "100-110" },
-          "INT": { "roll": "n/a", "average": "n/a" },
-          "POW": { "roll": "2D4*5", "average": 25 }
+          "STR": {
+            "roll": "host x 2",
+            "average": "100-110"
+          },
+          "CON": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "SIZ": {
+            "roll": "host",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "host x 2",
+            "average": "100-110"
+          },
+          "INT": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "POW": {
+            "roll": "2D4*5",
+            "average": 25
+          }
         },
         "derived_stats": {
           "hit_points": "12",
@@ -394,9 +508,18 @@
           }
         },
         "skills": [
-          { "name": "Climb", "value": "40%" },
-          { "name": "Jump", "value": "40%" },
-          { "name": "Stealth", "value": "30%" }
+          {
+            "name": "Climb",
+            "value": "40%"
+          },
+          {
+            "name": "Jump",
+            "value": "40%"
+          },
+          {
+            "name": "Stealth",
+            "value": "30%"
+          }
         ],
         "armor": {
           "rating": "1-point fungal growth",
@@ -425,12 +548,30 @@
         ],
         "main_entry_text": "This interstellar race is believed to serve Hastur, the Unnamable and may be summoned to partake in rituals. Composed of conventional matter, they are vulnerable to ordinary mundane weapons but possess cunning intelligence and guile. Dwelling in interstellar space, byakhee do not have bases on Earth, but may be summoned to perform deeds or to serve as steeds.",
         "characteristics": {
-          "STR": { "roll": "5D6*5", "average": "85-90" },
-          "CON": { "roll": "3D6*5", "average": "50-55" },
-          "SIZ": { "roll": "5D6*5", "average": "85-90" },
-          "DEX": { "roll": "(3D6+3)*5", "average": "65-70" },
-          "INT": { "roll": "3D6*5", "average": "50-55" },
-          "POW": { "roll": "3D6*5", "average": "50-55" }
+          "STR": {
+            "roll": "5D6*5",
+            "average": "85-90"
+          },
+          "CON": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "SIZ": {
+            "roll": "5D6*5",
+            "average": "85-90"
+          },
+          "DEX": {
+            "roll": "(3D6+3)*5",
+            "average": "65-70"
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
         },
         "derived_stats": {
           "hit_points": "13-14",
@@ -474,8 +615,14 @@
           }
         },
         "skills": [
-          { "name": "Listen", "value": "50%" },
-          { "name": "Spot Hidden", "value": "50%" }
+          {
+            "name": "Listen",
+            "value": "50%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "50%"
+          }
         ],
         "armor": {
           "rating": "2-point fur and tough hide"
@@ -503,12 +650,30 @@
         ],
         "main_entry_text": "A chakota is composed of the faces of its victims; each weeps, shouts, or cries out with great woe or anger. Somewhat mobile, it moves slowly and cannot climb, and so specimens are usually kept in pits from which they cannot escape, used by cults as a sacrificial \"altar\" or guardians. A willing person is required to create a chakota, whose body is consumed during a hideous magical ritual, and whose face becomes the first of the newborn creature.",
         "characteristics": {
-          "STR": { "roll": "10D6*5", "average": 175 },
-          "CON": { "roll": "10D6*5", "average": 175 },
-          "SIZ": { "roll": "10D6*5", "average": 175 },
-          "DEX": { "roll": "15", "average": 15 },
-          "INT": { "roll": "1D3*5", "average": 10 },
-          "POW": { "roll": "10D6*5", "average": 175 }
+          "STR": {
+            "roll": "10D6*5",
+            "average": 175
+          },
+          "CON": {
+            "roll": "10D6*5",
+            "average": 175
+          },
+          "SIZ": {
+            "roll": "10D6*5",
+            "average": 175
+          },
+          "DEX": {
+            "roll": "15",
+            "average": 15
+          },
+          "INT": {
+            "roll": "1D3*5",
+            "average": 10
+          },
+          "POW": {
+            "roll": "10D6*5",
+            "average": 175
+          }
         },
         "derived_stats": {
           "hit_points": "35",
@@ -544,7 +709,10 @@
           }
         },
         "skills": [
-          { "name": "Eat Quickly", "value": "90%" }
+          {
+            "name": "Eat Quickly",
+            "value": "90%"
+          }
         ],
         "armor": {
           "rating": "None",
@@ -573,12 +741,30 @@
         ],
         "main_entry_text": "Chaugnar Faugn's servants appear in two forms: lesser and greater versions. Usually, they guard sacred places or are sent forth to do their master's bidding. A form of permanent psychic bond links Chaugnar Faugn to its children; when that Great Old One is somehow harmed or in distress, its children also appear to suffer in a similar fashion. Their exceptional hearing appears to compensate for relatively poor eyesight.",
         "characteristics": {
-          "STR": { "roll": "(3D6+6)*5", "average": "80-85" },
-          "CON": { "roll": "(3D6+6)*5", "average": "80-85" },
-          "SIZ": { "roll": "(3D6+7)*5", "average": "85-90" },
-          "DEX": { "roll": "3D6*5", "average": "50-55" },
-          "INT": { "roll": "2D6*5", "average": 35 },
-          "POW": { "roll": "3D6*5", "average": "50-55" }
+          "STR": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "CON": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "SIZ": {
+            "roll": "(3D6+7)*5",
+            "average": "85-90"
+          },
+          "DEX": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "INT": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
         },
         "derived_stats": {
           "hit_points": "16-18",
@@ -623,8 +809,14 @@
           }
         },
         "skills": [
-          { "name": "Listen", "value": "80%" },
-          { "name": "Spot Hidden", "value": "15%" }
+          {
+            "name": "Listen",
+            "value": "80%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "15%"
+          }
         ],
         "armor": {
           "rating": "2-point folds of flesh"
@@ -652,12 +844,30 @@
         ],
         "main_entry_text": "These powerful burrowers bear little resemblance to anything else on this planet. Rarely seen, these entities live toward the earth's core, with only a few individuals visiting the upper strata and outer crust. Chthonians use telepathy, able to communicate with others of their race anywhere in the world, sense human (and other) minds, and (when a full adult) telepathically control members of other species. They can tunnel through rock as though it were butter.",
         "characteristics": {
-          "STR": { "roll": "3D6*25", "average": "250-275" },
-          "CON": { "roll": "(3D6+30)*5", "average": "200-205" },
-          "SIZ": { "roll": "3D6*25", "average": "250-275" },
-          "DEX": { "roll": "2D6*5", "average": 35 },
-          "INT": { "roll": "5D6*5", "average": "85-90" },
-          "POW": { "roll": "5D6*5", "average": "85-90" }
+          "STR": {
+            "roll": "3D6*25",
+            "average": "250-275"
+          },
+          "CON": {
+            "roll": "(3D6+30)*5",
+            "average": "200-205"
+          },
+          "SIZ": {
+            "roll": "3D6*25",
+            "average": "250-275"
+          },
+          "DEX": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "INT": {
+            "roll": "5D6*5",
+            "average": "85-90"
+          },
+          "POW": {
+            "roll": "5D6*5",
+            "average": "85-90"
+          }
         },
         "derived_stats": {
           "hit_points": "45-48",
@@ -713,7 +923,10 @@
           }
         },
         "skills": [
-          { "name": "Burrow", "value": "100%" }
+          {
+            "name": "Burrow",
+            "value": "100%"
+          }
         ],
         "armor": {
           "rating": "5-point tough hide and muscle",
@@ -743,12 +956,30 @@
         ],
         "main_entry_text": "Cold ones seem to only be encountered in regions or seasons of bitter cold, appearing and disappearing into snowy skies or drifts of snow and ice like ghosts. Being only partially immaterial, they cannot pass through solid matter, although may gain entrance through the slimmest of openings. Whether they are a distinct species or the tortured souls of once-human worshippers of the Great Old Ones is disputed.",
         "characteristics": {
-          "STR": { "roll": "n/a", "average": "n/a" },
-          "CON": { "roll": "n/a", "average": "n/a" },
-          "SIZ": { "roll": "(2D6+6)*5", "average": 65 },
-          "DEX": { "roll": "(2D10+10)*5", "average": 105 },
-          "INT": { "roll": "(2D6+6)*5", "average": 65 },
-          "POW": { "roll": "(3D6+6)*5", "average": "80-85" }
+          "STR": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "CON": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "(2D10+10)*5",
+            "average": 105
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          }
         },
         "derived_stats": {
           "hit_points": "16 (one-fifth of POW)",
@@ -778,7 +1009,10 @@
           }
         },
         "skills": [
-          { "name": "Snow Stealth", "value": "90%" }
+          {
+            "name": "Snow Stealth",
+            "value": "90%"
+          }
         ],
         "armor": {
           "rating": "None",
@@ -806,12 +1040,30 @@
         ],
         "main_entry_text": "Colours come from an area of space or other dimensions where natural laws differ. Adult colours create sphere-carrying embryos, which are sent out through space to find nourishment on other worlds. The jellylike larva can grow to great size. As it infiltrates and infects the ecosystem, local vegetation exhibits a tremendous but unhealthy growth... After a few months, the larva matures into a young colour and begins to drain the life force from the area.",
         "characteristics": {
-          "STR": { "roll": "1D6*5 per 50 POW", "average": 15 },
-          "CON": { "roll": "n/a", "average": "n/a" },
-          "SIZ": { "roll": "equal to POW", "average": 50 },
-          "DEX": { "roll": "(2D6+12)*5", "average": 95 },
-          "INT": { "roll": "4D6*5", "average": 70 },
-          "POW": { "roll": "2D6*5 (base)", "average": "35 (50)" }
+          "STR": {
+            "roll": "1D6*5 per 50 POW",
+            "average": 15
+          },
+          "CON": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "SIZ": {
+            "roll": "equal to POW",
+            "average": 50
+          },
+          "DEX": {
+            "roll": "(2D6+12)*5",
+            "average": 95
+          },
+          "INT": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "POW": {
+            "roll": "2D6*5 (base)",
+            "average": "35 (50)"
+          }
         },
         "derived_stats": {
           "hit_points": "n/a",
@@ -879,12 +1131,30 @@
         ],
         "main_entry_text": "In past times, good folk were wise to burn the bodies of evil wizards, lest their \"essential fats\" be eaten and consumed by grave worms and the like... a crawling one is a union of such crawling creatures, forming a human-like mass, able to disguise itself to pass as human and work its malign intent. The ingested \"will\" of the wizard effectively drives the mass to work collectively.",
         "characteristics": {
-          "STR": { "roll": "(1D6+6)*5", "average": "45-50" },
-          "CON": { "roll": "4D6*5", "average": 70 },
-          "SIZ": { "roll": "(2D6+6)*5", "average": 65 },
-          "DEX": { "roll": "2D6*5", "average": 35 },
-          "INT": { "roll": "4D6*5", "average": 70 },
-          "POW": { "roll": "(4D6+6)*5", "average": 100 }
+          "STR": {
+            "roll": "(1D6+6)*5",
+            "average": "45-50"
+          },
+          "CON": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "INT": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "POW": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          }
         },
         "derived_stats": {
           "hit_points": "13",
@@ -919,9 +1189,18 @@
           }
         },
         "skills": [
-          { "name": "Climb", "value": "80%" },
-          { "name": "Jump", "value": "40%" },
-          { "name": "Stealth", "value": "60%" }
+          {
+            "name": "Climb",
+            "value": "80%"
+          },
+          {
+            "name": "Jump",
+            "value": "40%"
+          },
+          {
+            "name": "Stealth",
+            "value": "60%"
+          }
         ],
         "armor": {
           "rating": "None",
@@ -950,12 +1229,30 @@
         ],
         "main_entry_text": "These creatures are somehow linked to artifacts known as Crystallizers of Dreams (sometimes referred to as Hearts of Dream), which are in turn connected to the Elder God commonly referred to as Hypnos. Acting as guardians of the devices, these entities herald from another dimension that exists between the realms of dream and consciousness. Lore states that both use and misuse of a Crystallizer of Dream alerts and brings forth the guardians.",
         "characteristics": {
-          "STR": { "roll": "n/a", "average": "n/a" },
-          "CON": { "roll": "n/a", "average": "n/a" },
-          "SIZ": { "roll": "(3D6+3)*5", "average": "65-70" },
-          "DEX": { "roll": "(2D6+8)*5", "average": 75 },
-          "INT": { "roll": "(2D6+8)*5", "average": 75 },
-          "POW": { "roll": "(2D6+6)*5", "average": 65 }
+          "STR": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "CON": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "SIZ": {
+            "roll": "(3D6+3)*5",
+            "average": "65-70"
+          },
+          "DEX": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "INT": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
         },
         "derived_stats": {
           "hit_points": "13 (one-fifth of POW)",
@@ -991,7 +1288,10 @@
           }
         },
         "skills": [
-          { "name": "Stealth", "value": "100%" }
+          {
+            "name": "Stealth",
+            "value": "100%"
+          }
         ],
         "armor": {
           "rating": "None",
@@ -1021,12 +1321,30 @@
         ],
         "main_entry_text": "While star-spawn resemble Great Cthulhu, they are somewhat smaller in stature, yet still gigantic in relation to humanity. Human dreams and visions often depict Cthulhu's spawn as possessing human-like bodies, with two legs and arms; however, star-spawn may be encountered in various forms, from humanoid to protean masses of walking flesh. Despite most being confined or \"caged\" like their high priest and master in the dead city of Sunken R'lyeh, some are entombed elsewhere.",
         "characteristics": {
-          "STR": { "roll": "2D6*50", "average": 350 },
-          "CON": { "roll": "3D6*25", "average": 260 },
-          "SIZ": { "roll": "3D6*50", "average": 525 },
-          "DEX": { "roll": "3D6*5", "average": 50 },
-          "INT": { "roll": "6D6*5", "average": 105 },
-          "POW": { "roll": "6D6*5", "average": 105 }
+          "STR": {
+            "roll": "2D6*50",
+            "average": 350
+          },
+          "CON": {
+            "roll": "3D6*25",
+            "average": 260
+          },
+          "SIZ": {
+            "roll": "3D6*50",
+            "average": 525
+          },
+          "DEX": {
+            "roll": "3D6*5",
+            "average": 50
+          },
+          "INT": {
+            "roll": "6D6*5",
+            "average": 105
+          },
+          "POW": {
+            "roll": "6D6*5",
+            "average": 105
+          }
         },
         "derived_stats": {
           "hit_points": "78",
@@ -1090,12 +1408,30 @@
         ],
         "main_entry_text": "Humans transformed into monstrous servant creatures, their minds totally consumed by their devotion to Great Cthulhu. After years of worship and a succession of debased rituals, the cultist transforms into something more than human. When a thrall reaches advanced age (50-100 years), it permanently enters the sea to continue its service, usually joining with deep ones or star-spawn.",
         "characteristics": {
-          "STR": { "roll": "human + 20", "average": "75 (120 mature)" },
-          "CON": { "roll": "human + 20", "average": "75 (120 mature)" },
-          "SIZ": { "roll": "human + 20", "average": "85 (130 mature)" },
-          "DEX": { "roll": "human - 20", "average": "30 (30 mature)" },
-          "INT": { "roll": "human", "average": "65 (65 mature)" },
-          "POW": { "roll": "human", "average": "55 (80 mature)" }
+          "STR": {
+            "roll": "human + 20",
+            "average": "75 (120 mature)"
+          },
+          "CON": {
+            "roll": "human + 20",
+            "average": "75 (120 mature)"
+          },
+          "SIZ": {
+            "roll": "human + 20",
+            "average": "85 (130 mature)"
+          },
+          "DEX": {
+            "roll": "human - 20",
+            "average": "30 (30 mature)"
+          },
+          "INT": {
+            "roll": "human",
+            "average": "65 (65 mature)"
+          },
+          "POW": {
+            "roll": "human",
+            "average": "55 (80 mature)"
+          }
         },
         "derived_stats": {
           "hit_points": "16 (25 mature)",
@@ -1132,9 +1468,18 @@
           }
         },
         "skills": [
-          { "name": "Climb", "value": "40%" },
-          { "name": "Listen In Water", "value": "70%" },
-          { "name": "Swim", "value": "80%" }
+          {
+            "name": "Climb",
+            "value": "40%"
+          },
+          {
+            "name": "Listen In Water",
+            "value": "70%"
+          },
+          {
+            "name": "Swim",
+            "value": "80%"
+          }
         ],
         "armor": {
           "rating": "None",
@@ -1164,12 +1509,30 @@
         ],
         "main_entry_text": "These nightmarish lamprey-like worms travel from location to location, seeking out minds from which to draw sustenance. Dark crawlers are gifted with psychic powers, most notably a form of telepathy allowing them to communicate with other sentient creatures... They live in a globe-spanning web of caves, traversing far beneath the beds of the oceans.",
         "characteristics": {
-          "STR": { "roll": "(3D6+6)*5", "average": "80-85" },
-          "CON": { "roll": "(3D6+12)*5", "average": "110-115" },
-          "SIZ": { "roll": "(2D6+10)*5", "average": 85 },
-          "DEX": { "roll": "2D6*5", "average": 35 },
-          "INT": { "roll": "(3D6+6)*5", "average": "80-85" },
-          "POW": { "roll": "(6D6+12)*5", "average": 165 }
+          "STR": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "CON": {
+            "roll": "(3D6+12)*5",
+            "average": "110-115"
+          },
+          "SIZ": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "DEX": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "INT": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "POW": {
+            "roll": "(6D6+12)*5",
+            "average": 165
+          }
         },
         "derived_stats": {
           "hit_points": "19-20",
@@ -1217,8 +1580,14 @@
           }
         },
         "skills": [
-          { "name": "Burrow Through Rock", "value": "90%" },
-          { "name": "Telepathy", "value": "70%" }
+          {
+            "name": "Burrow Through Rock",
+            "value": "90%"
+          },
+          {
+            "name": "Telepathy",
+            "value": "70%"
+          }
         ],
         "armor": {
           "rating": "1-point tough skin",
@@ -1254,12 +1623,30 @@
         ],
         "main_entry_text": "Deep ones are an amphibious race that primarily serves Cthulhu and two beings known as Father Dagon and Mother Hydra. Locked in the timeless depths of the sea, their alien and arrogant lives are coldly beautiful, unbelievably cruel, and effectively immortal. They are a marine race, unknown in freshwater environments, and globally have many cities, all submerged beneath the waves.",
         "characteristics": {
-          "STR": { "roll": "4D6*5", "average": 70 },
-          "CON": { "roll": "3D6*5", "average": 50 },
-          "SIZ": { "roll": "(3D6+6)*5", "average": 80 },
-          "DEX": { "roll": "3D6*5", "average": 50 },
-          "INT": { "roll": "(2D6+6)*5", "average": 65 },
-          "POW": { "roll": "3D6*5", "average": 50 }
+          "STR": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "CON": {
+            "roll": "3D6*5",
+            "average": 50
+          },
+          "SIZ": {
+            "roll": "(3D6+6)*5",
+            "average": 80
+          },
+          "DEX": {
+            "roll": "3D6*5",
+            "average": 50
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": 50
+          }
         },
         "derived_stats": {
           "hit_points": "13",
@@ -1296,13 +1683,34 @@
           }
         },
         "skills": [
-          { "name": "Climb", "value": "30%" },
-          { "name": "Language (Deep One Speech)", "value": "70%" },
-          { "name": "Language (R'lyeh Glyphs)", "value": "70%" },
-          { "name": "Listen", "value": "40%" },
-          { "name": "Spot Hidden", "value": "40%" },
-          { "name": "Stealth", "value": "40%" },
-          { "name": "Swim", "value": "90%" }
+          {
+            "name": "Climb",
+            "value": "30%"
+          },
+          {
+            "name": "Language (Deep One Speech)",
+            "value": "70%"
+          },
+          {
+            "name": "Language (R'lyeh Glyphs)",
+            "value": "70%"
+          },
+          {
+            "name": "Listen",
+            "value": "40%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "40%"
+          },
+          {
+            "name": "Stealth",
+            "value": "40%"
+          },
+          {
+            "name": "Swim",
+            "value": "90%"
+          }
         ],
         "armor": {
           "rating": "1-point skin and scales"
@@ -1332,13 +1740,34 @@
         ],
         "main_entry_text": "Deep one hybrids are, in the main, the progeny of deep one and human mating. Although the offspring of such unions are usually born as normal humans, changes in appearance and physiology tend to occur in late teens commonly known as the \"Innsmouth Look.\" ...By middle age, most hybrids display some form of gross deformity... Within a few years, the hybrid undergoes the final transformation into a full deep one.",
         "characteristics": {
-          "STR": { "roll": "(2D6+6)*5", "average": 65 },
-          "CON": { "roll": "(2D6+6)*5", "average": 65 },
-          "SIZ": { "roll": "3D6*5", "average": "50-55" },
-          "DEX": { "roll": "(2D6+6)*5", "average": 65 },
-          "INT": { "roll": "(2D6+6)*5", "average": 65 },
-          "POW": { "roll": "3D6*5", "average": "50-55" },
-          "APP": { "roll": "2D6*5", "average": 35 }
+          "STR": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "CON": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "SIZ": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "APP": {
+            "roll": "2D6*5",
+            "average": 35
+          }
         },
         "derived_stats": {
           "hit_points": "11-12",
@@ -1374,13 +1803,34 @@
           }
         },
         "skills": [
-          { "name": "Climb", "value": "40%" },
-          { "name": "Cthulhu Mythos", "value": "00% to 30%" },
-          { "name": "Jump", "value": "45%" },
-          { "name": "Listen", "value": "50%" },
-          { "name": "Spot Hidden", "value": "45%" },
-          { "name": "Stealth", "value": "46%" },
-          { "name": "Swim", "value": "70%" }
+          {
+            "name": "Climb",
+            "value": "40%"
+          },
+          {
+            "name": "Cthulhu Mythos",
+            "value": "00% to 30%"
+          },
+          {
+            "name": "Jump",
+            "value": "45%"
+          },
+          {
+            "name": "Listen",
+            "value": "50%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "45%"
+          },
+          {
+            "name": "Stealth",
+            "value": "46%"
+          },
+          {
+            "name": "Swim",
+            "value": "70%"
+          }
         ],
         "armor": {
           "rating": "None"
@@ -1406,12 +1856,30 @@
         ],
         "main_entry_text": "Named the desh by the Hyperboreans, these creatures originate in another dimension, yet find it easy to slip through dimensional walls to \"swim\" in our reality, most often using the energy and power within a human brain as a mechanism to travel into this world. In our world, they are invisible and semi-material. They come in two distinct groups: the lesser and the greater desh.",
         "characteristics": {
-          "STR": { "roll": "(2D6+1)*5", "average": "40 (Lesser) / 85 (Greater)" },
-          "CON": { "roll": "2D4*5", "average": "25 (Lesser) / 50 (Greater)" },
-          "SIZ": { "roll": "2D4*5", "average": "25 (Lesser) / 35 (Greater)" },
-          "DEX": { "roll": "(2D6+6)*5", "average": "65 (Lesser) / 110 (Greater)" },
-          "INT": { "roll": "1D4*5", "average": "10 (Lesser) / 35 (Greater)" },
-          "POW": { "roll": "1D4*5", "average": "10 (Lesser) / 65 (Greater)" }
+          "STR": {
+            "roll": "(2D6+1)*5",
+            "average": "40 (Lesser) / 85 (Greater)"
+          },
+          "CON": {
+            "roll": "2D4*5",
+            "average": "25 (Lesser) / 50 (Greater)"
+          },
+          "SIZ": {
+            "roll": "2D4*5",
+            "average": "25 (Lesser) / 35 (Greater)"
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": "65 (Lesser) / 110 (Greater)"
+          },
+          "INT": {
+            "roll": "1D4*5",
+            "average": "10 (Lesser) / 35 (Greater)"
+          },
+          "POW": {
+            "roll": "1D4*5",
+            "average": "10 (Lesser) / 65 (Greater)"
+          }
         },
         "derived_stats": {
           "hit_points": "5 (Lesser) / 10 (Greater)",
@@ -1487,12 +1955,30 @@
         ],
         "main_entry_text": "These evil seeds have been used by wizards and others of ill-intent as guards and as a form of retribution. As seeds, devil creepers are inert and only begin to develop when consumed by a living creature (human or animal). Within 2D6 days, the seed grows inside the host body and then sprouts forth, destroying the host. Once mature, the devil creeper tends to remain in the same spot unless summoned.",
         "characteristics": {
-          "STR": { "roll": "(4D6+6)*5", "average": "100 (Average) / 150 (Monstrous)" },
-          "CON": { "roll": "4D6*5", "average": "70 (Average) / 120 (Monstrous)" },
-          "SIZ": { "roll": "(4D6+2)*5", "average": "80 (Average) / 500 (Monstrous)" },
-          "DEX": { "roll": "(2D6+6)*5", "average": "65 (Average) / 30 (Monstrous)" },
-          "INT": { "roll": "2D4*5", "average": "25 (Average) / 30 (Monstrous)" },
-          "POW": { "roll": "4D6*5", "average": "70 (Average) / 120 (Monstrous)" }
+          "STR": {
+            "roll": "(4D6+6)*5",
+            "average": "100 (Average) / 150 (Monstrous)"
+          },
+          "CON": {
+            "roll": "4D6*5",
+            "average": "70 (Average) / 120 (Monstrous)"
+          },
+          "SIZ": {
+            "roll": "(4D6+2)*5",
+            "average": "80 (Average) / 500 (Monstrous)"
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": "65 (Average) / 30 (Monstrous)"
+          },
+          "INT": {
+            "roll": "2D4*5",
+            "average": "25 (Average) / 30 (Monstrous)"
+          },
+          "POW": {
+            "roll": "4D6*5",
+            "average": "70 (Average) / 120 (Monstrous)"
+          }
         },
         "derived_stats": {
           "hit_points": "15 (Average) / 62 (Monstrous)",
@@ -1529,7 +2015,10 @@
           }
         },
         "skills": [
-          { "name": "Detect Prey", "value": "60%" }
+          {
+            "name": "Detect Prey",
+            "value": "60%"
+          }
         ],
         "armor": {
           "rating": "None",
@@ -1561,12 +2050,30 @@
         ],
         "main_entry_text": "Dholes are gigantic worm-like burrowing horrors. They are not native to the Earth and none seem to have been brought here for more than brief periods. They seem to have riddled and laid waste to other worlds, consuming them from within. They are rarely seen in daylight, as they dislike direct light, though it does not visibly harm them.",
         "characteristics": {
-          "STR": { "roll": "10D100*5", "average": 2525 },
-          "CON": { "roll": "(1D100+100)*5", "average": 755 },
-          "SIZ": { "roll": "(100+STR/5)*5", "average": 3025 },
-          "DEX": { "roll": "1D4*5", "average": 10 },
-          "INT": { "roll": "2D6*5", "average": 35 },
-          "POW": { "roll": "10D6*5", "average": 175 }
+          "STR": {
+            "roll": "10D100*5",
+            "average": 2525
+          },
+          "CON": {
+            "roll": "(1D100+100)*5",
+            "average": 755
+          },
+          "SIZ": {
+            "roll": "(100+STR/5)*5",
+            "average": 3025
+          },
+          "DEX": {
+            "roll": "1D4*5",
+            "average": 10
+          },
+          "INT": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "POW": {
+            "roll": "10D6*5",
+            "average": 175
+          }
         },
         "derived_stats": {
           "hit_points": "353",
@@ -1637,12 +2144,30 @@
         ],
         "main_entry_text": "Little is known about these beings who seem capable of walking between the planes and worlds of the cosmos, never spending much time at any one location. It is unknown whether they are a distinct interdimensional species or constructs created in the deep passages of time to serve a higher power. Rumors suggest that these entities occasionally serve the Outer Gods and Great Old Ones.",
         "characteristics": {
-          "STR": { "roll": "(2D6+12)*5", "average": 95 },
-          "CON": { "roll": "(3D6+6)*5", "average": "80-85" },
-          "SIZ": { "roll": "(2D6+12)*5", "average": 95 },
-          "DEX": { "roll": "3D6*5", "average": "50-55" },
-          "INT": { "roll": "2D6*5", "average": 35 },
-          "POW": { "roll": "3D6*5", "average": "50-55" }
+          "STR": {
+            "roll": "(2D6+12)*5",
+            "average": 95
+          },
+          "CON": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "SIZ": {
+            "roll": "(2D6+12)*5",
+            "average": 95
+          },
+          "DEX": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "INT": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
         },
         "derived_stats": {
           "hit_points": "17-18",
@@ -1685,9 +2210,18 @@
           }
         },
         "skills": [
-          { "name": "Listen", "value": "60%" },
-          { "name": "Spot Hidden", "value": "50%" },
-          { "name": "Stealth", "value": "40%" }
+          {
+            "name": "Listen",
+            "value": "60%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "50%"
+          },
+          {
+            "name": "Stealth",
+            "value": "40%"
+          }
         ],
         "armor": {
           "rating": "3-point thick hide"
@@ -1715,12 +2249,30 @@
         ],
         "main_entry_text": "Said to be associated with entities like Great Cthulhu, Dagon and Hydra, and the cursed star-spawn, these creatures appear to be amphibious, with some suggesting they are a larger, more powerful, and advanced strain of deep ones. Inhabiting places beneath the ocean as well as certain great freshwater lakes. The Cult of Cthulhu holds the dwellers in great regard.",
         "characteristics": {
-          "STR": { "roll": "(4D6+6)*5", "average": 100 },
-          "CON": { "roll": "(4D6+6)*5", "average": 100 },
-          "SIZ": { "roll": "(2D6+16)*5", "average": 115 },
-          "DEX": { "roll": "(2D6+6)*5", "average": 65 },
-          "INT": { "roll": "(2D6+6)*5", "average": 65 },
-          "POW": { "roll": "(3D6+6)*5", "average": "80-85" }
+          "STR": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "CON": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "SIZ": {
+            "roll": "(2D6+16)*5",
+            "average": 115
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          }
         },
         "derived_stats": {
           "hit_points": "21",
@@ -1759,10 +2311,22 @@
           }
         },
         "skills": [
-          { "name": "Language (Deep One Speech)", "value": "60%" },
-          { "name": "Language (R'lyeh Glyphs)", "value": "80%" },
-          { "name": "Spot Hidden", "value": "80%" },
-          { "name": "Swim", "value": "95%" }
+          {
+            "name": "Language (Deep One Speech)",
+            "value": "60%"
+          },
+          {
+            "name": "Language (R'lyeh Glyphs)",
+            "value": "80%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "80%"
+          },
+          {
+            "name": "Swim",
+            "value": "95%"
+          }
         ],
         "armor": {
           "rating": "None",
@@ -1793,13 +2357,34 @@
         ],
         "main_entry_text": "Broodlings are gestalt beings made up of millions of the tiny white spidery brood of Eihort. When combined, a broodling looks like a deathly pale, hairless human of average size. In such a form, the entity is capable of a guttural speech. It is not until a broodling suffers physical damage that its true nature becomes apparent... each point of damage causes bits of a broodling to come apart, falling off as globby masses of the white spidery brood.",
         "characteristics": {
-          "STR": { "roll": "(2D6+10)*5", "average": 85 },
-          "CON": { "roll": "(3D6+6)*5", "average": "80-85" },
-          "SIZ": { "roll": "(2D6+6)*5", "average": 65 },
-          "DEX": { "roll": "(2D6+6)*5", "average": 65 },
-          "INT": { "roll": "(3D6+6)*5", "average": "80-85" },
-          "POW": { "roll": "(3D6+6)*5", "average": "80-85" },
-          "APP": { "roll": "(2D6-1)*5", "average": 30 }
+          "STR": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "CON": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "POW": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "APP": {
+            "roll": "(2D6-1)*5",
+            "average": 30
+          }
         },
         "derived_stats": {
           "hit_points": "14-15",
@@ -1841,12 +2426,30 @@
           }
         },
         "skills": [
-          { "name": "Climb", "value": "70%" },
-          { "name": "Intimidate", "value": "40%" },
-          { "name": "Listen", "value": "80%" },
-          { "name": "Persuade", "value": "60%" },
-          { "name": "Spot Hidden", "value": "80%" },
-          { "name": "Stealth", "value": "80%" }
+          {
+            "name": "Climb",
+            "value": "70%"
+          },
+          {
+            "name": "Intimidate",
+            "value": "40%"
+          },
+          {
+            "name": "Listen",
+            "value": "80%"
+          },
+          {
+            "name": "Persuade",
+            "value": "60%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "80%"
+          },
+          {
+            "name": "Stealth",
+            "value": "80%"
+          }
         ],
         "armor": {
           "rating": "None",
@@ -1873,12 +2476,30 @@
         ],
         "main_entry_text": "Elder things came to Earth a billion years ago and may have accidentally started terrestrial life through arcane experimentation. Foremost scientists, they created the blasphemous shoggoths to serve as slaves, building vast cities around the globe. By the time humanity was evolving, the elder things were already degenerating as a race... While only the dead or those in frozen hibernation can be found in the frozen remains of their Antarctic city, there remain living communities of elder things in the deepest and darkest parts of the ocean.",
         "characteristics": {
-          "STR": { "roll": "(4D6+24)*5", "average": 190 },
-          "CON": { "roll": "(4D6+8)*5", "average": 110 },
-          "SIZ": { "roll": "8D6*5", "average": 140 },
-          "DEX": { "roll": "(3D6+6)*5", "average": "80-85" },
-          "INT": { "roll": "(2D6+12)*5", "average": 95 },
-          "POW": { "roll": "3D6*5", "average": "50-55" }
+          "STR": {
+            "roll": "(4D6+24)*5",
+            "average": 190
+          },
+          "CON": {
+            "roll": "(4D6+8)*5",
+            "average": 110
+          },
+          "SIZ": {
+            "roll": "8D6*5",
+            "average": 140
+          },
+          "DEX": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "INT": {
+            "roll": "(2D6+12)*5",
+            "average": 95
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
         },
         "derived_stats": {
           "hit_points": "25",
@@ -1917,11 +2538,26 @@
           }
         },
         "skills": [
-          { "name": "Climb", "value": "60%" },
-          { "name": "Science (Any)", "value": "60%" },
-          { "name": "Spot Hidden", "value": "80%" },
-          { "name": "Stealth", "value": "70%" },
-          { "name": "Throw", "value": "70%" }
+          {
+            "name": "Climb",
+            "value": "60%"
+          },
+          {
+            "name": "Science (Any)",
+            "value": "60%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "80%"
+          },
+          {
+            "name": "Stealth",
+            "value": "70%"
+          },
+          {
+            "name": "Throw",
+            "value": "70%"
+          }
         ],
         "armor": {
           "rating": "7-point tough skin"
@@ -1950,12 +2586,30 @@
         ],
         "main_entry_text": "Fire vampires are said to be minions of the Great Old One Cthugha and, like that entity, dwell on or in the planetary system of the star Fomalhaut. Extraterrestrial, fire vampires appear to be intelligent gas or plasma... unable to move through water, which can kill them.",
         "characteristics": {
-          "STR": { "roll": "n/a", "average": "n/a" },
-          "CON": { "roll": "2D6*5", "average": 35 },
-          "SIZ": { "roll": "01", "average": 1 },
-          "DEX": { "roll": "(3D6+6)*5", "average": 80 },
-          "INT": { "roll": "3D6*5", "average": "50-55" },
-          "POW": { "roll": "(2D6+6)*5", "average": 65 }
+          "STR": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "CON": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "SIZ": {
+            "roll": "01",
+            "average": 1
+          },
+          "DEX": {
+            "roll": "(3D6+6)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
         },
         "derived_stats": {
           "hit_points": "3",
@@ -2026,12 +2680,30 @@
         ],
         "main_entry_text": "Sometimes confused with shantaks and even prehistoric Pterosaurs, the fishers from outside are a distinct species believed to serve the Great Old One known as Groth-golka. Called down from the spaces between and beyond the stars, the fishers sometimes act as proxies, accepting and devouring human sacrifices while also metering out the divine will of their master.",
         "characteristics": {
-          "STR": { "roll": "(3D6+15)*5", "average": "125-130" },
-          "CON": { "roll": "(2D6+6)*5", "average": 65 },
-          "SIZ": { "roll": "(3D6+20)*5", "average": "150-155" },
-          "DEX": { "roll": "(3D6+6)*5", "average": "80-85" },
-          "INT": { "roll": "3D6*5", "average": "50-55" },
-          "POW": { "roll": "3D6*5", "average": "50-55" }
+          "STR": {
+            "roll": "(3D6+15)*5",
+            "average": "125-130"
+          },
+          "CON": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "SIZ": {
+            "roll": "(3D6+20)*5",
+            "average": "150-155"
+          },
+          "DEX": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
         },
         "derived_stats": {
           "hit_points": "21-22",
@@ -2075,13 +2747,433 @@
           }
         },
         "skills": [
-          { "name": "Listen", "value": "30%" },
-          { "name": "Spot Prey", "value": "60%" }
+          {
+            "name": "Listen",
+            "value": "30%"
+          },
+          {
+            "name": "Spot Prey",
+            "value": "60%"
+          }
         ],
         "armor": {
           "rating": "9-point thick scales"
         },
         "spells": "None.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Flying Polyp",
+        "subtitle": "Awful Neoplasmic Horrors",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Alien"
+        ],
+        "description": "Unlike animal or plant, they twist and form-polypus neoplasms, alien and malign-a dark plastic flesh, cancerous with strange growths amidst multiple eyes and mouths. Semi-material, elements or portions seemed to phase between visible and invisible. No wings could be seen, despite a floating or hovering appearance, although they must walk, jump, or crawl on invisible limbs, as where they went, certain strange marks were left off a footprint consisting of five circular toe marks, some 6 feet in total length.",
+        "alternative_names": [
+          "Aforplasm",
+          "Bubbling Ones",
+          "Flesh Twisters",
+          "Floating Horrors",
+          "They Who Leave the Mark"
+        ],
+        "main_entry_text": "The flying polyps are an elder race not of this earth, having been drawn here by dark desires of conquest. They traveled across space and found Earth around 750 million years ago. On arrival, they constructed bizarre basalt cities wherein numerous high and windowless towers were raised. Having arrived on Earth, the polyps warred with the Great Race of Yith but were eventually defeated and driven underground. Around 50 million years ago, the polyps rose to exact revenge by exterminating the Yithians. To humanity, they are known as flying polyps, although their true name is unknown.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+36)*5",
+            "average": 250
+          },
+          "CON": {
+            "roll": "(2D6+18)*5",
+            "average": 125
+          },
+          "SIZ": {
+            "roll": "(4D6+36)*5",
+            "average": 250
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "POW": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "37",
+          "damage_bonus": "+5D6 (only for Wind Blast)",
+          "build": 6,
+          "magic_points": 16,
+          "move": {
+            "base": 8,
+            "special": "12 floating"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Invisibility",
+            "description": "Can turn invisible by spending 1 MP per round. Nauseating piping sound still reveals approximate location. Attacks against it suffer one penalty die (if located via Listen roll). Luck roll required with each attack; failure means polyp phases and attack suffers a second penalty die."
+          },
+          {
+            "name": "Wind Blast",
+            "description": "Costs 1 MP. Range 20 yards (cylinder 10 yards diameter). Deals damage equal to damage bonus. Can extend range for 1 MP per 20 yards, but damage decreases by 1D6 per multiple of base range. Strips flesh and blows target backward."
+          },
+          {
+            "name": "Fixing Blast",
+            "description": "Costs 1 MP. Range up to 1,000 yards. Sucking wind slows target. Opposed STR vs. POW roll. If polyp wins, victim cannot move. Can be used on multiple targets within 30 yards of each other."
+          },
+          {
+            "name": "Windstorm Attack",
+            "description": "Group ability. Wind speed 1 mph per 2 POW of participants. Losing 5 mph per 200 yards. Targets suffer 1D4 damage for every 20 mph above 100 mph."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "2D6 (tentacles) or 1 (wind-based attack)",
+          "attacks": [
+            {
+              "name": "Fighting (Tentacle)",
+              "success_chance": "85%",
+              "difficulty_hard": "42%",
+              "difficulty_extreme": "17%",
+              "damage": "1D10",
+              "special_effect": "Tentacle damage is dealt directly to hit points, ignoring body armor (windburn/desiccation). Rolls 2D6 each round to determine number of tentacles."
+            },
+            {
+              "name": "Wind Blast",
+              "success_chance": "70%",
+              "difficulty_hard": "35%",
+              "difficulty_extreme": "14%",
+              "damage": "DB (approx 5D6)",
+              "description": "See Powers."
+            }
+          ],
+          "dodge": {
+            "success_chance": "30%",
+            "difficulty_hard": "15%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Sense Prey",
+            "value": "50%"
+          }
+        ],
+        "armor": {
+          "rating": "4-point otherworldly hide",
+          "modifiers": "Suffers minimum damage from mundane weapons (incl. bullets); fire and electrical attacks deal normal damage."
+        },
+        "spells": "70% chance of knowing 1D10 spells.",
+        "sanity_loss": "1D3/1D20"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Formless Spawn",
+        "subtitle": "Shape-Shifting Ichor",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Tsathoggua"
+        ],
+        "description": "At the second quarter of the summoning did the god's hands rise from the great bronze bowls. For what seemed like black pools were sentient creations of foulness: a living ooze able to take temporary shapes of wild design. An intelligent and amorphous black slime that, in an instant, became a mass of undulating limbs, and then a great sphere possessing many mouths.",
+        "alternative_names": [
+          "Black Slime",
+          "Fluid Ones",
+          "The Ichorous"
+        ],
+        "main_entry_text": "These black, protean beings may be found in temples dedicated to the Old Ones or in deep sunless caverns, often acting as guardians and protectors of secrets. They may accompany or herald the arrival of an Old One or stand in the god's stead. Formless spawn can change their form and shape in an instant, from toad-like lumps to elongated things with hundreds of rudimentary legs. Being a living viscous liquid, they can ooze through small cracks.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+11)*5",
+            "average": 90
+          },
+          "CON": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "SIZ": {
+            "roll": "(4D6+10)*5",
+            "average": 120
+          },
+          "DEX": {
+            "roll": "(2D6+12)*5",
+            "average": 95
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "17 (Average) / 25 (Greater)",
+          "damage_bonus": "+2D6 (Average) / +3D6 (Greater)",
+          "build": "3 (Average) / 4 (Greater)",
+          "magic_points": 10,
+          "move": {
+            "base": 12
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (whip, crush, strike, grab) or 1 (bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "2D6+DB",
+              "special_effect": "Can form whips, tentacles, and other appendages."
+            },
+            {
+              "name": "Grab (Maneuver)",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "DB on following round",
+              "description": "Uses whip-like appendage to grab. Range is 1/5 SIZ in yards. Can crush on following round."
+            },
+            {
+              "name": "Bite",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "Swallowed",
+              "description": "Target instantly swallowed. Suffers 1 damage first round, 2 second, etc. (constriction). Can swallow own SIZ in prey."
+            }
+          ],
+          "dodge": {
+            "success_chance": "47%",
+            "difficulty_hard": "23%",
+            "difficulty_extreme": "9%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Detect Prey",
+            "value": "50%"
+          },
+          {
+            "name": "Stealth",
+            "value": "80%"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Immune to mundane and enchanted weapons (wounds snap closed). Fire, chemical, explosions, and cold cause damage (assume 1D6 per round)."
+        },
+        "spells": "25% chance of knowing 1 spell (of those, 2% know 2D4 spells).",
+        "sanity_loss": "1/1D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Ghast",
+        "subtitle": "Unwholesome Scabrous Beasts",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Subterranean",
+          "Dreamlands"
+        ],
+        "description": "Know them by their repulsive smell and strange guttural speech. They shun the light, preferring dark places below the ground, and go about on overlong hind legs, leaping forth to pounce on the unwary. In size, they resemble a small horse, yet humanoid in shape they appear, with yellow-red eyes and a bestial yet human-like face devoid of a nose or forehead. Their skin is scabrous, often flaking off in dry patches, and coarse to the touch.",
+        "alternative_names": [
+          "Creeping Hoppers",
+          "Crypt Lurkers",
+          "Dark Fiends",
+          "Faceless Ones",
+          "The Shunned"
+        ],
+        "main_entry_text": "Ghasts may be encountered in places where sunlight never comes, such as underworld labyrinths, cavern networks, and deep tunnel systems. They shun light and are fearful of the sun, as when they are exposed to direct sunlight they sicken and may eventually die. Often living in groups of 10 to 20 members, some ghast communities can accommodate up to 60 or more individuals. Close relationships between ghasts are rare, as they are cannibalistic in nature.",
+        "characteristics": {
+          "STR": {
+            "roll": "(3D6+12)*5",
+            "average": "110-115"
+          },
+          "CON": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "SIZ": {
+            "roll": "(4D6+12)*5",
+            "average": 130
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "1D6*5",
+            "average": 15
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "20",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 10,
+          "move": {
+            "base": 10
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (claw, punch, kick, bash)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "35%",
+            "difficulty_hard": "17%",
+            "difficulty_extreme": "7%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Stealth",
+            "value": "70%"
+          }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D8"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Ghoul",
+        "subtitle": "Mocking Charnel Feeders",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Subterranean",
+          "Dreamlands"
+        ],
+        "description": "Some may once have been human... others were greatly bestial with elongated snouts equipped with pointed teeth and receding foreheads conveying a canine-like aspect. They walked on two legs, although some seemed more comfortable moving on all fours. Their skin ranged from pale white to gray and brown, and in places, their rubbery flesh was coated in grave mold... Their hands ended in long claw-tipped fingers, and their feet were more akin to a goat's hooves.",
+        "alternative_names": [
+          "Dark Kin",
+          "Gh\u00fcls",
+          "Fiends",
+          "Corpse Eaters",
+          "Grave Lurkers",
+          "Grave Robbers",
+          "Tomb Dwellers"
+        ],
+        "main_entry_text": "Loathsome humanoids with rubbery skin, hoof-like feet, canine-bestial features, and long claws, they dwell near crypts and graveyards, traveling via underground tunnels to feast upon the unspeakable delights of rotting remains. Due to their appetite for corpse flesh, ghouls are never far from human settlements and live in secret at the edges of civilization. Ghouls have an uncertain relationship with humanity, as, much like humans, each is an individual who may or may not want to entertain a dialogue.",
+        "characteristics": {
+          "STR": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "CON": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "13",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 13,
+          "move": {
+            "base": 8
+          }
+        },
+        "combat": {
+          "attacks_per_round": "3 (bite, claw, kick)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Bite and Hold (Maneuver)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D4 per round",
+              "description": "If bite strikes home, ghoul hangs on and worries the victim. Automatic damage per round. Opposed STR roll to dislodge."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "85%"
+          },
+          {
+            "name": "Stealth",
+            "value": "70%"
+          },
+          {
+            "name": "Jump",
+            "value": "75%"
+          },
+          {
+            "name": "Language (Human)",
+            "value": "60%"
+          },
+          {
+            "name": "Listen",
+            "value": "70%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "50%"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Firearms deal half damage."
+        },
+        "spells": "15% chance of knowing 1D10 spells.",
         "sanity_loss": "0/1D6"
       }
     }
