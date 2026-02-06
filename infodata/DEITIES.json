@@ -1,0 +1,1638 @@
+{
+  "deities": [
+    {
+      "deity_entry": {
+        "name": "Abhoth",
+        "classification": "Great Old One",
+        "other_names": [
+          "The Great Source",
+          "The Great Mind Below",
+          "Mother of All",
+          "The Unclean One"
+        ],
+        "description_quote": "A pool of gray stinking foulness, quivering and swelling in disjointed rhythm, and at its edges was a tide of obscene offal. Bubbles formed, creating and releasing its abominable spawn...",
+        "main_entry_text": "Abhoth appears to be imprisoned in the gray-litten cavern of Y'quaa, a black grotto, possibly within the subterranean realm of N'kai. Obscene monsters constantly form in the gray mass and crawl away from their parent. Abhoth creates pseudopods and limbs at will, using these to grasp countless numbers of its offspring so it may devour them.",
+        "cult": {
+          "text": "Abhoth has no organized human worshipers, although individuals may become obsessed with the entity. Some are compelled to gorge themselves on food, becoming morbidly obese. Distorted telepathic contact may cause a creative spurt in some humans, causing them to fashion 'art' from clay, paint, or extreme body modification.",
+          "possible_blessings": [
+            {
+              "name": "Artistic Obsession",
+              "description": "Creation of art in single or varied forms, each attempting to realize the deity's form or message."
+            },
+            {
+              "name": "Manipulation of Life",
+              "description": "Granted some small portion of Abhoth, a cultist may use it to give strange life to a creation of clay, wood, metal, etc."
+            }
+          ]
+        },
+        "encounters": "Those who come upon Abhoth may find the entity puts forth a probing hand or member to feel over the intruder. Depending on their intentions, Abhoth may treat with them or eat them.",
+        "aura": "A sense of grime, filth, and foreboding. A feeling that 'things' are crawling over one's skin, and a general nausea.",
+        "sanity_loss": "1D6/2D10",
+        "magic": {
+          "pow": "250",
+          "magic_points": "50",
+          "spells": "None."
+        },
+        "powers": [
+          {
+            "name": "Duplication",
+            "description": "May grant a small portion of its body mass to someone, which can then be grown into a spawn of Abhoth."
+          },
+          {
+            "name": "Telepathy",
+            "description": "Able to communicate with its own spawn over any distance, and also with humans. Nearby humans may be coerced into performing Abhoth's will if they fail an Extreme POW roll."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Abhoth",
+          "characteristics": {
+            "STR": "200",
+            "CON": "500",
+            "SIZ": "400",
+            "DEX": "05",
+            "HP": "90",
+            "DB": "+6D6 (only +1D6 per pseudopod)",
+            "Build": "7",
+            "Move": "0"
+          },
+          "combat": {
+            "attacks_per_round": "1 (pseudopod whip, seize)",
+            "description": "May create pseudopods to whip and strike, or to seize opponents. It may also throw up its bulk and smash down to crush.",
+            "special_maneuvers": [
+              {
+                "name": "Seize",
+                "description": "Seizes and then absorbs the target on following round (killing them instantly). Those seized have one chance to escape by breaking or wriggling free with an Extreme STR or a Hard DEX roll."
+              },
+              {
+                "name": "Crush",
+                "description": "Targets any group within 5 yards/meters, all of whom may attempt a Dodge roll to avoid being crushed for 6D6 damage."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "1D6"
+              },
+              {
+                "name": "Crush",
+                "success_chance": "40%",
+                "difficulty_hard": "20%",
+                "difficulty_extreme": "8%",
+                "damage": "6D6"
+              },
+              {
+                "name": "Seize (Maneuver)",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "Victim absorbed (death on following round)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Regenerates 20 hit points per round (death at zero hit points). If reduced to zero, sinks far into the earth and oozes back in 6D10 days."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Aforgomon",
+        "classification": "Avatar (Yog-Sothoth)",
+        "other_names": [
+          "Time Eater"
+        ],
+        "description_quote": "As like a ray or beam of crackling energy does Aforgomon appear, reaching from the angles of time to penetrate the barriers of our world.",
+        "main_entry_text": "A strange and rarely encountered avatar of Yog-Sothoth, Aforgomon appears to be concerned with time rather than space. The Book of Eibon tells that this entity appears only to those who have angered Yog-Sothoth by meddling with time.",
+        "cult": {
+          "text": "While there seems little in the way of organized worship on Earth, inhabitants of other dimensions pay particular devotion to Aforgomon. A handful of witches and wizards have sought to call upon this avatar to change past events or divine futures.",
+          "possible_blessings": [
+            {
+              "name": "Perceive Time",
+              "description": "Awards followers with glimpses of matters past or future."
+            },
+            {
+              "name": "Time Travel",
+              "description": "A limited form of travel through time, allowing a cultist to travel back or forward at a cost 1 magic point per month moved."
+            }
+          ]
+        },
+        "encounters": "Those caught in or meddling with time (such as casting spells such as Time Gate) may encounter Aforgomon.",
+        "aura": "The ever-changing quality of time pervades all things touched by Aforgomon. The environment may rapidly alter, causing a room's furnishings to appear new one moment and decrepit the next.",
+        "sanity_loss": "1D6/2D10",
+        "magic": {
+          "pow": "500",
+          "magic_points": "100",
+          "spells": "Augury, Bestow Glimpse of Truth, Fist of Yog-Sothoth; others dealing with time."
+        },
+        "powers": [
+          {
+            "name": "Chain of Aforgomon",
+            "description": "Those who have angered Aforgomon may be transported to the Dreamlands, chained naked to a huge stone chair suspended over a gaping abyss. The chains heat to incandescence, charring the body."
+          },
+          {
+            "name": "Manipulate Time",
+            "description": "Ability to halt and otherwise manipulate time in its proximity (up to 10 miles/16 km)."
+          },
+          {
+            "name": "Time Travel",
+            "description": "May pass into and out of time at will."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Aforgomon",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "1000",
+            "SIZ": "200",
+            "DEX": "500",
+            "HP": "120",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "Infinite"
+          },
+          "combat": {
+            "attacks_per_round": "1 (bolt)",
+            "description": "Uses its powers to affect and disorientate targets, or may issue a bolt of strange fire to damage and kill.",
+            "attacks": [
+              {
+                "name": "Fighting (Bolt)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "1D10 + Age Adjustment (+/- 3D10 years)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons (incl. bullets); mundane weapons have a 50 percent chance of disintegrating upon contact. Undying."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Ahtu",
+        "classification": "Avatar (Nyarlathotep)",
+        "other_names": [
+          "The Spiraling One"
+        ],
+        "description_quote": "A huge and twisting bundle of column of creased flesh, somewhat red-black in color. Around its upper portion extended a ring of snaking tentacles... It possessed no head and, instead, a bulbous, spherical eye of burning red and yellow formed at the summit.",
+        "main_entry_text": "Ahtu does not make frequent visits to the Earth. It is believed to have appeared in Asia, Africa, and possibly Australia, where it is said it rose up from deep below the ground, causing earth tremors and much consternation.",
+        "cult": {
+          "text": "Cults are said to undergo a horrendous initiation that leaves their bodies mutilated with amputated limbs and deep scars. Marks apparently emulate the wounds Ahtu inflicts.",
+          "possible_blessings": []
+        },
+        "encounters": "Small groups of isolated peoples hold ceremonies and rituals of appeasement.",
+        "aura": "Not detailed specifically, but associated with earth tremors and heat.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "500",
+          "magic_points": "100",
+          "spells": "None."
+        },
+        "powers": [
+          {
+            "name": "Earth Tremor",
+            "description": "When appearing, Ahtu rises from the ground, causing earth tremors in the region of level 5 on the Richter Scale. Those within 10 yards are assaulted with searing heat (6D6 damage) and chunks of rock (3D6 damage)."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Ahtu",
+          "characteristics": {
+            "STR": "400",
+            "CON": "250",
+            "SIZ": "450",
+            "DEX": "100",
+            "HP": "70",
+            "DB": "+10D6",
+            "Build": "11",
+            "Move": "16"
+          },
+          "combat": {
+            "attacks_per_round": "8 (tentacles) or 1 (crush)",
+            "description": "May strike out with its eight tentacles (each with a range of 200 feet/61 m) or may use its massive bulk to crush once every four rounds.",
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "6D6"
+              },
+              {
+                "name": "Crush",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "15D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "20-point hardened skin",
+            "notes": "If reduced to zero hit points, dissolves into a lake of viscous fluid-matter. Reforms in 10D100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Amber Elder",
+        "classification": "Avatar (Hastur)",
+        "other_names": [
+          "Divine Teacher",
+          "He Who Reveals",
+          "The Unholy Monk",
+          "Yellow Lama"
+        ],
+        "description_quote": "This human-seeming apparition appears decked in shimmering robes of amber hue, which open to reveal a husk-like figure within, emaciated with peeling and dry skin and deathly pale. Its face is like a mask, although it possesses but a single yellow eye within its forehead.",
+        "main_entry_text": "Considered to only appear on Earth. It is said to reside in a temple known as the 'Amber Chambers' that sits upon the Plain of U'Long (Leng?). It seems to act as a herald or voice of the Unspeakable One, appearing to foretell of calamitous events or pass on cosmic wisdom.",
+        "cult": {
+          "text": "A lesser number of Hastur cults place the Amber Elder at the core of their devotion. Ceremony and ritual figure largely for these cults.",
+          "possible_blessings": []
+        },
+        "encounters": "Warnings of dire portent and forthcoming disaster may be heralded by the appearance of this avatar.",
+        "aura": "A certain sense of mysticism, of forbidden secrets and enlightenment, as well as a feeling of things being out of step with reality.",
+        "sanity_loss": "None (to see robes); 1D3/1D10 (if face/body revealed).",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Knows all spells."
+        },
+        "powers": [
+          {
+            "name": "Unsolvable Puzzle",
+            "description": "Sets a mental puzzle for an individual. Impossible to solve, requiring the person to remain in situ until their body dies or the puzzle is solved."
+          },
+          {
+            "name": "Dire Insight",
+            "description": "May impart knowledge of all varieties, spells, rituals, etc."
+          },
+          {
+            "name": "Become the Gate",
+            "description": "The avatar may open a Gate at will."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Amber Elder",
+          "characteristics": {
+            "STR": "100",
+            "CON": "100",
+            "SIZ": "70",
+            "DEX": "100",
+            "HP": "17",
+            "DB": "+1D6",
+            "Build": "2",
+            "Move": "12"
+          },
+          "combat": {
+            "attacks_per_round": "2 (tentacles) or 1 (embrace or psychic blast)",
+            "description": "May attack with two tentacle limbs to strike and bludgeon, or can perform an embrace maneuver, or release a psychic blast.",
+            "special_maneuvers": [
+              {
+                "name": "Embrace",
+                "description": "Target is grabbed and drained of lifeforce (1D10+5 CON + 1D4 HP per round). Break free with Extreme STR or DEX."
+              },
+              {
+                "name": "Psychic Blast",
+                "description": "Causes 1D10 damage to all within 5 yards/meters; successful Extreme POW halves damage."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "1D6+1D6"
+              },
+              {
+                "name": "Embrace (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "1D4 + Drain (see description)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "If reduced to zero, crumbles to dust. Reforms in 24 hours."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Aphoom Zhah",
+        "classification": "Great Old One",
+        "other_names": [
+          "Arcturus",
+          "The Frozen One",
+          "The Icy Gray Flame"
+        ],
+        "description_quote": "Behold the white flame! Not heat shall you feel as it glows with a cold intensity. Look on this wall of white fire and feel the frost upon your flesh!",
+        "main_entry_text": "Aphoom Zhah is a living white-gray flickering mass of flame, which gives off a sickly, cold, and unhealthy glow. It is said to dwell somewhere far beneath the ice of the North Pole, or possibly the star Arcturus.",
+        "cult": {
+          "text": "Aphoom Zhah has no organized human cult, although it was worshiped by the ancient voormis, and still today by the gnoph-keh.",
+          "possible_blessings": [
+            {
+              "name": "Strange Vision",
+              "description": "Seeing the world differently and opening the mind to cosmic knowledge."
+            },
+            {
+              "name": "Touch of Cold",
+              "description": "Able to freeze matter by touch or radiating a general cold."
+            }
+          ]
+        },
+        "encounters": "Those in close proximity to Aphoom Zhah's full majesty are liable to find the experience chilly. Contact causes blood to freeze and bodily processes to stop, resulting in instant death.",
+        "aura": "A coldness beyond mere chill that drives a stake through one's heart. An otherworldliness that is hard to define except as a sense of strange wonder.",
+        "sanity_loss": "1D4/1D10+2",
+        "magic": {
+          "pow": "240",
+          "magic_points": "48",
+          "spells": "Alter Weather, Create Mist of R'lyeh (frosty variant), Dominate (extended range)."
+        },
+        "powers": [
+          {
+            "name": "Shroud of Cold",
+            "description": "Emits a zone of bitter cold. Those within suffer one penalty die to all physical skills. Hard CON or suffer 1D4+1 damage + 5 CON loss per round."
+          },
+          {
+            "name": "Mind Touch",
+            "description": "May touch the mind of an individual seeing the entity (e.g. through a telescope). Victim receives 1D10 Cthulhu Mythos and loses 1D10+2 Sanity."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Aphoom Zhah",
+          "characteristics": {
+            "STR": "350",
+            "CON": "500",
+            "SIZ": "400",
+            "DEX": "100",
+            "HP": "90",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "18"
+          },
+          "combat": {
+            "attacks_per_round": "1D4 (cold strike) or 1 (ice touch)",
+            "description": "May send forth flaming tendrils of cold to strike down those in its presence or touch them to cause flesh to freeze.",
+            "special_maneuvers": [
+              {
+                "name": "Ice Touch",
+                "description": "Instant destruction of living flesh unless Hard CON roll. Success staves off death but results in 1D10 damage + 3D10 CON loss."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "3D6 (per strike)"
+              },
+              {
+                "name": "Ice Touch",
+                "success_chance": "50%",
+                "difficulty_hard": "25%",
+                "difficulty_extreme": "10%",
+                "damage": "1D10 + 3D10 CON (or instant death)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Mundane weapons shatter on contact. Fire is harmful (incendiary bomb 1D10). Vanishes at 0 HP, reforming in 2D10 hours."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Arwassa",
+        "classification": "Great Old One",
+        "other_names": [
+          "The Howler",
+          "Mind Eater",
+          "The Silent Shouter",
+          "The Wailer"
+        ],
+        "description_quote": "A gross heap of yellow-brown flesh, somewhat humanoid in shape, from which sprouts four thick and long tentacle-like limbs where hands and feet should be. Betwixt the two upper limbs is a giant, rubbery maw instead of a head.",
+        "main_entry_text": "Little is known of Arwassa. It appears to only venture forth during the latter portion of the year (Sept-Nov), suggesting it is otherwise imprisoned, possibly in Central Europe. It outpours a perpetual scream (inaudible to humans) that can drive people to madness and violence.",
+        "cult": {
+          "text": "Worshiped by individuals who recruit a small following. Cult leaders seem to be chosen by Arwassa via its scream.",
+          "possible_blessings": [
+            {
+              "name": "Doom Scream",
+              "description": "Able to produce a terrifying scream that harms others (1D4 damage per round) or causes objects to move."
+            }
+          ]
+        },
+        "encounters": "First contact is signified by the effects of 'hearing' its inaudible scream, causing madness and outbreaks of random violence.",
+        "aura": "An instant revulsion and comprehension of wrongness. A strange sensation in the ears, although there is no sound.",
+        "sanity_loss": "1D6+2/3D6+2",
+        "magic": {
+          "pow": "150",
+          "magic_points": "30",
+          "spells": "Cloud Memory, Dampen Light (variant), Fist of Yog-Sothoth, Maws of Pandemonium (variant), Utterance of Bile."
+        },
+        "powers": [
+          {
+            "name": "Scream",
+            "description": "Continual scream provokes Sanity roll to all within 1 mile (1.6 km). 1D6 loss immediately, then 1D2 per hour."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Arwassa",
+          "characteristics": {
+            "STR": "250",
+            "CON": "250",
+            "SIZ": "150",
+            "DEX": "100",
+            "HP": "40",
+            "DB": "+4D6",
+            "Build": "5",
+            "Move": "9 / 12 flying"
+          },
+          "combat": {
+            "attacks_per_round": "4 (tentacle bash, grab)",
+            "description": "May attack with each of its four tentacles every round, either inflicting damage or grabbing targets to then eat them.",
+            "special_maneuvers": [
+              {
+                "name": "Grab",
+                "description": "Seizes and holds a target, who may be crushed for 2D6 damage or eaten for 1D6+4 damage on the following round. Escape with Extreme STR or Hard DEX."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "4D6"
+              },
+              {
+                "name": "Tentacle Grab (Maneuver)",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "Target held (see description)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "3-point rubbery skin",
+            "notes": "Regenerates 1 hit point per 1 damage consumed by eating victims. If reduced to zero, melts into scum."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Atlach-Nacha",
+        "classification": "Great Old One",
+        "other_names": [
+          "The Spider God",
+          "The Great Spinner",
+          "The Weaver"
+        ],
+        "description_quote": "Somewhat larger than a human, a dark and hairy spider-like thing with eight legs and a toothsome mouth. Upon its front-facing abdomen appears a kind of face, human-seeming and beguiling.",
+        "main_entry_text": "The Great Spinner devotes its time to fashioning an immense web, which is said to pull and hold multiple dimensions together. Some tomes report that sections of this web can be found in secret places deep in the earth.",
+        "cult": {
+          "text": "Atlach-Nacha has no known organized human cult, however individuals have been known to contact the deity.",
+          "possible_blessings": [
+            {
+              "name": "Spider-Like",
+              "description": "Able to move like a spider up walls, spin web from fingers, or have enhanced visual or physical senses."
+            },
+            {
+              "name": "Spider Limbs",
+              "description": "Body is transformed, possessing multiple limbs or spider-like limbs."
+            },
+            {
+              "name": "Spider Birth",
+              "description": "Blessed with hosting a brood of spiders within, able to send forth numerous spiders to act as spies."
+            }
+          ]
+        },
+        "encounters": "Those exploring deep caves and tunnels may inadvertently come upon a doorway to Atlach-Nacha's web.",
+        "aura": "A person's skin crawls while in the presence of Atlach-Nacha, and one is likely filled with dread and a terrible foreboding.",
+        "sanity_loss": "1/1D10",
+        "magic": {
+          "pow": "150",
+          "magic_points": "30",
+          "spells": "All Contact spells; others as Keeper desires."
+        },
+        "powers": [
+          {
+            "name": "Spider Parasite",
+            "description": "Can birth small spider-like creatures that attached themselves to other creatures. If the parasite overcomes the host's POW, they gain full control."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Atlach-Nacha",
+          "characteristics": {
+            "STR": "150",
+            "CON": "375",
+            "SIZ": "125",
+            "DEX": "125",
+            "HP": "50",
+            "DB": "+2D6",
+            "Build": "3",
+            "Move": "15"
+          },
+          "combat": {
+            "attacks_per_round": "4 (leg strike, bite) or 1 (abdomen bash or cast web)",
+            "description": "May kick out with its legs or bite up to four times a round, or can forgo those attacks and use its body to bash opponents or cast its web.",
+            "special_maneuvers": [
+              {
+                "name": "Cast Web",
+                "description": "A strong, sticky web is cast. Hard Dodge to avoid. Entangled target must make Opposed STR vs web's STR 100 to break free."
+              },
+              {
+                "name": "Bite",
+                "description": "Injects paralyzing venom. Extreme CON to resist for 1D10 rounds."
+              },
+              {
+                "name": "Drain",
+                "description": "Paralyzed victim sucked of juices at rate of 3D10 STR per round."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "2D6"
+              },
+              {
+                "name": "Bite",
+                "success_chance": "50%",
+                "difficulty_hard": "25%",
+                "difficulty_extreme": "10%",
+                "damage": "1D6+2 + Venom"
+              },
+              {
+                "name": "Cast Web (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "Entangled"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "12-point chitin and fur; 8-point underside",
+            "notes": "If reduced to zero, flees across web to heal."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Azathoth",
+        "classification": "Outer God",
+        "other_names": [
+          "Azoth",
+          "Aztot",
+          "The Black Sun",
+          "The Blind Idiot God",
+          "Demon Sultan",
+          "The Well of Chaos"
+        ],
+        "description_quote": "Foolish is he who speaks the name Aztot aloud, for the center of all things sleeps to the music of the spheres lest the hideous chaos should wake and consume everything. Beyond reason lies Aztot, a bubbling black sun of fearsome intensity...",
+        "main_entry_text": "Azathoth is the mindless center of the universe, and has existed since the beginning of the universe. It dwells beyond normal space-time at the center of all things, where its amorphous body writhes unceasingly to the monotonous piping of harsh flutes.",
+        "cult": {
+          "text": "Azathoth is little-worshiped. Humans usually call upon Azathoth by accident. Some death cults exist, fixated on the pointlessness of existence.",
+          "possible_blessings": [
+            {
+              "name": "Touch of Doom",
+              "description": "Hands become a channel of the deity, when placed on a human they burn and corrupt flesh."
+            },
+            {
+              "name": "Teleport",
+              "description": "Allows limited movement between points with a charred and blackened outline scorched into the ground."
+            }
+          ]
+        },
+        "encounters": "Encounters usually occur through its dreams touching humanity. Close contact is surely instant madness and death.",
+        "aura": "The sheer scale of Azathoth is enough to cause insanity. Its touch is shaded in despair and colored with madness.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "500",
+          "magic_points": "100",
+          "spells": "All."
+        },
+        "powers": [
+          {
+            "name": "Devastation",
+            "description": "The appearance of Azathoth's full form destroys everything around it for 10D10+10 miles."
+          },
+          {
+            "name": "Mindless",
+            "description": "May send forth a tentacle of negativity, whose touch instantly disintegrates living matter."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Azathoth (Portion)",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "n/a",
+            "SIZ": "n/a",
+            "DEX": "n/a",
+            "HP": "20 (for portion)",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "0"
+          },
+          "combat": {
+            "attacks_per_round": "1D6",
+            "description": "May strike anything within its vicinity with a tendril of negative energy.",
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "1D100 (1D10 for portion)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "An Elder Sign delivers 3D6 damage and is destroyed. If reduced to zero, implodes and reforms."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Bast",
+        "classification": "Elder God",
+        "other_names": [
+          "B'al-sot",
+          "B'sst",
+          "Bastet",
+          "Mother of Cats",
+          "Ubaste"
+        ],
+        "description_quote": "The statute was a remarkable likeness of the cat goddess, possessing the form of a slender human female with a cat's head; svelte and nimble... The second statue... showed a more frightening aspect. Here, she was coiled and ready to pounce, her teeth bared, her eyes narrow, and her long nails thrust forth.",
+        "main_entry_text": "One of the few Elder Gods who seems to have taken an interest in or has some dominion over the Earth. Bast is considered to have dominion over the feline species of Earth and Earth's Dreamlands. Some believe Bast is a formless thing who only takes physicality through human perception... What is known is Bast's alignment to earthly cats, a being that will seek retribution for those who consistently act cruelly or harm cats.",
+        "cult": {
+          "text": "In Ancient Egypt, Bast was worshiped in the city of Bubastis. Small sects are said to have existed down the years into modern times... Some dreamers recount seeing temples to Bast in the Dreamlands where the cult of the goddess appears to remain active.",
+          "possible_blessings": [
+            {
+              "name": "Cat Whispers",
+              "description": "Able to communicate with cats, using feline helpers as spies, or may call upon a gathering of cats."
+            },
+            {
+              "name": "Cat Form",
+              "description": "Able to transform into a cat (costing 5 or more magic points)."
+            }
+          ]
+        },
+        "encounters": "Rarely does Bast make personal appearances, although when she does it is a fearsome and often fatal encounter. Retribution is usually the motive. Bast may appear as a human female or in bestial feline forms.",
+        "aura": "A sharp tension and expectation... One feels as if they are constantly being watched and there's a sense of danger and electricity in the air.",
+        "sanity_loss": "0/1D6",
+        "magic": {
+          "pow": "150",
+          "magic_points": "30",
+          "spells": "Blessing of Bast, Cloud Memory, Deflect Harm, Elder Sign, Evil Eye; others as chosen."
+        },
+        "powers": [
+          {
+            "name": "Call Cats",
+            "description": "Can instantaneously summon dozens of cats to her side. In combat, cats leap into the fray and shield Bast."
+          },
+          {
+            "name": "Change Form",
+            "description": "May appear in human guise or transform into a panther, lion, tiger, or house cat. In big cat form, attacks deal 4D6 damage."
+          },
+          {
+            "name": "Cat Messenger",
+            "description": "May use any cat to relay a message; sometimes speaking through the cat."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Bast",
+          "characteristics": {
+            "STR": "240",
+            "CON": "125",
+            "SIZ": "70",
+            "DEX": "200",
+            "INT": "150",
+            "APP": "99",
+            "HP": "19",
+            "DB": "+3D6",
+            "Build": "4",
+            "Move": "20"
+          },
+          "combat": {
+            "attacks_per_round": "3 (claws, bite)",
+            "description": "Transforms hands into cat-like claws and grows sharp teeth. Attacks ignore mundane armor and cause deep wounds that take twice as long to heal.",
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "3D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to bullets and impaling weapons. May spend magic points to heal damage (1 for 1). If reduced to zero, disappears in black smoke and reforms in 10 hours."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Bugg-Shash",
+        "classification": "Great Old One",
+        "other_names": [
+          "Bu-al-Sugg-ashh",
+          "The Dark One",
+          "The Drowner",
+          "He Who Comes in Darkness",
+          "The Night-Thing"
+        ],
+        "description_quote": "The painting depicted a black wall of slime, oozing and quivering and glistening in an unwholesome light cast by a crescent moon. Within this twisting black curtain of jelly were many evil-looking eyes and crooked mouths...",
+        "main_entry_text": "Bugg-Shash does not appear to be a native of our universe and allegedly derives from a dark dimension. It appears trapped in its 'home' dimension, only able to venture to Earth by being called through magic... The entity abhors light and only manifests during nighttime hours or in areas of total darkness.",
+        "cult": {
+          "text": "Bugg-Shash has no known organized human cult, although its puppets are a sort of cult. Lone sorcerers and those craving power are most likely candidates.",
+          "possible_blessings": [
+            {
+              "name": "Animate Corpse",
+              "description": "Zombie creation; able to give unlife to the dead (costing 5+ magic points)."
+            },
+            {
+              "name": "Kill Light",
+              "description": "Diminishes or dampens light in the vicinity (costing 2+ magic points)."
+            },
+            {
+              "name": "Willing Puppet",
+              "description": "Grants the deity temporary possession of the body."
+            }
+          ]
+        },
+        "encounters": "The entity abhors light and only manifests during nighttime hours. Those with correct lore may create an enchanted pentagram to hold it. Bugg-Shash may create flesh puppets from humans reduced to zero Sanity.",
+        "aura": "The darkness brings fear. Any light sources suddenly go out in the presence of Bugg-Shash. One's stomach churns and tension causes excessive sweating.",
+        "sanity_loss": "1D6/1D20",
+        "magic": {
+          "pow": "125",
+          "magic_points": "25",
+          "spells": "Contact Yibb-Tstll, others as desired."
+        },
+        "powers": [
+          {
+            "name": "Animate Corpse",
+            "description": "May animate corpses by immersing them in its slimy excretions."
+          },
+          {
+            "name": "Control Light",
+            "description": "Any light sources go out on arrival. Strong light can dispel it (10 damage/round), normal light causes 1 damage. Can cause all light within 100 yards to go out by expending 1 MP."
+          },
+          {
+            "name": "Whisper",
+            "description": "Those hearing its whispering mouths must make a POW roll or lose 1D6+2 Sanity."
+          },
+          {
+            "name": "Create Puppet",
+            "description": "Once a person's Sanity is reduced to zero by whispers, they become a puppet. STR/CON increase by 20+1D10, POW reduced to 05."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Bugg-Shash",
+          "characteristics": {
+            "STR": "250",
+            "CON": "225",
+            "SIZ": "300",
+            "DEX": "60",
+            "HP": "52",
+            "DB": "+6D6",
+            "Build": "7",
+            "Move": "6"
+          },
+          "combat": {
+            "attacks_per_round": "3 (crush, bash, swipe, kiss)",
+            "description": "Uses body mass to swipe, bash, and crush, or utilize kiss attack.",
+            "special_maneuvers": [
+              {
+                "name": "Kiss of Bugg-Shash",
+                "description": "Envelopes target and suffocates. 1D6 damage per round until death. Escape with Extreme STR."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "90%",
+                "difficulty_hard": "45%",
+                "difficulty_extreme": "18%",
+                "damage": "6D6"
+              },
+              {
+                "name": "Kiss (Maneuver)",
+                "success_chance": "90%",
+                "difficulty_hard": "45%",
+                "difficulty_extreme": "18%",
+                "damage": "Held then suffocated"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons. Bright light deals 1D10 damage/round. Reforms in six months."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Byatis",
+        "classification": "Great Old One",
+        "other_names": [
+          "The Berkeley Toad",
+          "The Dark Shambler",
+          "The Serpent-Bearded One"
+        ],
+        "description_quote": "A one-eyed being whose beard was a nest of impossibly long trunk-like serpents... mounted on a conical and tapering body possessing spindly legs. Upon two great wings it flew and with two large crab-like claws did it grab and crush...",
+        "main_entry_text": "Touching an image or carving of Byatis awakens the mind of the deity. Ancient lore tells of deep ones who possessed an idol of Byatis. It appears to have been imprisoned through Elder magics... Accounts tell of the 'Berkeley Toad' in the Severn Valley... Whether Byatis is a Great Old One is debatable; perhaps it is the spawn of an Outer God or cousin of Tsathoggua.",
+        "cult": {
+          "text": "Though no known human cult is associated with Byatis, it is named in several books of occult lore. Some isolated deep one communities still worship Byatis alongside Cthulhu.",
+          "possible_blessings": [
+            {
+              "name": "Grow Bigger",
+              "description": "Able to increase SIZ by +10 or more points (costing 5+ magic points)."
+            },
+            {
+              "name": "Toad Like",
+              "description": "Physical characteristics take on a permanent toad-like quality."
+            }
+          ]
+        },
+        "encounters": "Encounters mainly concern those who venture into the Severn Valley... The Elder wards may be failing, allowing brief periods of freedom. Byatis increases in size when it feeds.",
+        "aura": "Darkness and the cold of the earth are features to draw upon, as well as the tension arising from seeing a multitude of great serpents squirming around in the darkness.",
+        "sanity_loss": "1D6/1D20",
+        "magic": {
+          "pow": "160",
+          "magic_points": "32",
+          "spells": "All Summon and Contact spells (except Elder Gods)."
+        },
+        "powers": [
+          {
+            "name": "Bigger",
+            "description": "STR, CON, and SIZ each increase by 3D6 points whenever it feeds upon one human (upper limit 500/400/400)."
+          },
+          {
+            "name": "Hypnotic Gaze",
+            "description": "A human looking into the eyes is compelled to approach unless they succeed an Extreme POW roll."
+          },
+          {
+            "name": "Summons",
+            "description": "May be summoned by touching a relatively accurate image or idol. Responds 60% of the time."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Byatis",
+          "characteristics": {
+            "STR": "175",
+            "CON": "300",
+            "SIZ": "150",
+            "DEX": "75",
+            "HP": "45",
+            "DB": "+3D6",
+            "Build": "4",
+            "Move": "8 / 10 flying"
+          },
+          "combat": {
+            "attacks_per_round": "2 (claws, bite) or 1 (serpent tentacle)",
+            "description": "Attack with claws, mouth, or viper-like face tentacles.",
+            "special_maneuvers": [
+              {
+                "name": "Serpent Tentacle",
+                "description": "Can grab an opponent to hold, crush (3D6), or bring to main mouth (2D6)."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "85%",
+                "difficulty_hard": "42%",
+                "difficulty_extreme": "17%",
+                "damage": "3D6"
+              },
+              {
+                "name": "Bite",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "1D8"
+              },
+              {
+                "name": "Serpent Tentacle (Maneuver)",
+                "success_chance": "85%",
+                "difficulty_hard": "42%",
+                "difficulty_extreme": "17%",
+                "damage": "Held and crushed/bitten"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "10-point hide",
+            "notes": "If reduced to zero, explodes into a dust cloud. Reforms in one year."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Chaugnar Faugn",
+        "classification": "Great Old One",
+        "other_names": [
+          "Chat-u F'naun'a",
+          "The Feeding One",
+          "The Horror from the Hills",
+          "The Sitting God"
+        ],
+        "description_quote": "Folds of flesh... from which arms and legs extended... A hulking thing, grotesque and bulbous... Rising out of the corpulent flesh, a head with perhaps three or more small eyes, from which a trunk-like tentacle extended, flaring at its end into a large circular disk.",
+        "main_entry_text": "Said to have arrived on Earth in pre-history, Chaugnar Faugn is often spoken of as the 'Sitting God' as it is believed the entity rests in a seated position within a secret cave in the mountains of Asia. Sometimes misattributed as the 'Elephant God'... All stories frame the deity in vampiric terms, as one who desires to sup on the lifeforce of others.",
+        "cult": {
+          "text": "Worshiped by numerous human cults, many led by those with tcho-tcho blood. One cult, 'The Blood', believed to have existed in Montreal.",
+          "possible_blessings": [
+            {
+              "name": "Mesmerize",
+              "description": "Able to hypnotize others to question them or perform tasks."
+            },
+            {
+              "name": "Pluck Heart",
+              "description": "Causing a heart attack in a touched target (costing 10 MP, 1D10+1 damage)."
+            }
+          ]
+        },
+        "encounters": "Acquisition of an idol may lead to influence or avatar transformation. Kidnapping cases may lead to trafficking for the god's food.",
+        "aura": "A loathsome feeling comes upon those who touch an idol. In the presence of the entity, the loathsomeness is amplified and blood runs cold.",
+        "sanity_loss": "0/1D6 (inert); 1D4/2D6+2 (living)",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Curse of Chaugnar Faugn, Summon/Bind Brother of Chaugnar Faugn; others."
+        },
+        "powers": [
+          {
+            "name": "Mesmerize",
+            "description": "Causes a single target to be compelled to walk toward the deity."
+          },
+          {
+            "name": "Heart Attack",
+            "description": "Gaze may cause massive heart attack (CON roll or 2D6+1 damage/unconsciousness)."
+          },
+          {
+            "name": "Chosen of Chaugnar Faugn",
+            "description": "Selects a human to become a companion, draining Sanity until they are psychically linked and physically transformed."
+          },
+          {
+            "name": "Psychic Sending",
+            "description": "Thoughts bleed into human subconsciousness, causing dreams and obsession."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Chaugnar Faugn",
+          "characteristics": {
+            "STR": "325",
+            "CON": "700",
+            "SIZ": "200",
+            "DEX": "150",
+            "HP": "90",
+            "DB": "+6D6",
+            "Build": "7",
+            "Move": "20"
+          },
+          "combat": {
+            "attacks_per_round": "2 (melee) or 1 (hold and drain)",
+            "description": "Use hand/feet to crush/kick or face tentacle to bite. Accompanied by 1D6 spawn.",
+            "special_maneuvers": [
+              {
+                "name": "Hold and Drain",
+                "description": "Target is bitten by trunk mouth. Drained of blood (1D6 damage + 5 CON per round). Permanent loss."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "6D6"
+              },
+              {
+                "name": "Hold and Drain (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "1D6 + 5 CON"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "10-point blubbery hide",
+            "notes": "Immune to mundane weapons. If reduced to zero, becomes lifeless statue. Reforms after variable time."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Cthugha",
+        "classification": "Great Old One",
+        "other_names": [
+          "Fthaggua",
+          "The Living Flame",
+          "Lord of Fire",
+          "The Scorching One"
+        ],
+        "description_quote": "A vast sphere of flame, sending forth burning fingers and spitting scorching torrents of fire. A terrible orb of pain and suffering, glowing red to orange to black.",
+        "main_entry_text": "Said to dwell near to the star Fomalhaut shackled and bound by Elder wards. Ancient texts cite the deity as master of all fire vampires... Aphoom Zhah is believed to have a connection to Cthugha. Certain accounts suggest enmity between Cthugha and the Outer Gods (specifically Nyarlathotep).",
+        "cult": {
+          "text": "Fire cults have existed throughout history. In modern times, rare cults hide behind masks of holy fire. All hold the belief that Cthugha shall cleanse the unworthy.",
+          "possible_blessings": [
+            {
+              "name": "Touch of Fire",
+              "description": "Those touched suffer burns (1D6 damage/round; costing 5 MP)."
+            },
+            {
+              "name": "Fire Starter",
+              "description": "Able to start a fire by willpower (costing 5 MP)."
+            },
+            {
+              "name": "Fire Walk",
+              "description": "Able to enter a fire and be transported to another fire (costing 5 MP)."
+            }
+          ]
+        },
+        "encounters": "Encounters with minions (cultists or fire vampires). High ranking cultists may have horrendous scars.",
+        "aura": "Anything touched by Cthugha contains an inner heat. Burning sensation.",
+        "sanity_loss": "1D3/1D20",
+        "magic": {
+          "pow": "200",
+          "magic_points": "40",
+          "spells": "Any spell concerning fire."
+        },
+        "powers": [
+          {
+            "name": "Flaming Entrance",
+            "description": "Appearing, Cthugha brings 1D100 x 10 fire vampires. Sets everything in vicinity alight. Humans suffer 1 damage/round from heat, increasing to 2 damage/round."
+          },
+          {
+            "name": "Bright as the Sun",
+            "description": "Can glow more brightly (cost 10 MP). Causes blindness (temporary or permanent depending on duration)."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Cthugha",
+          "characteristics": {
+            "STR": "400",
+            "CON": "600",
+            "SIZ": "700",
+            "DEX": "100",
+            "HP": "130",
+            "DB": "+13D6",
+            "Build": "14",
+            "Move": "4 flying"
+          },
+          "combat": {
+            "attacks_per_round": "3 (flaming pseudopods) or 1 (flame burst)",
+            "description": "Send forth flaming pseudopods or create a flame burst. Anything touched may catch fire.",
+            "special_maneuvers": [
+              {
+                "name": "Flame Burst",
+                "description": "Range 150 yards. Blankets 20 yard area with fire. Luck roll or incinerated. Success takes 1D10 damage."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "40%",
+                "difficulty_hard": "20%",
+                "difficulty_extreme": "8%",
+                "damage": "6D6 + burning"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "14-point flaming tough skin",
+            "notes": "Mundane weapons destroyed after first hit. If reduced to zero, implodes and reforms in 1D10+10 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Cthulhu",
+        "classification": "Great Old One",
+        "other_names": [
+          "He Who Waits Dreaming",
+          "Ku-Thu-loo",
+          "Oo-loo",
+          "The Sleeper",
+          "Thu-Thu",
+          "Tulu"
+        ],
+        "description_quote": "I have found numerous representations of Cthulhu... Some depict a monstrous amorphous bulk while others suggest a vaguely anthropoid outline, although all share a grand corpulence. All seem to feature an octopean head... surmounted by six or eight eyes... and possessing prodigious claws or hands on hind and fore feet. Again, common to all is a pair of long and narrow wings rising from the back.",
+        "main_entry_text": "Great Cthulhu came down to Earth from Xoth with its star-spawn some 350 million years ago, establishing the hideous city of R'lyeh... Cataclysmic events said to have been instigated by Elder Gods led to the sinking of R'lyeh and the imprisonment of Cthulhu. Prophecy foretells that Great Cthulhu shall break free... heralding the time 'when the stars are right'. For now, Cthulhu lies dead but dreaming in the corpse city of R'lyeh.",
+        "cult": {
+          "text": "The human Cthulhu Cult appears to be the most widespread and insidious cult devoted to the worship of the Old Ones... directed by a secretive cabal of elders sometimes known as the 'Deathless Masters'. The cult appears to operate in a cell-like structure... Evidence for these groups has been found in the USA, Greenland, Canada, England, and Greece... Some cult groups have close connections to the deep ones.",
+          "possible_blessings": [
+            {
+              "name": "Sprout Tentacles",
+              "description": "From face or body (costing 5 magic points), granting extra attacks (1D4+DB damage) and a Sanity roll (0/1D6 loss)."
+            },
+            {
+              "name": "Hear Dreams",
+              "description": "Able to read the dreams of others (2 magic points per target) and discern their meaning (possibly granting insights into what the target is thinking or will do next)."
+            }
+          ]
+        },
+        "encounters": "Most will encounter Cthulhu through its cult and the many groups therein... Some may come across solitary believers who have been influenced by Cthulhu. Coming face to face with Cthulhu while venturing through R'lyeh would be a life-changing (or ending) experience.",
+        "aura": "In touching idols of Cthulhu, one feels a greasy sense of falling and an uncanny coldness... Cthulhu radiates an otherworldliness that twists human perception and destroys minds: the smell of rotting seas... sounds become distorted, colors are unfamiliar.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "250",
+          "magic_points": "50",
+          "spells": "All, except for those concerning Elder beings."
+        },
+        "powers": [
+          {
+            "name": "Body Modification",
+            "description": "Cthulhu's body form is not fixed, it is able to warp and reshape its mass at will."
+          },
+          {
+            "name": "Call of Cthulhu",
+            "description": "Cthulhu's dreams may affect and touch human minds while sleeping... The first time a person receives the Call of Cthulhu they must attempt a POW roll: if failed, they become susceptible to Cthulhu's dreams and must make an immediate Sanity roll (1/1D4 loss)."
+          },
+          {
+            "name": "Warp Senses",
+            "description": "Humans coming into contact with Cthulhu or objects allied to the deity may find their senses distorted and warped... humans suffer a penalty die to all actions other than self-preservation."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Cthulhu",
+          "characteristics": {
+            "STR": "700",
+            "CON": "600",
+            "SIZ": "1000",
+            "DEX": "100",
+            "HP": "160",
+            "DB": "+20D6",
+            "Build": "21",
+            "Move": "16 / 12 flying"
+          },
+          "combat": {
+            "attacks_per_round": "2 (crush, swipe) or 1 (scoop, stomp)",
+            "description": "May stomp and crush with its feet, or scoop with its hands or face tentacles. Otherwise, it may use hands, feet, or face tentacles to kick, swipe, or strike twice a round.",
+            "special_maneuvers": [
+              {
+                "name": "Scoop",
+                "description": "Each round 1D3 investigators are scooped up by Cthulhu's flabby claws or face tentacles to die hideously."
+              },
+              {
+                "name": "Stomp",
+                "description": "Those within 100 yards/meters must succeed with a Dodge roll or be squashed flat (20D6 damage)."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "10D6"
+              },
+              {
+                "name": "Scoop (Maneuver)",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "1D3 people killed"
+              },
+              {
+                "name": "Stomp (Maneuver)",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "20D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "21-point trans-dimensional hide",
+            "notes": "Regenerates 6 hit points per round (death at zero hit points). If reduced to zero, bursts into greenish cloud and reforms in 1D10 hours."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Cthulhu: B'Moth",
+        "classification": "Avatar (Cthulhu)",
+        "other_names": [
+          "Behemoth",
+          "Bhemaut",
+          "The Devourer"
+        ],
+        "description_quote": "From the ship's bow we spied the blue mist... it was pouring upward, out of the ocean itself. It carried a strange luminosity that seemed at times to change from blue to green and back again... Carson was the first to exhibit the madness that soon swept through the crew...",
+        "main_entry_text": "Believed to be an avatar or some form of emanation from Great Cthulhu... Agreement rests on the entity's form, that of a luminescent fog or mist of blue, green, and/or yellow coloration, and that it only appears in the sea and never on land. If an avatar, perhaps it is a physical manifestation of Cthulhu's dreaming mind: a living embodiment of will. While being insubstantial, B'Moth's presence affects humans adversely, causing otherwise rational people to quickly descend into primal and savage states.",
+        "cult": {
+          "text": "In the historical record, B'Moth's worship seems relegated to primitive cultures, although in more modern times there are hints that this avatar may be favored by some curious coastal communities in North America, Western Canada, Asia, and Polynesia. Historically, ceremonial rites dedicated to B'Moth have encompassed wild and frantic dancing, depraved orgies, and savage acts of violence.",
+          "possible_blessings": []
+        },
+        "encounters": "While sea-based encounters are rare, the appearance of a derelict ship may lead the unwary into a meeting with B'Moth. On land, the avatar's cults provide a tangible and real threat to anyone who happens to come upon their strange communities.",
+        "aura": "B'Moth's effect upon humans is insidious and profound, amplifying primal instincts while nullifying any sense of propriety and decency. Base emotions flare and cruel rage is the likely result.",
+        "sanity_loss": "1/1D8",
+        "magic": {
+          "pow": "250",
+          "magic_points": "50",
+          "spells": "B'Moth does not usually utilize spells."
+        },
+        "powers": [
+          {
+            "name": "Mind Control",
+            "description": "May read and control the minds of animals and humans. Animals easily fall under its mental faculties. Humans may resist such control with a successful Extreme POW roll."
+          },
+          {
+            "name": "Mind Influence",
+            "description": "B'Moth's presence causes animals and humans to become savage and bestial, attacking anyone or thing nearby with violent fury. Costs 10 magic points. Humans may resist with a successful POW roll."
+          },
+          {
+            "name": "Infect Dreams",
+            "description": "Those within 1 mile of B'Moth are subject to loathsome nightmares."
+          },
+          {
+            "name": "Weather Control",
+            "description": "May spend 5+ magic points to affect the weather within 5 miles."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: B'Moth",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "300",
+            "SIZ": "400",
+            "DEX": "n/a",
+            "HP": "70",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "2"
+          },
+          "combat": {
+            "attacks_per_round": "Variable",
+            "description": "Engulfs victims in its glowing fog. Anyone within the luminescent, swirling mist is overcome by an icy, eerie feeling. Such individuals are automatically susceptible to B'Moth's Mind Influence.",
+            "attacks": []
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons (incl. bullets). Susceptible to sustained fire (1D6 damage per round). If reduced to zero, reforms in 5D10 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Cthulhu: Chorazin",
+        "classification": "Avatar (Cthulhu)",
+        "other_names": [
+          "Choron",
+          "Choronzon",
+          "Korzin",
+          "The Voice"
+        ],
+        "description_quote": "A distorted and dream-like image of a great hulking mass with squid-like tentacles emerging from an elongated head. Every now and then, sparks of bright green light would shine through the image, which moved and lumbered in a loathsome manner.",
+        "main_entry_text": "Akin in many ways to B'Moth, Chorazin seems to be another avatar of the will of dreaming Cthulhu, a psychic manifestation resembling Cthulhu's physical form seen or heard through technology... It appears that modernity provides the medium for its appearance, as it seems able to 'infect' radio and television waves. Able to use radios, televisions, and other receivers, the avatar spreads the words of sleeping Cthulhu.",
+        "cult": {
+          "text": "Chorazin does not appear to be worshipped in its own right, although having a name, it appears as a manifestation of Cthulhu's will. Initially, when contacting a human, it speaks as 'Chorazin' but soon modifies its language to be a representative of a greater power, namely Great Cthulhu.",
+          "possible_blessings": []
+        },
+        "encounters": "Consumers of media (whether radio, television, or the internet) may find themselves targeted by Chorazin. Acquaintances, friends, and family members may be affected... For those affected, the commands of Chorazin vary greatly, from performing the murder of someone opposed to Cthulhu to delivering a message.",
+        "aura": "A distinct otherworldliness seems to be a feature of contact with Chorazin, making many believe they are being targeted by aliens or even spirits. The voice of the avatar is often distorted and frightening.",
+        "sanity_loss": "1D4/1D6+2",
+        "magic": {
+          "pow": "100",
+          "magic_points": "20",
+          "spells": "Dampen Light (variant), Dominate, Drown Mind, Implant Fear, others at Keeper's discretion."
+        },
+        "powers": [
+          {
+            "name": "Contact",
+            "description": "When manifesting, Chorazin preys on the minds of everyone within a 10-mile radius, instigating an initial Sanity roll when folks realize their device is talking to them. If they fail a POW roll, they become obsessed with the device."
+          },
+          {
+            "name": "Physical Manifestation",
+            "description": "If Chorazin's POW reaches 5,000, it may temporarily manifest as a physical avatar of Cthulhu. In doing so, it exudes its stolen POW in the form of a hissing cloud of white-hot plasma."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Chorazin",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "n/a",
+            "SIZ": "n/a",
+            "DEX": "n/a",
+            "HP": "n/a",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "n/a"
+          },
+          "combat": {
+            "attacks_per_round": "n/a",
+            "description": "Chorazin has no physical attacks.",
+            "attacks": []
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Being an incorporeal entity, it is immune to all weapons. Electrical forms of attack can cause harm; high voltage electricity deals 1D10 damage per round."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Cthulhu: Leviathan",
+        "classification": "Avatar (Cthulhu)",
+        "other_names": [
+          "The Serpent",
+          "White Death"
+        ],
+        "description_quote": "Bigger than any fish and more like a whale, it must have been over 50 feet from nose to tail. It rose up from the deep, its whiteness filling the water... a pointed snout with two deep-set beady eyes and a great maw of huge teeth that could swallow a man whole.",
+        "main_entry_text": "Most scholars agree that Leviathan is in some way connected to Great Cthulhu... According to the Ponape Scripture, Leviathan is the physical manifestation of Cthulhu, able to roam the oceans at certain times and devouring all in its path... From the supporting evidence, Leviathan rests for great periods of time and rises in brief bursts of savage ferocity. Like an elemental force of destruction and death.",
+        "cult": {
+          "text": "This entity is said to be revered by some isolated communities in Polynesia, Hawaii, and along the coastal regions of the Arctic... The deep ones worship Leviathan, holding rituals that are designed to calm its destructive qualities, or at least keep them in relative check.",
+          "possible_blessings": []
+        },
+        "encounters": "Should humanity harm deep one communities or in some way threaten the death-sleep of Great Cthulhu, the threat of Leviathan's appearance becomes real. While a rare occurrence, this avatar's unleashing always brings disaster.",
+        "aura": "Primal terror, akin to coming face to face with a great white shark or bear (yet greatly amplified), overcomes most who see this 'killing machine' rise from the watery depths.",
+        "sanity_loss": "1D6/2D10",
+        "magic": {
+          "pow": "250",
+          "magic_points": "50",
+          "spells": "None."
+        },
+        "powers": [
+          {
+            "name": "Shark Coterie",
+            "description": "Prior to the appearance of this avatar, marine life acts erratically... Only sharks seem unaffected by this desire to flee and instead appear drawn to the area where Leviathan will appear."
+          },
+          {
+            "name": "Tidal Wave",
+            "description": "The movement of its massive body combined with its will (2 magic points), creates monstrous tidal waves able to capsize boats and devastate coastal communities."
+          },
+          {
+            "name": "Land Walk",
+            "description": "If warranted, the avatar may leap from the water onto land and 'walk' on its many tentacular growths that sprout from its body."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Leviathan",
+          "characteristics": {
+            "STR": "600",
+            "CON": "400",
+            "SIZ": "700",
+            "DEX": "100",
+            "HP": "110",
+            "DB": "+15D6",
+            "Build": "16",
+            "Move": "15 swimming / 5 walking"
+          },
+          "combat": {
+            "attacks_per_round": "2 (bite, swallow, thrash) or 1 (smash)",
+            "description": "Using its immense bulk, the avatar may smash into a target or use its mouth to bite and swallow.",
+            "special_maneuvers": [
+              {
+                "name": "Swallow",
+                "description": "Its great jaws can swallow anything SIZ 210 or smaller in one bite; for any living creature death is instantaneous."
+              },
+              {
+                "name": "Thrash",
+                "description": "Bites and holds a target; instead of swallowing, thrashes the victim. Initial bite delivers 6D6 damage and on the following round deals 10D6 damage."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "7D6 or bite 6D6"
+              },
+              {
+                "name": "Swallow",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "Death"
+              },
+              {
+                "name": "Thrash (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "6D6 plus held"
+              },
+              {
+                "name": "Smash",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "15D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "15-point hide",
+            "notes": "If reduced to zero, ruptures and bursts into cloud of gore. Cannot reform for 100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Cthylla",
+        "classification": "Great Old One",
+        "other_names": [
+          "Chosen of Cthulhu",
+          "The Hidden One",
+          "Mother of Limbs",
+          "Scylla"
+        ],
+        "description_quote": "A thing composed of glistening red-black flesh within an oval outline... Many of these tentacle-limbs ended in hooked claws, although two were wing-like in nature. Its globular head extended and retracted on a thick neck. About the head grew six eyestalks... While its beaked maw was like a set of serrated blades.",
+        "main_entry_text": "Said to have arrived on Earth with Great Cthulhu, Cthylla may be a particularly significant star-spawn or, according to some, one of Cthulhu's progeny... Cthylla is 'daughter' to Cthulhu and predestined to rebirth 'her' father at some future date... Cthylla is kept imprisoned in R'lyeh, not by Elder wards but rather by Cthulhu's will, due to 'her' value in ensuring that deity's immortality.",
+        "cult": {
+          "text": "No human cult exists for Cthylla, and those who mention the entity's name seem never to be heard from again. Such skullduggery stems from the deep ones, who appear to go out of their way to control information regarding Cthylla... Within deep one society, a sect whose name translates as, 'Cthylla's Keepers', are charged with maintaining a blanket of darkness over this deity.",
+          "possible_blessings": []
+        },
+        "encounters": "While direct encounters with Cthylla are most unlikely (unless somehow finding oneself wandering around R'lyeh), those seeking to keep this deity a secret may come sharply into focus for anyone using the god's name in public or otherwise attempting to undertake research in this area.",
+        "aura": "Secrets, hidden agendas, lies, and general obfuscation abound, with Cthylla hidden at the center of an age-old conspiracy of silence.",
+        "sanity_loss": "1D6/2D10",
+        "magic": {
+          "pow": "180",
+          "magic_points": "36",
+          "spells": "Any dealing with Cthulhu, Ghatanothoa, Zoth-Ommog, Ythogtha, Dagon, Hydra, the deep ones, star-spawn."
+        },
+        "powers": [
+          {
+            "name": "Secret",
+            "description": "Cthylla's powers have been purposefully kept blank. The truth about this deity remains a secret and something for each Keeper to determine themselves."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Cthylla",
+          "characteristics": {
+            "STR": "190",
+            "CON": "800",
+            "SIZ": "200",
+            "DEX": "100",
+            "HP": "100",
+            "DB": "+4D6",
+            "Build": "5",
+            "Move": "9 / 12 flying / 30 swimming"
+          },
+          "combat": {
+            "attacks_per_round": "2D6 (strike, tear, rend, grasp) or 1 (smash)",
+            "description": "May attack with 2D6 tentacles per round; each is equipped with retractable razor-like hooks to tear and rend flesh. Alternatively, may smash into opponents with its bulk.",
+            "special_maneuvers": [
+              {
+                "name": "Grasp",
+                "description": "Tentacles grab and hold a target, allowing Cthylla to either crush (2D6 damage) or draw victims into its beaked maw (1D8+2 damage) on the following round."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "2D6"
+              },
+              {
+                "name": "Grasp (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "Held"
+              },
+              {
+                "name": "Smash",
+                "success_chance": "70%",
+                "difficulty_hard": "35%",
+                "difficulty_extreme": "14%",
+                "damage": "4D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "16-point hide",
+            "notes": "Regenerates 1D6 damage per round. If reduced to zero, erupts into burning fluid cloud and reforms in 1D100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Cxaxukluth",
+        "classification": "Outer God",
+        "other_names": [
+          "Dark Hungerer",
+          "The Shunned One",
+          "K'saksu-K'luth",
+          "Seed of Azathoth",
+          "Zazlu-C'oluth"
+        ],
+        "description_quote": "An amorphous, writhing protoplasmic jelly mass that constantly bubbled... From this oil-sheened blackness, it sent forth boneless pseudopods, each as thick as man, but no head did it possess.",
+        "main_entry_text": "Cxaxukluth is believed to be the spawn of Azathoth... Most texts state the deity dwells alone within a 'deep curtain of night,' which is likely a reference to some void or pocket of space... Cxaxukluth is 'apart' from other Mythos deities and is shunned... due to Cxaxukluth's propensity to consume and/or kill other Mythos beings who venture too close.",
+        "cult": {
+          "text": "A few human worshipers or followers, who tend to be solo operators inflicted with some shard of cosmic insight... most appear to mirror the deity's behavior in regard to other living things, killing without remorse and eating their kills, which usually extends to cannibalism.",
+          "possible_blessings": [
+            {
+              "name": "Grant Pain",
+              "description": "Touch causes flesh to melt (costing 4 magic points per round), dealing 1D4+1 damage per round."
+            },
+            {
+              "name": "Absorb Others",
+              "description": "Envelopes a person and absorbs them (costing 10 magic points); once absorbed, hit points, STR, and CON are doubled for 1D6 hours."
+            }
+          ]
+        },
+        "encounters": "It is unlikely that any humans would come upon Cxaxukluth, unless venturing out into the farthest darkness of space. Contact with demented human worshippers is far more probable.",
+        "aura": "Death and darkness pervade anything influenced by this deity... An oppressive tension, a bleak empty feeling, and a lingering hatred.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "500",
+          "magic_points": "100",
+          "spells": "None."
+        },
+        "powers": [
+          {
+            "name": "Null Magic",
+            "description": "Any spells cast within 100 yards/meters of Cxaxukluth have a 60% chance of failing; this also applies to enchanted items."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Cxaxukluth",
+          "characteristics": {
+            "STR": "1000",
+            "CON": "700",
+            "SIZ": "1500",
+            "DEX": "80",
+            "HP": "220",
+            "DB": "+30D6",
+            "Build": "31",
+            "Move": "25"
+          },
+          "combat": {
+            "attacks_per_round": "10 (strike, crush, grasp)",
+            "description": "Attacks by blindly putting forth plastic-like pseudopods from its bulk, grasping and scooping up anything and everything within its reach.",
+            "special_maneuvers": [
+              {
+                "name": "Touch of Pain",
+                "description": "Anything touched by Cxaxukluth instantly burns and melts (inflicting 10D6 damage)."
+              },
+              {
+                "name": "Grasp",
+                "description": "Grabbed by a pseudopod, the target suffers 10D6 damage and, on the following round, is pulled into the Outer God's bubbling mass and absorbed."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "90%",
+                "difficulty_hard": "45%",
+                "difficulty_extreme": "18%",
+                "damage": "10D6 + 15D6"
+              },
+              {
+                "name": "Grasp (Maneuver)",
+                "success_chance": "90%",
+                "difficulty_hard": "45%",
+                "difficulty_extreme": "18%",
+                "damage": "10D6, absorbed on following round"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Anything physically striking the deity suffers 10D6 damage before any weapon damage is dealt; a few enchanted weapons may be resistant. If reduced to zero, dries up and disintegrates. Reforms in 1,000 years."
+          }
+        }
+      }
+    }
+  ]
+}
