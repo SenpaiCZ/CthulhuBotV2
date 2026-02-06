@@ -243,93 +243,6 @@
     },
     {
       "deity_entry": {
-        "name": "Amber Elder",
-        "classification": "Avatar (Hastur)",
-        "other_names": [
-          "Divine Teacher",
-          "He Who Reveals",
-          "The Unholy Monk",
-          "Yellow Lama"
-        ],
-        "description_quote": "This human-seeming apparition appears decked in shimmering robes of amber hue, which open to reveal a husk-like figure within, emaciated with peeling and dry skin and deathly pale. Its face is like a mask, although it possesses but a single yellow eye within its forehead.",
-        "main_entry_text": "Considered to only appear on Earth. It is said to reside in a temple known as the 'Amber Chambers' that sits upon the Plain of U'Long (Leng?). It seems to act as a herald or voice of the Unspeakable One, appearing to foretell of calamitous events or pass on cosmic wisdom.",
-        "cult": {
-          "text": "A lesser number of Hastur cults place the Amber Elder at the core of their devotion. Ceremony and ritual figure largely for these cults.",
-          "possible_blessings": []
-        },
-        "encounters": "Warnings of dire portent and forthcoming disaster may be heralded by the appearance of this avatar.",
-        "aura": "A certain sense of mysticism, of forbidden secrets and enlightenment, as well as a feeling of things being out of step with reality.",
-        "sanity_loss": "None (to see robes); 1D3/1D10 (if face/body revealed).",
-        "magic": {
-          "pow": "175",
-          "magic_points": "35",
-          "spells": "Knows all spells."
-        },
-        "powers": [
-          {
-            "name": "Unsolvable Puzzle",
-            "description": "Sets a mental puzzle for an individual. Impossible to solve, requiring the person to remain in situ until their body dies or the puzzle is solved."
-          },
-          {
-            "name": "Dire Insight",
-            "description": "May impart knowledge of all varieties, spells, rituals, etc."
-          },
-          {
-            "name": "Become the Gate",
-            "description": "The avatar may open a Gate at will."
-          }
-        ],
-        "physical_manifestation": {
-          "title": "Typical Physical Manifestation: Amber Elder",
-          "characteristics": {
-            "STR": "100",
-            "CON": "100",
-            "SIZ": "70",
-            "DEX": "100",
-            "HP": "17",
-            "DB": "+1D6",
-            "Build": "2",
-            "Move": "12"
-          },
-          "combat": {
-            "attacks_per_round": "2 (tentacles) or 1 (embrace or psychic blast)",
-            "description": "May attack with two tentacle limbs to strike and bludgeon, or can perform an embrace maneuver, or release a psychic blast.",
-            "special_maneuvers": [
-              {
-                "name": "Embrace",
-                "description": "Target is grabbed and drained of lifeforce (1D10+5 CON + 1D4 HP per round). Break free with Extreme STR or DEX."
-              },
-              {
-                "name": "Psychic Blast",
-                "description": "Causes 1D10 damage to all within 5 yards/meters; successful Extreme POW halves damage."
-              }
-            ],
-            "attacks": [
-              {
-                "name": "Fighting",
-                "success_chance": "80%",
-                "difficulty_hard": "40%",
-                "difficulty_extreme": "16%",
-                "damage": "1D6+1D6"
-              },
-              {
-                "name": "Embrace (Maneuver)",
-                "success_chance": "80%",
-                "difficulty_hard": "40%",
-                "difficulty_extreme": "16%",
-                "damage": "1D4 + Drain (see description)"
-              }
-            ]
-          },
-          "armor": {
-            "rating": "None",
-            "notes": "If reduced to zero, crumbles to dust. Reforms in 24 hours."
-          }
-        }
-      }
-    },
-    {
-      "deity_entry": {
         "name": "Aphoom Zhah",
         "classification": "Great Old One",
         "other_names": [
@@ -1636,103 +1549,6 @@
     },
     {
       "deity_entry": {
-        "name": "Cyäegha",
-        "classification": "Great Old One",
-        "other_names": [
-          "The One in Darkness"
-        ],
-        "description_quote": "The green eye in darkness sees all. Look not upon its eye lest you spy the darkness behind and within. Be not caught by its writhing and boneless limbs lest you become wrapped in the darkest night and choked of life.",
-        "main_entry_text": "Cyäegha might best be described as utter nihilism—a being devoid of anything except contempt for all life. It is said to fester in an 'empty' prison... One earthly location appears to be near to the village of Freihausgarten, Germany, where a strange magical ward affects the local population. Each of Cyäegha's prisons is said to be guarded by the Vaeyen, lesser entities somehow connected to the deity.",
-        "cult": {
-          "text": "It would appear that nearly all cults devoted to Cyäegha herald from Freihausgarten, Germany, although some cults with no ties whatsoever to that community have been known to sprout and grow in dark corners of the world. The Freihausgarten cult performs sacrifices to their god while also unknowingly shoring up its prison.",
-          "possible_blessings": [
-            {
-              "name": "Regenerate",
-              "description": "Blessed with automatic healing of 2 hit points per round (death at zero hit points); body becomes permanently disfigured."
-            },
-            {
-              "name": "Light Aversion",
-              "description": "Cannot stand to be in bright light as it causes 1D4 damage per round."
-            },
-            {
-              "name": "Dark Eyes",
-              "description": "Removal of eyes allows perfect night vision (light causes blindness)."
-            }
-          ]
-        },
-        "encounters": "Those who have angered or hindered Cyäegha or its cults may come face to face with the nagäae. Encounters with the Old One's cults is a probability for those who work or venture beneath towns and cities.",
-        "aura": "Total darkness, the blackest black, and the absence of light. A terrible freezing cold descends on areas wherein rituals to the deity are performed.",
-        "sanity_loss": "1D10/1D100",
-        "magic": {
-          "pow": "175",
-          "magic_points": "35",
-          "spells": "Accursed Eye, Barrier of Pain, Clutch of Nyogtha, Drown Mind; others."
-        },
-        "powers": [
-          {
-            "name": "Create/Summon Nagäae",
-            "description": "At the cost of 5 magic points, 1D6 nagäae appear where Cyäegha desires."
-          },
-          {
-            "name": "Dark Mesmerism",
-            "description": "Enthralls humans to walk toward it or perform tasks (cost 10 MP). Resisted by Extreme POW roll."
-          },
-          {
-            "name": "Drain Light",
-            "description": "Causes all light sources to go out within a 1-mile area (cost 2 MP)."
-          },
-          {
-            "name": "Bestow Vitality",
-            "description": "Heals any wound or illness for those nearby. Those healed are marked; if they work against the deity, their flesh necrotizes."
-          }
-        ],
-        "physical_manifestation": {
-          "title": "Typical Physical Manifestation: Cyäegha",
-          "characteristics": {
-            "STR": "400",
-            "CON": "600",
-            "SIZ": "1000",
-            "DEX": "70",
-            "HP": "160",
-            "DB": "+16D6",
-            "Build": "17",
-            "Move": "20 flying"
-          },
-          "combat": {
-            "attacks_per_round": "5 (strike, crush)",
-            "description": "Tends to float or drift over an area, randomly picking targets to crush with its tentacles.",
-            "special_maneuvers": [
-              {
-                "name": "Grasp",
-                "description": "Grabbed by a tentacle, the target suffers 8D6 damage per round thereafter. Break free with Extreme STR or Hard DEX."
-              }
-            ],
-            "attacks": [
-              {
-                "name": "Fighting",
-                "success_chance": "100%",
-                "difficulty_hard": "50%",
-                "difficulty_extreme": "20%",
-                "damage": "4D6"
-              },
-              {
-                "name": "Grasp",
-                "success_chance": "100%",
-                "difficulty_hard": "50%",
-                "difficulty_extreme": "20%",
-                "damage": "8D6"
-              }
-            ]
-          },
-          "armor": {
-            "rating": "None",
-            "notes": "Minimum damage from impaling weapons. Light of any nature inflicts 1 damage per round. If reduced to 0 HP, fades from existence and reforms in 4D10+10 years."
-          }
-        }
-      }
-    },
-    {
-      "deity_entry": {
         "name": "Cymaeghi",
         "classification": "Great Old One",
         "other_names": [
@@ -1895,6 +1711,103 @@
           "armor": {
             "rating": "None",
             "notes": "Immune to mundane weapons. If reduced to 0 HP, turns into thick blue liquid that burns through ground. Reforms in 100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Cyäegha",
+        "classification": "Great Old One",
+        "other_names": [
+          "The One in Darkness"
+        ],
+        "description_quote": "The green eye in darkness sees all. Look not upon its eye lest you spy the darkness behind and within. Be not caught by its writhing and boneless limbs lest you become wrapped in the darkest night and choked of life.",
+        "main_entry_text": "Cyäegha might best be described as utter nihilism—a being devoid of anything except contempt for all life. It is said to fester in an 'empty' prison... One earthly location appears to be near to the village of Freihausgarten, Germany, where a strange magical ward affects the local population. Each of Cyäegha's prisons is said to be guarded by the Vaeyen, lesser entities somehow connected to the deity.",
+        "cult": {
+          "text": "It would appear that nearly all cults devoted to Cyäegha herald from Freihausgarten, Germany, although some cults with no ties whatsoever to that community have been known to sprout and grow in dark corners of the world. The Freihausgarten cult performs sacrifices to their god while also unknowingly shoring up its prison.",
+          "possible_blessings": [
+            {
+              "name": "Regenerate",
+              "description": "Blessed with automatic healing of 2 hit points per round (death at zero hit points); body becomes permanently disfigured."
+            },
+            {
+              "name": "Light Aversion",
+              "description": "Cannot stand to be in bright light as it causes 1D4 damage per round."
+            },
+            {
+              "name": "Dark Eyes",
+              "description": "Removal of eyes allows perfect night vision (light causes blindness)."
+            }
+          ]
+        },
+        "encounters": "Those who have angered or hindered Cyäegha or its cults may come face to face with the nagäae. Encounters with the Old One's cults is a probability for those who work or venture beneath towns and cities.",
+        "aura": "Total darkness, the blackest black, and the absence of light. A terrible freezing cold descends on areas wherein rituals to the deity are performed.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Accursed Eye, Barrier of Pain, Clutch of Nyogtha, Drown Mind; others."
+        },
+        "powers": [
+          {
+            "name": "Create/Summon Nagäae",
+            "description": "At the cost of 5 magic points, 1D6 nagäae appear where Cyäegha desires."
+          },
+          {
+            "name": "Dark Mesmerism",
+            "description": "Enthralls humans to walk toward it or perform tasks (cost 10 MP). Resisted by Extreme POW roll."
+          },
+          {
+            "name": "Drain Light",
+            "description": "Causes all light sources to go out within a 1-mile area (cost 2 MP)."
+          },
+          {
+            "name": "Bestow Vitality",
+            "description": "Heals any wound or illness for those nearby. Those healed are marked; if they work against the deity, their flesh necrotizes."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Cyäegha",
+          "characteristics": {
+            "STR": "400",
+            "CON": "600",
+            "SIZ": "1000",
+            "DEX": "70",
+            "HP": "160",
+            "DB": "+16D6",
+            "Build": "17",
+            "Move": "20 flying"
+          },
+          "combat": {
+            "attacks_per_round": "5 (strike, crush)",
+            "description": "Tends to float or drift over an area, randomly picking targets to crush with its tentacles.",
+            "special_maneuvers": [
+              {
+                "name": "Grasp",
+                "description": "Grabbed by a tentacle, the target suffers 8D6 damage per round thereafter. Break free with Extreme STR or Hard DEX."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "4D6"
+              },
+              {
+                "name": "Grasp",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "8D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Minimum damage from impaling weapons. Light of any nature inflicts 1 damage per round. If reduced to 0 HP, fades from existence and reforms in 4D10+10 years."
           }
         }
       }
@@ -2668,6 +2581,1334 @@
           "armor": {
             "rating": "40-point integument",
             "notes": "Spines have 4-point armor/6 HP. If 0 HP, crumbles to dust. Reforms in 1D100 days."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Gol-Goroth",
+        "classification": "Great Old One",
+        "other_names": [
+          "The Forgotten One",
+          "Golgoro",
+          "Keeper of Black Stone"
+        ],
+        "description_quote": "The depiction showed a monstrous thing, perched atop a great stone pillar. Toad-like and bulbous, its corpulent and scaled flesh sagged in rolls nearly hiding its hindquarters while rising itself upward on two hooved legs. No arms did it possess and, instead, two long tentacles dangled and waved...",
+        "main_entry_text": "Many shrines to this Old One may be found in subterranean temples, although a handful of shrines, looking like tall stone pillars or obelisks, are said to survive in remote parts of the Old World. According to Nameless Cults, Gol-goroth dwells in a sunken temple-prison somewhere in either Hungary or Romania... Given its toad-like visage and subterranean scope, most scholars agree that there must be some form of connection between Gol-goroth and the Tsathoggua.",
+        "cult": {
+          "text": "Historically, Gol-goroth appears to have been a popular deity in pre-human society... Monthly rites are a common feature of this deity's cults, and usually include chanting and orgiastic dancing, as well as flagellation and blood sacrifice. Young people are particularly honored by these cults... with many becoming indoctrinated into cult beliefs and willingly offering themselves as sacrifices.",
+          "possible_blessings": [
+            {
+              "name": "Toad Form",
+              "description": "Bestows the ability to transform into a toad-like creature, able to squeeze through small places, swim, and lurk in dark places."
+            },
+            {
+              "name": "Beguile Others",
+              "description": "Grants the power to charm or beguile other humans, enabling cultists to draw unsuspecting innocents into the clutches of a cult."
+            }
+          ]
+        },
+        "encounters": "While cults appear mostly insular with no overreaching inter-cult operations, the tendency of Gol-goroth worship to exist in small clusters across a widespread area means that encounters with cult members are likely in certain areas of the world. Given the deity's capacity for making personal appearances during cult rituals, face to face contact is possible.",
+        "aura": "Secrets of a dark and sinister hue coalesce around this entity whose cultists often mask the truth of their beliefs behind more 'traditional' pagan practices and gods. In physicality, Gol-goroth seems to amplify one's inner fears.",
+        "sanity_loss": "1D4/2D8",
+        "magic": {
+          "pow": "150",
+          "magic_points": "30",
+          "spells": "Animate Flesh Thing, Barrier of Pain, Blight/Bless Crop, Call Lightning, Contact Ghoul, Contact Formless Spawn, Fury, Maggots; others."
+        },
+        "powers": [
+          {
+            "name": "Beguile",
+            "description": "Those viewing Gol-goroth see their darkest fears (1D6+1/3D8 SAN loss). Alternatively, can spend 3 MP to appear in a charming/beautiful form that compels viewers to approach."
+          },
+          {
+            "name": "Empower Stone",
+            "description": "Places magical energy into a stone/pillar. Touching it during waning moon grants bonuses (MP, spells, POW increase, etc.)."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Gol-Goroth",
+          "characteristics": {
+            "STR": "250",
+            "CON": "325",
+            "SIZ": "225",
+            "DEX": "80",
+            "HP": "55",
+            "DB": "+5D6",
+            "Build": "6",
+            "Move": "8"
+          },
+          "combat": {
+            "attacks_per_round": "4 (tentacles, kick, bite) or 1 (leap)",
+            "description": "May use tentacles, hindleg hooves, and bite in a combination of attacks, or leap on top of opponents and crush them.",
+            "special_maneuvers": [
+              {
+                "name": "Grab",
+                "description": "Tentacles grab opponent. Held victims can be bitten (3D6+4) or flung (2D6) on following round."
+              },
+              {
+                "name": "Leap",
+                "description": "Jumps up to 20 yards to crush targets with bulk. Dodge to avoid."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "50%",
+                "difficulty_hard": "25%",
+                "difficulty_extreme": "10%",
+                "damage": "2D6+2"
+              },
+              {
+                "name": "Leap",
+                "success_chance": "70%",
+                "difficulty_hard": "35%",
+                "difficulty_extreme": "14%",
+                "damage": "5D6+6"
+              },
+              {
+                "name": "Tentacle Grab (Maneuver)",
+                "success_chance": "50%",
+                "difficulty_hard": "25%",
+                "difficulty_extreme": "10%",
+                "damage": "Held, then bitten or flung"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Mundane physical attacks deal minimum damage. Enchanted weapons inflict damage but cannot impale. Immune to cold. If reduced to 0 HP, melts into corruption and reforms in 1D100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Groth-Golka",
+        "classification": "Great Old One",
+        "other_names": [
+          "Demon-Bird",
+          "Rott-Ukka"
+        ],
+        "description_quote": "Know this as a winged demon whose countenance resembles a wicked avian terror with fiery eyes of evil intent in which the flames of Hell doth burn brightly. From the darkest of places, it comes with an awful beak that doth slice like the sharpest of knives...",
+        "main_entry_text": "According to the Book of Eibon, Groth-Golka resides beneath 'Mount Antarktos' (somewhere in the South Polar region) upon a 'Black Cone.'... The Conspiracies of Yeal remarks that this entity is 'brother' to Mnomquah... The pre-historical record... has accounts concerning the worship of bird-like deities, and most scholars agree that temples to Groth-Golka existed in ancient Bal-Sagoth, Atlantis, and Hyperborea.",
+        "cult": {
+          "text": "The cult of Groth-Golka may once have been particularly powerful in both Africa and South America... Otherwise, cults honoring this Old One seem rare, and, where they do appear, are small affairs.",
+          "possible_blessings": [
+            {
+              "name": "Clear Sight",
+              "description": "Grants the devoted the ability to see the Old One and its minions (the fishers from outside) without nightmarish consequences."
+            },
+            {
+              "name": "Rebirth",
+              "description": "Devoted followers may be eaten and reborn as a strangely shaped egg that hatches into a fisher from outside."
+            },
+            {
+              "name": "Insight",
+              "description": "Allows a glimpse of truth concerning the Black Cone."
+            }
+          ]
+        },
+        "encounters": "Polar explorers would do well to avoid seeking out Mount Antarktos... Archaeologists may encounter remnants of this Old One's worship... Those magically inclined researchers may find themselves traveling through a Gate only to inadvertently appear in the presence of Groth-Golka.",
+        "aura": "Contact with anything connected to Groth-Golka is liable to produce cold sweats, increased heart rate, and result in either nightmares or waking visions filled with horrible bird-like creatures.",
+        "sanity_loss": "1D8/1D20",
+        "magic": {
+          "pow": "115",
+          "magic_points": "23",
+          "spells": "As the Keeper desires."
+        },
+        "powers": [
+          {
+            "name": "Minions",
+            "description": "May summon 1D6 fishers from outside at will."
+          },
+          {
+            "name": "Foul Imagery",
+            "description": "Artistic representations cause adverse reactions. Hard POW roll or suffer nightmares (1 Sanity loss/night). Fumble causes brooding introspection. Requires destruction of image or 5 days psychoanalysis to cure."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Groth-Golka",
+          "characteristics": {
+            "STR": "190",
+            "CON": "220",
+            "SIZ": "260",
+            "DEX": "120",
+            "HP": "48",
+            "DB": "+5D6",
+            "Build": "6",
+            "Move": "10 / 45 flying"
+          },
+          "combat": {
+            "attacks_per_round": "4 (bite, skewer, whip) or 1 (tail spikes or body smash)",
+            "description": "May bite or skewer with its beak, use its tail to whip, body smash, or shoot out dart-like spikes from its hide.",
+            "special_maneuvers": [
+              {
+                "name": "Tail Spikes",
+                "description": "Can project spikes like darts. 1D10 spikes, 1D2 damage each. Ignores armor. Removal causes 1 damage unless Medicine roll made."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "75%",
+                "difficulty_hard": "37%",
+                "difficulty_extreme": "15%",
+                "damage": "3D6"
+              },
+              {
+                "name": "Beak",
+                "success_chance": "75%",
+                "difficulty_hard": "37%",
+                "difficulty_extreme": "15%",
+                "damage": "3D6+2D6"
+              },
+              {
+                "name": "Body Smash",
+                "success_chance": "75%",
+                "difficulty_hard": "37%",
+                "difficulty_extreme": "15%",
+                "damage": "5D6"
+              },
+              {
+                "name": "Tail Spikes",
+                "success_chance": "50%",
+                "difficulty_hard": "25%",
+                "difficulty_extreme": "10%",
+                "damage": "1D2 each (see above)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "18-point tough scales and hide",
+            "notes": "If reduced to 0 HP, consumed by maggots. Reforms in 4D10+40 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Han",
+        "classification": "Great Old One/Unique Entity",
+        "other_names": [
+          "Bringer of Madness",
+          "The Dark One",
+          "Grinning Abomination",
+          "Hand of Yig",
+          "Thing of the Mists"
+        ],
+        "description_quote": "Know it as 'HAN,' who comes veiled in mist and with the howling of dogs. Wrapped in a black cloak and the smell of the open grave is He who stands taller than a man, whose grinning skull face burns with eternal flames.",
+        "main_entry_text": "Han appears to be a lesser entity... the case seems stronger for it being a unique entity with some connection to Yig... Appearances of Han suggest it is a harbinger of doom and prophecy... De Vermiis Mysteriis states that Han dwells upon the hidden Plateau of Leng... It should be noted that the nomenclature of 'Han' is the same as the name given by the Lakota peoples of the Great Plains to the personification or spirit of darkness.",
+        "cult": {
+          "text": "Han has little in way of earthly human cults, but some of the Cult of Yig venerate its name. The entity is said to have been worshiped by the serpent folk and possibly still by the people of K'n-yan... The Temple of Futures in the Dreamlands is believed to hold Han foremost in its devotions.",
+          "possible_blessings": [
+            {
+              "name": "Foresight",
+              "description": "Grants limited precognition to divine future events. Costs 1 Sanity minimum; seeing own death costs 1D4+1/2D10."
+            }
+          ]
+        },
+        "encounters": "Initial encounters may see Han first appear as a shadow within a mist, but it may later take on a more substantial form-usually that of a humanoid-like entity wrapped in a black cloak and a dense fog.",
+        "aura": "Things hidden and obscured, cloaked in mist and covered in darkness are the tokens of Han. Illumination and truth only come at the end.",
+        "sanity_loss": "1D6/2D6+4",
+        "magic": {
+          "pow": "200",
+          "magic_points": "40",
+          "spells": "Mainly divination spells; others as Keeper desires."
+        },
+        "powers": [
+          {
+            "name": "Prophecy",
+            "description": "Can provide accurate insights into the future. Message is dire and portends death/destruction. Sanity loss varies."
+          },
+          {
+            "name": "Black Gale",
+            "description": "Increases mist movement to create wind (5 MP). Shatters windows, throws people. DEX roll to keep footing or suffer 1D6 damage. Can increase severity."
+          },
+          {
+            "name": "Shadow Creatures",
+            "description": "Cloak fragments become bat-like/serpentine shadow creatures. Can spy or attack (1 damage/round). Can produce 1D100 creatures."
+          },
+          {
+            "name": "Veil of Mist",
+            "description": "Covers 50-yard radius. Causes hallucinations (howls, faces). 1 Sanity loss/round. Penalty die to sight/hearing skills."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Han",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "150",
+            "SIZ": "125",
+            "DEX": "100",
+            "HP": "27",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "10"
+          },
+          "combat": {
+            "attacks_per_round": "1 (withering touch)",
+            "description": "Attacks by touching a target with its shadowy skeletal hand, causing 1D100 POW to be drained.",
+            "special_maneuvers": [
+              {
+                "name": "Withering Touch",
+                "description": "Targets may Dodge if they spot the hand. If POW reaches zero, victim dies, leaving withered husk. Survivors age 1D10 years per 5 POW lost."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Withering touch",
+                "success_chance": "75%",
+                "difficulty_hard": "37%",
+                "difficulty_extreme": "15%",
+                "damage": "1D100 POW drain"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons (incl. bullets). If reduced to 0 HP, fades to nothingness. Reforms in 1D100 days."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Hastalÿk",
+        "classification": "Great Old One",
+        "other_names": [
+          "Bringer of Change",
+          "The Living Contagion",
+          "Lord of Disease"
+        ],
+        "description_quote": "Seemingly formless, its touch corrupts entire worlds. Composed of many parts, all interconnected, it ranges the void seeking out life to be changed and consumed. None may stand before it.",
+        "main_entry_text": "Perhaps the most insidious of the Old Ones, Hastalÿk is a gestalt entity composed of millions of parts at the microbial level... Hastalÿk seems to be akin to a microorganism, capable of infecting ecosystems by amplifying and altering existing contagions... For most scholars, their conception of Hastalÿk is often wayward and imprecise, likening the entity to a disease and failing to understand that, rather than a contagion, Hastalÿk is a mutating force.",
+        "cult": {
+          "text": "While no organized human cult appears to operate, isolated groups and malevolent individuals may seek to 'nurture' and call to consciousness Hastalÿk on Earth.",
+          "possible_blessings": [
+            {
+              "name": "Carriers",
+              "description": "Cultist may carry a sentient element of Hastalÿk within them, bestowing their touch with a mutable agency that causes sickness. The carrier eventually mutates."
+            }
+          ]
+        },
+        "encounters": "Encounters may feature portions of Hastalÿk waking and causing local untoward effects, some of which may be beyond the notion of disease and instead concern mutation on a grander scale... Otherwise, lone scientists, crazed cultists, and the like may seek to use or fall foul of Hastalÿk.",
+        "aura": "The sense of a dormant, lurking terror that cannot be seen. Of mind-bending mutation at the cellular and more complex levels.",
+        "sanity_loss": "1D4/1D8 (microscope)",
+        "magic": {
+          "pow": "250",
+          "magic_points": "50",
+          "spells": "n/a"
+        },
+        "powers": [
+          {
+            "name": "Change",
+            "description": "Causes mutations in cells and living matter. Complex life may mutate if CON roll failed. Animals/microbes automatically affected. Mutated diseases may cause delusional fevers and Mythos visions."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Hastalÿk",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "n/a",
+            "SIZ": "n/a",
+            "DEX": "n/a",
+            "HP": "n/a",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "n/a"
+          },
+          "combat": {
+            "attacks_per_round": "n/a",
+            "description": "Possesses no physicality or ability to engage in combat, nor spellcasting powers.",
+            "attacks": []
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Magic is the only effective means to dispel, limit, or kill portions of Hastalÿk."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Hastur",
+        "classification": "Great Old One",
+        "other_names": [
+          "Azzator",
+          "That Which Should Not Be Named",
+          "Unspeakable One",
+          "X'Stur"
+        ],
+        "description_quote": "It rules beyond the ken of man... I have seen it in my dreams: the boneless limbs bulging outward from its corpulent and sickly body, the myriad of tentacles that seek to grasp and entwine...",
+        "main_entry_text": "The Unspeakable One dwells near the star Aldebaran... It is said to share some form of kinship with Great Cthulhu... The Necronomicon makes mention of this Old One, stating that saying its name aloud is to court its attention... Seemingly, the Unspeakable One is confined... by the will of the Elder Ones. The fabled Lake of Hali... is its prison.",
+        "cult": {
+          "text": "The Cult of Hastur is well established on Earth... most groups are isolationist in outlook... The character of such groups varies wildly, from the debased and primal to intellectual and calculated... Some cults prefer to venerate the Unspeakable One through its other forms, with humanity apparently most favoring the King in Yellow.",
+          "possible_blessings": [
+            {
+              "name": "Alien Wisdom",
+              "description": "Implantation of cosmic knowledge and spells."
+            },
+            {
+              "name": "Allies",
+              "description": "Establishment of a link with an alien servant (byakhee or spawn)."
+            },
+            {
+              "name": "Unspeakable Oath",
+              "description": "Afforded to the most blessed, who accept the Oath and join with the deity."
+            },
+            {
+              "name": "Boneless",
+              "description": "Able to rapidly dissolve bones and become a flexible sack of living flesh."
+            }
+          ]
+        },
+        "encounters": "Most will encounter Hastur through its cult... The appearance of the Yellow Sign or the text of The King in Yellow may be the sparks that light the touch paper.",
+        "aura": "A sense of slipperiness and moist unpleasant things... An inner darkness conceals the rotting core... An overwhelming feeling of everlasting antipathy swells.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Bestow Glimpse of Truth, Bring Pestilence, Circle of Nausea, Drain Youth, Liquidity, Oscillating Expanse, Possess Corpse, Possession, Power Drain, Shrivelling, Song of Hastur, Summon Byakhee, Swelling Torment, Touch of Decay, The Unspeakable Promise, Wrack; others."
+        },
+        "powers": [
+          {
+            "name": "Body Modification",
+            "description": "Physical form is not fixed; can warp/reshape mass at will."
+          },
+          {
+            "name": "Corruption",
+            "description": "Encountering Hastur may infect victim with seed of corruption (Hard POW). Causes tiring, then flesh rot (APP loss), visions (Sanity loss). Host offered Unspeakable Oath to stop pain."
+          },
+          {
+            "name": "Say My Name",
+            "description": "Vocalizing 'Hastur' risks drawing attention (Luck roll). Consequences include inspection by minions, misfortune, or dreams of Hali."
+          },
+          {
+            "name": "Warp Senses",
+            "description": "Senses distorted/warped. Reality bends. Extreme POW to avoid penalty die to actions."
+          },
+          {
+            "name": "Earthly Manifestation",
+            "description": "Can only be summoned to Earth when Aldebaran is above the horizon (Oct-March). Psychic appearance anytime."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Hastur",
+          "characteristics": {
+            "STR": "600",
+            "CON": "1000",
+            "SIZ": "500",
+            "DEX": "150",
+            "HP": "150",
+            "DB": "+13D6",
+            "Build": "14",
+            "Move": "16 / 24 swimming / 25 flying"
+          },
+          "combat": {
+            "attacks_per_round": "3 (claw/tentacle) + 1D3 (gathering tentacles)",
+            "description": "Attacks with claws/tentacles and randomly gathers up those nearby.",
+            "special_maneuvers": [
+              {
+                "name": "Gather",
+                "description": "1D3 random humans grabbed. Crushed (13D6) or held (1D6)."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "6D6"
+              },
+              {
+                "name": "Crush",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "13D6"
+              },
+              {
+                "name": "Gather (Maneuver)",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "Crushed or held"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "30-point trans-dimensional flesh",
+            "notes": "Regenerates 5 HP/round. Explodes if 0 HP, reforms in 2D10 hours."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Hastur: Amber Elder",
+        "classification": "Avatar (Hastur)",
+        "other_names": [
+          "Divine Teacher",
+          "He Who Reveals",
+          "The Unholy Monk",
+          "Yellow Lama"
+        ],
+        "description_quote": "This human-seeming apparition appears decked in shimmering robes of amber hue, which open to reveal a husk-like figure within, emaciated with peeling and dry skin and deathly pale. Its face is like a mask, although it possesses but a single yellow eye within its forehead.",
+        "main_entry_text": "This avatar is considered to only appear on Earth... It is said to reside in a temple known as the 'Amber Chambers' that sits upon the Plain of U'Long... The Amber Elder appears to function in ways not dissimilar to the King in Yellow... this avatar seems to act as a herald or voice of the Unspeakable One.",
+        "cult": {
+          "text": "A lesser number of Hastur cults place the Amber Elder at the core of their devotion... Ceremony and ritual figure largely for these cults.",
+          "possible_blessings": []
+        },
+        "encounters": "Warnings of dire portent and forthcoming disaster may be heralded by the appearance of this avatar... Those who seek the answer to a question or some hidden information may be directed to find the Amber Chambers.",
+        "aura": "A certain sense of mysticism surrounds this avatar, of forbidden secrets and enlightenment, as well as a feeling of things being out of step with reality.",
+        "sanity_loss": "No Sanity loss (robes); 1D3/1D10 (revealed)",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Knows all spells."
+        },
+        "powers": [
+          {
+            "name": "Unsolvable Puzzle",
+            "description": "Sets a mental puzzle impossible to solve without a critical INT success. Victim remains catatonic until death or solution."
+          },
+          {
+            "name": "Dire Insight",
+            "description": "May impart knowledge, spells, rituals. Portents of future events."
+          },
+          {
+            "name": "Become the Gate",
+            "description": "Can open a Gate at will."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Amber Elder",
+          "characteristics": {
+            "STR": "100",
+            "CON": "100",
+            "SIZ": "70",
+            "DEX": "100",
+            "HP": "17",
+            "DB": "+1D6",
+            "Build": "2",
+            "Move": "12"
+          },
+          "combat": {
+            "attacks_per_round": "2 (tentacles) or 1 (embrace or psychic blast)",
+            "description": "Attack with tentacle limbs, embrace maneuver, or psychic blast.",
+            "special_maneuvers": [
+              {
+                "name": "Embrace",
+                "description": "Target grabbed and drained of lifeforce (1D10+5 CON + 1D4 HP per round)."
+              },
+              {
+                "name": "Psychic Blast",
+                "description": "1D10 damage to all within 5 yards. Extreme POW halves damage."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "1D6+1D6"
+              },
+              {
+                "name": "Embrace (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "1D4 + Drain"
+              },
+              {
+                "name": "Psychic Blast",
+                "success_chance": "Automatic",
+                "damage": "1D10"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "If reduced to 0 HP, crumbles to dust. Reforms in 24 hours."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Hastur: The King in Yellow",
+        "classification": "Avatar/Unique Entity (Hastur)",
+        "other_names": [
+          "Lord of Carcosa"
+        ],
+        "description_quote": "Hark! Comes the Yellow King! Regaled in a gown of yellow... Majestic, he glides over the ground to take his throne in Lost Carcosa... See, his spindly and taloned fingers rise to lift the hood of his gown, reveal the Pallid Mask within!",
+        "main_entry_text": "Disagreement surrounds the King in Yellow with some recognizing the entity as a singular being with its own agenda, while the majority posit the King as the primary avatar of He Who Is Not To Be Named... Seemingly, the King appears either in a regal robe and cloak of many yellow hues or in a tattered gown... Usually, its face is hidden behind the Pallid Mask... The color yellow seems to characterize an association with corruption, decay, disease, as well as decadence, which are embodied in the Yellow Sign... Indeed, the King in Yellow’s agenda seems to be quite clear: to establish 'Carcosa' across all things.",
+        "cult": {
+          "text": "On Earth, cults of the King in Yellow tend to be small clusters of like-minded people or individuals who possess above-average intelligence. Often, such people favor a bohemian or decadent lifestyle... Most are misguided, believing the King in Yellow to embody high ideals...",
+          "possible_blessings": [
+            {
+              "name": "The King in Yellow",
+              "description": "Gifted the playscript, becoming obsessed. Opens mind to King, spreading corruption."
+            },
+            {
+              "name": "Artistic Amplification",
+              "description": "Blessed with enhanced artistic ability to create bizarre works."
+            },
+            {
+              "name": "Dreams of Carcosa",
+              "description": "Granted visits to Carcosa in dreams."
+            }
+          ]
+        },
+        "encounters": "Encounters usually begin in small ways, with corruption appearing at the margins of one's life... The appearance of the Yellow Sign or the text of The King in Yellow may be the sparks... Once a person has become fully consumed, they are either brought before the King or, on occasion, the King visits them.",
+        "aura": "Corruption and decay lie at the heart of all things touched by the King in Yellow. Sickness and revelation figure, as does the impending sense of inevitable doom.",
+        "sanity_loss": "None (Pallid Mask worn); 1D3/1D10 (mask removed)",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Barrier of Pain, Bespeak the End of the Day, Bring Pestilence, Call Hastur, Cause Disease, Compel Flesh, Dominate, Implant Fear, Maggots, Nullify Device, Send Dream, Song of Hastur, Touch of Decay, The Unspeakable Promise, The Yellow Sign; others."
+        },
+        "powers": [
+          {
+            "name": "Gaze of the Yellow King",
+            "description": "Induces fear by staring. Costs victim 1D6 Sanity/round. Extreme POW to avoid."
+          },
+          {
+            "name": "Seed of Carcosa",
+            "description": "Implants vision/desire to find Carcosa. Obsession leads to Sanity loss and eventual calling to Carcosa."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: King in Yellow",
+          "characteristics": {
+            "STR": "125",
+            "CON": "530",
+            "SIZ": "70",
+            "DEX": "135",
+            "HP": "60",
+            "DB": "+1D6",
+            "Build": "2",
+            "Move": "15"
+          },
+          "combat": {
+            "attacks_per_round": "6 (robes) or 1 (gaze or face pseudopod)",
+            "description": "Robes are like razors. Pseudopods behind mask can strike or kiss. Gaze instills fear.",
+            "special_maneuvers": [
+              {
+                "name": "Kiss",
+                "description": "Pseudopod extends and latches onto target, draining 1D10 POW/round. Sever with 6 damage."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "1D6+1D6"
+              },
+              {
+                "name": "Kiss (Maneuver)",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "1D10 POW"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "If reduced to 0 HP, vanishes in blinding light. Reforms in Carcosa in 1D100 days."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Hastur: The Ravening One",
+        "classification": "Avatar (Hastur)",
+        "other_names": [
+          "Star Eater",
+          "Strange Devourer",
+          "Unspeakable Beast"
+        ],
+        "description_quote": "Before us it appeared, falling from the sky in a fury of sound... Through the smoke it rose... possessed of a dark ovoid body from which grew long and writhing appendages, each ending in a multitude of wicked-looking blade-like tentacles.",
+        "main_entry_text": "Most agree that this avatar seems to embody the Unspeakable One's rage or hatred... sent forth to mete out death and punishment... The Necronomicon speaks of a spell to call down this vicious avatar when Aldebaran is above the horizon... According to the rare accounts... its arrival causes those with knowledge of true cosmic order... to experience nightmares.",
+        "cult": {
+          "text": "No known human cult exists for this awful avatar, although wise members of the Cult of Hastur make sacrifices and tokens of appeasement to this entity to ensure its goodwill.",
+          "possible_blessings": []
+        },
+        "encounters": "Those seeking revenge and bloody retribution on others may be enticed to attempt to summon and bind this entity... Those who have crossed Hastur in some way may find themselves beset with terrifying nightmares.",
+        "aura": "Its presence is signaled by an icy wind that seems to blow from the stars themselves. Radiating from this entity are psychic waves of animosity and rage.",
+        "sanity_loss": "1D8/2D10",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Bait Human, Circle of Nausea, Death's Breath, Drain Youth, Grasp of Cthulhu, Wrack; others."
+        },
+        "powers": [
+          {
+            "name": "Provoke Fear",
+            "description": "Radiates aura of fear within 100 yards. Hard POW or become panicked (penalty die). Fumble causes reckless/catatonic state."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Ravening One",
+          "characteristics": {
+            "STR": "245",
+            "CON": "500",
+            "SIZ": "160",
+            "DEX": "100",
+            "HP": "66",
+            "DB": "+4D6",
+            "Build": "5",
+            "Move": "10 / 30 flying"
+          },
+          "combat": {
+            "attacks_per_round": "1 (tentacle strike or devour brain)",
+            "description": "Strikes with razor-tipped tentacles or grabs to devour brain.",
+            "special_maneuvers": [
+              {
+                "name": "Tentacle Strike",
+                "description": "Attacks with 2D10 razor-talons, each inflicting 1 damage."
+              },
+              {
+                "name": "Devour Brain",
+                "description": "Entangles target. Next round burrows into head (1D6 damage + 1D10 INT drain). Third round onwards, 1D10 INT drain. Zero INT = death."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "2D10 (see above)"
+              },
+              {
+                "name": "Devour Brain (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "1D6 + 1D10 INT"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "20-point extra-terrene wrinkled hide",
+            "notes": "If reduced to 0 HP, bursts. Reforms in 1D100 days."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Hziulquoigmnzhah",
+        "classification": "Great Old One",
+        "other_names": [
+          "Ziulquaz-Manzah"
+        ],
+        "description_quote": "It had a toad-like shape... covered in wet fur that gathered in clumps. Proportionally, its legs were slender and short... while its arms were longer and ended in spindly claw-like fingers. Its head emerged on a thick neck... with a snapping beak-like mouth and clusters of tiny red eyes.",
+        "main_entry_text": "This lesser-known and bizarre-looking being is said to be a relative of Tsathoggua and Ghisguth, and the progeny of Cxaxukluth... Apparently, Hziulquoigmnzhah is believed to dwell on Cykranosh (Saturn), where it swims in a sea of molten metal... Seemingly, Hziulquoigmnzhah is not bound to any particular place... which would strengthen the argument for it being an underdeveloped Old One.",
+        "cult": {
+          "text": "While no known human or Earth-bound cult exists... the entity is worshiped on Cykranosh by millions of its inhabitants.",
+          "possible_blessings": [
+            {
+              "name": "Armor of Cykranosh",
+              "description": "Blesses followers with a casing of metal (5-point armor, -1 Move)."
+            }
+          ]
+        },
+        "encounters": "Unless the time to take to the skies and travel to Earth has come, encounters on our planet would seem limited to contact with potential cultists wishing to contact or attract this Old One.",
+        "aura": "Much of what has been written about Hziulquoigmnzhah suggests it has an affinity with metal.",
+        "sanity_loss": "1D4/2D6",
+        "magic": {
+          "pow": "150",
+          "magic_points": "30",
+          "spells": "As desired by Keeper."
+        },
+        "powers": [
+          {
+            "name": "Bind Metal",
+            "description": "At cost of 5 MP, may vomit forth metal objects (weapons, artifacts) as gifts."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Hziulquoigmnzhah",
+          "characteristics": {
+            "STR": "275",
+            "CON": "650",
+            "SIZ": "200",
+            "DEX": "125",
+            "HP": "85",
+            "DB": "+5D6",
+            "Build": "6",
+            "Move": "20"
+          },
+          "combat": {
+            "attacks_per_round": "1 (spit, bite, or crush)",
+            "description": "May spit caustic saliva or metal shards, or crush/bite.",
+            "special_maneuvers": [
+              {
+                "name": "Spit",
+                "description": "Caustic saliva (1D6+4, eats skin) or metal shard (2D6)."
+              },
+              {
+                "name": "Crush",
+                "description": "Rolling bulk deals 5D6 damage."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "3D6"
+              },
+              {
+                "name": "Crush (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "5D6"
+              },
+              {
+                "name": "Spit",
+                "success_chance": "70%",
+                "difficulty_hard": "35%",
+                "difficulty_extreme": "14%",
+                "damage": "1D6+4 or 2D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "10-point thick and metal-covered hide",
+            "notes": "Regenerates 10 HP/round (cost 5 MP). Immune to fire, electricity, chemicals. If 0 HP, implodes to metal ball. Reforms in 1D100+10 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Idh-yaa",
+        "classification": "Great Old One",
+        "other_names": [
+          "Quum-yaa",
+          "Star Mother",
+          "Yhd-ya"
+        ],
+        "description_quote": "The pale idol pictured a great worm-like thing, suggestive of enormous size, with numerous growths of a crystalline nature and pseudopods extending outward. Detailed in miniature, these limbs clutched terrified human figures, with some being brought to its giant-sized mouth to be consumed.",
+        "main_entry_text": "This pulsating and eternally writhing entity is thought to dwell on or near to the double star Xoth... According to the Ponape Scripture, Idh-yaa joined with Cthulhu to produce the entities known as Cthylla, Zoth-Ommog, and Ghatanothoa. The Necronomicon mentions Idh-yaa briefly, stating that the deity is unable to move from Xoth... Some scholars have posited that Idh-yaa is akin to or the same as Shub-Niggurath... The wizard Eibon wrote that Idh-yaa would one day give birth to a being he described as the 'Augmentus Occisor,' an entity so powerful as to contend with the might of Azathoth.",
+        "cult": {
+          "text": "Seemingly sessile, Idh-yaa's worship seems primarily centered on the native Xothans, although numerous cultures on alien planets revere this deity's absolute destructive and creational power. The mi-go are one such race... No human cults exist on Earth at this time.",
+          "possible_blessings": [
+            {
+              "name": "Strange Birth",
+              "description": "Those blessed may give birth or produce strange offspring possessing Old One characteristics. In humanity, both males and females may be the 'parent,' with the blessing being bestowed magically."
+            }
+          ]
+        },
+        "encounters": "Contact with Idh-yaa on Earth is rare... Those contacting or somehow summoning a portion of the deity to Earth may find the ground cracks violently open, revealing a milky-white glowing liquid below from which tendrils of mist rise... Other times, Idh-yaa may manifest in its worm-like form, bursting up from the ground or floating down from the stars.",
+        "aura": "Anything touched by Idh-yaa possesses a distinct coldness... A sense of timelessness and the infinity of the void are likely to overwhelm those who encounter the deity.",
+        "sanity_loss": "1D8/1D20",
+        "magic": {
+          "pow": "375",
+          "magic_points": "75",
+          "spells": "All spells."
+        },
+        "powers": [
+          {
+            "name": "Cosmic Wisdom",
+            "description": "Those who behold the entity may be blessed with cosmic wisdom... Such sight may grant 1D10+2 points of Cthulhu Mythos while also provoking a Sanity roll (1D6/2D6+2 loss)."
+          },
+          {
+            "name": "Creation",
+            "description": "The entity exudes a sticky white slime... Those touching this slime (or those swallowed by the deity) may be partially or fully transformed by contact if they fail a Luck roll. Full transformation sees the victim secrete a jelly-like substance that hardens into a shell; in time, this shell cracks open to reveal the victim has metamorphized into a full monstrosity."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Idh-yaa",
+          "characteristics": {
+            "STR": "270",
+            "CON": "225",
+            "SIZ": "340",
+            "DEX": "70",
+            "HP": "56",
+            "DB": "+7D6",
+            "Build": "8",
+            "Move": "3"
+          },
+          "combat": {
+            "attacks_per_round": "1 per available target (pseudopod, bite, or swallow) or 1 (crush)",
+            "description": "May use pseudopods to strike or grab, use its bulk to crush, or bite or swallow.",
+            "special_maneuvers": [
+              {
+                "name": "Swallow",
+                "description": "Target is swallowed whole. Must make a Hard CON each round; once failed, the victim succumbs to strange magics, melting into a pile of twisting flesh from which a 'new' creature is birthed. Can cut way out by dealing 10 damage to the interior."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "90%",
+                "difficulty_hard": "45%",
+                "difficulty_extreme": "18%",
+                "damage": "3D6"
+              },
+              {
+                "name": "Crush (Maneuver)",
+                "success_chance": "90%",
+                "difficulty_hard": "45%",
+                "difficulty_extreme": "18%",
+                "damage": "7D6"
+              },
+              {
+                "name": "Swallow",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "Transformation/Death"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "10-point slimy and viscous flesh",
+            "notes": "Regenerates 5 hit points per round (death at zero hit points). If reduced to zero, melts into a large pool of slime, killing anything it touches. Reforms on Xoth in 1D100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Iod",
+        "classification": "Great Old One",
+        "other_names": [
+          "Shining Hunter",
+          "The Source"
+        ],
+        "description_quote": "First, a dark shadow appeared, consuming all light. Then, a burst of blinding light from which Iod emerged. Something like a conglomeration of crystal, flesh, and vegetable, it was semi-transparent and pulsed with a sickening inner light. A huge, many-faceted eye contained in membranous skin coated in a liquid film...",
+        "main_entry_text": "Said to be worshipped by the inhabitants of Bel Yarnak... this Old One was also known to the peoples of Atlantis and Mu as 'The Shining Hunter.'... The Book of Iod... presents this Old One as the harbinger of doom, a death-dealing anti-life godhead... In a manner not unlike the terrifying hounds of Tindalos, Iod sometimes manifests as a hunter, tracking and pursuing those who have somehow crossed its path.",
+        "cult": {
+          "text": "Occasionally, a small group or lone sorcerer chooses to serve Iod in the hope of receiving blessings in the form of magical knowledge or as a means to direct dire retribution against those who have been perceived to have wronged them. Such cults practice ritual murder and often embrace death.",
+          "possible_blessings": [
+            {
+              "name": "Film of Shadow",
+              "description": "The follower drinks from the liquid that covers the deity. Once consumed, the liquid becomes part of their flesh, enabling them to 'melt' into a shadow-like form."
+            },
+            {
+              "name": "Unbirth",
+              "description": "Cultists practice ritual murder... a chosen one is brought back to unlife by the power of Iod. They remain 'alive' despite their corrupting frame and, according to some accounts, cannot be killed."
+            }
+          ]
+        },
+        "encounters": "Most are liable to encounter Iod via its loathsome cultists or those despicable wizards who would delve into death magic and necromancy. Certain actions or being witness to certain sights may mark a person or persons with the eye of Iod, with them being hunted down and killed.",
+        "aura": "The deity's white light is all-encompassing and reveals the truth and the inescapable horror at the heart of all existence. This light burns cold and is death.",
+        "sanity_loss": "1D6/3D10",
+        "magic": {
+          "pow": "150",
+          "magic_points": "30",
+          "spells": "Animate Flesh Thing, Awful Doom of Cerrit, Breath of Pazzuzu (variant), Enthrall Victim, Liquid Death, Possession, Sense Life, Siren’s Song; others."
+        },
+        "powers": [
+          {
+            "name": "The Hunt",
+            "description": "Those marked by Iod suffer nightmares of being pursued (1 Sanity loss/day). Iod will track down that person in 1D100 days. The victim may escape by dispelling the Old One, 'killing' it, or using spells to hide."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Iod",
+          "characteristics": {
+            "STR": "375",
+            "CON": "300",
+            "SIZ": "500",
+            "DEX": "80",
+            "HP": "80",
+            "DB": "+10D6",
+            "Build": "11",
+            "Move": "20 flying"
+          },
+          "combat": {
+            "attacks_per_round": "1 (strike or flash)",
+            "description": "May strike out with its tendril-like arms, causing those hit to be paralyzed. Thereafter, Iod plunges its many limbs into the victim and drains their lifeforce.",
+            "special_maneuvers": [
+              {
+                "name": "Paralysis",
+                "description": "Target hit is immobilized if they fail an Extreme POW roll. Victim can attempt to roll once per round to escape."
+              },
+              {
+                "name": "Lifeforce Drain",
+                "description": "Once paralyzed, Iod drains POW at 20 points per round. At zero POW, the brain remains alive in a dead body."
+              },
+              {
+                "name": "Flash",
+                "description": "Emits wave of dazzling light (10 yards). Combined CON and POW roll or suffer 1D4 burn damage."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "3D6 + Paralysis"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "10-point extra-dimensional armor",
+            "notes": "Mundane weapons deal minimum damage. If reduced to zero, bursts in dazzling white light. Reforms in 2D100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Ithaqua",
+        "classification": "Great Old One",
+        "other_names": [
+          "Great Wind-Walker",
+          "The Howling God",
+          "Ice Father",
+          "Star-Strider",
+          "The Wandering One"
+        ],
+        "description_quote": "It strides across the sky, immense and wraith-like... a giant humanoid wreathed in ice-cold winds and snow blizzards, sometimes a skeletal thing, and, at others encased in white-blue flesh... darkness lies at its heart: its two red eyes burn as though they were stars.",
+        "main_entry_text": "The Great Wind-Walker has some bond with the Earth, with reports citing its appearance within the Arctic and sub-Arctic regions... The Old One is characterized in lore as stalking the wastes, appearing before hapless travelers and, sometimes, hunting down and carrying off people to who knows where... Historically, the term 'Wendigo' has been used as a name for Ithaqua... Ithaqua's purpose remains somewhat unclear, although most agree that the deity endures some form of suffering... its binding appears to cause the Old One great distress.",
+        "cult": {
+          "text": "Organized worship of Ithaqua tends to be located within the boundaries of its earthly domain... All cults of Ithaqua seem to share the practice of flesh eating, with some including cannibalism. Another common practice seems to be initiation through wilderness survival.",
+          "possible_blessings": [
+            {
+              "name": "Become Wind-Walker",
+              "description": "Those embraced by Ithaqua may undergo a change, permanently turning them into wind-walkers."
+            },
+            {
+              "name": "Token of Ithaqua",
+              "description": "Granted an item (medallion, etc.) holding a portion of the Old One's power. Touching it conveys a shock and creates a bond with the deity."
+            },
+            {
+              "name": "Touch of Ice",
+              "description": "Grants ability to withstand cold."
+            }
+          ]
+        },
+        "encounters": "Explorers of the remote wilds may hear the cry of Ithaqua and its children... Others may come to hear of the Great Wind-Walker through odd folk tales or evidenced through unusual practices, such as placing pouches of salt around doors and windows.",
+        "aura": "A devastating and incredible coldness suffuses the places touched by Ithaqua, causing hands to numb and breath to fog. Tallying too long brings an undeniable chill to one's bones and heart.",
+        "sanity_loss": "1D10/1D100; 1/1D6 to hear howl.",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Call Lightning, Fury, Nullify Device, Possess Corpse, Send Dream, Temporal Rip, Wrath of Pazzuzu; others."
+        },
+        "powers": [
+          {
+            "name": "Howl",
+            "description": "Hearing the howl requires a Sanity roll (1/1D6). Failed Sanity requires a POW roll. Failed POW means the character is touched by Ithaqua and may later fall under its command or begin changing into a wind-walker."
+          },
+          {
+            "name": "Command Elements",
+            "description": "Create snowfall, temperature drops, and blizzards up to 100 miles. Can cause mighty winds to whisk people into the air (STR roll to resist). 5 MP increases wind severity."
+          },
+          {
+            "name": "Air Walk",
+            "description": "May move freely across the sky."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Ithaqua",
+          "characteristics": {
+            "STR": "250",
+            "CON": "750",
+            "SIZ": "500",
+            "DEX": "150",
+            "HP": "125",
+            "DB": "+8D6",
+            "Build": "9",
+            "Move": "10 / 30 flying"
+          },
+          "combat": {
+            "attacks_per_round": "1 (stomp, strike, tear, crush)",
+            "description": "May stomp and strike, or use its bite or claws to tear, grab, and crush.",
+            "special_maneuvers": [
+              {
+                "name": "Grab",
+                "description": "Uses claws or bite to grab. Held victims can be bitten (6D6), crushed (8D6), or flung (4D6). Break free with Extreme STR or DEX."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "4D6 (ignores mundane armor)"
+              },
+              {
+                "name": "Grab (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "Varies"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "10-point skin or fur covered in thick rime",
+            "notes": "If reduced to zero, dematerializes leaving an echoing howl. Reforms in 1D100+10 days."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Ithaqua: Death-Walker",
+        "classification": "Avatar (Ithaqua)",
+        "other_names": [
+          "The Coming Storm",
+          "The Snow-Thing",
+          "Storm Bringer",
+          "The Whipping Wind"
+        ],
+        "description_quote": "The storm came upon us suddenly, violent and dark... As we looked skyward, we saw the clouds churning and bellowing, forming a gigantic face that was fearsome to behold. It was a skeletal-like face, diabolical, and full of fury...",
+        "main_entry_text": "This avatar of Ithaqua manifests either as a violent storm or as a snow blizzard. If a storm, the terrible visage of a human-like figure or face (often skeletal) may be seen at its heart... In many ways, this avatar appears to embody the elemental ferocity of the Great Wind-Walker, an unrestrained, primal, and ultimately unstoppable force. One might suspect that Death-Walker is unleashed when Ithaqua's fury reaches an uncontainable point.",
+        "cult": {
+          "text": "Death-Walker has some following among the peoples of the sub-Arctic region in both America, Siberia, and Iceland. While most do not worship the entity, many may make token gestures to appease the 'Coming Storm'... One particular group, known among themselves as the Storm Born, is said to secretly hold rites on the Shetland Islands.",
+          "possible_blessings": []
+        },
+        "encounters": "Those traveling in the subarctic and arctic regions may find themselves witnesses to the outbreak of Death-Walker. Worse, those who have somehow interfered with Ithaqua's schemes or those of its cult may find this avatar coming upon them, venting its fury.",
+        "aura": "Primal and unrestrained rage embodied within severe weather. A sense of forces so great, as to break people like matchsticks.",
+        "sanity_loss": "1D4/2D8",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Does not normally utilize spells."
+        },
+        "powers": [
+          {
+            "name": "Elemental Rage",
+            "description": "Causes devastating storms with hurricane force winds, driving rain, hail, and lightning. Lasts 1D8+1 rounds. People caught outside must make STR rolls (becoming Hard and Extreme as storm builds) or be blown away (4D6 to 8D6 damage). Lightning strikes on fumbled Luck rolls (1D8 damage)."
+          },
+          {
+            "name": "Piercing Cold",
+            "description": "In snow form, inflicts freezing damage. Lasts 1D8+1 rounds. Each round, unprotected persons take 1D6 damage and lose 2D10 CON. Frostbite requires medical attention."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Death-Walker",
+          "characteristics": {
+            "STR": "175",
+            "CON": "n/a",
+            "SIZ": "n/a",
+            "DEX": "n/a",
+            "HP": "n/a",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "n/a"
+          },
+          "combat": {
+            "attacks_per_round": "1 per target (violent storm effects)",
+            "description": "While this avatar does not possess a physical body as such (it being a psychic manifestation), it employs and enhances the weather to attack those in its path.",
+            "attacks": []
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Possibly may be resisted or banished by the performance of spells. If in snow form, the avatar may be warded off if a significant fire or heat is employed."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Kassogtha",
+        "classification": "Great Old One",
+        "other_names": [
+          "The Coiled One",
+          "K'ssuggtha",
+          "Leviathan of Disease",
+          "Ochre Demon"
+        ],
+        "description_quote": "Cloaked in a halo of ochre-colored light, floats this great mass of blue-tinted and disease-infested coils of flesh, like some conglomeration of intestinal pipes, perhaps miles long, ever moving and sliding, knotting and unknotting in unhealthy rhythm.",
+        "main_entry_text": "According to some sources, Kassogtha shares some relationship with Great Cthulhu... This Old One seems to be more like some cosmic parasite, able to merge or join with other significant entities for periods of time... When not bound with another entity, Kassogtha appears to dwell in a great body of water (or some such other liquid matter), which is poisoned by its presence. A strong association with disease seems evident... Kassogtha is like a 'cosmic sickness' that seeps into life.",
+        "cult": {
+          "text": "Kassogtha has little organized earthly following, seemingly only worshipped by solitary practitioners of magic and those crazed enough to embrace disease as a force for transformation. The (still at large) serial killer known only as the 'Carrion Murderer,' may be an adherent of this Old One. One faction, the Daughters of Isolation, works to undermine and take control of other groups.",
+          "possible_blessings": [
+            {
+              "name": "Hand of Sickness",
+              "description": "Grants an individual immunity to disease while also making them carriers for all manner of earthly and alien sickness."
+            },
+            {
+              "name": "Language of Pain",
+              "description": "The deity forms a psychic link with a follower, forcing them to hear the Old One's messages... causing physical and mental pain."
+            }
+          ]
+        },
+        "encounters": "Earthly encounters with this Old One are exceedingly rare, with any potential contact most likely arising from cultists or lone adherents.",
+        "aura": "A pervading disquiet and sense of sickness hang over areas, items, and people touched by Kassogtha. Planet life rots, creatures, and humans present illness.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "600",
+          "magic_points": "120",
+          "spells": "As the Keeper desires."
+        },
+        "powers": [
+          {
+            "name": "Poisonous",
+            "description": "Exudes poisonous gases. 1D4 damage within 10 yards (CON roll). Within 5 yards, Hard CON and 1D4+2 damage. Direct contact requires Extreme CON or 2D4+2 damage."
+          },
+          {
+            "name": "Merge",
+            "description": "If winning an opposed combined CON and POW roll, may merge with another entity/host. Can force host to supply genetic material for new beings."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Kassogtha",
+          "characteristics": {
+            "STR": "590",
+            "CON": "400",
+            "SIZ": "400",
+            "DEX": "125",
+            "HP": "80",
+            "DB": "+11D6",
+            "Build": "12",
+            "Move": "20 flying"
+          },
+          "combat": {
+            "attacks_per_round": "1D4 (coil strikes) or 1 (coil grab and crush)",
+            "description": "May strike out and/or grab a target, pulling into its slithering coils.",
+            "special_maneuvers": [
+              {
+                "name": "Coil Grab",
+                "description": "Target pulled into mass, constricted and crushed. 11D6 damage per round. Escape with Extreme DEX or opposed STR (friends)."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "2D6"
+              },
+              {
+                "name": "Coil Grab (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "11D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Mundane weapons deal minimum damage. If reduced to zero, coils melt and bubble, scorching ground for 100 years. Reforms in 4D100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Lilith",
+        "classification": "Great One, Old One",
+        "other_names": [
+          "Lilit",
+          "Night Queen",
+          "Q'allit-ur",
+          "Queen of Lies"
+        ],
+        "description_quote": "Beware the sensuous beauty, alabaster skin, and flowing black hair for they hide the leprous and phosphorescent limbs and form of Lilith: this smiling beauty masks a bestial angel of death that shall consume your soul.",
+        "main_entry_text": "The entity, which some humans have named 'Lilith,' has appeared in a number of forms... Commonly, 'she' appears as a woman of ageless and sinister beauty... At other times, Lilith appears as a glowing leprous figure... A handful of tomes reveal that behind these aspects is a monstrous thing composed of an ovoid shaped body from which six pairs of giant limbs emerge... Some sources believe that Lilith was once a powerful and mysterious Old One who was banished (or escaped) to Earth's Dreamlands and there was reborn as a Great One.",
+        "cult": {
+          "text": "Lilith has little organized worship in the modern world, although the deity was well known and feared in the ancient one. Usually, worship centers around small cults and sorcerers... Direct contact with Lilith usually finds her imploring a person to undertake a certain task.",
+          "possible_blessings": [
+            {
+              "name": "Glamor",
+              "description": "Grants the ability to appear beautiful and beguiling to others."
+            },
+            {
+              "name": "Splendid Dreams",
+              "description": "Gathers one or more dreaming people, ferrying their minds into either Earth's Dreamlands or another 'bubble' dreamscape."
+            }
+          ]
+        },
+        "encounters": "Most encounters are likely to take place in dream... Other times, Lilith may manifest in reality wearing some human-seeming mask... Often, such schemes may be revealed to act against the interests of Nyarlathotep.",
+        "aura": "Mystery, glamour, and sensuality are often key elements in the appearances of Lilith... A certain sense of tainted beauty may resonate.",
+        "sanity_loss": "No loss for human guise; 1D4/1D10 for monstrous form.",
+        "magic": {
+          "pow": "150",
+          "magic_points": "30",
+          "spells": "Awaken the Beast, Bind Enemy, Cloud Memory, Command Animal, Dissolve Skeleton, Drain Youth, Eviscerator, Implant Fear, Raise Corpses, Wrack; others."
+        },
+        "powers": [
+          {
+            "name": "Beguiling Glamor",
+            "description": "May appear in human form (usually attractive female). Humans fall into awed stupor if Extreme POW failed."
+          },
+          {
+            "name": "Pass Through",
+            "description": "Can pass through obstructions. May visit sleeping persons to whisper commands/seduce, draining 1D6+4 MP."
+          },
+          {
+            "name": "Dream Talk",
+            "description": "May enter and affect human dreams."
+          },
+          {
+            "name": "Kiss",
+            "description": "Drains 1D6+4 MP by kissing target who fails Extreme POW."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Lilith",
+          "characteristics": {
+            "STR": "100 (Human) / 150 (Monstrous)",
+            "CON": "250",
+            "SIZ": "65 (Human) / 360 (Monstrous)",
+            "DEX": "100 (Human) / 120 (Monstrous)",
+            "HP": "31 (Human) / 61 (Monstrous)",
+            "DB": "+1D6 (Human) / +5D6 (Monstrous)",
+            "Build": "2 (Human) / 6 (Monstrous)",
+            "Move": "10"
+          },
+          "combat": {
+            "attacks_per_round": "1 (Human: nails, bite, kiss) / 4 (Monstrous: slash, pierce) or 1 (bite)",
+            "description": "Human: uses claw-like fingernails, bite, or kiss. Monstrous: uses four of its six limbs to slash/pierce or bites.",
+            "attacks": [
+              {
+                "name": "Fighting (Human)",
+                "success_chance": "85%",
+                "difficulty_hard": "42%",
+                "difficulty_extreme": "17%",
+                "damage": "1D6+1D6"
+              },
+              {
+                "name": "Bite/Kiss (Human)",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "1D4+1D6 or MP drain"
+              },
+              {
+                "name": "Fighting (Monstrous)",
+                "success_chance": "85%",
+                "difficulty_hard": "42%",
+                "difficulty_extreme": "17%",
+                "damage": "2D6+2D6"
+              },
+              {
+                "name": "Kiss/Bite (Monstrous)",
+                "success_chance": "70%",
+                "difficulty_hard": "35%",
+                "difficulty_extreme": "14%",
+                "damage": "5D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "5-point (Human); 10-point (Monstrous)",
+            "notes": "Immune to mundane weapons during daylight. Regenerates 1 HP per 1 MP. If reduced to zero, crumbles to dust and reforms in 2D8 days in dream."
           }
         }
       }
