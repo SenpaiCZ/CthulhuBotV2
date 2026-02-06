@@ -1,6 +1,7 @@
 import os
 import json
 import re
+from collections import Counter
 import discord
 import asyncio
 import emoji
@@ -619,6 +620,58 @@ async def recalculate_karma():
         return jsonify({"status": "success", "message": "Recalculation started in background."})
 
     return jsonify({"status": "error", "message": "Karma Cog not loaded"}), 500
+
+@app.route('/api/karma/detect_emojis', methods=['POST'])
+async def detect_karma_emojis():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    channel_id = data.get('channel_id')
+
+    if not guild_id or not channel_id:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    try:
+        guild = app.bot.get_guild(int(guild_id))
+        if not guild:
+            return jsonify({"status": "error", "message": "Guild not found"}), 404
+
+        channel = guild.get_channel(int(channel_id))
+        if not channel:
+            return jsonify({"status": "error", "message": "Channel not found"}), 404
+
+        # Scan last 20 messages
+        emoji_counter = Counter()
+
+        async for message in channel.history(limit=20):
+            for reaction in message.reactions:
+                emoji_str = str(reaction.emoji)
+                emoji_counter[emoji_str] += reaction.count
+
+        if not emoji_counter:
+             return jsonify({"status": "error", "message": "No reactions found in the last 20 messages."}), 400
+
+        most_common = emoji_counter.most_common(2)
+
+        if len(most_common) < 2:
+             return jsonify({"status": "error", "message": "Insufficient data: Less than 2 unique emojis found."}), 400
+
+        upvote = most_common[0][0]
+        downvote = most_common[1][0]
+
+        return jsonify({
+            "status": "success",
+            "upvote": upvote,
+            "downvote": downvote
+        })
+
+    except Exception as e:
+        print(f"Error detecting emojis: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # --- Soundboard Routes ---
 
