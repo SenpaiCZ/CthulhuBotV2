@@ -5272,6 +5272,604 @@
         "spells": "30% chance to know 1D4 spells.",
         "sanity_loss": "1D4/1D8"
       }
+    },
+    {
+      "monster_entry": {
+        "name": "Mind Parasite",
+        "subtitle": "Mental Vampires",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Invisible",
+          "Parasite"
+        ],
+        "description": "Insubstantial entities that lie unseen within human minds, able to latch on brains and direct the will of those they possess. They have been among us for a time, controlling and directing human interactions as they see fit. Leeching upon our intellect they are parasitic and malign.",
+        "alternative_names": [
+          "Brain Leeches",
+          "The Masters",
+          "Mind Crawlers",
+          "The Unseen Ones"
+        ],
+        "main_entry_text": "Mind parasites are bodiless entities who feed upon the will and intellect of sentient species. Originally, lore suggested they were a race of sentient gas living within our solar system's sun... Subsequently, these intelligences made their way to our planet, infesting human minds. Through their parasitic feeding and meddling, they have advanced or stalled human development as they desired... The parasites infect the minds of many human beings on the planet; it is uncertain how many.",
+        "characteristics": {
+          "STR": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "CON": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "SIZ": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "DEX": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "INT": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "POW": {
+            "roll": "05",
+            "average": 5
+          }
+        },
+        "derived_stats": {
+          "hit_points": "n/a",
+          "damage_bonus": "n/a",
+          "build": "n/a",
+          "magic_points": 1,
+          "move": {
+            "base": "n/a"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Brain Food",
+            "description": "Groups of 10+ parasites can drain 3D6 MP over a night. For each 5 MP drained, victim loses 1D4 Sanity. Can combine POW to resist spells."
+          },
+          {
+            "name": "Mental Influence",
+            "description": "Can influence host's thoughts and actions. Becoming aware of them is difficult (Extreme POW roll)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "n/a",
+          "attacks": [],
+          "dodge": {
+            "success_chance": "n/a"
+          }
+        },
+        "skills": [],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Only vulnerable to magic or complete destruction of the host (e.g. chlorine gas)."
+        },
+        "spells": "None.",
+        "sanity_loss": "1D4/1D10 Sanity points upon becoming aware of the mind parasites."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Miri Nigri",
+        "subtitle": "Minions of Chaugnar Faugn",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Chaugnar Faugn"
+        ],
+        "description": "Creatures of Chaugnar Faugn, they take the form of small humanoids crafted from the corrupt flesh of toads. These servants scurry and strive to fulfill the wishes of their master. Like men but not men, their features belie their amphibious origins, with cold and bulbous watery eyes. Their skin is slimy moist and pockmarked with strange lumps and bulges.",
+        "alternative_names": [
+          "Silent Ones",
+          "Spawn of Faugn",
+          "Toad Folk",
+          "Voiceless Creepers"
+        ],
+        "main_entry_text": "A race of dark, silent dwarf-like humanoids serving the Great Old One Chaugnar Faugn. They tirelessly tend to their alien sire and crawl about the inert form of Chaugnar Faugn day and night. It is said, twice a year the Great Old One sends its slime-coated servants forth into the world to acquire humans... Having no voices, they communicate with their own kind by some form of mental telepathy or subtle facial or body gestures.",
+        "characteristics": {
+          "STR": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "CON": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "SIZ": {
+            "roll": "(2D6-1)*5",
+            "average": 30
+          },
+          "DEX": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "INT": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "8",
+          "damage_bonus": "-1",
+          "build": -1,
+          "magic_points": 10,
+          "move": {
+            "base": 9
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (punch, kick, bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D3+DB or by weapon type"
+            }
+          ],
+          "dodge": {
+            "success_chance": "45%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "60%"
+          },
+          {
+            "name": "Jump",
+            "value": "80%"
+          },
+          {
+            "name": "Stealth",
+            "value": "90%"
+          },
+          {
+            "name": "Swim",
+            "value": "75%"
+          }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D4"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Nag\u00e4ae",
+        "subtitle": "Twisted Servants",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Cy\u00e4egha",
+          "Toad-like"
+        ],
+        "description": "A toad-like body, transparent, its pulsating innards covered only by a thin layer of leathery skin. It had the hind legs of a frog, and the forelegs of a man. It moved crab-like, crawling on its lumpy belly... The forelegs were raised mantis-like as in prayer, all four of them. The face, if such it could be called, consisted of bulging eyes and an oversized mouth with multiple forked tongues.",
+        "alternative_names": [
+          "Cy\u00e4egha's Claws",
+          "Nagae",
+          "Toad Kin"
+        ],
+        "main_entry_text": "Nag\u00e4ae are the repellent, amphibious, toad-like servants of Cy\u00e4egha, although they are also sired or spawned by other Mythos entities to act as servitors and attendants... They move by creeping along the ground in a sideways fashion, not unlike a crab. Malodorous, they reek of decay and rot... When killed, a nag\u00e4ae dissolves into a sickening mass of corrosive black slime in 2D4 minutes.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+12)*5",
+            "average": 130
+          },
+          "CON": {
+            "roll": "(4D6+10)*5",
+            "average": 120
+          },
+          "SIZ": {
+            "roll": "(4D6+8)*5",
+            "average": 110
+          },
+          "DEX": {
+            "roll": "(1D6+3)*5",
+            "average": 30
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "23",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 13,
+          "move": {
+            "base": 6
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Bite Venom",
+            "description": "If bitten, target must attempt an Extreme CON roll. If successful, suffers hallucinogenic state (penalty die to skill rolls, delusions for 3D6 rounds). If failed, target suffers 4D10 damage or paralysis for 3D6 rounds."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "4 (claw) or 3 (claw and bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Bite",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D8 + venom"
+            }
+          ],
+          "dodge": {
+            "success_chance": "20%",
+            "difficulty_hard": "10%",
+            "difficulty_extreme": "4%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Listen",
+            "value": "60%"
+          },
+          {
+            "name": "Slither Quietly",
+            "value": "70%"
+          },
+          {
+            "name": "Smell Victim",
+            "value": "80%"
+          }
+        ],
+        "armor": {
+          "rating": "2-point tough, leathery, translucent skin"
+        },
+        "spells": "10% chance of knowing 1D4 spells.",
+        "sanity_loss": "1/1D8"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Nightgaunt",
+        "subtitle": "Faceless Nightmares",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Nodens",
+          "Dreamlands",
+          "Avian"
+        ],
+        "description": "Smooth black things, their skin is oily and whale-like. From their heads rise two unpleasant horns that curve inward toward each other, while from their backs unfold great bat-like wings. Semi human in appearance, they bear ugly prehensile paws and barbed tails, like some demon conjured from the lightless realms of the Abyss. They have no faces, only a suggestive blankness where a face ought to be.",
+        "alternative_names": [
+          "Dream Devils",
+          "Faceless Ones",
+          "Night Bringers",
+          "The Ticklers",
+          "Winged Harbingers"
+        ],
+        "main_entry_text": "These creatures of the Dreamlands often wing their way into the Waking World for various reasons. It is said that they serve Nodens by, among other things, grasping and carrying off those who anger their master, unceremoniously dumping offenders in the most dismal and horrible places imaginable... Some nightgaunts fly through dreams and manifest in the Waking World to those whose dreams have caught their fancy... With limited intelligence, nightgaunts appear capable of understanding and undertaking complex tasks.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "CON": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "SIZ": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "1D6*5",
+            "average": 20
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "12",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 10,
+          "move": {
+            "base": 6,
+            "special": "12 flying"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (punch, tail rake, nail rake, horn gore, seize)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D4+DB"
+            },
+            {
+              "name": "Seize (Maneuver)",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "Held",
+              "description": "Opponent is held and carried aloft. Can drop victim (1D6 damage per 10 feet/3 meters) or tickle them. Groups can combine seize attacks for bonus dice."
+            },
+            {
+              "name": "Tickle",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "Immobilized",
+              "description": "Can only tickle seized foes. Target is immobilized, bewildered, and disoriented (penalty die on all rolls) for 1D6+1 rounds or until tickling stops."
+            }
+          ],
+          "dodge": {
+            "success_chance": "35%",
+            "difficulty_hard": "17%",
+            "difficulty_extreme": "7%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Stealth",
+            "value": "90%"
+          }
+        ],
+        "armor": {
+          "rating": "2-point skin"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Nioth-Korghai",
+        "subtitle": "Vampiric Nasties",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Ubbo-Sathla",
+          "Alien"
+        ],
+        "description": "In its true form, it is something like a black-orange colored octopus. A bundle of fungoid-like creepers all gathered and joined at one end to a body sack, which is a pulsating mass of glistening flesh, within which is a circular shaped mouth. Yet, all can assume other forms to blend in with their prey while seeking to bend the will of others to their command.",
+        "alternative_names": [
+          "Space Vampires",
+          "Ubbo-Sathlans"
+        ],
+        "main_entry_text": "A race of space-faring vampiric entities who journey through the cosmos in an immense and strange-looking spacecraft. They lay dormant within their vessel until they reach a world with inhabitants suitable to their vampiric needs. On arrival at a new world, the nioth-korghai are able to alter their physicality to resemble the indigenous life forms... Nioth-korghai worship the Outer God known as Ubbo Sathla.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+14)*5",
+            "average": 140
+          },
+          "CON": {
+            "roll": "(4D6+14)*5",
+            "average": 140
+          },
+          "SIZ": {
+            "roll": "(6D6+7)*5",
+            "average": 140
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "POW": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          }
+        },
+        "derived_stats": {
+          "hit_points": "28",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 11,
+          "move": {
+            "base": 6,
+            "special": "10 swimming"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Change Form",
+            "description": "Cost 5D10 POW (regained over time). Can mimic nearby lifeforms or objects."
+          },
+          {
+            "name": "Possession",
+            "description": "Can mentally possess intelligent life forms by winning an opposed POW roll. Control is absolute within 20 miles."
+          },
+          {
+            "name": "Life Drain",
+            "description": "Feeds on life force by grasping victim and leeching 3D10 POW per round (plus 2D8 CON and APP loss). Victim ages dramatically. If drained to 0 POW/CON, victim dies and becomes a vampiric zombie."
+          },
+          {
+            "name": "Energy Blast",
+            "description": "Expends POW to create psychic blast. 5 POW = 1D6 damage."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1D4 (tentacles) or 1 (energy blast)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D4+DB"
+            },
+            {
+              "name": "Grab (Maneuver)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "Held",
+              "description": "Can attempt possession or life drain."
+            },
+            {
+              "name": "Energy Blast",
+              "success_chance": "Automatic",
+              "damage": "1D6 per 5 POW spent",
+              "description": "See Powers."
+            }
+          ],
+          "dodge": {
+            "success_chance": "32%",
+            "difficulty_hard": "16%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Stealth",
+            "value": "70%"
+          }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "None.",
+        "sanity_loss": "1/1D8"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Ny'ghan Grii",
+        "subtitle": "Extra-dimensional Travelers",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Extra-Dimensional"
+        ],
+        "description": "Possessing round, globe-like, bodies curiously flattened at either end and covered in numerous slender tentacles that give it a rugose appearance. A great faceted eye grew from the bulk, below which a mouth, more like a puckered orifice, from which icy cold air would emerge. The flesh was semi-translucent and ivory in color: repellent and suggestive of pale and leprous things.",
+        "alternative_names": [
+          "Cold Things",
+          "Dimension Crawlers",
+          "The Enemy",
+          "Feasting Mounds",
+          "Space Parasites",
+          "Strange Invaders"
+        ],
+        "main_entry_text": "The ny'ghan grii are luminous spherical creatures from another dimension. They move by floating or crawling and are accompanied by thick fog and icy cold. They lurk at interdimensional Gates or nexus points... Parasitic, they seem able to enter other dimensions by attaching themselves to other entities and \"piggybacking\" their way through.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "CON": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "DEX": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "INT": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "15",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 13,
+          "move": {
+            "base": 2,
+            "special": "8 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Devolution",
+            "description": "Can cause an individual to devolve into a primitive version of its species. Requires opposed POW roll. Process takes 2D6 rounds and is usually irreversible. Witnessing causes 1/1D6 Sanity loss."
+          },
+          {
+            "name": "Chilling Blast",
+            "description": "Numbing icy air pours from its mass (2 yards diameter). Causes 1D4 damage per round. Costs 2 MP per round."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1D3 (tentacles, bite) or 1 (chilling blast)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "DB"
+            },
+            {
+              "name": "Chilling Blast",
+              "success_chance": "Automatic (area)",
+              "damage": "1D4 per round",
+              "description": "See Powers."
+            }
+          ],
+          "dodge": {
+            "success_chance": "20%",
+            "difficulty_hard": "10%",
+            "difficulty_extreme": "4%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Attach to Another Being",
+            "value": "80%"
+          },
+          {
+            "name": "Stealth",
+            "value": "70%"
+          }
+        ],
+        "armor": {
+          "rating": "4-point fleshy hide",
+          "modifiers": "Resistant to cold."
+        },
+        "spells": "Roll INT to determine if 1D6 spells are known.",
+        "sanity_loss": "0/1D6"
+      }
     }
   ]
 }
