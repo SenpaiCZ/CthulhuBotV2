@@ -6430,7 +6430,8 @@
           "rating": "None",
           "modifiers": "Attacks to hit a running rat-thing are made with one penalty die."
         },
-        "spells": "30% chance of knowing 1D3 spells."
+        "spells": "30% chance of knowing 1D3 spells; humans transformed retain knowledge.",
+        "sanity_loss": "0/1D6; 1/1D6+2 if the face is of a known human."
       }
     }
   ]
