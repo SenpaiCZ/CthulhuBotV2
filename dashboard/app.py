@@ -302,6 +302,13 @@ async def admin_monsters():
     monsters_data = await _load_json_file(INFODATA_FOLDER, 'monsters.json')
     return await render_template('monsters.html', data=monsters_data)
 
+@app.route('/admin/deities')
+async def admin_deities():
+    if not is_admin(): return redirect(url_for('login'))
+
+    deities_data = await _load_json_file(INFODATA_FOLDER, 'deities.json')
+    return await render_template('deities.html', data=deities_data)
+
 @app.route('/admin/browse/<folder_name>')
 async def browse_files(folder_name):
     if not is_admin(): return redirect(url_for('login'))
