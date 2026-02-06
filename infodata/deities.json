@@ -1633,6 +1633,1044 @@
           }
         }
       }
+    },
+    {
+      "deity_entry": {
+        "name": "Cyäegha",
+        "classification": "Great Old One",
+        "other_names": [
+          "The One in Darkness"
+        ],
+        "description_quote": "The green eye in darkness sees all. Look not upon its eye lest you spy the darkness behind and within. Be not caught by its writhing and boneless limbs lest you become wrapped in the darkest night and choked of life.",
+        "main_entry_text": "Cyäegha might best be described as utter nihilism—a being devoid of anything except contempt for all life. It is said to fester in an 'empty' prison... One earthly location appears to be near to the village of Freihausgarten, Germany, where a strange magical ward affects the local population. Each of Cyäegha's prisons is said to be guarded by the Vaeyen, lesser entities somehow connected to the deity.",
+        "cult": {
+          "text": "It would appear that nearly all cults devoted to Cyäegha herald from Freihausgarten, Germany, although some cults with no ties whatsoever to that community have been known to sprout and grow in dark corners of the world. The Freihausgarten cult performs sacrifices to their god while also unknowingly shoring up its prison.",
+          "possible_blessings": [
+            {
+              "name": "Regenerate",
+              "description": "Blessed with automatic healing of 2 hit points per round (death at zero hit points); body becomes permanently disfigured."
+            },
+            {
+              "name": "Light Aversion",
+              "description": "Cannot stand to be in bright light as it causes 1D4 damage per round."
+            },
+            {
+              "name": "Dark Eyes",
+              "description": "Removal of eyes allows perfect night vision (light causes blindness)."
+            }
+          ]
+        },
+        "encounters": "Those who have angered or hindered Cyäegha or its cults may come face to face with the nagäae. Encounters with the Old One's cults is a probability for those who work or venture beneath towns and cities.",
+        "aura": "Total darkness, the blackest black, and the absence of light. A terrible freezing cold descends on areas wherein rituals to the deity are performed.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Accursed Eye, Barrier of Pain, Clutch of Nyogtha, Drown Mind; others."
+        },
+        "powers": [
+          {
+            "name": "Create/Summon Nagäae",
+            "description": "At the cost of 5 magic points, 1D6 nagäae appear where Cyäegha desires."
+          },
+          {
+            "name": "Dark Mesmerism",
+            "description": "Enthralls humans to walk toward it or perform tasks (cost 10 MP). Resisted by Extreme POW roll."
+          },
+          {
+            "name": "Drain Light",
+            "description": "Causes all light sources to go out within a 1-mile area (cost 2 MP)."
+          },
+          {
+            "name": "Bestow Vitality",
+            "description": "Heals any wound or illness for those nearby. Those healed are marked; if they work against the deity, their flesh necrotizes."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Cyäegha",
+          "characteristics": {
+            "STR": "400",
+            "CON": "600",
+            "SIZ": "1000",
+            "DEX": "70",
+            "HP": "160",
+            "DB": "+16D6",
+            "Build": "17",
+            "Move": "20 flying"
+          },
+          "combat": {
+            "attacks_per_round": "5 (strike, crush)",
+            "description": "Tends to float or drift over an area, randomly picking targets to crush with its tentacles.",
+            "special_maneuvers": [
+              {
+                "name": "Grasp",
+                "description": "Grabbed by a tentacle, the target suffers 8D6 damage per round thereafter. Break free with Extreme STR or Hard DEX."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "4D6"
+              },
+              {
+                "name": "Grasp",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "8D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Minimum damage from impaling weapons. Light of any nature inflicts 1 damage per round. If reduced to 0 HP, fades from existence and reforms in 4D10+10 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Cymaeghi",
+        "classification": "Great Old One",
+        "other_names": [
+          "Eye of Intoxicating Tears",
+          "The Weeper"
+        ],
+        "description_quote": "A mass of twisting gray-black flesh in which a milky-white orb, an eye of enormous size, was surrounded by clusters of reaching tentacles. The unblinking eye surveyed us and knew us, weeping yellow-white tears that flowed constantly...",
+        "main_entry_text": "Rumors circulate about this entity being connected to Cyäegha. Whispers appear to arise from tales of German settlers to Australia in the early 19th century, who are said to have brought with them a 'seed' of a Great Old One. Another rumor speaks of the entity's tears, which are collected by the cult and made into a wine of rare virtue said to cure all ills and grant immortality.",
+        "cult": {
+          "text": "The cult is insular and secretive and remains small, primarily in Australia. In sacrificing humans to Cymaeghi, its cultists are allowed to collect its tears, from which they receive vitality. Cultists' flesh becomes withered and bleached, marked with growths that open into horrific eyes.",
+          "possible_blessings": [
+            {
+              "name": "Create Darkness",
+              "description": "Causes a zone of total darkness 20 yards/meters in diameter (costing 2 MP)."
+            },
+            {
+              "name": "Great Weeping",
+              "description": "Both eyes constantly weep."
+            }
+          ]
+        },
+        "encounters": "Unless traveling to Australia, most will remain ignorant of this deity. Wine connoisseurs and collectors may hear rumors of the cult's miraculous bottles.",
+        "aura": "Despair and darkness. Those who behold Cymaeghi become enthralled by its weeping eye.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "130",
+          "magic_points": "26",
+          "spells": "Knot Flesh, Liquid Death, Swelling Torment; others."
+        },
+        "powers": [
+          {
+            "name": "Tears of Cymaeghi",
+            "description": "Fluid weeping from its eye boosts vitality, healing wounds and curing illness. Repeated use causes permanent CON loss. Consumers may grow eyes on their body through which the deity can see."
+          },
+          {
+            "name": "Wine of Tears",
+            "description": "Distilled tears. Drinking causes sudden vitality and longevity, but erodes Sanity (1D10+10 loss) and may cause weeping eyes to grow on the body."
+          },
+          {
+            "name": "Drain Light",
+            "description": "Causes all light sources to go out within a 500 yard/meter area (cost 5 MP)."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Cymaeghi",
+          "characteristics": {
+            "STR": "250",
+            "CON": "350",
+            "SIZ": "400",
+            "DEX": "70",
+            "HP": "75",
+            "DB": "+7D6",
+            "Build": "8",
+            "Move": "12 floating"
+          },
+          "combat": {
+            "attacks_per_round": "2D4 (tentacle crush, grab, or swipe)",
+            "description": "May strike out with its tentacles or use them to grab and crush opponents.",
+            "special_maneuvers": [
+              {
+                "name": "Grab",
+                "description": "Target suffers 3D6 crushing damage per round. Break free with Extreme STR or Hard DEX."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "90%",
+                "difficulty_hard": "45%",
+                "difficulty_extreme": "18%",
+                "damage": "7D6"
+              },
+              {
+                "name": "Grab (Maneuver)",
+                "success_chance": "90%",
+                "difficulty_hard": "45%",
+                "difficulty_extreme": "18%",
+                "damage": "3D6 (held)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Minimum damage from impaling weapons. If reduced to 0 HP, disintegrates and reforms in 1D100+200 days."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Cythulos",
+        "classification": "Great Old One",
+        "other_names": [
+          "Hand of Fate",
+          "The One Who Brings Death",
+          "The Reaching Hand"
+        ],
+        "description_quote": "Those who enter the fog that surrounds, will find at its heart a formless mass of twisted limbs... From this mass shall extend a crooked hand and arm... Take this hand and be released from your mortal flesh. Take this hand and find oblivion.",
+        "main_entry_text": "For believers, Cythulos is the embodiment of fate or death. It does not roam, but lingers in a single location surrounded by dense mist, waiting for those who would seek death. It is said to be an 'orb' of Yog-Sothoth by some. Touching its outstretched hand means instant death.",
+        "cult": {
+          "text": "Human cults are rare and short-lived as they are primarily death cults. Members meditate on the end of existence and eventually seek their own deaths via the deity.",
+          "possible_blessings": [
+            {
+              "name": "Befuddle",
+              "description": "Causes another person to fall into a confused state for 1D6 rounds (opposed POW roll)."
+            },
+            {
+              "name": "Create Fog",
+              "description": "Mist pours from eyes and mouth, creating a dense fog (cost 5 MP)."
+            }
+          ]
+        },
+        "encounters": "Those seeking to explore death may cause the appearance of Cythulos. Statuettes of the deity carry an aura of despair and may be unearthed by archaeologists.",
+        "aura": "Death and fate figure largely. All things surrounding Cythulos should be laced with a sense of the cosmic indifference or wonder.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "150",
+          "magic_points": "30",
+          "spells": "Any as desired by the Keeper."
+        },
+        "powers": [
+          {
+            "name": "Obscure Mist",
+            "description": "Fog surrounds the deity (1 mile squared). Vision impaired (penalty die). Luck roll to avoid getting lost."
+          },
+          {
+            "name": "Shroud of Bliss",
+            "description": "Those in the mist may fall into a dream-like hypnotic state (Hard POW to resist). Affected receive visions of their death and may despair, drawn to take the entity's hand and die."
+          },
+          {
+            "name": "Statuettes",
+            "description": "Handling a statuette may cause visions of death and eventual catatonic state calling out to the deity."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Cythulos",
+          "characteristics": {
+            "STR": "400",
+            "CON": "400",
+            "SIZ": "800",
+            "DEX": "60",
+            "HP": "120",
+            "DB": "n/a",
+            "Build": "15",
+            "Move": "9"
+          },
+          "combat": {
+            "attacks_per_round": "1 (touch)",
+            "description": "Stretches out its single hand, waiting for it to be grasped, or attempts to grasp those nearby.",
+            "attacks": [
+              {
+                "name": "Touch",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "Instant Death"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons. If reduced to 0 HP, turns into thick blue liquid that burns through ground. Reforms in 100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Dagon & Hydra",
+        "classification": "Unique Entities",
+        "other_names": [
+          "Sea Father",
+          "Deep Mother"
+        ],
+        "description_quote": "Dagon appeared somewhat humanoid, possessed of a bulbous body from which arms and legs emerged as well as numerous tentacular growths... Hydra's body... was represented as a long and twisting fish-like thing, more like some gigantic eel.",
+        "main_entry_text": "Father Dagon and Mother Hydra are considered the god-like leaders of the deep ones. Accepted wisdom states these two entities were once 'normal' deep ones but have grown to tremendous proportions. They are said to be millions of years old. Some conjecture they are star-spawn of Cthulhu.",
+        "cult": {
+          "text": "The worship of Dagon and Hydra by humanity appears to be ancient. In the modern world, worship is seen in the Esoteric Order of Dagon (Innsmouth). Other front organizations exist elsewhere (e.g., Hearts of the Sea Mission in the UK).",
+          "possible_blessings": [
+            {
+              "name": "Watery Breath",
+              "description": "Granted gills to breathe underwater."
+            },
+            {
+              "name": "Call Deep Ones",
+              "description": "Able to summon deep ones in coastal areas."
+            }
+          ]
+        },
+        "encounters": "Esoteric Order of Dagon, sea-based archaeology, chance sightings at sea.",
+        "aura": "The qualities of timelessness and hidden depths. Touching a representational idol conveys a sense of the sea and something malign.",
+        "sanity_loss": "1/1D10",
+        "magic": {
+          "pow": "150",
+          "magic_points": "30",
+          "spells": "Breath of the Deep, Call Cthulhu, Contact Deep One, Wave of Oblivion; others."
+        },
+        "powers": [
+          {
+            "name": "Summon Minions",
+            "description": "May summon 2D6 deep ones (2 MP) or a star-spawn of Cthulhu (10 MP)."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Dagon & Hydra",
+          "characteristics": {
+            "STR": "260",
+            "CON": "250",
+            "SIZ": "300",
+            "DEX": "100",
+            "HP": "55",
+            "DB": "+6D6",
+            "Build": "7",
+            "Move": "10 / 15 swimming"
+          },
+          "combat": {
+            "attacks_per_round": "2 (strike, claw, bite, stomp, crush)",
+            "description": "May strike out with kicking, clawing, punching, stamping, and so on, in addition to using their tentacles and body mass to bash and crush.",
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "6D6"
+              },
+              {
+                "name": "Bite",
+                "success_chance": "60%",
+                "difficulty_hard": "30%",
+                "difficulty_extreme": "12%",
+                "damage": "1D6+6D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "6-point tough skin",
+            "notes": ""
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Daoloth",
+        "classification": "Outer God",
+        "other_names": [
+          "Eye of Divination",
+          "Render of Darkness",
+          "Render of the Veil"
+        ],
+        "description_quote": "An awesome complexity of globes, rods, and cylinders of crystal, metal, and fleshy rubber. No single form could describe it, as it moved and undulated... Machine-like yet living...",
+        "main_entry_text": "A bizarre, geometric entity, seemingly composed of an ever-shifting conglomeration of geometric shapes. Seeing Daoloth can be disastrous, as the human eye is unable to follow the god's constantly moving form, causing madness. It exists outside our universe. It does not seem to manifest on Earth of its own accord but visits via summons.",
+        "cult": {
+          "text": "Human cults appear to be quite rare. Individuals wanting to alter the course of their life or obtain some historic truth are the primary followers. Worshiped by the mi-go and possibly the Great Race of Yith.",
+          "possible_blessings": [
+            {
+              "name": "Use Angles",
+              "description": "Able to move through angles between locations or other bodies (cost 4 MP)."
+            },
+            {
+              "name": "Prediction",
+              "description": "Able to predict likely future events in the next 24 hours (cost 10 MP)."
+            },
+            {
+              "name": "Confuse Mind",
+              "description": "Imparts complex mathematical patterns causing confusion (penalty die)."
+            }
+          ]
+        },
+        "encounters": "Summons by individuals or cults seeking power or knowledge. Reading certain divinatory texts may unwittingly contact the entity.",
+        "aura": "A certain mystique and atmosphere of otherworldliness. Ceremonies tend to have the trappings of 'high magic'.",
+        "sanity_loss": "1D10/1D100 (first round visible); 1D10 automatic loss every round thereafter.",
+        "magic": {
+          "pow": "350",
+          "magic_points": "70",
+          "spells": "None."
+        },
+        "powers": [
+          {
+            "name": "Containment",
+            "description": "If not summoned within a magical containment, its form expands and engulfs anyone nearby (approx 20 ft expansion per round). Those engulfed are sent to another dimension."
+          },
+          {
+            "name": "Lift Veils",
+            "description": "May allow veils of reality to be lifted. Experiencing this provokes 1D10/1D100 Sanity loss and 1D6 loss per day thereafter."
+          },
+          {
+            "name": "Know Past/Future",
+            "description": "May grant petitioners a vision of things past or future. Costs the recipient 1D10+2 MP and potential Sanity."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Daoloth",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "500",
+            "SIZ": "200 (Increases)",
+            "DEX": "150",
+            "HP": "100",
+            "DB": "n/a",
+            "Build": "9 (Variable)",
+            "Move": "6"
+          },
+          "combat": {
+            "attacks_per_round": "n/a",
+            "description": "Daoloth does not use attack forms other than engulfing those around it (see Containment).",
+            "attacks": []
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Anything touching Daoloth is transported to another place or dimension. If reduced to 0 HP, implodes and reforms in 1D100+500 days."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Daoloth: The Sacred Light",
+        "classification": "Avatar (Daoloth)",
+        "other_names": [
+          "None known"
+        ],
+        "description_quote": "A single shaft of beaming liquid light descending from above in which colorful splendors of this universe and others shall be visible.",
+        "main_entry_text": "An avatar of Daoloth used to better interface with beings from this universe. Witnessing its appearance brings 'clear sight' and a means to see beyond constraints of reality. Those who enter the Sacred Light become aware it is a living presence. Knowledge may turn a person into a Splinter of Daoloth.",
+        "cult": {
+          "text": "Cult of the Sacred Light. Secretive, with splinter cells in the US. Rumors of influencing politics.",
+          "possible_blessings": []
+        },
+        "encounters": "Summoned via the spell 'Light of Sacred Truth'.",
+        "aura": "Great secrecy. Profound sense of enlightenment.",
+        "sanity_loss": "1D6/1D10",
+        "magic": {
+          "pow": "350",
+          "magic_points": "70",
+          "spells": "None."
+        },
+        "powers": [
+          {
+            "name": "Gift of Truth",
+            "description": "Veils of earthly illusion are ripped apart, revealing cosmic knowledge. Provokes 1D10/1D100 Sanity loss and 1D6 per day thereafter. May turn victim into a Splinter of Daoloth."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: The Sacred Light",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "350",
+            "SIZ": "200",
+            "DEX": "n/a",
+            "HP": "50",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "n/a"
+          },
+          "combat": {
+            "attacks_per_round": "n/a",
+            "description": "Does not use attack forms.",
+            "attacks": []
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons. Enchanted weapons can cause harm. If reduced to 0 HP, ceases to exist."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Eihort",
+        "classification": "Great Old One",
+        "other_names": [
+          "Beast of the Labyrinth",
+          "The Lurker Below",
+          "Great Pale One"
+        ],
+        "description_quote": "As like an infernal demon... its vast bulk supported by numerous thin and spindly legs... Atop, a spherical mass of sickly ever-reforming eyes and gelatinous wet pulsating skin...",
+        "main_entry_text": "A monstrous being imprisoned in a labyrinth below England's Severn Valley. Eihort's tunnels are said to exist outside of normal space-time, phasing in and overlaying existing cave systems. Eihort appears unable to depart from its lair due to Elder magic.",
+        "cult": {
+          "text": "Known human cults operate in the Severn Valley (Brichester, Camside). Cults often led by a host for Eihort's brood. Gangs of children/youths come under its sway. Some take up Eihort's Bargain.",
+          "possible_blessings": [
+            {
+              "name": "Brood Carer",
+              "description": "Mentally linked to a brood carrier, able to sense when they are in danger."
+            },
+            {
+              "name": "Brood Carrier",
+              "description": "Carries the brood within. Can control these miniature horrors."
+            },
+            {
+              "name": "Mental Confusion",
+              "description": "Cause temporary disorientation in others (cost 5 MP)."
+            }
+          ]
+        },
+        "encounters": "Doorways into the labyrinth. Gangs of malevolent children. Operations of adult cults spreading the Bargain.",
+        "aura": "Confusion and doubt like a cancerous miasma. A sense of scuttling menace.",
+        "sanity_loss": "1D6/1D20",
+        "magic": {
+          "pow": "150",
+          "magic_points": "30",
+          "spells": "Cloud Memory, Enthrall Victim, Flesh Ward, Liquid Death; others."
+        },
+        "powers": [
+          {
+            "name": "Eihort's Bargain",
+            "description": "Offers a bargain to intruders. If accepted, implants brood in the human. Brood mature and eventually kill the host. If refused, usually smashes the human."
+          },
+          {
+            "name": "Manipulate Minds",
+            "description": "Can use Displacement (swap minds), Illusion (sensory manipulation), Magnify Fear, and Pain (inflict damage)."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Eihort",
+          "characteristics": {
+            "STR": "200",
+            "CON": "400",
+            "SIZ": "250",
+            "DEX": "60",
+            "HP": "65",
+            "DB": "+5D6",
+            "Build": "6",
+            "Move": "8"
+          },
+          "combat": {
+            "attacks_per_round": "1D6 (legs) or 1 (bite or crush)",
+            "description": "May use its numerous legs to kick, its body mass to crush, or can bite.",
+            "special_maneuvers": [
+              {
+                "name": "Crush",
+                "description": "Body leaps/rolls onto targets within 5 yard area. 5D6 damage if unable to Dodge."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "70%",
+                "difficulty_hard": "35%",
+                "difficulty_extreme": "14%",
+                "damage": "2D6"
+              },
+              {
+                "name": "Bite",
+                "success_chance": "70%",
+                "difficulty_hard": "35%",
+                "difficulty_extreme": "14%",
+                "damage": "2D6 + Poison (paralysis)"
+              },
+              {
+                "name": "Crush",
+                "success_chance": "50%",
+                "difficulty_hard": "25%",
+                "difficulty_extreme": "10%",
+                "damage": "5D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Mundane physical attacks deal minimum damage. Regenerates 3 HP per round. If reduced to 0 HP, dissolves into ooze and reforms in 1D10+20 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Elder Gods, Lesser",
+        "classification": "Elder Gods",
+        "other_names": [
+          "Angels",
+          "Those from Afar",
+          "Waiting Ones"
+        ],
+        "description_quote": "Mysterious are they, the lesser-known and unnamed Elder Ones whose time is not yet come. They dazzle the eyes as great shafts of light or as towering pillars of flame, each cast in many hues and colors beyond our ken.",
+        "main_entry_text": "These unnamed entities are believed to be unformed or immature Elder beings, or perhaps Elder Gods in their own right existing outside our reality. To the human eye they appear as rays of multicolored light, flaming whirlwinds, or some combination of both. Some sources suggest they act as soldiers or prison wardens for the Greater Elder Gods.",
+        "cult": {
+          "text": "Few, if any, are worshiped on Earth. Specific individuals may have cause to come to Earth, causing a stir viewed as divine. How people interpret such appearances depends on their cultural outlook.",
+          "possible_blessings": [
+            {
+              "name": "Cosmic Insight",
+              "description": "Grants 1D10+2 Cthulhu Mythos points while reducing Sanity by 1D10+6 points."
+            }
+          ]
+        },
+        "encounters": "Sightings may be mistaken for angels, demons, or UFOs. Delving around ancient sites of Elder interest or prisons of Great Old Ones may trigger their attention.",
+        "aura": "True alienness. An otherworldliness overcomes the senses, accompanied by a frightening cold and harsh, confusing lights.",
+        "sanity_loss": "0/1D3",
+        "magic": {
+          "pow": "120",
+          "magic_points": "24",
+          "spells": "Mind Blast, Oscillating Expanse, Pose Mundane, Soul Singing, Wrack, Wrath of Pazzuzu; others."
+        },
+        "powers": [
+          {
+            "name": "Telepathy",
+            "description": "Mentally communicate with any intelligent lifeform; the voice sounds like raging fire or swirling water."
+          },
+          {
+            "name": "Compel",
+            "description": "Implants a vision demanding a task. Resistance requires Hard POW roll. Failure to comply causes 1 Sanity loss per day."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Lesser Elder God",
+          "characteristics": {
+            "STR": "130",
+            "CON": "170",
+            "SIZ": "200",
+            "DEX": "100",
+            "HP": "37",
+            "DB": "+3D6",
+            "Build": "4",
+            "Move": "10 / 30 flying"
+          },
+          "combat": {
+            "attacks_per_round": "5 (force lash) or 1 (cast away)",
+            "description": "Lashes out with shafts of flame or light, or flings opponents away.",
+            "special_maneuvers": [
+              {
+                "name": "Cast Away",
+                "description": "Target is enveloped in light/flame and hurled 1D10x1,000 yards/meters (6D6 impact damage). Extreme success flings them into space."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Flame Lash",
+                "success_chance": "75%",
+                "difficulty_hard": "37%",
+                "difficulty_extreme": "15%",
+                "damage": "3D6 (ignores mundane armor)"
+              },
+              {
+                "name": "Cast Away (Maneuver)",
+                "success_chance": "75%",
+                "difficulty_hard": "37%",
+                "difficulty_extreme": "15%",
+                "damage": "6D6 or death (space)"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane attacks. Regenerates 1 HP per 1 MP spent. Bursts into explosion of light at 0 HP (10D10 damage radius)."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Fthaggua",
+        "classification": "Unique Entity",
+        "other_names": [
+          "The Blue God",
+          "Child of Cthugha",
+          "The Divine Flame",
+          "Lord of K'Thagg-Ua"
+        ],
+        "description_quote": "It burns the sky, sheathed in tongues of red-blue fire, and trailing a flaming tail. No comet is this that charts its movement in curves. Behold the living flame!",
+        "main_entry_text": "Believed to be the high priest or leader of all fire vampires, or possibly Cthugha's child. It is usually pictured as a mass of gaseous blue flames dwelling near the star Fomalhaut. Some texts say it was banished to 'Ktynga' (Norby's Comet) and is traveling toward Earth, due to arrive in four centuries.",
+        "cult": {
+          "text": "Most Cthugha cults place Fthaggua in their devotions but not as a god. The Teachers of Blue Sun hold Fthaggua as a separate deity. Sorcerers may call it for revenge.",
+          "possible_blessings": []
+        },
+        "encounters": "May arrive as Cthugha's attendant or in place of Cthugha. Fire vampires may appear first and call Fthaggua.",
+        "aura": "Touch is flame, burning and painful. Smell of acrid smoke, air full of ashes, overpowering heat.",
+        "sanity_loss": "1/1D8",
+        "magic": {
+          "pow": "100",
+          "magic_points": "20",
+          "spells": "Call Cthugha, Incinerate, Power Drain, Summon Fire Vampire, Wither Limb."
+        },
+        "powers": [
+          {
+            "name": "Heat",
+            "description": "Burns at 2,012°F (1,100°C). Touch sets objects alight and causes 2D6 to 8D6 burn damage."
+          },
+          {
+            "name": "Coterie",
+            "description": "Accompanied by 4D10 fire vampires when traveling."
+          },
+          {
+            "name": "Mind Burn",
+            "description": "Flaming tendril wraps around head to consume memories. Opposed POW to resist. Victim suffers partial or total memory loss. Luck roll failure causes 4D6 damage (burning head to cinders)."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Fthaggua",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "175",
+            "SIZ": "400",
+            "DEX": "300",
+            "HP": "57",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "100 flying"
+          },
+          "combat": {
+            "attacks_per_round": "1D4+1 (flaming coils)",
+            "description": "Shoots forth or drops coils of bluish lightning-like flames.",
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "50%",
+                "difficulty_hard": "25%",
+                "difficulty_extreme": "10%",
+                "damage": "4D6 burn"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Immune to mundane weapons. Water causes 2 damage/gallon. Fire extinguisher deals 1D6+1. Reforms in 50 days if destroyed."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Ghatanothoa",
+        "classification": "Great Old One",
+        "other_names": [
+          "The Dark God",
+          "Lord of the Volcano",
+          "That Which Cannot Be Seen"
+        ],
+        "description_quote": "Huge, multiple eyed, many mouthed, plastic, squamous, rugose, nightmarish, tentacular—the list could go on but is essentially meaningless. Until we stand before this miasma of death and embrace our doom, we shall not truly know its like.",
+        "main_entry_text": "Once dwelt on Yuggoth, brought to Earth and imprisoned within Yaddith-Gho (a volcano in Mu). Some claim it is the first spawn of Cthulhu. To look upon Ghatanothoa (or a perfect image of it) is to be damned, suffering instant petrification while the brain remains alive.",
+        "cult": {
+          "text": "Venerated by lloigor, mi-go, and some serpent folk. Ancient human cults existed in Mu. Modern cults are secretive. Human sacrifices were common.",
+          "possible_blessings": [
+            {
+              "name": "Visionary Insight",
+              "description": "Grants dreams/visions of history, alien landscapes, or future. Grants Cthulhu Mythos points but costs Sanity."
+            },
+            {
+              "name": "Sight of the Dead",
+              "description": "Allows seeing through the eyes of the petrified victims of the god."
+            }
+          ]
+        },
+        "encounters": "Seeking Mu or artifacts of the deity. Idols may bring doom.",
+        "aura": "Distinct sense of wrongness. Secrets obscured and hidden.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "175",
+          "magic_points": "35",
+          "spells": "Summon/Bind and Contact spells for Old Ones/Star-Spawn."
+        },
+        "powers": [
+          {
+            "name": "Curse of Ghatanothoa",
+            "description": "Looking at the deity (or a perfect image) requires a CON roll each round. Failure causes 3D10 DEX loss (stiffening). At 0 DEX, victim is permanently petrified into a leather/bone statue. Brain remains alive and conscious, losing 1D6 Sanity/day until insane."
+          },
+          {
+            "name": "Send Vision Message",
+            "description": "Imparts messages via visions/dreams. Resist with Extreme POW."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Ghatanothoa",
+          "characteristics": {
+            "STR": "450",
+            "CON": "400",
+            "SIZ": "700",
+            "DEX": "40",
+            "HP": "110",
+            "DB": "+13D6",
+            "Build": "14",
+            "Move": "6"
+          },
+          "combat": {
+            "attacks_per_round": "1D4 (tentacles) or 1 (crush)",
+            "description": "Uses tentacles to strike/grab or bulk to crush.",
+            "special_maneuvers": [
+              {
+                "name": "Grab",
+                "description": "Target suffers 7D6 crushing damage per round. Break free with Extreme STR or Regular DEX."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "4D6"
+              },
+              {
+                "name": "Grab (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "7D6"
+              },
+              {
+                "name": "Crush",
+                "success_chance": "50%",
+                "difficulty_hard": "25%",
+                "difficulty_extreme": "10%",
+                "damage": "13D6"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "10-point hide",
+            "notes": "Regenerates 10 HP/round. If 0 HP, disintegrates into dust. Dust cloud requires CON roll or 1D6 choking damage. Reforms in 10D100 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Ghizguth",
+        "classification": "Great Old One",
+        "other_names": [
+          "Ghe-Zulth",
+          "Lord of the Deeps",
+          "Spawn of Cxaxukluth"
+        ],
+        "description_quote": "A large and wrinkled sack of jelly in which a single overly wide mouth gapes... pairs of tiny eyes peering out from folds in the greasy flesh. Instead of legs, it has several long claw-tipped, vine-like tendrils...",
+        "main_entry_text": "Said to have begat Tsathoggua and is the child of Cxaxukluth. Dwells in the deep oceans or possibly on Cykranosh (Saturn) or Xoth. Arrived on Earth causing boiling oceans. Remains 'chained' to deep oceans, occasionally rising to cause ship disappearances.",
+        "cult": {
+          "text": "Little known human cults, possibly small coastal communities. Deep Ones and Mi-Go may offer worship. Shrines to Tsathoggua may contain effigies of Ghizguth.",
+          "possible_blessings": [
+            {
+              "name": "Gather the Sea",
+              "description": "Create oceanic whirlpools capable of capsizing vessels (10 MP per 20ft of vessel size)."
+            },
+            {
+              "name": "Watery Breath",
+              "description": "Enables underwater breathing and swimming."
+            }
+          ]
+        },
+        "encounters": "Rare. Ship disappearances. Cultists seeking to bring Ghizguth and Leviathan (or Tsathoggua) together.",
+        "aura": "Taste of saltwater and brine. Thoughts of deep, dark things.",
+        "sanity_loss": "1D8/1D20",
+        "magic": {
+          "pow": "140",
+          "magic_points": "28",
+          "spells": "Bestow Glimpse of Truth, Command Shoggoth, Create Mist of R'lyeh (variant), Solar Gaze, etc."
+        },
+        "powers": [
+          {
+            "name": "Change Weather",
+            "description": "Worsens weather to gales/storms (5 MP)."
+          },
+          {
+            "name": "Far See",
+            "description": "Summon vision of event within 1,000 miles (1 MP)."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Ghizguth",
+          "characteristics": {
+            "STR": "220",
+            "CON": "350",
+            "SIZ": "230",
+            "DEX": "90",
+            "HP": "58",
+            "DB": "+5D6",
+            "Build": "6",
+            "Move": "8 / 20 swimming"
+          },
+          "combat": {
+            "attacks_per_round": "4 (rend, tear, entwine, grasp)",
+            "description": "Uses tendrils to rend/tear or entwine/crush.",
+            "special_maneuvers": [
+              {
+                "name": "Entwine",
+                "description": "Target is held and pulled into mouth to be swallowed. Swallowed victims suffer 5D6 acid/crush damage per round. Escape with Extreme STR or DEX."
+              }
+            ],
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "2D6"
+              },
+              {
+                "name": "Entwine (Maneuver)",
+                "success_chance": "80%",
+                "difficulty_hard": "40%",
+                "difficulty_extreme": "16%",
+                "damage": "3D6 (held)"
+              },
+              {
+                "name": "Swallow",
+                "success_chance": "Automatic if entwined",
+                "damage": "5D6 per round"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "1-point gelatinous flesh",
+            "notes": "Regenerates 1D6 HP/round. Explodes in acid splatter at 0 HP (1D8 damage radius). Reforms in 200 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Ghroth",
+        "classification": "Outer God",
+        "other_names": [
+          "Doom Maker",
+          "The Harbinger",
+          "Nemesis",
+          "World Killer"
+        ],
+        "description_quote": "A red star whose surface is riddled with cracks and strange geography that hide unquiet seas beneath. Great torment shall herald its arrival. Look not closely, lest it opens its great eye and sees you.",
+        "main_entry_text": "A planet-sized, star-like entity of living gas, ash, and molten iron. Roams the void singing a siren song (Music of the Spheres) that awakens slumbering Old Ones. Its arrival causes natural disasters. Believed to be responsible for the destruction of Shaggai and the K-T extinction on Earth.",
+        "cult": {
+          "text": "Few human worshipers; mostly 'death cults' or sorcerer-astrologers. Cult of Ghroth exists in Goatswood. Mi-go are fascinated by it; Shan fear it.",
+          "possible_blessings": [
+            {
+              "name": "The End is Nigh",
+              "description": "Premonitions of calamity via hallucinations/dreams. May lead to enlightenment or despondency."
+            }
+          ]
+        },
+        "encounters": "Astronomical observation (telescopes, radio astronomy). Magical travel to doomed planets.",
+        "aura": "Doom, inevitable destruction, insignificance.",
+        "sanity_loss": "1D10/1D100",
+        "magic": {
+          "pow": "500",
+          "magic_points": "100",
+          "spells": "None."
+        },
+        "powers": [
+          {
+            "name": "Cosmic Realignment",
+            "description": "Can pull planets into new orbits, destroy planets, cause stars to die/born."
+          },
+          {
+            "name": "Music of the Spheres",
+            "description": "Never-ending song that awakens dead/slumbering gods. Hearing it drives many insane (1D10/1D100 Sanity loss)."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Ghroth",
+          "characteristics": {
+            "STR": "n/a",
+            "CON": "n/a",
+            "SIZ": "n/a",
+            "DEX": "n/a",
+            "HP": "n/a",
+            "DB": "n/a",
+            "Build": "n/a",
+            "Move": "n/a"
+          },
+          "combat": {
+            "attacks_per_round": "n/a",
+            "description": "Presence alone destroys planets. No conventional combat.",
+            "attacks": []
+          },
+          "armor": {
+            "rating": "None",
+            "notes": "Theoretical destruction via planet-destroying power. Reforms inside Azathoth in 1,000 years."
+          }
+        }
+      }
+    },
+    {
+      "deity_entry": {
+        "name": "Gla'aki",
+        "classification": "Great Old One",
+        "other_names": [
+          "The Inhabitant of the Lake"
+        ],
+        "description_quote": "Its slug-like oval body covered in needle-like spines metal of varied colors... A head of sorts at one end, with a vast mouth... three stalk protrusions, each ending in a bulbous eye. Its underside squirmed and wriggled...",
+        "main_entry_text": "Arrived on Earth in a meteorite that shattered, scattering shards/avatars to various lakes (notably Severn Valley). Associated with 'The Revelations of Gla'aki'. Creates undead servants by injecting fluid via spines. Servants eventually suffer 'Green Decay'.",
+        "cult": {
+          "text": "Loathsome cult of undead servants. Living humans may worship seeking the 'un-life'. Servants copy/compile the Revelations.",
+          "possible_blessings": [
+            {
+              "name": "Green Decay",
+              "description": "May bestow a spell causing the Green Decay."
+            },
+            {
+              "name": "Long Life",
+              "description": "Blessed with un-life as a servant."
+            }
+          ]
+        },
+        "encounters": "Near bodies of water containing shards. Dream-pull leads victims to lake. Undead servants reclaiming meteorite fragments.",
+        "aura": "Damp, rotting, foul. Sense of the alien.",
+        "sanity_loss": "1D3/1D20",
+        "magic": {
+          "pow": "140",
+          "magic_points": "28",
+          "spells": "Green Decay; others."
+        },
+        "powers": [
+          {
+            "name": "Dream-Pull",
+            "description": "Draws victims to the lake. Success based on MP vs MP. Range reduces chance."
+          },
+          {
+            "name": "Create Servant",
+            "description": "Drives metallic spine into victim's chest, injecting fluid. Spine kills victim (3D10 damage) or turns them into undead slave. Spine detaches and leaves red wound."
+          }
+        ],
+        "physical_manifestation": {
+          "title": "Typical Physical Manifestation: Gla'aki",
+          "characteristics": {
+            "STR": "200",
+            "CON": "300",
+            "SIZ": "450",
+            "DEX": "50",
+            "HP": "140",
+            "DB": "+7D6",
+            "Build": "8",
+            "Move": "6"
+          },
+          "combat": {
+            "attacks_per_round": "1 (spines)",
+            "description": "Attacks with spines (ramming or shooting).",
+            "attacks": [
+              {
+                "name": "Fighting",
+                "success_chance": "100%",
+                "difficulty_hard": "50%",
+                "difficulty_extreme": "20%",
+                "damage": "3D10"
+              }
+            ]
+          },
+          "armor": {
+            "rating": "40-point integument",
+            "notes": "Spines have 4-point armor/6 HP. If 0 HP, crumbles to dust. Reforms in 1D100 days."
+          }
+        }
+      }
     }
   ]
 }
