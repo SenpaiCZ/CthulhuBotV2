@@ -3075,7 +3075,7 @@
         "description": "Some may once have been human... others were greatly bestial with elongated snouts equipped with pointed teeth and receding foreheads conveying a canine-like aspect. They walked on two legs, although some seemed more comfortable moving on all fours. Their skin ranged from pale white to gray and brown, and in places, their rubbery flesh was coated in grave mold... Their hands ended in long claw-tipped fingers, and their feet were more akin to a goat's hooves.",
         "alternative_names": [
           "Dark Kin",
-          "Gh\u00fcls",
+          "Ghüls",
           "Fiends",
           "Corpse Eaters",
           "Grave Lurkers",
@@ -3327,7 +3327,7 @@
           },
           {
             "name": "Generate Cold",
-            "description": "Can drop temperature by 20\u00b0F (approx 11\u00b0C) per 1 MP spent for one hour in a 100-yard radius."
+            "description": "Can drop temperature by 20°F (approx 11°C) per 1 MP spent for one hour in a 100-yard radius."
           }
         ],
         "combat": {
@@ -4295,106 +4295,6 @@
     },
     {
       "monster_entry": {
-        "name": "King in Yellow, Courtiers of the",
-        "subtitle": "Pallid Dancers",
-        "tags": [
-          "Mythos",
-          "Servitor",
-          "Hastur",
-          "Construct"
-        ],
-        "description": "Attendant upon the will of the King in Yellow... Arrayed in flowing and tattered yellow-orange rags, they wear pale and uncanny flesh-like masks. Beneath these robes and masks none can say what form they take. Within the King's court, they perform elaborate dances to strange music that echoes through the dank corridors of Lost Carcosa.",
-        "alternative_names": [
-          "The King's Demons",
-          "Masked Ones",
-          "Pallid Dancers",
-          "Yellow Horrors"
-        ],
-        "main_entry_text": "Servants of Lost Carcosa, the courtiers of the King in Yellow may be encountered attending to the king, appearing to perform ritualistic dances at the king's desire. They move with unnatural grace, swirling in violent circles and moving in synchronized patterns. For unwelcome guests, the courtiers reveal their malice, the edges of their flowing robes turning to razors to cut down those unworthy of the king's attention.",
-        "characteristics": {
-          "STR": {
-            "roll": "70",
-            "average": 70
-          },
-          "CON": {
-            "roll": "80",
-            "average": 80
-          },
-          "SIZ": {
-            "roll": "50",
-            "average": 50
-          },
-          "DEX": {
-            "roll": "120",
-            "average": 120
-          },
-          "INT": {
-            "roll": "100",
-            "average": 100
-          },
-          "POW": {
-            "roll": "100",
-            "average": 100
-          }
-        },
-        "derived_stats": {
-          "hit_points": "13",
-          "damage_bonus": "0",
-          "build": 0,
-          "magic_points": 20,
-          "move": {
-            "base": 15
-          }
-        },
-        "powers_and_abilities": [
-          {
-            "name": "Dance of Death",
-            "description": "Mesmerizes and damages those bearing witness. Targets within 20 yards must make Hard POW or become mesmerized. In following rounds, tattered robes turn razor-like, causing 1D4 damage per round. Mesmerized victims can attempt Hard POW roll to break free once per turn."
-          }
-        ],
-        "combat": {
-          "attacks_per_round": "1 (robe lash or weapon)",
-          "attacks": [
-            {
-              "name": "Fighting (Razor Robes)",
-              "success_chance": "70%",
-              "difficulty_hard": "35%",
-              "difficulty_extreme": "14%",
-              "damage": "1D4"
-            },
-            {
-              "name": "Scimitar",
-              "success_chance": "65%",
-              "difficulty_hard": "32%",
-              "difficulty_extreme": "13%",
-              "damage": "1D6"
-            }
-          ],
-          "dodge": {
-            "success_chance": "60%",
-            "difficulty_hard": "30%",
-            "difficulty_extreme": "12%"
-          }
-        },
-        "skills": [
-          {
-            "name": "Jump",
-            "value": "70%"
-          },
-          {
-            "name": "Stealth",
-            "value": "70%"
-          }
-        ],
-        "armor": {
-          "rating": "None"
-        },
-        "spells": "Summon/Bind Byakhee and others.",
-        "sanity_loss": "0/1D3"
-      }
-    },
-    {
-      "monster_entry": {
         "name": "K'n-yan, People of",
         "subtitle": "Psychic Subterranean Dwellers",
         "tags": [
@@ -4518,104 +4418,102 @@
     },
     {
       "monster_entry": {
-        "name": "Leng, Ghoul Hound of",
-        "subtitle": "Graveside Horrors",
+        "name": "King in Yellow, Courtiers of the",
+        "subtitle": "Pallid Dancers",
         "tags": [
           "Mythos",
-          "Independent",
-          "Dreamlands",
-          "Canine"
+          "Servitor",
+          "Hastur",
+          "Construct"
         ],
-        "description": "The amulet best described the hound's appearance: that of a quadruped with folded wings, crouched and ready to pounce. Its head was repellent, something vaguely canine, with enormous fangs and eyes that spoke of an ancient hunger and malignancy. Its skin was furry in places, while in others it seemed caked in grave mold or soil.",
+        "description": "Attendant upon the will of the King in Yellow... Arrayed in flowing and tattered yellow-orange rags, they wear pale and uncanny flesh-like masks. Beneath these robes and masks none can say what form they take. Within the King's court, they perform elaborate dances to strange music that echoes through the dank corridors of Lost Carcosa.",
         "alternative_names": [
-          "Dragvals",
-          "Dark Seekers",
-          "Flesh Rippers",
-          "Grave Beasts"
+          "The King's Demons",
+          "Masked Ones",
+          "Pallid Dancers",
+          "Yellow Horrors"
         ],
-        "main_entry_text": "Ghoul hounds are believed to come from the hidden Plateau of Leng where numerous realities are said to co-exist... Some speculate that the hounds were once creatures living on the plateau that have been transformed by proximity to dimensional nexus points... Relentless hunters, ghoul hounds seek out their target, each night drawing closer until they pounce to either rip their prey limb from limb or carry them away to answer for their crimes.",
+        "main_entry_text": "Servants of Lost Carcosa, the courtiers of the King in Yellow may be encountered attending to the king, appearing to perform ritualistic dances at the king's desire. They move with unnatural grace, swirling in violent circles and moving in synchronized patterns. For unwelcome guests, the courtiers reveal their malice, the edges of their flowing robes turning to razors to cut down those unworthy of the king's attention.",
         "characteristics": {
           "STR": {
-            "roll": "(4D6+4)*5",
-            "average": 90
+            "roll": "70",
+            "average": 70
           },
           "CON": {
-            "roll": "(4D6+2)*5",
+            "roll": "80",
             "average": 80
           },
           "SIZ": {
-            "roll": "(2D6+8)*5",
-            "average": 75
+            "roll": "50",
+            "average": 50
           },
           "DEX": {
-            "roll": "(2D6+9)*5",
-            "average": 80
+            "roll": "120",
+            "average": 120
           },
           "INT": {
-            "roll": "(2D6+4)*5",
-            "average": 55
+            "roll": "100",
+            "average": 100
           },
           "POW": {
-            "roll": "(2D6+5)*5",
-            "average": 60
+            "roll": "100",
+            "average": 100
           }
         },
         "derived_stats": {
-          "hit_points": "15",
-          "damage_bonus": "+1D6",
-          "build": 2,
-          "magic_points": 12,
+          "hit_points": "13",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 20,
           "move": {
-            "base": 10,
-            "special": "12 flying"
+            "base": 15
           }
         },
         "powers_and_abilities": [
           {
-            "name": "Death Cry",
-            "description": "Baying is bone-chilling. Those hearing it must make Sanity roll (0/1D2 loss)."
-          },
-          {
-            "name": "Death Stare",
-            "description": "May stare into prey's eyes (opposed POW roll). If victim loses, they are transfixed/frozen until the hound attacks. Victim comprehends why they are hunted (1/1D6 Sanity loss)."
+            "name": "Dance of Death",
+            "description": "Mesmerizes and damages those bearing witness. Targets within 20 yards must make Hard POW or become mesmerized. In following rounds, tattered robes turn razor-like, causing 1D4 damage per round. Mesmerized victims can attempt Hard POW roll to break free once per turn."
           }
         ],
         "combat": {
-          "attacks_per_round": "2 (claws) or 1 (bite)",
+          "attacks_per_round": "1 (robe lash or weapon)",
           "attacks": [
             {
-              "name": "Fighting",
+              "name": "Fighting (Razor Robes)",
+              "success_chance": "70%",
+              "difficulty_hard": "35%",
+              "difficulty_extreme": "14%",
+              "damage": "1D4"
+            },
+            {
+              "name": "Scimitar",
               "success_chance": "65%",
               "difficulty_hard": "32%",
               "difficulty_extreme": "13%",
-              "damage": "1D8+DB (claw) or 1D8+4+DB (bite)"
+              "damage": "1D6"
             }
           ],
           "dodge": {
-            "success_chance": "50%",
-            "difficulty_hard": "25%",
-            "difficulty_extreme": "10%"
+            "success_chance": "60%",
+            "difficulty_hard": "30%",
+            "difficulty_extreme": "12%"
           }
         },
         "skills": [
           {
             "name": "Jump",
-            "value": "90%"
+            "value": "70%"
           },
           {
-            "name": "Listen",
-            "value": "75%"
-          },
-          {
-            "name": "Track (Scent)",
-            "value": "90%"
+            "name": "Stealth",
+            "value": "70%"
           }
         ],
         "armor": {
-          "rating": "3-point thick fur and hard skin"
+          "rating": "None"
         },
-        "spells": "None.",
-        "sanity_loss": "0/1D6"
+        "spells": "Summon/Bind Byakhee and others.",
+        "sanity_loss": "0/1D3"
       }
     },
     {
@@ -4734,6 +4632,108 @@
         },
         "spells": "15% chance to know one spell; mostly Contact Lrogg.",
         "sanity_loss": "0/1D8"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Leng, Ghoul Hound of",
+        "subtitle": "Graveside Horrors",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Dreamlands",
+          "Canine"
+        ],
+        "description": "The amulet best described the hound's appearance: that of a quadruped with folded wings, crouched and ready to pounce. Its head was repellent, something vaguely canine, with enormous fangs and eyes that spoke of an ancient hunger and malignancy. Its skin was furry in places, while in others it seemed caked in grave mold or soil.",
+        "alternative_names": [
+          "Dragvals",
+          "Dark Seekers",
+          "Flesh Rippers",
+          "Grave Beasts"
+        ],
+        "main_entry_text": "Ghoul hounds are believed to come from the hidden Plateau of Leng where numerous realities are said to co-exist... Some speculate that the hounds were once creatures living on the plateau that have been transformed by proximity to dimensional nexus points... Relentless hunters, ghoul hounds seek out their target, each night drawing closer until they pounce to either rip their prey limb from limb or carry them away to answer for their crimes.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          },
+          "CON": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "DEX": {
+            "roll": "(2D6+9)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "POW": {
+            "roll": "(2D6+5)*5",
+            "average": 60
+          }
+        },
+        "derived_stats": {
+          "hit_points": "15",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 12,
+          "move": {
+            "base": 10,
+            "special": "12 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Death Cry",
+            "description": "Baying is bone-chilling. Those hearing it must make Sanity roll (0/1D2 loss)."
+          },
+          {
+            "name": "Death Stare",
+            "description": "May stare into prey's eyes (opposed POW roll). If victim loses, they are transfixed/frozen until the hound attacks. Victim comprehends why they are hunted (1/1D6 Sanity loss)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "2 (claws) or 1 (bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "65%",
+              "difficulty_hard": "32%",
+              "difficulty_extreme": "13%",
+              "damage": "1D8+DB (claw) or 1D8+4+DB (bite)"
+            }
+          ],
+          "dodge": {
+            "success_chance": "50%",
+            "difficulty_hard": "25%",
+            "difficulty_extreme": "10%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Jump",
+            "value": "90%"
+          },
+          {
+            "name": "Listen",
+            "value": "75%"
+          },
+          {
+            "name": "Track (Scent)",
+            "value": "90%"
+          }
+        ],
+        "armor": {
+          "rating": "3-point thick fur and hard skin"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D6"
       }
     },
     {
@@ -5448,21 +5448,21 @@
     },
     {
       "monster_entry": {
-        "name": "Nag\u00e4ae",
+        "name": "Nagäae",
         "subtitle": "Twisted Servants",
         "tags": [
           "Mythos",
           "Servitor",
-          "Cy\u00e4egha",
+          "Cyäegha",
           "Toad-like"
         ],
         "description": "A toad-like body, transparent, its pulsating innards covered only by a thin layer of leathery skin. It had the hind legs of a frog, and the forelegs of a man. It moved crab-like, crawling on its lumpy belly... The forelegs were raised mantis-like as in prayer, all four of them. The face, if such it could be called, consisted of bulging eyes and an oversized mouth with multiple forked tongues.",
         "alternative_names": [
-          "Cy\u00e4egha's Claws",
+          "Cyäegha's Claws",
           "Nagae",
           "Toad Kin"
         ],
-        "main_entry_text": "Nag\u00e4ae are the repellent, amphibious, toad-like servants of Cy\u00e4egha, although they are also sired or spawned by other Mythos entities to act as servitors and attendants... They move by creeping along the ground in a sideways fashion, not unlike a crab. Malodorous, they reek of decay and rot... When killed, a nag\u00e4ae dissolves into a sickening mass of corrosive black slime in 2D4 minutes.",
+        "main_entry_text": "Nagäae are the repellent, amphibious, toad-like servants of Cyäegha, although they are also sired or spawned by other Mythos entities to act as servitors and attendants... They move by creeping along the ground in a sideways fashion, not unlike a crab. Malodorous, they reek of decay and rot... When killed, a nagäae dissolves into a sickening mass of corrosive black slime in 2D4 minutes.",
         "characteristics": {
           "STR": {
             "roll": "(4D6+12)*5",
@@ -5869,6 +5869,472 @@
         },
         "spells": "Roll INT to determine if 1D6 spells are known.",
         "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Nyogtha, Spawn of",
+        "subtitle": "Children of Darkness",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Nyogtha",
+          "Mutant"
+        ],
+        "description": "Nyogtha creates its spawn from vile unions, its progeny taking human seeming shape at first before coming to resemble a shapeless bloated thing with gray-black rotted flesh, squirming as though filled with large black worms. Despite such foul appearance, the spawn wear once-human fang-filled faces and possess skeletal hands from which sharp talons extend. Hellish bulging eyes of crimson hue reveal little trace of humanity.",
+        "alternative_names": [
+          "Children of the Red Abyss",
+          "Envelopers",
+          "Pus Sacks",
+          "Spawn of the Thing That Should Not Be"
+        ],
+        "main_entry_text": "The spawn of Nyogtha issue from blasphemous unions between the Great Old One Nyogtha and humans or ghouls. Such spawn swiftly degenerate into shapeless abominations after three to six decades, but at first resemble humans, able to pass within society. The transformation from human-like to fully matured spawn begins with hideous black splotches appearing on the flesh... The human form's skeleton warps and distorts into a parody of itself... while the flesh continues to bloat and blacken like a rotting corpse.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+12)*5 (Human) / (4D6+12)*5 (Monstrous)",
+            "average": "95 (Human) / 130 (Monstrous)"
+          },
+          "CON": {
+            "roll": "(2D6+9)*5 (Human) / (2D6+9)*5 (Monstrous)",
+            "average": "80 / 80"
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5 (Human) / (4D6+6)*5 (Monstrous)",
+            "average": "65 / 100"
+          },
+          "DEX": {
+            "roll": "(2D6+4)*5 (Human) / (2D6+1)*5 (Monstrous)",
+            "average": "55 / 40"
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(2D6+9)*5",
+            "average": 80
+          },
+          "APP": {
+            "roll": "(2D6+5)*5 (Human)",
+            "average": "60"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "14 (Human) / 18 (Monstrous)",
+          "damage_bonus": "+1D4 (Human) / +2D6 (Monstrous)",
+          "build": "1 (Human) / 3 (Monstrous)",
+          "magic_points": 16,
+          "move": {
+            "base": "8 (Human) / 6 (Monstrous)"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Not Quite Human",
+            "description": "Close examination may reveal that a viscous black ichor pulses through its veins rather than blood."
+          },
+          {
+            "name": "Photosensitivity",
+            "description": "As a spawn matures, they become photosensitive (usually around age 16). Sunlight causes excruciating pain. Easily blinded by bright light but have excellent night vision."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (human) or 2 or 1 (monstrous)",
+          "attacks": [
+            {
+              "name": "Fighting (Human)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D3+DB or weapon"
+            },
+            {
+              "name": "Fighting (Monstrous)",
+              "success_chance": "65%",
+              "difficulty_hard": "32%",
+              "difficulty_extreme": "13%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Enfold (Monstrous Maneuver)",
+              "success_chance": "65%",
+              "difficulty_hard": "32%",
+              "difficulty_extreme": "13%",
+              "damage": "1D6 + suffocation",
+              "description": "Target pulled into gelatinous flesh. Tendrils sprout and bore into body (1D6 damage + 1/1D6 Sanity loss). Victim must succeed Extreme CON or take 1D4 suffocation damage/round. Can enfold up to 3 targets."
+            }
+          ],
+          "dodge": {
+            "success_chance": "27% (Human) / 20% (Monstrous)",
+            "difficulty_hard": "13% / 10%",
+            "difficulty_extreme": "5% / 4%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "All impaling weapons (incl. bullets) deal minimum possible damage; immune to fire, chemical, radioactivity, and electrical based attacks."
+        },
+        "spells": "Contact Nyogtha (once in contact). Monstrous spawn know 2D6 spells.",
+        "sanity_loss": "None (human form); 0/1D3 (human form bleeding ichor); 1/1D10 (monstrous)."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Old Ones, Fosterlings of the",
+        "subtitle": "Children of Alien Gods",
+        "tags": [
+          "Mythos",
+          "Human Mutant",
+          "Servitor"
+        ],
+        "description": "It was unstable, a swollen bulk whose pale pink skin glistened as though flayed, with a bulb-like head possessing a lumpy forehead and covered in patches of hair-like strands of thin flesh. Despite its cursed origin, the taint of humanity could be seen.",
+        "alternative_names": [
+          "Chosen One",
+          "Dark Child",
+          "Strange One"
+        ],
+        "main_entry_text": "Fosterlings of the Old Ones are the offspring of magical unions between humans and Outer Gods or Great Old Ones. Each resultant child is unique, with some resembling more the form of its Mythos parent, while others appear human... Once born, the resulting child can spend many years as a normal human until one day it transforms into something more closely resembling its alien parent. In some cases, child never fully transforms and remains \"human\" until death, but in life passes the taint of the Mythos to their own children.",
+        "characteristics": {
+          "STR": {
+            "roll": "(3D6+3D10)*5",
+            "average": 135
+          },
+          "CON": {
+            "roll": "(3D6+3D10)*5",
+            "average": 135
+          },
+          "SIZ": {
+            "roll": "(3D6+1D10+6)*5",
+            "average": 110
+          },
+          "DEX": {
+            "roll": "(3D6+1D10)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          },
+          "POW": {
+            "roll": "(3D6+1D10)*5",
+            "average": 80
+          }
+        },
+        "derived_stats": {
+          "hit_points": "24",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 16,
+          "move": {
+            "base": 8
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Special Powers",
+            "description": "Each fosterling is different. May include mind reading, mind control, prophetic visions, telekinesis, levitation, etc. (Keeper determined)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (or 2 or 3, dependent on form)",
+          "attacks": [
+            {
+              "name": "Fighting (Crush)",
+              "success_chance": "75%",
+              "difficulty_hard": "37%",
+              "difficulty_extreme": "15%",
+              "damage": "1D6+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Varies",
+            "value": "Retains human skills but at penalty due to size/body."
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Minimal damage from mundane weapons (incl. bullets)."
+        },
+        "spells": "All fosterlings may Call their parent deity and Summon/Bind or Contact members of that deity's allied races; those with INT 90 know at least 1D6 spells.",
+        "sanity_loss": "1/1D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Outer Gods, Larvae of the",
+        "subtitle": "Spawn of Impossible Alien Forces",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Outer God",
+          "Larva"
+        ],
+        "description": "A company of entities, they number among those who dance for Azathoth at the center of all things. They spawn monstrous larvae which may, in time, grow into new gods. Each is nameless for now and possessed of nameless hungers.",
+        "alternative_names": [
+          "Star Kin",
+          "Star Seeds"
+        ],
+        "main_entry_text": "The larvae of the Outer Gods (sometimes Other Gods) are among those beings that dance blindly and idiotically in the court of Azathoth at the center of space and time. Occasionally, portions of these beings are torn off or ejected into the depths of space, and sometimes become living beings unto themselves... These entities may be of any form: insectoid, metal, liquid, gaseous, crystalline, living machine, geometrical, amorphous, phosphorous, fiery, mammalian, living sound, living color, and so on.",
+        "characteristics": {
+          "STR": {
+            "roll": "6D10*5",
+            "average": 165
+          },
+          "CON": {
+            "roll": "10D10*5",
+            "average": 275
+          },
+          "SIZ": {
+            "roll": "8D10*5",
+            "average": 220
+          },
+          "DEX": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "INT": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "POW": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          }
+        },
+        "derived_stats": {
+          "hit_points": "49",
+          "damage_bonus": "+4D6",
+          "build": 5,
+          "magic_points": 20,
+          "move": {
+            "base": "1D10+1 (varies)"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1D10 (varies by form)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "90%",
+              "difficulty_hard": "45%",
+              "difficulty_extreme": "18%",
+              "damage": "DB",
+              "special_effect": "Attacks vary by form (tentacle, poison gas, bite, smash, claw, engulf, etc.)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "25%",
+            "difficulty_hard": "12%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Immune to cold and vacuum; certain forms may have other vulnerabilities."
+        },
+        "spells": "1D6 spells.",
+        "sanity_loss": "Varies dependent on form; from 0/1D10 to 1D8/5D10."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Outer Gods, Servitor of the",
+        "subtitle": "The Piping Ones",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Azathoth",
+          "Amorphous"
+        ],
+        "description": "At the center of all things lies Azathoth... surrounded by the servitors. These beings are best described as amorphous masses, fluid like and bubbling, yet sometimes taking on more solid forms resembling caricatures of toads, octopi, and squids. From them comes a ghastly ululation, a piping song which pleases Azathoth and ensures his unending sleep... lest he wake and in so doing give vent to primal destruction and end all things.",
+        "alternative_names": [
+          "Heralds",
+          "Piping Ones",
+          "Star Creatures",
+          "The Dancers"
+        ],
+        "main_entry_text": "These amorphous beings progress by rolling, slithering, or lurching. Their ever-changing shapes are a blasphemous contortion, making description difficult... Servitors may be found accompanying Mythos deities, though they are most commonly found in Azathoth's Court. These are the \"demon flautists\" playing flute-like music for their masters. The noise is best described as a sort of background dirge rising to a maddening cacophony of piping.",
+        "characteristics": {
+          "STR": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "CON": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "DEX": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "(4D6+3)*5",
+            "average": 85
+          },
+          "POW": {
+            "roll": "(2D6+12)*5",
+            "average": 95
+          }
+        },
+        "derived_stats": {
+          "hit_points": "18",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 19,
+          "move": {
+            "base": 7
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Music of Madness",
+            "description": "Discordant music adversely affects human listeners. Provokes a Sanity roll every two rounds (0/1D4 loss)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "4 (tentacles)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6 per tentacle",
+              "special_effect": "A mass of writhing tentacles batters and swipes. Each successful hit inflicts damage from 1D3 tentacles."
+            },
+            {
+              "name": "Tentacle Grab (Maneuver)",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "Held (crush 1D6 or fling 2D6)",
+              "description": "Can grab up to four targets (range 20 yards). Held targets may be crushed (1D6) or flung (2D6 falling damage). Victims can break free with opposed STR/DEX roll."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Immune to mundane weapons (incl. bullets); regenerates 3 hit points per round (death at zero hit points)."
+        },
+        "spells": "Knows 1D10 spells (usually Summon/Bind and Call).",
+        "sanity_loss": "1/1D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Petesouchi",
+        "subtitle": "Crocodile People",
+        "tags": [
+          "Mythos",
+          "Human Mutant",
+          "Reptilian"
+        ],
+        "description": "Do not tempt the malice of those who are learned in the arcane lest their ire is turned upon you. For there are those who can unnaturally twist the human form into bestial shape. Look upon the basking crocodile you passed outside and note its eyes. See you the mind within, unable to converse, possessing a mouth through which human speech is impossible. What despair a man whose intellect is forever trapped in inhuman form.",
+        "alternative_names": [
+          "The Cursed",
+          "Crocodile Folk"
+        ],
+        "main_entry_text": "Differing opinions arise concerning the crocodile people known as petesouchi. Some are said to be transformed by dark spells perpetrated by vengeful sorcerers, while others are considered to have a tainted bloodline that turns a human being into a crocodile... Unlike deep ones, however, their final mature form is that of an enormous crocodile with human intelligence. Unable to communicate with other humans or even their own children, they are cursed to remain nearby but forever isolated from their families.",
+        "characteristics": {
+          "STR": {
+            "roll": "(6D6+8)*5",
+            "average": 145
+          },
+          "CON": {
+            "roll": "(4D6+8)*5",
+            "average": 110
+          },
+          "SIZ": {
+            "roll": "(6D6+8)*5",
+            "average": 145
+          },
+          "DEX": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(2D6+1)*5",
+            "average": 40
+          }
+        },
+        "derived_stats": {
+          "hit_points": "25",
+          "damage_bonus": "+3D6",
+          "build": 4,
+          "magic_points": 8,
+          "move": {
+            "base": 7,
+            "special": "10 swimming"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (bite) or 1 (roll)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "DB"
+            },
+            {
+              "name": "Roll",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D8+DB",
+              "description": "Bites victim and goes into classic crocodile roll to crush, twist, and snap."
+            }
+          ],
+          "dodge": {
+            "success_chance": "17%",
+            "difficulty_hard": "8%",
+            "difficulty_extreme": "3%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Overturn Boat",
+            "value": "70%"
+          },
+          {
+            "name": "Psychology",
+            "value": "40%"
+          },
+          {
+            "name": "Stealth",
+            "value": "60%"
+          },
+          {
+            "name": "Swim",
+            "value": "80%"
+          }
+        ],
+        "armor": {
+          "rating": "6-point hide"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D4 to encounter adult; 0/1D6 to encounter transforming."
       }
     }
   ]
