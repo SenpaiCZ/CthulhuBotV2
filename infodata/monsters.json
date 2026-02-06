@@ -7505,6 +7505,597 @@
         "spells": "80% chance of knowing 2D10 spells.",
         "sanity_loss": "0/1D6"
       }
+    },
+    {
+      "monster_entry": {
+        "name": "Shantak",
+        "subtitle": "Elephantine Mounts",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Independent",
+          "Avian"
+        ],
+        "description": "It came down from the stars upon two wings wrought of scales and sinuous skin rather than feathers, encrusted with rime and niter. It was loathsome and elephantine in shape... A chimera of sorts, seemingly composed of bird, reptile, and equine aspects. Its horse-like head was scaled and monstrous, and its dark eyes were set within deep pits of flesh.",
+        "alternative_names": [
+          "Dragons",
+          "Steeds of the Gods"
+        ],
+        "main_entry_text": "Shantaks brood in cavernous holes within meteors and other bodies among the stars. Able to fly through the vacuum of space, they are sometimes bound by wizards and servants of the Outer Gods as steeds... Said to be noisome and loathly, they are cantankerous beasts who must be kept in check through the proper bindings lest they unseat and eat their riders. For unknown reasons, shantaks appear to fear nightgaunts.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+20)*5",
+            "average": 170
+          },
+          "CON": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "SIZ": {
+            "roll": "(4D6+36)*5",
+            "average": 250
+          },
+          "DEX": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "INT": {
+            "roll": "1D6*5",
+            "average": 15
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "31",
+          "damage_bonus": "+4D6",
+          "build": 5,
+          "magic_points": 10,
+          "move": {
+            "base": 6,
+            "special": "18 flying"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (strike, bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Bite and Hold (Maneuver)",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "2D6",
+              "description": "Grabs prey with bite. Automatic 1D6 damage per round thereafter. Victim may attempt escape with STR or DEX roll; otherwise makes Luck roll each round to avoid being thrown to the ground (2D6 damage)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "25%",
+            "difficulty_hard": "12%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "armor": {
+          "rating": "9-point hide"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Shoggoth",
+        "subtitle": "Fetid Iridescences",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Alien",
+          "Slave Race"
+        ],
+        "description": "The insane creation of beings now dead, these monstrous nightmares are as plastic columns of black iridescence. Shapeless, yet able to form appendages and limbs at will... Bubbling self-luminous protoplasm, forming and unforming. Once the slaves of their masters, they rose and destroyed a civilization.",
+        "alternative_names": [
+          "The Builders",
+          "Elder Spawn",
+          "Loathsome Things",
+          "Shuggoths"
+        ],
+        "main_entry_text": "Shoggoths are among the most horrible and loathsome of things. Mighty sacks of protoplasm, roughly five yards/meters in diameter, these amphibious creatures can imitate other life forms, growing limbs, eyes, and other appendages at will. Created by the elder things... shoggoths were used as beasts of burden and to build elder thing cities in prehistory. Over time, mutations caused shoggoths to develop their intellect and will, causing them to rebel.",
+        "characteristics": {
+          "STR": {
+            "roll": "18D6*5",
+            "average": 315
+          },
+          "CON": {
+            "roll": "12D6*5",
+            "average": 210
+          },
+          "SIZ": {
+            "roll": "24D6*5",
+            "average": 420
+          },
+          "DEX": {
+            "roll": "1D6*5",
+            "average": 15
+          },
+          "INT": {
+            "roll": "2D6*5",
+            "average": "35 (70 for mutated/descendant)"
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "63",
+          "damage_bonus": "+8D6",
+          "build": 9,
+          "magic_points": 10,
+          "move": {
+            "base": 10,
+            "special": "10 rolling/swimming"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Mimicry",
+            "description": "Can mimic sounds they hear, from penguin cries to human voices."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "2 (swipe, bite, crush, engulf)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "70%",
+              "difficulty_hard": "35%",
+              "difficulty_extreme": "14%",
+              "damage": "DB"
+            },
+            {
+              "name": "Engulf (Maneuver)",
+              "success_chance": "80%",
+              "difficulty_hard": "40%",
+              "difficulty_extreme": "16%",
+              "damage": "DB",
+              "description": "Victims must make opposed STR roll or be sucked apart (usually instant death). Damage is DB divided by number of people engulfed."
+            }
+          ],
+          "dodge": {
+            "success_chance": "8%",
+            "difficulty_hard": "4%",
+            "difficulty_extreme": "1%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "80%"
+          },
+          {
+            "name": "Stealth",
+            "value": "40%"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Halve damage from fire and electricity; mundane weapons (incl. bullets) deal 1 damage per hit. Regenerates 2 HP per round (death at zero)."
+        },
+        "spells": "None (ancient individuals may know 1D4+).",
+        "sanity_loss": "1D6/1D20"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Shoggoth Lord",
+        "subtitle": "Corpulent Monstrosities",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Shapeshifter",
+          "Mimic"
+        ],
+        "description": "An expert in shape, this advanced species of shoggoth can blend in with its surroundings, mimicking humans to get as close as possible to its prey... In human form, these beings appear as grossly obese, hairless figures. They are cunning, charming, and devious, although can appear somewhat awkward in their interactions with humans.",
+        "alternative_names": [
+          "Changeling",
+          "Mimic",
+          "Shapeshifter",
+          "Shuggoth King"
+        ],
+        "main_entry_text": "Shoggoth Lords are smaller, more intelligent descendants of their larger monstrous cousins. Through some quirk of evolution... a handful of shoggoths evolved into intelligent creatures able at will to mimic humans in appearance and speech. A shoggoth lord may freely transmute between its human and monstrous forms, but does require great concentration and control to remain in human form for long periods of time.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+10)*5",
+            "average": "75 (Human) / 120 (True)"
+          },
+          "CON": {
+            "roll": "(6D6+10)*5",
+            "average": "65 (Human) / 155 (True)"
+          },
+          "SIZ": {
+            "roll": "(2D6+8)*5",
+            "average": "75 (Human) / 75 (True)"
+          },
+          "DEX": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "14 (Human) / 23 (True)",
+          "damage_bonus": "+1D4 (Human) / +1D6 (True)",
+          "build": "1 (Human) / 2 (True)",
+          "magic_points": 13,
+          "move": {
+            "base": "8 (Human) / 10 rolling (True)"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (unarmed, weapon) or 1 (crush or engulf)",
+          "attacks": [
+            {
+              "name": "Fighting (Human Form)",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "11%",
+              "damage": "1D6+2+DB"
+            },
+            {
+              "name": "Crush (True Form)",
+              "success_chance": "80%",
+              "difficulty_hard": "40%",
+              "difficulty_extreme": "16%",
+              "damage": "DB"
+            },
+            {
+              "name": "Engulf (True Form Maneuver)",
+              "success_chance": "80%",
+              "difficulty_hard": "40%",
+              "difficulty_extreme": "16%",
+              "damage": "DB per round",
+              "description": "Seizes target and sucks them into body mass to digest. Opposed STR roll to escape. Can only engulf one victim at a time."
+            }
+          ],
+          "dodge": {
+            "success_chance": "30%",
+            "difficulty_hard": "15%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Charm",
+            "value": "70%"
+          },
+          {
+            "name": "Persuade",
+            "value": "60%"
+          },
+          {
+            "name": "Stealth",
+            "value": "65%"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Halve damage from fire and electricity; mundane weapons (incl. bullets) deal 1 damage per hit. Regenerates 2 HP per round."
+        },
+        "spells": "1D3 spells.",
+        "sanity_loss": "1D6/1D20 (True Form); 1/1D3 to witness change."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Shoggoth, Proto",
+        "subtitle": "Shape-Shifters",
+        "tags": [
+          "Mythos",
+          "Construct",
+          "Shapeshifter"
+        ],
+        "description": "Notable is the tissue, characteristic of human flesh, though possessing greater mobility. The live specimen appears to be able to change at will. Its mass is humanoid but features ridges that are apparently muscle and/or bone pushing out through the skin... The subject continually shivers, with distinct rhythmic breathing. Apparently by design, the subject can will the formation of new limbs.",
+        "alternative_names": [
+          "Monstrous Hybrids",
+          "Shoggoth Spawn",
+          "Weird Ones"
+        ],
+        "main_entry_text": "Proto-shoggoths are not true shoggoths but rather creatures created through science and/or arcane magic. A process of combining the tissue of a human with that of a shoggoth enables the formation of a proto-shoggoth. The tissue is the color and texture of human flesh, though it can change at will. These hybrid creations grow only through the combining and absorption of other proto-shoggoth matter.",
+        "characteristics": {
+          "STR": {
+            "roll": "10D6*5",
+            "average": 175
+          },
+          "CON": {
+            "roll": "(6D6+4)*5",
+            "average": 125
+          },
+          "SIZ": {
+            "roll": "8D6*5",
+            "average": 140
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "26",
+          "damage_bonus": "+3D6",
+          "build": 4,
+          "magic_points": 13,
+          "move": {
+            "base": 8
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1+ (crush, rake, whip, kick, fist)",
+          "attacks": [
+            {
+              "name": "Fighting (Human Form)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D3+DB"
+            },
+            {
+              "name": "Crush (True Form)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "DB"
+            },
+            {
+              "name": "Engulf (True Form Maneuver)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "DB",
+              "description": "Seized and sucked into body mass. Digested for DB damage each round. Opposed STR roll to break free."
+            }
+          ],
+          "dodge": {
+            "success_chance": "32%",
+            "difficulty_hard": "16%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Mundane weapons (incl. bullets) deal 1 damage per hit. Regenerates 2 HP per round."
+        },
+        "spells": "None (unless created from human who knew spells).",
+        "sanity_loss": "1/1D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Shub-Niggurath, Child of",
+        "subtitle": "Seeds of the Mother",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Shub-Niggurath"
+        ],
+        "description": "The chosen one's skin had earlier turned pearlescent but now changed again into a pale milky-yellow color. The transformation was messy and noisy... Pallid bundles of muscle and tentacle growths emerged... It was human in overall shape, but far beyond what might pass as human. It possessed numerous red or yellow eyes and a multitude of small mouths.",
+        "alternative_names": [
+          "Children of the Grove",
+          "The Cursed",
+          "The Joined",
+          "Pale Ones",
+          "Spawn of the Mother",
+          "The Transformed"
+        ],
+        "main_entry_text": "The children of Shub-Niggurath grow from seed pods that take human blood as nourishment... When submerged in fresh human blood, be it in a bowl or within a living body, the pod's outer shell softens and the seed within begins to grow... If growing inside a human, the final stage of maturity sees the monster inside break through the host's skin and rise out of the sloughed-off flesh.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "CON": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          },
+          "SIZ": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "DEX": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "17",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 13,
+          "move": {
+            "base": 8
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (whip, bite, grab)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "70%",
+              "difficulty_hard": "35%",
+              "difficulty_extreme": "14%",
+              "damage": "1D4+DB"
+            },
+            {
+              "name": "Grab (Maneuver)",
+              "success_chance": "70%",
+              "difficulty_hard": "35%",
+              "difficulty_extreme": "14%",
+              "damage": "1D6+1 per round",
+              "description": "Latches onto target and pulls to larger central mouth. Victim can break free with opposed STR roll. If child suffers 5+ damage, victim may make Luck roll to break hold."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "70%"
+          },
+          {
+            "name": "Mutter Mythos Wisdom",
+            "value": "30%"
+          },
+          {
+            "name": "Sense Prey",
+            "value": "45%"
+          },
+          {
+            "name": "Stealth",
+            "value": "35%"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Minimum damage from bullets. Immune to fire and chemical-based attacks."
+        },
+        "spells": "Contact Shub-Niggurath, plus 30% chance to know 1D4 spells.",
+        "sanity_loss": "1/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Shub-Niggurath, Dark Young of",
+        "subtitle": "Stomping Horrors",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Shub-Niggurath",
+          "Tree-like"
+        ],
+        "description": "An enormous writhing mass formed of ropy black, earthworm like tentacles. Something like twenty feet tall. Here and there, across the surface were great puckered mouths that dripped green goo. Beneath its central mass, two or three thicker tentacles terminated in enormous black hooves, on which it stamped forward. It carried the visage of some ancient gnarled tree when its shape was cast against the moon. The smell was appalling, like the stench of open graves.",
+        "alternative_names": [
+          "Dark Walkers",
+          "Death Trees",
+          "Hands of the Goat",
+          "Servants of the Mother",
+          "Squirming Ones"
+        ],
+        "main_entry_text": "Dark young are often mistakenly attributed to being the 'young' referred to in Shub-Niggurath's epithet... Dark young appear to be most closely connected children of the Dark Mother, often sent in her stead as envoys or heralds to act as proxies... In silhouette, dark young may at first be mistaken for great trees, ranging from 12 to 20 feet (3 to 6 meters) tall.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+30)*5",
+            "average": 220
+          },
+          "CON": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "(4D6+30)*5",
+            "average": 220
+          },
+          "DEX": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "POW": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          }
+        },
+        "derived_stats": {
+          "hit_points": "30",
+          "damage_bonus": "+4D6",
+          "build": 5,
+          "magic_points": 18,
+          "move": {
+            "base": 8
+          }
+        },
+        "combat": {
+          "attacks_per_round": "5 (strike, swipe, kick, crush, grab) or 1 (trample)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "80%",
+              "difficulty_hard": "40%",
+              "difficulty_extreme": "16%",
+              "damage": "DB"
+            },
+            {
+              "name": "Grab (Maneuver)",
+              "success_chance": "80%",
+              "difficulty_hard": "40%",
+              "difficulty_extreme": "16%",
+              "damage": "1D10+5 STR drain",
+              "description": "Can grab up to 4 targets. Pulled to mouths and drained of STR. STR loss is permanent. Friends can combine STR to pull victim free."
+            },
+            {
+              "name": "Trample",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "2D6+DB",
+              "description": "Rears up and smashes down on up to 1D4 opponents."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Stealth",
+            "value": "30% (Bonus die in woods)"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Firearms deal 1 damage (2 for impale); shotguns deal minimum damage. Immune to heat, blast, corrosion, electricity, or poison."
+        },
+        "spells": "Knows 1D10+5 spells.",
+        "sanity_loss": "1D3/1D10"
+      }
     }
   ]
 }
