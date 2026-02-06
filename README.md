@@ -22,6 +22,7 @@
     *   **Music Control**: Manage the music queue and blacklist songs.
     *   **Game Settings**: Configure gameplay rules like Luck Threshold.
     *   **Reaction Roles**: easily configure self-assignable roles.
+    *   **Auto Deleter**: Manage auto-deletion rules and bulk delete messages.
 *   📈 **Karma System**: Track user reputation with custom upvote/downvote emojis.
 *   🎭 **Reaction Roles**: Allow users to assign roles to themselves by reacting to messages.
 *   🔊 **Soundboard**: Admin-controlled soundboard to play audio clips in voice channels.
@@ -108,9 +109,9 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 *   `listreactions`: 📋 List all smart reactions.
 *   `youtube`: 📺 Setup YouTube channel notifications.
 *   `unsubscribe`: 🔕 Unsubscribe from YouTube notifications.
-*   `deleter`: 🗑️ Setup auto-deletion for channels.
-*   `autodeleter`: 🤖 Configure auto-deleter.
-*   `stopdeleter`: 🛑 Stop auto-deletion.
+*   `deleter`: 🗑️ Delete the last X messages in the current channel.
+*   `autodeleter`: 🤖 Interactive wizard to setup auto-deletion rules.
+*   `stopdeleter`: 🛑 Stop auto-deletion for a channel.
 *   `rss`: 📰 Add a specific RSS feed manually.
 *   `rsssetup`: 📰 Interactive setup wizard for RSS feeds.
 
