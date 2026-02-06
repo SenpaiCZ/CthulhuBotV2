@@ -1,0 +1,2089 @@
+{
+  "monsters": [
+    {
+      "monster_entry": {
+        "name": "Abhoth, Spawn of",
+        "subtitle": "Slimy Progeny",
+        "tags": [
+          "Mythos",
+          "Servitor"
+        ],
+        "description": "Curious things of a mainly pale hue comprised white, gray, and yellow flesh, sticky and slime-coated. Each is born of Abhoth and takes a unique form, often bizarre and strange. Some appearing with multiple appendages or legs or arms, others with more than one mouth-like maw, and some with many eyes or sensory organs.",
+        "alternative_names": [
+          "Abhoth's Issue",
+          "Crawling Horrors",
+          "The Created",
+          "Flourishing Madness",
+          "Ghozii",
+          "Pale Things"
+        ],
+        "main_entry_text": "Abhoth's spawn are numerous and take many forms, each birthed from the Outer God's bulk, and each one unique in form and appearance. They are complex life forms, although some do not appear to be \"finished,\" with vestigial limbs and half-formed bodies, while others seem fully realized. Variously, they range in looks from juvenile prehistoric creatures and monstrous mutants to bothersome-looking humanoids and amorphous globs of living flesh. Some can walk or fly, while many simply crawl or glide slug-like.",
+        "characteristics": {
+          "STR": { "roll": "4D10*5", "average": 110 },
+          "CON": { "roll": "6D6*5", "average": 105 },
+          "SIZ": { "roll": "3D10*5", "average": "80-85" },
+          "DEX": { "roll": "3D6*5", "average": "50-55" },
+          "INT": { "roll": "2D4*5", "average": 25 },
+          "POW": { "roll": "6D6*5", "average": 105 }
+        },
+        "derived_stats": {
+          "hit_points": "18-19",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 21,
+          "move": {
+            "base": "3D6-2 (approx 8)"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (grab, crush, whip, claw, bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D4+DB to 2D6+DB (varies by spawn)",
+              "special_effect": "Every spawn is different, each has a different mode of attack."
+            },
+            {
+              "name": "Crush (Maneuver)",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D4+DB to 2D6+DB per round",
+              "description": "Envelops the target and then crushes on the following round. The target may attempt to break free on their action with a successful opposed STR or DEX roll."
+            }
+          ],
+          "dodge": {
+            "success_chance": "25%",
+            "difficulty_hard": "12%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "skills": [
+          { "name": "Climb", "value": "45%" },
+          { "name": "Scent/Spot Prey", "value": "60%" },
+          { "name": "Stealth", "value": "50%" }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Regenerates 1D6 hit points per round (death at zero hit points)."
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D2 to 1/1D8"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Adherent of the Unpeakable Oath",
+        "subtitle": "Servants of Hastur",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Hastur"
+        ],
+        "description": "These foul caricatures of humanity have given over their will completely to Him Who Is Not To Be Named. Their lumpen flesh has turned scaly and mottled green-gray, their jelly-like arms and legs shamble and wobble as though boneless, and their faces are mask-like, with deep-set eyes hardly visible.",
+        "alternative_names": [
+          "Bloated Ones",
+          "Child of Hali",
+          "Nameless Walkers",
+          "Sinister Devotee",
+          "Servants of Carcosa",
+          "Things from Hali",
+          "Unspeakable Possessors"
+        ],
+        "main_entry_text": "The adherents are creatures who have accepted Hastur's Unspeakable Oath and been transformed into something other. While on earth such creatures tend to be of human origin, other species are lured by the Unspeakable Promise and so the adherents may come in many strange forms. Once the Oath is recited, Hastur's will is imposed upon the adherent, changing their physical form into to jelly-like substance, able to walk and squeeze itself through narrow places.",
+        "characteristics": {
+          "STR": { "roll": "host x 2", "average": 100 },
+          "CON": { "roll": "host x 3", "average": 165 },
+          "SIZ": { "roll": "host x 1.5", "average": 97 },
+          "DEX": { "roll": "host x 2", "average": 110 },
+          "INT": { "roll": "75", "average": 75 },
+          "POW": { "roll": "175", "average": 175 }
+        },
+        "derived_stats": {
+          "hit_points": "24",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 35,
+          "move": {
+            "base": 9
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Nightly Feeding",
+            "description": "Each night an adherent must feed, grasping its victim with its tentacular arms with a successful attack. The target is held and on the following round is drained of bodily fluids at the rate of 1D10 damage per round until death or the target breaks away. Any damage caused is consumed by the adherent, increasing its STR and SIZ by an amount equal to the damage multiplied by 5."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (strike or grab)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "80%",
+              "difficulty_hard": "40%",
+              "difficulty_extreme": "16%",
+              "damage": "1D8+DB",
+              "special_effect": "Uses jelly-like arms to strike or grab and then crush opponents."
+            },
+            {
+              "name": "Grab (Maneuver)",
+              "success_chance": "80%",
+              "difficulty_hard": "40%",
+              "difficulty_extreme": "16%",
+              "damage": "1D10 per round",
+              "description": "Grabs the target and then crushes/drains on the following round. Target may attempt to break free on their action with a successful opposed STR or DEX roll."
+            }
+          ],
+          "dodge": {
+            "success_chance": "55%",
+            "difficulty_hard": "27%",
+            "difficulty_extreme": "11%"
+          }
+        },
+        "skills": [
+          { "name": "Retains those it had while human", "value": "Variable" }
+        ],
+        "armor": {
+          "rating": "6-point scales and rubbery flesh"
+        },
+        "spells": "Any known before the transformation into an adherent, plus those granted by Hastur.",
+        "sanity_loss": "1/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Ashen One",
+        "subtitle": "Dust Devils",
+        "tags": [
+          "Mythos",
+          "Construct",
+          "Magical Creation"
+        ],
+        "description": "Living dust from the ground bones of corpses, some take the form of humanoid nightmares, with faces of dire anger and hatred, while others are akin to those from beyond the stars. Although composed of bone dust, their physicality is solid enough, able to smash and render those who cross their path.",
+        "alternative_names": [
+          "Dust Chokers",
+          "Dust of Hate",
+          "Hell Ash",
+          "Scattered Things",
+          "Whirling Ones"
+        ],
+        "main_entry_text": "Ashen ones are magical creations, be they forged by a wizard's spell or the thought of a Mythos deity. Rumor holds that a secret spell, said to be hidden in the pages of the Necronomicon, provides the ritual to bring life to the ground down bones of the once-living. Once created, an ashen one is bound to service, although if their mortal creator dies, they are free to roam and devise havoc.",
+        "characteristics": {
+          "STR": { "roll": "(2D6+2)*5", "average": 45 },
+          "CON": { "roll": "3D6*5", "average": "50-55" },
+          "SIZ": { "roll": "(2D6+2)*5", "average": 45 },
+          "DEX": { "roll": "(3D6+6)*5", "average": "80-85" },
+          "INT": { "roll": "(2D6+6)*5", "average": 65 },
+          "POW": { "roll": "(2D6+2)*5", "average": 45 }
+        },
+        "derived_stats": {
+          "hit_points": "9-10",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 9,
+          "move": {
+            "base": 8,
+            "special": "10 flying dust"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Whirling Dust",
+            "description": "An ashen one may forgo its physical form to transform into a vortex of whirling dust. Takes one round. All within 5 yards/meters suffer 2D4 automatic damage (unless 2+ armor or successful Dodge). Dodge forfeits next action."
+          },
+          {
+            "name": "Possessing Dust",
+            "description": "May disperse its form to possess a target, entering mouth, nose, and ears. Takes 1D2 rounds. Must win opposed POW roll. If successful, the target is controlled by the ashen one."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (smash, rake, or disperse)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D4+2+DB",
+              "special_effect": "Flesh is scored and raked in addition to force of attack."
+            },
+            {
+              "name": "Whirling Dust",
+              "success_chance": "Automatic",
+              "damage": "2D4 per round",
+              "description": "See special powers."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          { "name": "Stealth", "value": "60%" }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "All impaling weapons (incl. bullets) cause minimum damage."
+        },
+        "spells": "Only those granted by a controlling wizard or god.",
+        "sanity_loss": "0/1D4 to encounter physical form; no loss if encountering in whirling dust form."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Atlach-Nacha, Daughter of",
+        "subtitle": "Hideous Spiders",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Atlach-Nacha"
+        ],
+        "description": "The newborn were wet and slimy things, long and spindly legs radiating out from a central mass. Quickly maturing, these spider-like horrors are enormous. Their skin hardens to a deep black color, except for their abdomens, which are streaked with green and yellow. While akin to the spiders of earth, these are of another scale entirely. Limbs and body pulsate with a horrible rhythm. Each leg terminates in a sharp-pointed end, capable of piercing flesh and bone, while their head boasts a hideous, claw-like mandible for feasting on unspeakable delights.",
+        "alternative_names": [
+          "Children of the Spider God",
+          "Harvesters",
+          "Loathsome Creepers",
+          "Makarasa Jeisa",
+          "Puer Aranea"
+        ],
+        "main_entry_text": "Atlach-Nacha's daughters are enormous, venomous spider-like entities. Chosen by the Great Old One as worthy to serve, a human (or possibly another species) is \"rebirthed\" by Atlach-Nacha-the process transforming the worshipper into one of its children, known as \"daughters.\" Human devotees who bear the mark of a venomous spider bite are particularly revered by the god's cult priestesses, who regard the subject as \"favored.\"",
+        "characteristics": {
+          "STR": { "roll": "(3D6+13)*5", "average": "115-120" },
+          "CON": { "roll": "(3D6+8)*5", "average": "90-95" },
+          "SIZ": { "roll": "(3D6+8)*5", "average": "90-95" },
+          "DEX": { "roll": "(2D6+6)*5", "average": 65 },
+          "INT": { "roll": "3D6*5", "average": "50-55" },
+          "POW": { "roll": "(2D6+6)*5", "average": 65 }
+        },
+        "derived_stats": {
+          "hit_points": "18-19",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 13,
+          "move": {
+            "base": 8
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Spin Web",
+            "description": "Capable of spinning webs to form traps. Unaware characters may fall foul of such traps (STR 70 to break free). Can be cut or burned (1D6 damage per round)."
+          },
+          {
+            "name": "Feast",
+            "description": "Once paralyzed by a bite attack, it may begin to devour the flesh of the victim's head, sucking out the brain. Takes 1 round per 5 INT of the victim. Victim dies at zero INT. Survivors are permanently blind and lose 2D10 APP and the devoured INT."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (bite, spear, or feast)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "70%",
+              "difficulty_hard": "35%",
+              "difficulty_extreme": "14%",
+              "damage": "1D6+DB",
+              "special_effect": "Uses long spear-like leg to pierce."
+            },
+            {
+              "name": "Bite",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D10 + venom",
+              "special_effect": "Venom is a paralyzing toxin; if target fails Extreme CON roll, they are paralyzed for 1D6 hours."
+            },
+            {
+              "name": "Feast",
+              "success_chance": "Automatic",
+              "damage": "5 INT devoured per round",
+              "description": "See Powers and Abilities."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          { "name": "Climb", "value": "80%" },
+          { "name": "Spin Web", "value": "60%" },
+          { "name": "Stealth", "value": "50%" }
+        ],
+        "armor": {
+          "rating": "5-point hard shell"
+        },
+        "spells": "All know Contact and Call Atlach-Nacha. INT 75+ know 1D3 additional spells.",
+        "sanity_loss": "1/1D8. Seeing the process of human transformation costs 1/1D8."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Blighted One",
+        "subtitle": "Alien Parasites",
+        "tags": [
+          "Mythos",
+          "Mutant",
+          "Fungal"
+        ],
+        "description": "Fungus not of this earth. It spreads rapidly, multiplying as it feasts upon anything it encounters... Inhalation leads to a conjoining of flesh and fungi, a bothersome union producing the blighted one, a walking assemblage of fungal blooms, strands, and spores.",
+        "alternative_names": [
+          "Boletun",
+          "Corrupted Ones",
+          "Fungus People",
+          "Mushroom Man",
+          "Oozing Ones",
+          "The Ruined"
+        ],
+        "main_entry_text": "Brought to earth by the mi-go, this parasitic fungus devours earthly matter, establishing itself and spreading outward to overgrow an area. The spores are best avoided as inhalation may cause a human or animal to succumb to infection. The spores act parasitically, attaching themselves and multiplying, a process that alters the DNA of the host, mutating them into a blighted one, a mindless walking fungus, driven to infect others.",
+        "characteristics": {
+          "STR": { "roll": "host x 2", "average": "100-110" },
+          "CON": { "roll": "4D6*5", "average": 70 },
+          "SIZ": { "roll": "host", "average": 65 },
+          "DEX": { "roll": "host x 2", "average": "100-110" },
+          "INT": { "roll": "n/a", "average": "n/a" },
+          "POW": { "roll": "2D4*5", "average": 25 }
+        },
+        "derived_stats": {
+          "hit_points": "12",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 5,
+          "move": {
+            "base": 9
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Infection",
+            "description": "Inhaling spores requires a CON roll (Hard if close). Failure leads to infection. Mutation takes 1D6+1 days. INT rolls required as mind decays; after 72 hours, the host is fully transformed."
+          },
+          {
+            "name": "Spore Kiss",
+            "description": "Clamps mouth over target's mouth, exhaling spores directly. Victim must succeed in a Hard CON roll to avoid infection."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (unarmed, spore kiss)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D4 or weapon"
+            },
+            {
+              "name": "Spore Kiss",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "Special (Infection)"
+            }
+          ],
+          "dodge": {
+            "success_chance": "60%",
+            "difficulty_hard": "30%",
+            "difficulty_extreme": "12%"
+          }
+        },
+        "skills": [
+          { "name": "Climb", "value": "40%" },
+          { "name": "Jump", "value": "40%" },
+          { "name": "Stealth", "value": "30%" }
+        ],
+        "armor": {
+          "rating": "1-point fungal growth",
+          "modifiers": "Firearms and impaling weapons inflict minimal damage; fire and toxic chemical-based attacks inflict 1D6 per round damage."
+        },
+        "spells": "None.",
+        "sanity_loss": "1/1D6 to encounter; 1D4/1D6+2 if watching a friend transform."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Byakhee",
+        "subtitle": "Star-Steeds",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Hastur",
+          "Interstellar"
+        ],
+        "description": "Sometimes singularly, sometimes in packs they come, descending from the stars upon leathery wings. Upon four legs they go, but at times walk upon their hind quarters... In size, akin to a common cow, yet as neither cow, bird, nor insect do they wholly present and are instead a menagerie of all crossed with the foulness of a human corpse.",
+        "alternative_names": [
+          "Servant of He Not To be Named",
+          "Star Lizards",
+          "Void Steeds",
+          "Winged Things"
+        ],
+        "main_entry_text": "This interstellar race is believed to serve Hastur, the Unnamable and may be summoned to partake in rituals. Composed of conventional matter, they are vulnerable to ordinary mundane weapons but possess cunning intelligence and guile. Dwelling in interstellar space, byakhee do not have bases on Earth, but may be summoned to perform deeds or to serve as steeds.",
+        "characteristics": {
+          "STR": { "roll": "5D6*5", "average": "85-90" },
+          "CON": { "roll": "3D6*5", "average": "50-55" },
+          "SIZ": { "roll": "5D6*5", "average": "85-90" },
+          "DEX": { "roll": "(3D6+3)*5", "average": "65-70" },
+          "INT": { "roll": "3D6*5", "average": "50-55" },
+          "POW": { "roll": "3D6*5", "average": "50-55" }
+        },
+        "derived_stats": {
+          "hit_points": "13-14",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 10,
+          "move": {
+            "base": 5,
+            "special": "16 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Fly",
+            "description": "Can fly through space and carry a rider; though such riders need protection from the vacuum and cold by suitable spells or potions (e.g. Space-Mead)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "2 (claw, bite, crash)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "55%",
+              "difficulty_hard": "27%",
+              "difficulty_extreme": "11%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Bite and Hold (Maneuver)",
+              "success_chance": "55%",
+              "difficulty_hard": "27%",
+              "difficulty_extreme": "11%",
+              "damage": "1D6 + 3D10 STR drain",
+              "description": "Remains attached and drains blood (3D10 STR) until death or victim breaks free (opposed STR roll). Escaping death, victim regains 1D10+5 STR per day."
+            }
+          ],
+          "dodge": {
+            "success_chance": "35%",
+            "difficulty_hard": "17%",
+            "difficulty_extreme": "7%"
+          }
+        },
+        "skills": [
+          { "name": "Listen", "value": "50%" },
+          { "name": "Spot Hidden", "value": "50%" }
+        ],
+        "armor": {
+          "rating": "2-point fur and tough hide"
+        },
+        "spells": "40% chance of knowing 1D4 spells (relate to Hastur).",
+        "sanity_loss": "1/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Chakota",
+        "subtitle": "Many-Faced Monstrosity",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Magical Creation"
+        ],
+        "description": "A great mass of screaming, agonized human faces, each protruding from a cylindrical mass of pale, purple-gray flesh some six feet in height or length, and three to four feet in diameter. The loathsome worm-like body is reminiscent of a mass of sickly, purple-veined muscle. The many faces are those victims the chakota has consumed, each mouth ready to bite and consume any who would approach.",
+        "alternative_names": [
+          "Gnawing Crawlers",
+          "Howling Things",
+          "Face Eaters",
+          "Many-Faced Things",
+          "Worm Feasters"
+        ],
+        "main_entry_text": "A chakota is composed of the faces of its victims; each weeps, shouts, or cries out with great woe or anger. Somewhat mobile, it moves slowly and cannot climb, and so specimens are usually kept in pits from which they cannot escape, used by cults as a sacrificial \"altar\" or guardians. A willing person is required to create a chakota, whose body is consumed during a hideous magical ritual, and whose face becomes the first of the newborn creature.",
+        "characteristics": {
+          "STR": { "roll": "10D6*5", "average": 175 },
+          "CON": { "roll": "10D6*5", "average": 175 },
+          "SIZ": { "roll": "10D6*5", "average": 175 },
+          "DEX": { "roll": "15", "average": 15 },
+          "INT": { "roll": "1D3*5", "average": 10 },
+          "POW": { "roll": "10D6*5", "average": 175 }
+        },
+        "derived_stats": {
+          "hit_points": "35",
+          "damage_bonus": "n/a",
+          "build": 4,
+          "magic_points": 35,
+          "move": {
+            "base": 4
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Wail",
+            "description": "Hearing the woeful wail of a chakota for the first time costs 1/1D8 Sanity points. Hearing the wail thereafter costs no Sanity points."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1D8 (bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D3 per face",
+              "special_effect": "May bite with up to 1D8 faces per round. A successful bite clamps down on a victim, pulling and holding them. Victim may attempt opposed STR roll to break free (automatic +1 damage per set of clamped teeth when attempting to break free)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "7%",
+            "difficulty_hard": "3%",
+            "difficulty_extreme": "1%"
+          }
+        },
+        "skills": [
+          { "name": "Eat Quickly", "value": "90%" }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Immune to physical mundane weapons; fire and electrical based attacks can cause harm; if the mouths are covered, it can suffocate in earth or water."
+        },
+        "spells": "None.",
+        "sanity_loss": "1D3/1D20"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Chaugnar Faugn, Brother of (Lesser)",
+        "subtitle": "Vampiric Horrors",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Chaugnar Faugn"
+        ],
+        "description": "Much like their sire do they appear, lesser in stature yet requisite of skeletal heads on which large, webbed ears sprout, two or more tusks or horns, and tentacle-like trunks, in part reminiscent of a decaying elephant. The trunk member flares outwards at its tip, presenting a disk-like orifice ringed with razor-sharp and hook-like teeth. The tusks appear crystalline in nature.",
+        "alternative_names": [
+          "Horrendous Statue",
+          "Mountain Things",
+          "Servants of the Waiting One",
+          "Still Ones",
+          "Yethi"
+        ],
+        "main_entry_text": "Chaugnar Faugn's servants appear in two forms: lesser and greater versions. Usually, they guard sacred places or are sent forth to do their master's bidding. A form of permanent psychic bond links Chaugnar Faugn to its children; when that Great Old One is somehow harmed or in distress, its children also appear to suffer in a similar fashion. Their exceptional hearing appears to compensate for relatively poor eyesight.",
+        "characteristics": {
+          "STR": { "roll": "(3D6+6)*5", "average": "80-85" },
+          "CON": { "roll": "(3D6+6)*5", "average": "80-85" },
+          "SIZ": { "roll": "(3D6+7)*5", "average": "85-90" },
+          "DEX": { "roll": "3D6*5", "average": "50-55" },
+          "INT": { "roll": "2D6*5", "average": 35 },
+          "POW": { "roll": "3D6*5", "average": "50-55" }
+        },
+        "derived_stats": {
+          "hit_points": "16-18",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 10,
+          "move": {
+            "base": 10
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (claw, crush, bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D4+DB"
+            },
+            {
+              "name": "Bite (Blood Drain)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D3 + Blood Drain",
+              "special_effect": "Latches onto target with trunk, draining blood. Causes 1 damage each round after initial attack. Target may break free with opposed STR or DEX roll."
+            },
+            {
+              "name": "Crush (Maneuver)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D4 per round",
+              "description": "Attempts to envelop target and then crush."
+            }
+          ],
+          "dodge": {
+            "success_chance": "25%",
+            "difficulty_hard": "12%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "skills": [
+          { "name": "Listen", "value": "80%" },
+          { "name": "Spot Hidden", "value": "15%" }
+        ],
+        "armor": {
+          "rating": "2-point folds of flesh"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D2 (inert/statue-like); 1/1D4 (active)"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Chthonian (Adult)",
+        "subtitle": "Tentacled Burrowers",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Subterranean"
+        ],
+        "description": "Immense earth-bound snake-squid-worms, with tough elongated bodies coated with viscous slime. Something like a huge tentacle ending in a twisting and pulsating cluster of smaller tentacles or feelers, each tipped with sharp teeth. Its four eyes, equidistant around its \"head,\" are often hidden from view. They live below ground, burrowing through the earth.",
+        "alternative_names": [
+          "Burrowers Beneath",
+          "Deep Crawlers",
+          "Dark Tunnelers",
+          "Helmatodes",
+          "G'harne Spawn"
+        ],
+        "main_entry_text": "These powerful burrowers bear little resemblance to anything else on this planet. Rarely seen, these entities live toward the earth's core, with only a few individuals visiting the upper strata and outer crust. Chthonians use telepathy, able to communicate with others of their race anywhere in the world, sense human (and other) minds, and (when a full adult) telepathically control members of other species. They can tunnel through rock as though it were butter.",
+        "characteristics": {
+          "STR": { "roll": "3D6*25", "average": "250-275" },
+          "CON": { "roll": "(3D6+30)*5", "average": "200-205" },
+          "SIZ": { "roll": "3D6*25", "average": "250-275" },
+          "DEX": { "roll": "2D6*5", "average": 35 },
+          "INT": { "roll": "5D6*5", "average": "85-90" },
+          "POW": { "roll": "5D6*5", "average": "85-90" }
+        },
+        "derived_stats": {
+          "hit_points": "45-48",
+          "damage_bonus": "+5D6 to +6D6",
+          "build": 6,
+          "magic_points": 18,
+          "move": {
+            "base": 6,
+            "special": "1 burrowing"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Telepathic Control",
+            "description": "May use telepathy to control humans and other species to serve their needs. Targeted human falls under sway if the monster wins an opposed POW roll. Target becomes bound to the area."
+          },
+          {
+            "name": "Cause Earthquake",
+            "description": "Adult chthonians can create earthquakes. Force is figured by totaling the POW of participating chthonians and dividing by 100 to get Richter scale magnitude."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1D8 (tentacle flail) or 1 (crush)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "75%",
+              "difficulty_hard": "37%",
+              "difficulty_extreme": "15%",
+              "damage": "2D6"
+            },
+            {
+              "name": "Hold and Drain (Maneuver)",
+              "success_chance": "75%",
+              "difficulty_hard": "37%",
+              "difficulty_extreme": "15%",
+              "damage": "2D6 + 3D10 CON drain",
+              "description": "If a tentacle flail strikes home, it clings and worms its way into the victim's vitals, draining blood/fluids (3D10 CON permanent loss each round)."
+            },
+            {
+              "name": "Crush",
+              "success_chance": "80%",
+              "difficulty_hard": "40%",
+              "difficulty_extreme": "16%",
+              "damage": "DB",
+              "description": "Rears up and crashes down on a group. Crush area diameter is SIZ/50 in yards. Victims must succeed with DEX, Dodge, or Jump roll."
+            }
+          ],
+          "dodge": {
+            "success_chance": "17%",
+            "difficulty_hard": "8%",
+            "difficulty_extreme": "3%"
+          }
+        },
+        "skills": [
+          { "name": "Burrow", "value": "100%" }
+        ],
+        "armor": {
+          "rating": "5-point tough hide and muscle",
+          "modifiers": "Regenerates 5 hit points per round (death at zero hit points); water in large quantities is harmful (1D6 damage per round)."
+        },
+        "spells": "50% chance of knowing 1D6 spells.",
+        "sanity_loss": "1D3/1D20 (Adult); 1/1D10 (Instar)"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Cold One",
+        "subtitle": "Ghostly Wailers",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Aphoom Zhah",
+          "Rlim Shaikorth"
+        ],
+        "description": "Heralded by tortured wails upon the wind, the Ylidheem are ghost-like beings, appearing as human-shaped swirling snow and vapor, and manifest in areas of extreme cold. Semi-corporeal, they seep through the smallest of cracks to seek out their prey.",
+        "alternative_names": [
+          "Ghosts",
+          "Hands of the White Worm",
+          "Servants of the Cold Flame",
+          "Snow Demons",
+          "Ylidheem"
+        ],
+        "main_entry_text": "Cold ones seem to only be encountered in regions or seasons of bitter cold, appearing and disappearing into snowy skies or drifts of snow and ice like ghosts. Being only partially immaterial, they cannot pass through solid matter, although may gain entrance through the slimmest of openings. Whether they are a distinct species or the tortured souls of once-human worshippers of the Great Old Ones is disputed.",
+        "characteristics": {
+          "STR": { "roll": "n/a", "average": "n/a" },
+          "CON": { "roll": "n/a", "average": "n/a" },
+          "SIZ": { "roll": "(2D6+6)*5", "average": 65 },
+          "DEX": { "roll": "(2D10+10)*5", "average": 105 },
+          "INT": { "roll": "(2D6+6)*5", "average": 65 },
+          "POW": { "roll": "(3D6+6)*5", "average": "80-85" }
+        },
+        "derived_stats": {
+          "hit_points": "16 (one-fifth of POW)",
+          "damage_bonus": "n/a",
+          "build": "n/a",
+          "magic_points": 16,
+          "move": {
+            "base": "50 flying"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (cold attack)",
+          "attacks": [
+            {
+              "name": "Freezing Touch",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "Special",
+              "special_effect": "No actual wounds. Inflicts loss of 1D10 CON and 1D2 hit points. For every 15 combined points lost, victim loses 5 APP and 5 STR. Medical attention required to recover."
+            }
+          ],
+          "dodge": {
+            "success_chance": "52%",
+            "difficulty_hard": "26%",
+            "difficulty_extreme": "10%"
+          }
+        },
+        "skills": [
+          { "name": "Snow Stealth", "value": "90%" }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Immune to all physical mundane attacks; fire deals 2D6 damage per successful strike."
+        },
+        "spells": "With INT 80+, knows 1D3 spells (cold/weather related).",
+        "sanity_loss": "0/1D6 to encounter; 0/1D3 to hear tortured shriek."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Colour Out of Space",
+        "subtitle": "Life-Force Feeders",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Alien"
+        ],
+        "description": "A shaft of phosphorescence, a strange light from the spaces between the stars... A stream of alien, sentient color, unplaceable as it bears no resemblance to anything in nature. Not gaseous, but insubstantial; when it moves, some say it is visible as an amorphous, glistening patch of colour.",
+        "alternative_names": [
+          "Chromiant",
+          "Space Seeds",
+          "Strange Visitors",
+          "Spawn of the Meteor"
+        ],
+        "main_entry_text": "Colours come from an area of space or other dimensions where natural laws differ. Adult colours create sphere-carrying embryos, which are sent out through space to find nourishment on other worlds. The jellylike larva can grow to great size. As it infiltrates and infects the ecosystem, local vegetation exhibits a tremendous but unhealthy growth... After a few months, the larva matures into a young colour and begins to drain the life force from the area.",
+        "characteristics": {
+          "STR": { "roll": "1D6*5 per 50 POW", "average": 15 },
+          "CON": { "roll": "n/a", "average": "n/a" },
+          "SIZ": { "roll": "equal to POW", "average": 50 },
+          "DEX": { "roll": "(2D6+12)*5", "average": 95 },
+          "INT": { "roll": "4D6*5", "average": 70 },
+          "POW": { "roll": "2D6*5 (base)", "average": "35 (50)" }
+        },
+        "derived_stats": {
+          "hit_points": "n/a",
+          "damage_bonus": "n/a",
+          "build": 0,
+          "magic_points": 10,
+          "move": {
+            "base": 12,
+            "special": "20 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Disintegrate",
+            "description": "Can focus energies to disintegrate a hole through almost any material. Used primarily to excavate a lair."
+          },
+          {
+            "name": "Solidify",
+            "description": "Can concentrate and solidify a part of itself to manipulate objects."
+          },
+          {
+            "name": "Mental Attack",
+            "description": "Can weaken and corrupt minds nearby. Each day, victim must make opposed INT roll or lose 1D6 MP and 1D6 Sanity. Binds victim to the area (requires Hard/Extreme POW roll to leave)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (special)",
+          "attacks": [
+            {
+              "name": "Characteristic Drain",
+              "success_chance": "Opposed POW",
+              "damage": "1D6 + Drain",
+              "special_effect": "If Colour wins opposed POW, it permanently drains 1D10 points each of STR, CON, POW, DEX, and APP."
+            }
+          ],
+          "dodge": {
+            "success_chance": "47%",
+            "difficulty_hard": "23%",
+            "difficulty_extreme": "9%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Physical mundane attacks (incl. bullets) cause no damage; strong magnetic fields can imprison a colour. Vulnerable to bright light."
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D4 to encounter; 1/1D8 to see a victim."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Crawling One",
+        "subtitle": "Wriggling Masters of Sorcery",
+        "tags": [
+          "Mythos",
+          "Sorcerer",
+          "Undead"
+        ],
+        "description": "Composed of thousands of worms, insects, and maggots, each individually alive yet collectively forming a consciousness born from the lasting will of a dead wizard or witch. Twisting and writhing in unison, the mass holds a human-like shape, covered by rags, robes, or other clothing to conceal its terrible aspect.",
+        "alternative_names": [
+          "Dark Ones",
+          "Walking Corruption",
+          "Worm That Walks",
+          "Writhing Ones"
+        ],
+        "main_entry_text": "In past times, good folk were wise to burn the bodies of evil wizards, lest their \"essential fats\" be eaten and consumed by grave worms and the like... a crawling one is a union of such crawling creatures, forming a human-like mass, able to disguise itself to pass as human and work its malign intent. The ingested \"will\" of the wizard effectively drives the mass to work collectively.",
+        "characteristics": {
+          "STR": { "roll": "(1D6+6)*5", "average": "45-50" },
+          "CON": { "roll": "4D6*5", "average": 70 },
+          "SIZ": { "roll": "(2D6+6)*5", "average": 65 },
+          "DEX": { "roll": "2D6*5", "average": 35 },
+          "INT": { "roll": "4D6*5", "average": 70 },
+          "POW": { "roll": "(4D6+6)*5", "average": 100 }
+        },
+        "derived_stats": {
+          "hit_points": "13",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 20,
+          "move": {
+            "base": 8
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Discorporate",
+            "description": "If gravely threatened, can disintegrate at will into a pile of individual insects/worms to escape. Takes 1 round. Can reform in another round."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (unarmed, weapon, spell)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "1D3 (unarmed) or weapon"
+            }
+          ],
+          "dodge": {
+            "success_chance": "20%",
+            "difficulty_hard": "10%",
+            "difficulty_extreme": "4%"
+          }
+        },
+        "skills": [
+          { "name": "Climb", "value": "80%" },
+          { "name": "Jump", "value": "40%" },
+          { "name": "Stealth", "value": "60%" }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Mundane weapons deal minimal damage (bullets 1 point, shotgun pellets minimum). Fire, electrical, and chemical attacks deal full damage."
+        },
+        "spells": "Knows at least 1D10 spells, usually including Dominate.",
+        "sanity_loss": "1D3/2D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Crystallizers of Dreams, Guardian of",
+        "subtitle": "Dream Creepers",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Hypnos",
+          "Dreamlands"
+        ],
+        "description": "These strange entities may be encountered in both the Waking World and the Dreamlands. Appearing as shadowy silhouettes or half-images, they take the form of a nightmare conjured from the mind of those they target... They are featureless except for a pair of yellow eyes that glow menacingly. A sudden, cold chill may herald their presence.",
+        "alternative_names": [
+          "Keepers of the Heart of Dream",
+          "Nightmares",
+          "Silent and Dark Ones",
+          "Dream Creepers"
+        ],
+        "main_entry_text": "These creatures are somehow linked to artifacts known as Crystallizers of Dreams (sometimes referred to as Hearts of Dream), which are in turn connected to the Elder God commonly referred to as Hypnos. Acting as guardians of the devices, these entities herald from another dimension that exists between the realms of dream and consciousness. Lore states that both use and misuse of a Crystallizer of Dream alerts and brings forth the guardians.",
+        "characteristics": {
+          "STR": { "roll": "n/a", "average": "n/a" },
+          "CON": { "roll": "n/a", "average": "n/a" },
+          "SIZ": { "roll": "(3D6+3)*5", "average": "65-70" },
+          "DEX": { "roll": "(2D6+8)*5", "average": 75 },
+          "INT": { "roll": "(2D6+8)*5", "average": 75 },
+          "POW": { "roll": "(2D6+6)*5", "average": 65 }
+        },
+        "derived_stats": {
+          "hit_points": "13 (one-fifth of POW)",
+          "damage_bonus": "n/a",
+          "build": "n/a",
+          "magic_points": 13,
+          "move": {
+            "base": "10 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Implacable Hunter",
+            "description": "Considered to always succeed with their CON roll to determine MOV in chases. Ignore mundane obstacles and hazards."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (entangle)",
+          "attacks": [
+            {
+              "name": "Entangle",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "Special",
+              "description": "Wraps shadowy arms around victim. If entangled for 3 consecutive rounds, the victim is dragged through a portal into the realm of Hypnos on the 4th round. Victim may escape with opposed STR vs POW roll or by using spells like Curse of Darkness or Elder Sign."
+            }
+          ],
+          "dodge": {
+            "success_chance": "45%",
+            "difficulty_hard": "22%",
+            "difficulty_extreme": "9%"
+          }
+        },
+        "skills": [
+          { "name": "Stealth", "value": "100%" }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Immune to mundane physical damage (incl. bullets)."
+        },
+        "spells": "Roll 1D100; if result is <= 1/5 INT, knows that many spells. Can cast Dreamlands spells in the Waking World.",
+        "sanity_loss": "1/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Cthulhu, Star-Spawn of",
+        "subtitle": "Satraps of the Sleeper",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Cthulhu"
+        ],
+        "description": "Gigantic cephalopodic beings, whose heads are a corruption of tentacles set beneath two or more eyes that glow with radiant malice. With humanoid bodies, sometimes with multiple limbs or appendages, they rest until the Old Ones return. Dead yet alive, their dreams seep, corrupting unwitting minds much like their kin and master, Great Cthulhu.",
+        "alternative_names": [
+          "Ancient Awfulness",
+          "Children of the Sleeper",
+          "Cthulha",
+          "Horrores Dormidos",
+          "Tulu's Kin",
+          "Waiting Watchers"
+        ],
+        "main_entry_text": "While star-spawn resemble Great Cthulhu, they are somewhat smaller in stature, yet still gigantic in relation to humanity. Human dreams and visions often depict Cthulhu's spawn as possessing human-like bodies, with two legs and arms; however, star-spawn may be encountered in various forms, from humanoid to protean masses of walking flesh. Despite most being confined or \"caged\" like their high priest and master in the dead city of Sunken R'lyeh, some are entombed elsewhere.",
+        "characteristics": {
+          "STR": { "roll": "2D6*50", "average": 350 },
+          "CON": { "roll": "3D6*25", "average": 260 },
+          "SIZ": { "roll": "3D6*50", "average": 525 },
+          "DEX": { "roll": "3D6*5", "average": 50 },
+          "INT": { "roll": "6D6*5", "average": 105 },
+          "POW": { "roll": "6D6*5", "average": 105 }
+        },
+        "derived_stats": {
+          "hit_points": "78",
+          "damage_bonus": "+10D6",
+          "build": 11,
+          "magic_points": 21,
+          "move": {
+            "base": 15,
+            "special": "15 swimming"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Dream Sending",
+            "description": "Humans living within the area of an entombed star-spawn may be subject to its psychic residue or dreams. Star-spawn may send forth their mind to seek out and influence susceptible humans."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "4 (claw, tentacle, body slam)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "80%",
+              "difficulty_hard": "40%",
+              "difficulty_extreme": "16%",
+              "damage": "DB",
+              "special_effect": "May attack with tentacles or claws to crush, rent, or seize, and may use its body to slam and mash."
+            }
+          ],
+          "dodge": {
+            "success_chance": "26%",
+            "difficulty_hard": "13%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "armor": {
+          "rating": "10-point hide and blubber",
+          "modifiers": "Regenerates 3 hit points per round (death at zero hit points)."
+        },
+        "spells": "Knows 3D6 spells; possibly Contact Cthulhu, Create Mist of R'lyeh, Grasp of Cthulhu, Send Dream.",
+        "sanity_loss": "1D6/1D20"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Cthulhu, Thrall of",
+        "subtitle": "Servants of the Sleeper",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Cthulhu",
+          "Human Mutant"
+        ],
+        "description": "Bloated, jelly-like gray-blue corpulent masses. Their puffy flesh exudes tiny, jelly-like droplets that smell of methane. They are hairless, with slit-like unblinking yellow-red eyes. Small vestigial tentacles surround a mouth filled with crooked and sharp teeth... Once human, their forms vary but each belies their original heritage.",
+        "alternative_names": [
+          "Acolytes of the Sleeper",
+          "Jelly Men",
+          "Once Humans",
+          "Servant of Cthulhu",
+          "Tulu Brood"
+        ],
+        "main_entry_text": "Humans transformed into monstrous servant creatures, their minds totally consumed by their devotion to Great Cthulhu. After years of worship and a succession of debased rituals, the cultist transforms into something more than human. When a thrall reaches advanced age (50-100 years), it permanently enters the sea to continue its service, usually joining with deep ones or star-spawn.",
+        "characteristics": {
+          "STR": { "roll": "human + 20", "average": "75 (120 mature)" },
+          "CON": { "roll": "human + 20", "average": "75 (120 mature)" },
+          "SIZ": { "roll": "human + 20", "average": "85 (130 mature)" },
+          "DEX": { "roll": "human - 20", "average": "30 (30 mature)" },
+          "INT": { "roll": "human", "average": "65 (65 mature)" },
+          "POW": { "roll": "human", "average": "55 (80 mature)" }
+        },
+        "derived_stats": {
+          "hit_points": "16 (25 mature)",
+          "damage_bonus": "+1D4 (+2D6 mature)",
+          "build": "1 (3 mature)",
+          "magic_points": "11 (16 mature)",
+          "move": {
+            "base": 6,
+            "special": "10 swimming"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Not Death",
+            "description": "When reduced to zero hit points by physical damage, turns into a cloud of gray, foul-smelling gas. In 1D8+1 rounds, reforms completely healed. If reduced to zero by magic/spells, dies permanently."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (claw, bite, swipe, squeeze, crush, choke)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D6+2+DB or weapon",
+              "special_effect": "Each thrall's attacks vary slightly depending on transformation (claws, tentacles, multiple mouths)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "15%",
+            "difficulty_hard": "7%",
+            "difficulty_extreme": "3%"
+          }
+        },
+        "skills": [
+          { "name": "Climb", "value": "40%" },
+          { "name": "Listen In Water", "value": "70%" },
+          { "name": "Swim", "value": "80%" }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Regenerates 1D6 hit points per round (see Not Death)."
+        },
+        "spells": "Any known as human or gifted by Cthulhu.",
+        "sanity_loss": "1/1D8"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Dark Crawler",
+        "subtitle": "Voracious Worms",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Subterranean"
+        ],
+        "description": "They come up from the ground like horrid worms, thicker than a human thigh and up to 4 yards in length. Along their \"backs\" can be found pairs of small translucent feelers. Their heads... are bulbous but present a lamprey-like mouth filled with rows of large needles. Around the mouth, are numerous black eyes set within deep pits.",
+        "alternative_names": [
+          "Booming Ones",
+          "Burrowing Ones",
+          "Dirt Eaters",
+          "Horror Worms",
+          "Kepchula",
+          "Mind Eaters"
+        ],
+        "main_entry_text": "These nightmarish lamprey-like worms travel from location to location, seeking out minds from which to draw sustenance. Dark crawlers are gifted with psychic powers, most notably a form of telepathy allowing them to communicate with other sentient creatures... They live in a globe-spanning web of caves, traversing far beneath the beds of the oceans.",
+        "characteristics": {
+          "STR": { "roll": "(3D6+6)*5", "average": "80-85" },
+          "CON": { "roll": "(3D6+12)*5", "average": "110-115" },
+          "SIZ": { "roll": "(2D6+10)*5", "average": 85 },
+          "DEX": { "roll": "2D6*5", "average": 35 },
+          "INT": { "roll": "(3D6+6)*5", "average": "80-85" },
+          "POW": { "roll": "(6D6+12)*5", "average": 165 }
+        },
+        "derived_stats": {
+          "hit_points": "19-20",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 33,
+          "move": {
+            "base": 6,
+            "special": "16 burrowing"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Telepathy",
+            "description": "Able to mentally communicate with other sentient life forms, imparting or implanting information in the form of bad dreams, hallucinations, and suggestions. May also read minds (target forgets information if they fail a Hard POW roll)."
+          },
+          {
+            "name": "Siphon Energy",
+            "description": "When within 100 yards/meters, may attempt to psychically feast upon a victim's life force (POW). Requires opposed POW roll. If failed (or victim is unconscious), victim loses 1D6 POW per round until stopped."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (bite or clobber)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D6+DB",
+              "special_effect": "Can use its body mass to clobber opponents."
+            },
+            {
+              "name": "Bite",
+              "success_chance": "80%",
+              "difficulty_hard": "40%",
+              "difficulty_extreme": "16%",
+              "damage": "2D6+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "20%",
+            "difficulty_hard": "10%",
+            "difficulty_extreme": "4%"
+          }
+        },
+        "skills": [
+          { "name": "Burrow Through Rock", "value": "90%" },
+          { "name": "Telepathy", "value": "70%" }
+        ],
+        "armor": {
+          "rating": "1-point tough skin",
+          "modifiers": "Suffers half damage from mundane weapon attacks (incl. bullets); regenerates 2 hit points per round (death at zero hit points)."
+        },
+        "spells": "50% chance of knowing 1D6 spells.",
+        "sanity_loss": "1D3/1D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Deep One",
+        "subtitle": "Masters of the Deep",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Cthulhu",
+          "Aquatic"
+        ],
+        "description": "Humanoid fish-frog people... their scaled, sometimes rugose, skin is a grayish-green to blue... Shiny and slippery, with fin-like ridges on their backs, and webbed feet and hands. Their heads vary in disposition, appearing fish- or frog-like, with prodigious bulging eyes and wide, thin-lipped mouths possessing shark-like teeth.",
+        "alternative_names": [
+          "Fish Folk",
+          "Kelpie",
+          "Mermaids",
+          "Merrows",
+          "Nommo",
+          "Rusalki",
+          "Sea Demon",
+          "Sea People",
+          "Scaled Ones",
+          "Sirens",
+          "Those From Below"
+        ],
+        "main_entry_text": "Deep ones are an amphibious race that primarily serves Cthulhu and two beings known as Father Dagon and Mother Hydra. Locked in the timeless depths of the sea, their alien and arrogant lives are coldly beautiful, unbelievably cruel, and effectively immortal. They are a marine race, unknown in freshwater environments, and globally have many cities, all submerged beneath the waves.",
+        "characteristics": {
+          "STR": { "roll": "4D6*5", "average": 70 },
+          "CON": { "roll": "3D6*5", "average": 50 },
+          "SIZ": { "roll": "(3D6+6)*5", "average": 80 },
+          "DEX": { "roll": "3D6*5", "average": 50 },
+          "INT": { "roll": "(2D6+6)*5", "average": 65 },
+          "POW": { "roll": "3D6*5", "average": 50 }
+        },
+        "derived_stats": {
+          "hit_points": "13",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 10,
+          "move": {
+            "base": 8,
+            "special": "10 swimming"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Breathe Underwater",
+            "description": "Require no exterior help to breathe underwater and are equally capable of breathing on land."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (claw, bite, weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6+DB or weapon (e.g. spear 1D8+DB)",
+              "special_effect": "Skilled with spears and tridents."
+            }
+          ],
+          "dodge": {
+            "success_chance": "25%",
+            "difficulty_hard": "12%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "skills": [
+          { "name": "Climb", "value": "30%" },
+          { "name": "Language (Deep One Speech)", "value": "70%" },
+          { "name": "Language (R'lyeh Glyphs)", "value": "70%" },
+          { "name": "Listen", "value": "40%" },
+          { "name": "Spot Hidden", "value": "40%" },
+          { "name": "Stealth", "value": "40%" },
+          { "name": "Swim", "value": "90%" }
+        ],
+        "armor": {
+          "rating": "1-point skin and scales"
+        },
+        "spells": "40% chance of knowing 1D4 spells (poss. Contact Father Dagon, Contact Mother Hydra, Contact Star-spawn of Cthulhu, Grasp of Cthulhu, Summon Deep Ones, Wave of Oblivion).",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Deep One Hybrid",
+        "subtitle": "Strange Progeny",
+        "tags": [
+          "Mythos",
+          "Human Mutant",
+          "Cthulhu"
+        ],
+        "description": "Thin humans, stoop-shouldered, with watery eyes that never seem to blink. Their whole demeanor seemed wrong, and they lurched or shambled forward as if on unsteady legs. Some had facial deformities: receding chins or foreheads, half-realized noses or ears... close examination of the strange creases on their necks would reveal vestigial gill slits.",
+        "alternative_names": [
+          "The Changed",
+          "The Cursed",
+          "Frog Folk",
+          "Hydra's Ones",
+          "Innsmouth Kin",
+          "Sea Child",
+          "Touched by Dagon"
+        ],
+        "main_entry_text": "Deep one hybrids are, in the main, the progeny of deep one and human mating. Although the offspring of such unions are usually born as normal humans, changes in appearance and physiology tend to occur in late teens commonly known as the \"Innsmouth Look.\" ...By middle age, most hybrids display some form of gross deformity... Within a few years, the hybrid undergoes the final transformation into a full deep one.",
+        "characteristics": {
+          "STR": { "roll": "(2D6+6)*5", "average": 65 },
+          "CON": { "roll": "(2D6+6)*5", "average": 65 },
+          "SIZ": { "roll": "3D6*5", "average": "50-55" },
+          "DEX": { "roll": "(2D6+6)*5", "average": 65 },
+          "INT": { "roll": "(2D6+6)*5", "average": 65 },
+          "POW": { "roll": "3D6*5", "average": "50-55" },
+          "APP": { "roll": "2D6*5", "average": 35 }
+        },
+        "derived_stats": {
+          "hit_points": "11-12",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 10,
+          "move": {
+            "base": 9,
+            "special": "8 swimming"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Breath Underwater (Partial)",
+            "description": "Unable to breathe underwater until full transformation, but can remain underwater for up to twice as long as the average human."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (unarmed or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D3+DB or by weapon type"
+            }
+          ],
+          "dodge": {
+            "success_chance": "30%",
+            "difficulty_hard": "15%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          { "name": "Climb", "value": "40%" },
+          { "name": "Cthulhu Mythos", "value": "00% to 30%" },
+          { "name": "Jump", "value": "45%" },
+          { "name": "Listen", "value": "50%" },
+          { "name": "Spot Hidden", "value": "45%" },
+          { "name": "Stealth", "value": "46%" },
+          { "name": "Swim", "value": "70%" }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "Older hybrids who have embraced their heritage have a 10% chance of knowing 1D3 spells.",
+        "sanity_loss": "0/1D4 (increased to 1/1D6+ for particularly monstrous specimens)."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Desh",
+        "subtitle": "Things from Outside",
+        "tags": [
+          "Mythos",
+          "Extra-Dimensional",
+          "Invisible"
+        ],
+        "description": "From without they come, penetrating the curtain of our realm to cavort and feast. The smaller ones have a slivery skin upon their fat, little ovoid bodies... Their larger, more fearsome kin are long limbed and slender, with wide mouths containing lines of curved six-inch teeth.",
+        "alternative_names": [
+          "Flapping Horrors",
+          "Things from Outside",
+          "Veelens"
+        ],
+        "main_entry_text": "Named the desh by the Hyperboreans, these creatures originate in another dimension, yet find it easy to slip through dimensional walls to \"swim\" in our reality, most often using the energy and power within a human brain as a mechanism to travel into this world. In our world, they are invisible and semi-material. They come in two distinct groups: the lesser and the greater desh.",
+        "characteristics": {
+          "STR": { "roll": "(2D6+1)*5", "average": "40 (Lesser) / 85 (Greater)" },
+          "CON": { "roll": "2D4*5", "average": "25 (Lesser) / 50 (Greater)" },
+          "SIZ": { "roll": "2D4*5", "average": "25 (Lesser) / 35 (Greater)" },
+          "DEX": { "roll": "(2D6+6)*5", "average": "65 (Lesser) / 110 (Greater)" },
+          "INT": { "roll": "1D4*5", "average": "10 (Lesser) / 35 (Greater)" },
+          "POW": { "roll": "1D4*5", "average": "10 (Lesser) / 65 (Greater)" }
+        },
+        "derived_stats": {
+          "hit_points": "5 (Lesser) / 10 (Greater)",
+          "damage_bonus": "-1 (Lesser) / 0 (Greater)",
+          "build": "-1 (Lesser) / 0 (Greater)",
+          "magic_points": "2 (Lesser) / 13 (Greater)",
+          "move": {
+            "base": "15 (Lesser) / 30 (Greater)"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1D4 (Lesser) / 2D4 (Greater) (vine whip, bite, grab)",
+          "attacks": [
+            {
+              "name": "Fighting (Lesser)",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "1D2-1 (min 1)"
+            },
+            {
+              "name": "Ensnare (Lesser Maneuver)",
+              "success_chance": "35%",
+              "damage": "Fall damage",
+              "description": "Use nails and limbs to wrap around a target, causing them to fall over (1D4 to 1D6 damage)."
+            },
+            {
+              "name": "Fighting (Greater)",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6"
+            },
+            {
+              "name": "Grab (Greater Maneuver)",
+              "success_chance": "45%",
+              "damage": "1D6+1",
+              "description": "Attempts to grab a target and then, on the following round, bite down on the victim's flesh."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40% (Lesser) / 80% (Greater)",
+            "difficulty_hard": "20% / 40%",
+            "difficulty_extreme": "8% / 16%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "If successfully hitting a greater desh, multiply the damage rolled by five; the result is the percentage chance of killing it outright. If this roll fails, the attack causes no damage."
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D3 (Lesser); 1/1D4+1 (Greater)"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Devil Creeper",
+        "subtitle": "Blood-Soaked Vines of Death",
+        "tags": [
+          "Mythos",
+          "Plant",
+          "Parasite"
+        ],
+        "description": "Maturing rapidly, the growth eventually sprouts from the host's body, violently ripping through skin and bone in a shower of blood and gore. The dead host's remains continue to fertilize the deadly plant-like entity... In visage, the plant is nothing less than a writhing mass of vines that end in a variety of maws and strange orb-like eyes.",
+        "alternative_names": [
+          "Alien Seed",
+          "Blood Seed",
+          "Devil Seed",
+          "Green Spawn",
+          "Hell-Plant",
+          "Ripper",
+          "Watchers"
+        ],
+        "main_entry_text": "These evil seeds have been used by wizards and others of ill-intent as guards and as a form of retribution. As seeds, devil creepers are inert and only begin to develop when consumed by a living creature (human or animal). Within 2D6 days, the seed grows inside the host body and then sprouts forth, destroying the host. Once mature, the devil creeper tends to remain in the same spot unless summoned.",
+        "characteristics": {
+          "STR": { "roll": "(4D6+6)*5", "average": "100 (Average) / 150 (Monstrous)" },
+          "CON": { "roll": "4D6*5", "average": "70 (Average) / 120 (Monstrous)" },
+          "SIZ": { "roll": "(4D6+2)*5", "average": "80 (Average) / 500 (Monstrous)" },
+          "DEX": { "roll": "(2D6+6)*5", "average": "65 (Average) / 30 (Monstrous)" },
+          "INT": { "roll": "2D4*5", "average": "25 (Average) / 30 (Monstrous)" },
+          "POW": { "roll": "4D6*5", "average": "70 (Average) / 120 (Monstrous)" }
+        },
+        "derived_stats": {
+          "hit_points": "15 (Average) / 62 (Monstrous)",
+          "damage_bonus": "+1D6 (Average) / +6D6 (Monstrous)",
+          "build": "2 (Average) / 7 (Monstrous)",
+          "magic_points": "14 (Average) / 24 (Monstrous)",
+          "move": {
+            "base": 3
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1D4 (Average) / 2D4 (Monstrous) (vine whip, bite, grab)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Grab (Maneuver)",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D6+1 per round",
+              "description": "One vine wraps around target. Each additional success adds another vine. Once held, target may be strangled, squeezed, or bitten (automatic 1D6 damage per turn)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "32%",
+            "difficulty_hard": "16%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          { "name": "Detect Prey", "value": "60%" }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Non-impaling weapons and bullets deal minimum damage; slashing weapons deal normal damage; resistant to fire and electricity; toxic chemicals deal 1D6 per round."
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D6 (Average); 1/1D8 (Monstrous)"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Dhole",
+        "subtitle": "Planet Eaters",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Alien",
+          "Gigantic"
+        ],
+        "description": "A cancerous infliction upon the planets they consume, gigantic worms reaching over 600 feet in length and 20 feet thick, and some even larger... Their skin is armor-clad with thick chitinous-like sections through which no sword could pass. At one end is the feasting mouth, hidden beneath a segmented aperture.",
+        "alternative_names": [
+          "Bholes",
+          "Death Worms",
+          "Dol",
+          "Great Eater",
+          "K'ole",
+          "Maw of Death",
+          "Planet Devourers"
+        ],
+        "main_entry_text": "Dholes are gigantic worm-like burrowing horrors. They are not native to the Earth and none seem to have been brought here for more than brief periods. They seem to have riddled and laid waste to other worlds, consuming them from within. They are rarely seen in daylight, as they dislike direct light, though it does not visibly harm them.",
+        "characteristics": {
+          "STR": { "roll": "10D100*5", "average": 2525 },
+          "CON": { "roll": "(1D100+100)*5", "average": 755 },
+          "SIZ": { "roll": "(100+STR/5)*5", "average": 3025 },
+          "DEX": { "roll": "1D4*5", "average": 10 },
+          "INT": { "roll": "2D6*5", "average": 35 },
+          "POW": { "roll": "10D6*5", "average": 175 }
+        },
+        "derived_stats": {
+          "hit_points": "353",
+          "damage_bonus": "64D6 (Enough to flatten a battleship)",
+          "build": 65,
+          "magic_points": 34,
+          "move": {
+            "base": 15,
+            "special": "10 burrowing"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (crush, slam, engulf, spit goo)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "Death (Automatic if crushed)"
+            },
+            {
+              "name": "Engulf",
+              "success_chance": "80%",
+              "difficulty_hard": "40%",
+              "difficulty_extreme": "16%",
+              "damage": "Swallowed",
+              "description": "Scoops clean an area equal to the size of its goo attack. Keeper determines survival chances."
+            },
+            {
+              "name": "Spit Goo",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1 per round (caustic)",
+              "description": "Spits a gob of slime up to 2-3 miles. Goo covers diameter equal to 1% of SIZ in feet (approx 27 ft). Target is engulfed, stunned, and begins to drown."
+            }
+          ],
+          "dodge": {
+            "success_chance": "6%",
+            "difficulty_hard": "3%",
+            "difficulty_extreme": "1%"
+          }
+        },
+        "armor": {
+          "rating": "34 (One-fifth of POW)"
+        },
+        "spells": "None.",
+        "sanity_loss": "1D4/1D20"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Dimensional Shambler",
+        "subtitle": "Dimension-Hoppers",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Extra-Dimensional"
+        ],
+        "description": "Hulking extra-dimensional entities, seemingly outlandish combinations of crustacean, insect, and ape-like mammal. In places, their hide is like thick plates of armor, while elsewhere their skin is loose and rugose. Black points of light appear to be eyes set deep into a rudimentary head... Large talon-like clawed appendages protrude from the arms.",
+        "alternative_names": [
+          "Dark Gatherers",
+          "Excoleoptera",
+          "Insects from the Void",
+          "Lurkers",
+          "Shambling Things"
+        ],
+        "main_entry_text": "Little is known about these beings who seem capable of walking between the planes and worlds of the cosmos, never spending much time at any one location. It is unknown whether they are a distinct interdimensional species or constructs created in the deep passages of time to serve a higher power. Rumors suggest that these entities occasionally serve the Outer Gods and Great Old Ones.",
+        "characteristics": {
+          "STR": { "roll": "(2D6+12)*5", "average": 95 },
+          "CON": { "roll": "(3D6+6)*5", "average": "80-85" },
+          "SIZ": { "roll": "(2D6+12)*5", "average": 95 },
+          "DEX": { "roll": "3D6*5", "average": "50-55" },
+          "INT": { "roll": "2D6*5", "average": 35 },
+          "POW": { "roll": "3D6*5", "average": "50-55" }
+        },
+        "derived_stats": {
+          "hit_points": "17-18",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 10,
+          "move": {
+            "base": 8
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Trans-dimensional Travel",
+            "description": "Able to leave a plane of existence or translocate at will. Costs 4 MP and takes 1 round (cannot fight back/dodge during transit). Can take objects/beings by clutching them and spending +1 MP per 50 SIZ of the object/creature."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "2 (claws) or 1 (grab)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D8+DB"
+            },
+            {
+              "name": "Grab (Maneuver)",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "Disappears",
+              "description": "Attempts to latch onto a target. If successful, on the following round, it may instantly transport to anywhere in this plane or another dimension. Victim may attempt to break free on their action (opposed STR/DEX)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "30%",
+            "difficulty_hard": "15%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          { "name": "Listen", "value": "60%" },
+          { "name": "Spot Hidden", "value": "50%" },
+          { "name": "Stealth", "value": "40%" }
+        ],
+        "armor": {
+          "rating": "3-point thick hide"
+        },
+        "spells": "40% chance of knowing 1D3 spells.",
+        "sanity_loss": "0/1D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Dweller in the Depths",
+        "subtitle": "Aquatic Horrors",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Cthulhu",
+          "Aquatic"
+        ],
+        "description": "From an elliptical body extended eight appendages, arm-like and ending in something akin to a flipper, although two were more like writhing tentacles. It appeared to use the flippers for locomotion, able to \"walk\" on land just as easily as swimming through water. There was no head as such, rather a gross nodule on which a round, sponge-like organ sprouted... The damnable appearance was made worse due to the creature's transparent skin, through which one could discern bizarre internal organs and a spherical yet misshaped brain.",
+        "alternative_names": [
+          "Chosen of Tulu",
+          "Deep Ones",
+          "Sea Masters",
+          "Spawn of Hydra"
+        ],
+        "main_entry_text": "Said to be associated with entities like Great Cthulhu, Dagon and Hydra, and the cursed star-spawn, these creatures appear to be amphibious, with some suggesting they are a larger, more powerful, and advanced strain of deep ones. Inhabiting places beneath the ocean as well as certain great freshwater lakes. The Cult of Cthulhu holds the dwellers in great regard.",
+        "characteristics": {
+          "STR": { "roll": "(4D6+6)*5", "average": 100 },
+          "CON": { "roll": "(4D6+6)*5", "average": 100 },
+          "SIZ": { "roll": "(2D6+16)*5", "average": 115 },
+          "DEX": { "roll": "(2D6+6)*5", "average": 65 },
+          "INT": { "roll": "(2D6+6)*5", "average": 65 },
+          "POW": { "roll": "(3D6+6)*5", "average": "80-85" }
+        },
+        "derived_stats": {
+          "hit_points": "21",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 16,
+          "move": {
+            "base": 7,
+            "special": "12 swimming"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (tentacle bash, bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6+DB",
+              "special_effect": "Uses two tentacle arms to swipe and bash, and tentacle legs to kick."
+            },
+            {
+              "name": "Bite",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "1D6+2+DB",
+              "special_effect": "Mouth tentacles latch onto flesh, pulling victim into mouth where coarse tentacles rake and tear."
+            }
+          ],
+          "dodge": {
+            "success_chance": "32%",
+            "difficulty_hard": "16%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          { "name": "Language (Deep One Speech)", "value": "60%" },
+          { "name": "Language (R'lyeh Glyphs)", "value": "80%" },
+          { "name": "Spot Hidden", "value": "80%" },
+          { "name": "Swim", "value": "95%" }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Immune to most physical damage. Exception: if 5+ damage is dealt to the brain-organ (penalty die to target), it instantly dies. Fire and electrical attacks inflict normal damage."
+        },
+        "spells": "2D6 spells relating to Cthulhu, deep ones, and aquatic horrors.",
+        "sanity_loss": "0/1D8"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Eihort, Broodling of",
+        "subtitle": "Gestalt Servants",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Eihort",
+          "Gestalt"
+        ],
+        "description": "The pale man... his body dissolving and liquifying. Strange white foam poured from his mouth, eyes, and ears, and then from the flesh as it lost its elasticity and corrupted. Soon, what was once human, became soggy mounds of writhing white jelly-like spiders.",
+        "alternative_names": [
+          "Child of the Kingdom",
+          "Children of the Bargain",
+          "Labyrinth Kin",
+          "White Death",
+          "Pale Ones",
+          "Pale Spawn"
+        ],
+        "main_entry_text": "Broodlings are gestalt beings made up of millions of the tiny white spidery brood of Eihort. When combined, a broodling looks like a deathly pale, hairless human of average size. In such a form, the entity is capable of a guttural speech. It is not until a broodling suffers physical damage that its true nature becomes apparent... each point of damage causes bits of a broodling to come apart, falling off as globby masses of the white spidery brood.",
+        "characteristics": {
+          "STR": { "roll": "(2D6+10)*5", "average": 85 },
+          "CON": { "roll": "(3D6+6)*5", "average": "80-85" },
+          "SIZ": { "roll": "(2D6+6)*5", "average": 65 },
+          "DEX": { "roll": "(2D6+6)*5", "average": 65 },
+          "INT": { "roll": "(3D6+6)*5", "average": "80-85" },
+          "POW": { "roll": "(3D6+6)*5", "average": "80-85" },
+          "APP": { "roll": "(2D6-1)*5", "average": 30 }
+        },
+        "derived_stats": {
+          "hit_points": "14-15",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 16,
+          "move": {
+            "base": 8
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Spider Form",
+            "description": "If reduced to zero HP, melts into millions of spiders. A group of 20+ may attack (30%, 1 damage). Unconscious victims may have spiders crawl inside them (1D4 damage/day)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (unarmed or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting (Broodling)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D4+DB or weapon"
+            },
+            {
+              "name": "Fighting (Spider Group)",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "1"
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          { "name": "Climb", "value": "70%" },
+          { "name": "Intimidate", "value": "40%" },
+          { "name": "Listen", "value": "80%" },
+          { "name": "Persuade", "value": "60%" },
+          { "name": "Spot Hidden", "value": "80%" },
+          { "name": "Stealth", "value": "80%" }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Mundane attacks deal minimum damage; if it escapes with even 1 HP, fully regenerates in 10 mins/HP. Death at 0 HP (melts into spiders)."
+        },
+        "spells": "Knows 1D4 spells, usually concerning Eihort.",
+        "sanity_loss": "No loss for human form; 1/1D8 to see true nature/melting."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Elder Thing",
+        "subtitle": "Mysterious Scientists",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Alien",
+          "Scientist"
+        ],
+        "description": "Gray colored, barrel-shaped beings, six to eight feet in length... The central mass displays five vertical ridges, between which are strange growths from which wing-like membranes can unfold... The apex of the body mass tapers to a bulbous neck from which a five-pointed starfish-like \"head\" rises... Overall, despite seemingly changeable color orientation, the skin appears leathery and tough.",
+        "alternative_names": [
+          "The First",
+          "Old Ones"
+        ],
+        "main_entry_text": "Elder things came to Earth a billion years ago and may have accidentally started terrestrial life through arcane experimentation. Foremost scientists, they created the blasphemous shoggoths to serve as slaves, building vast cities around the globe. By the time humanity was evolving, the elder things were already degenerating as a race... While only the dead or those in frozen hibernation can be found in the frozen remains of their Antarctic city, there remain living communities of elder things in the deepest and darkest parts of the ocean.",
+        "characteristics": {
+          "STR": { "roll": "(4D6+24)*5", "average": 190 },
+          "CON": { "roll": "(4D6+8)*5", "average": 110 },
+          "SIZ": { "roll": "8D6*5", "average": 140 },
+          "DEX": { "roll": "(3D6+6)*5", "average": "80-85" },
+          "INT": { "roll": "(2D6+12)*5", "average": 95 },
+          "POW": { "roll": "3D6*5", "average": "50-55" }
+        },
+        "derived_stats": {
+          "hit_points": "25",
+          "damage_bonus": "+3D6",
+          "build": 4,
+          "magic_points": 10,
+          "move": {
+            "base": 8,
+            "special": "10 flying"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "5 (swipe, bash, seize, or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "DB",
+              "special_effect": "Due to the alignment of its five eyes and tentacles, it can attack and defend in a 360-degree arc (surprise attacks suffer penalty dice)."
+            },
+            {
+              "name": "Seize (Maneuver)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "Half DB per round",
+              "description": "Once a tentacle grips, it clings to the target and inflicts crushing damage. Can hold up to five victims (one per tentacle)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          { "name": "Climb", "value": "60%" },
+          { "name": "Science (Any)", "value": "60%" },
+          { "name": "Spot Hidden", "value": "80%" },
+          { "name": "Stealth", "value": "70%" },
+          { "name": "Throw", "value": "70%" }
+        ],
+        "armor": {
+          "rating": "7-point tough skin"
+        },
+        "spells": "70% chance of knowing 1D4 spells.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Fire Vampire",
+        "subtitle": "Burning Stars",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Cthugha",
+          "Extra-Terrestrial"
+        ],
+        "description": "It was though the stars were falling... Many came in flaming clusters, exploding outward into hundreds or thousands of individual star-like flames, each no larger than a candle flame. These living star-flames danced in the air in a mesmerizing fashion. Whatever they touched burst into flame.",
+        "alternative_names": [
+          "Cthugha's Brood",
+          "Devil Eyes",
+          "Flame Demons",
+          "Searing Ones",
+          "Will-o-the-Wisps"
+        ],
+        "main_entry_text": "Fire vampires are said to be minions of the Great Old One Cthugha and, like that entity, dwell on or in the planetary system of the star Fomalhaut. Extraterrestrial, fire vampires appear to be intelligent gas or plasma... unable to move through water, which can kill them.",
+        "characteristics": {
+          "STR": { "roll": "n/a", "average": "n/a" },
+          "CON": { "roll": "2D6*5", "average": 35 },
+          "SIZ": { "roll": "01", "average": 1 },
+          "DEX": { "roll": "(3D6+6)*5", "average": 80 },
+          "INT": { "roll": "3D6*5", "average": "50-55" },
+          "POW": { "roll": "(2D6+6)*5", "average": 65 }
+        },
+        "derived_stats": {
+          "hit_points": "3",
+          "damage_bonus": "n/a",
+          "build": -2,
+          "magic_points": 13,
+          "move": {
+            "base": "11 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Mesmerizing Dance",
+            "description": "The crazed dance of multiple fire vampires can produce a hypnotic effect. Target must succeed with a POW roll or fall under a trance (unable to move, unaware of being set on fire)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (individual or mass cluster)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "85%",
+              "difficulty_hard": "42%",
+              "difficulty_extreme": "17%",
+              "damage": "2D6 (Heat Shock)",
+              "special_effect": "Target makes CON roll to halve damage. Then opposed POW roll: if vampire wins, it steals 1D10 MP; if target wins, vampire loses 1 MP. Flammable targets catch fire (burn damage doubles each round)."
+            },
+            {
+              "name": "Cluster",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "6D6",
+              "special_effect": "Target makes CON roll to halve damage. Cannot steal MP in cluster form."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Mundane weapons (incl. bullets) deal no damage. Water deals 1 damage per half-gallon (2 ltr)."
+        },
+        "spells": "20% chance of knowing 1D3 spells.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Fisher from Outside",
+        "subtitle": "Servants of Groth-golka",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Groth-golka",
+          "Avian"
+        ],
+        "description": "Great and dark avian creatures with leprous veined flesh instead of feathers and membranous wings... Immense things, caricatures of earthly birds, which hop about on a single-foot when not in flight, while above a hooked and fang-lined beak, glows an all-seeing Cyclopean eye.",
+        "alternative_names": [
+          "Dark Flyers",
+          "Demon Birds",
+          "Devil Skewers",
+          "Pterodactyls",
+          "Slaughterers"
+        ],
+        "main_entry_text": "Sometimes confused with shantaks and even prehistoric Pterosaurs, the fishers from outside are a distinct species believed to serve the Great Old One known as Groth-golka. Called down from the spaces between and beyond the stars, the fishers sometimes act as proxies, accepting and devouring human sacrifices while also metering out the divine will of their master.",
+        "characteristics": {
+          "STR": { "roll": "(3D6+15)*5", "average": "125-130" },
+          "CON": { "roll": "(2D6+6)*5", "average": 65 },
+          "SIZ": { "roll": "(3D6+20)*5", "average": "150-155" },
+          "DEX": { "roll": "(3D6+6)*5", "average": "80-85" },
+          "INT": { "roll": "3D6*5", "average": "50-55" },
+          "POW": { "roll": "3D6*5", "average": "50-55" }
+        },
+        "derived_stats": {
+          "hit_points": "21-22",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 10,
+          "move": {
+            "base": 3,
+            "special": "35 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Foul Imagery",
+            "description": "Seeing or touching a representation of a fisher requires a Hard POW roll. Failure causes nightmares (1 Sanity loss per night) or brooding introspection (oblivious to surroundings)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (in flight) or 2 (on ground)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "2D6"
+            },
+            {
+              "name": "Grasp (Maneuver)",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "1D6 per round",
+              "description": "Swoops down to grasp target. On following rounds, crushes life out of victim. Victim may fall if released (1D6 to 4D6 damage)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "45%",
+            "difficulty_hard": "22%",
+            "difficulty_extreme": "9%"
+          }
+        },
+        "skills": [
+          { "name": "Listen", "value": "30%" },
+          { "name": "Spot Prey", "value": "60%" }
+        ],
+        "armor": {
+          "rating": "9-point thick scales"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D6"
+      }
+    }
+  ]
+}
