@@ -234,7 +234,7 @@ class Karma(commands.Cog):
         up_emoji = settings.get("upvote_emoji")
         down_emoji = settings.get("downvote_emoji")
 
-        print(f"Starting karma recalculation for {guild.name} in #{channel.name}...")
+        print(f"Starting karma recalculation for {guild.name} in #{channel.name}...", flush=True)
 
         # Temp stats
         new_stats = {}
@@ -244,8 +244,8 @@ class Karma(commands.Cog):
             # Iterate history (scan all messages)
             async for message in channel.history(limit=None):
                 message_count += 1
-                if message_count % 500 == 0:
-                    print(f"Recalculating Karma... Scanned {message_count} messages so far.")
+                if message_count % 50 == 0:
+                    print(f"Recalculating Karma... Scanned {message_count} messages so far.", flush=True)
 
                 try:
                     # Check if author exists
@@ -281,10 +281,10 @@ class Karma(commands.Cog):
                 except Exception as msg_error:
                     # Log error but continue processing other messages
                     # This handles deleted users or malformed data issues gracefully
-                    print(f"Error processing message {message.id} during recalculation: {msg_error}")
+                    print(f"Error processing message {message.id} during recalculation: {msg_error}", flush=True)
                     continue
 
-            print(f"Recalculation finished. Total messages scanned: {message_count}")
+            print(f"Recalculation finished. Total messages scanned: {message_count}", flush=True)
 
             # Save new stats
             all_stats = await load_karma_stats()
