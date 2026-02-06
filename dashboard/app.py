@@ -1695,3 +1695,49 @@ async def deleter_bulk():
              return jsonify({"status": "error", "message": result}), 500
 
     return jsonify({"status": "error", "message": "Deleter Cog not loaded"}), 500
+
+# --- Backup Routes ---
+
+@app.route('/admin/backup')
+async def admin_backup():
+    if not is_admin(): return redirect(url_for('login'))
+    settings = load_settings()
+    backup_time = settings.get('backup_time')
+    return await render_template('backup_dashboard.html', backup_time=backup_time)
+
+@app.route('/api/backup/save', methods=['POST'])
+async def backup_save():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    backup_time = data.get('backup_time')
+
+    # Validation
+    if backup_time:
+        if not re.match(r'^\d{2}:\d{2}$', backup_time):
+             return jsonify({"status": "error", "message": "Invalid time format (HH:MM required)"}), 400
+
+    settings = load_settings()
+    settings['backup_time'] = backup_time
+    await save_settings(settings)
+
+    return jsonify({"status": "success"})
+
+@app.route('/api/backup/run', methods=['POST'])
+async def backup_run():
+    if not is_admin(): return "Unauthorized", 401
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    cog = app.bot.get_cog("backup")
+    if not cog:
+        return jsonify({"status": "error", "message": "Backup cog not loaded"}), 500
+
+    # Run backup
+    success, result = await cog.perform_backup()
+
+    if success:
+        return jsonify({"status": "success", "filename": result})
+    else:
+        return jsonify({"status": "error", "message": result}), 500

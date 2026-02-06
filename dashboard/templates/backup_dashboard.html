@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Backup Settings{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Backup System</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                Scheduled Backup
+            </div>
+            <div class="card-body">
+                <p class="card-text">Set the time (UTC/Server Time) for the daily backup of the <code>data/</code> folder.</p>
+                <form id="backupForm" onsubmit="event.preventDefault(); saveBackupSettings();">
+                    <div class="mb-3">
+                        <label for="backupTime" class="form-label">Backup Time (24h format)</label>
+                        <input type="time" class="form-control" id="backupTime" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">Save Settings</button>
+                </form>
+                <div id="saveMessage" class="mt-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                Manual Actions
+            </div>
+            <div class="card-body">
+                <p class="card-text">Trigger a backup immediately. The zip file will be sent to the bot owner.</p>
+                <button class="btn btn-warning" onclick="runBackup()" id="runBtn">Run Backup Now</button>
+                <div id="runMessage" class="mt-2"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', loadBackupSettings);
+
+async function loadBackupSettings() {
+    // The value is injected by the server into the template,
+    // but here we are using a separate API call pattern or template variable.
+    // Let's use the template variable approach for simplicity if the route provides it,
+    // OR we can fetch it.
+    // Since I haven't written the route yet, I'll decide now:
+    // The route will render the template with `backup_time` variable.
+
+    const serverBackupTime = "{{ backup_time }}";
+    if (serverBackupTime && serverBackupTime !== "None") {
+        document.getElementById('backupTime').value = serverBackupTime;
+    }
+}
+
+async function saveBackupSettings() {
+    const timeInput = document.getElementById('backupTime').value;
+    const btn = document.getElementById('saveBtn');
+    const msg = document.getElementById('saveMessage');
+
+    btn.disabled = true;
+    msg.innerHTML = '';
+
+    try {
+        const response = await fetch('/api/backup/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ backup_time: timeInput })
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            msg.innerHTML = '<div class="alert alert-success">Settings saved!</div>';
+        } else {
+            msg.innerHTML = `<div class="alert alert-danger">Error: ${data.message}</div>`;
+        }
+    } catch (e) {
+        msg.innerHTML = `<div class="alert alert-danger">Error: ${e}</div>`;
+    } finally {
+        btn.disabled = false;
+        setTimeout(() => msg.innerHTML = '', 3000);
+    }
+}
+
+async function runBackup() {
+    const btn = document.getElementById('runBtn');
+    const msg = document.getElementById('runMessage');
+
+    if (!confirm("Are you sure you want to run the backup now? This will send a file to the bot owner.")) return;
+
+    btn.disabled = true;
+    msg.innerHTML = '<div class="text-info">Backup in progress...</div>';
+
+    try {
+        const response = await fetch('/api/backup/run', {
+            method: 'POST'
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            msg.innerHTML = `<div class="alert alert-success">Backup Success: ${data.filename}</div>`;
+        } else {
+            msg.innerHTML = `<div class="alert alert-danger">Backup Failed: ${data.message}</div>`;
+        }
+    } catch (e) {
+        msg.innerHTML = `<div class="alert alert-danger">Error: ${e}</div>`;
+    } finally {
+        btn.disabled = false;
+    }
+}
+</script>
+{% endblock %}

@@ -3,5 +3,6 @@
     "youtubetoken": "",
     "enable_dashboard": false,
     "dashboard_port": 5000,
-    "admin_password": "changeme"
+    "admin_password": "changeme",
+    "backup_time": "03:00"
 }
