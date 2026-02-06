@@ -3075,7 +3075,7 @@
         "description": "Some may once have been human... others were greatly bestial with elongated snouts equipped with pointed teeth and receding foreheads conveying a canine-like aspect. They walked on two legs, although some seemed more comfortable moving on all fours. Their skin ranged from pale white to gray and brown, and in places, their rubbery flesh was coated in grave mold... Their hands ended in long claw-tipped fingers, and their feet were more akin to a goat's hooves.",
         "alternative_names": [
           "Dark Kin",
-          "Ghüls",
+          "Gh\u00fcls",
           "Fiends",
           "Corpse Eaters",
           "Grave Lurkers",
@@ -3327,7 +3327,7 @@
           },
           {
             "name": "Generate Cold",
-            "description": "Can drop temperature by 20°F (approx 11°C) per 1 MP spent for one hour in a 100-yard radius."
+            "description": "Can drop temperature by 20\u00b0F (approx 11\u00b0C) per 1 MP spent for one hour in a 100-yard radius."
           }
         ],
         "combat": {
@@ -4054,6 +4054,568 @@
         },
         "spells": "25% chance of knowing 2D10 spells.",
         "sanity_loss": "0/1D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Hyperborean",
+        "subtitle": "A Once-Great Civilization",
+        "tags": [
+          "Mythos",
+          "Humanoid",
+          "Ancient"
+        ],
+        "description": "Small and slender, they were human-like but seldom more than five-feet tall. Their hair was light blue to a pure white, while their eyes were gray or green. All possessed prominent, straight noses and very long ear lobes. Some had bluish beards and had marked their faces with strange blue-colored sigils. Each wore unusual clothing... which brought to mind images of science fiction and functional design.",
+        "alternative_names": [
+          "Ancient Ones",
+          "Cold Folk",
+          "Eibon's Race",
+          "Proto-Atlanteans"
+        ],
+        "main_entry_text": "The Hyperboreans were a great race who built a fabulous culture that rose and fell before the dawn of recorded history. Said to be masters of magic, science, and art... Today, the Hyperboreans are an all but extinct race. Rumors speak of tiny groups of Hyperboreans left, hidden in the cold, glacial areas of the world... living a primitive lifestyle, using stone weapons and tools.",
+        "characteristics": {
+          "STR": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "CON": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "SIZ": {
+            "roll": "(2D4+6)*5",
+            "average": 55
+          },
+          "DEX": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "INT": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "APP": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "EDU": {
+            "roll": "(1D8+11)*5",
+            "average": 75
+          }
+        },
+        "derived_stats": {
+          "hit_points": "10-11",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 10,
+          "move": {
+            "base": 8
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (unarmed or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "1D3+DB or weapon"
+            },
+            {
+              "name": "Spear (thrown)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D8+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "30%",
+            "difficulty_hard": "15%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "60%"
+          },
+          {
+            "name": "Listen",
+            "value": "60%"
+          },
+          {
+            "name": "Stealth",
+            "value": "60%"
+          },
+          {
+            "name": "Survival (Cold)",
+            "value": "80%"
+          }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "10% chance of knowing 1D3 spells; descendants of Tsathoggua-worshipping wizards have a 30% chance of knowing 1D6+2 spells.",
+        "sanity_loss": "None."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Ithaqua, Spawn of",
+        "subtitle": "The Ice-Blessed",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Ithaqua",
+          "Mutant"
+        ],
+        "description": "Passing among us as human, those carrying the taint of the Great Wind-Walker manifest when provoked... Monstrous and bestial, growing coarse and pale hair across their forms, with long talons and wolf-like teeth, and yellow eyes within which only hatred and malice lie.",
+        "alternative_names": [
+          "Ice Blessed",
+          "The Chosen",
+          "Ice Devils",
+          "Wind Born"
+        ],
+        "main_entry_text": "These spawns are the offspring of Ithaqua and a human male or female. Such progeny appears normal in all ways until their true nature is revealed. At their choosing (or when angered), a spawn transforms into a huge, monstrous parody of its former human self, growing in height, with white hair sprouting wolf-like across the body and head, hands turning into long extended claws and nails, the face contorting into a bestial mask with huge fangs.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+11)*5 (Human) / (4D6+18)*5 (Monstrous)",
+            "average": "90 / 160"
+          },
+          "CON": {
+            "roll": "(2D6+9)*5 (Human) / (6D6+24)*5 (Monstrous)",
+            "average": "80 / 225"
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5 (Human) / (10D6+30)*5 (Monstrous)",
+            "average": "65 / 325"
+          },
+          "DEX": {
+            "roll": "(2D6+15)*5 (Human) / (2D6+16)*5 (Monstrous)",
+            "average": "110 / 115"
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(2D6+9)*5",
+            "average": 80
+          },
+          "APP": {
+            "roll": "3D6*5 (Human)",
+            "average": "50-55"
+          },
+          "EDU": {
+            "roll": "(2D6+5)*5 (Human)",
+            "average": 60
+          }
+        },
+        "derived_stats": {
+          "hit_points": "14 (Human) / 55 (Monstrous)",
+          "damage_bonus": "+1D4 (Human) / +5D6 (Monstrous)",
+          "build": "1 (Human) / 6 (Monstrous)",
+          "magic_points": 16,
+          "move": {
+            "base": "9 (Human) / 20 flying (Monstrous)"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Alter Weather",
+            "description": "When angered, can call down powerful storms (blizzards, thunder, lightning, tornados). Costs 5 MP per level of change (Cloud Cover, Wind Speed, Temperature, Precipitation). Radius 2 miles. Lasts 30 mins per 5 MP."
+          },
+          {
+            "name": "Sky Dance",
+            "description": "Some wind-walkers possess the ability to \"run\" through the air, a means of travel akin to flying."
+          },
+          {
+            "name": "Ice Heart",
+            "description": "The only way to kill a wind-walker is to plunge a burning stake/knife into its cold heart, cut it out and burn it to ashes (penalty die to attack heart). If not destroyed, it rises again at next sunset."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (Human) / 4 (Monstrous - claws, bite, bash, crush)",
+          "attacks": [
+            {
+              "name": "Fighting (Human)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D4+DB or weapon"
+            },
+            {
+              "name": "Fighting (Monstrous)",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Bite (Monstrous)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D4 + Special",
+              "special_effect": "Victim must make POW roll or be struck with absolute terror (frozen or flee) for 1D6+1 rounds. Bitten person has cumulative 1% chance of becoming a wind-walker."
+            }
+          ],
+          "dodge": {
+            "success_chance": "55%",
+            "difficulty_hard": "27%",
+            "difficulty_extreme": "11%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "50%"
+          },
+          {
+            "name": "Jump",
+            "value": "60%"
+          },
+          {
+            "name": "Stealth",
+            "value": "60% (40% Monstrous)"
+          }
+        ],
+        "armor": {
+          "rating": "None (Human) / 6-point fur and hide (Monstrous)"
+        },
+        "spells": "Call Ithaqua, and others at Keeper's discretion.",
+        "sanity_loss": "None (Human); 1D4/1D10 (Monstrous)."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "King in Yellow, Courtiers of the",
+        "subtitle": "Pallid Dancers",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Hastur",
+          "Construct"
+        ],
+        "description": "Attendant upon the will of the King in Yellow... Arrayed in flowing and tattered yellow-orange rags, they wear pale and uncanny flesh-like masks. Beneath these robes and masks none can say what form they take. Within the King's court, they perform elaborate dances to strange music that echoes through the dank corridors of Lost Carcosa.",
+        "alternative_names": [
+          "The King's Demons",
+          "Masked Ones",
+          "Pallid Dancers",
+          "Yellow Horrors"
+        ],
+        "main_entry_text": "Servants of Lost Carcosa, the courtiers of the King in Yellow may be encountered attending to the king, appearing to perform ritualistic dances at the king's desire. They move with unnatural grace, swirling in violent circles and moving in synchronized patterns. For unwelcome guests, the courtiers reveal their malice, the edges of their flowing robes turning to razors to cut down those unworthy of the king's attention.",
+        "characteristics": {
+          "STR": {
+            "roll": "70",
+            "average": 70
+          },
+          "CON": {
+            "roll": "80",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "50",
+            "average": 50
+          },
+          "DEX": {
+            "roll": "120",
+            "average": 120
+          },
+          "INT": {
+            "roll": "100",
+            "average": 100
+          },
+          "POW": {
+            "roll": "100",
+            "average": 100
+          }
+        },
+        "derived_stats": {
+          "hit_points": "13",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 20,
+          "move": {
+            "base": 15
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Dance of Death",
+            "description": "Mesmerizes and damages those bearing witness. Targets within 20 yards must make Hard POW or become mesmerized. In following rounds, tattered robes turn razor-like, causing 1D4 damage per round. Mesmerized victims can attempt Hard POW roll to break free once per turn."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (robe lash or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting (Razor Robes)",
+              "success_chance": "70%",
+              "difficulty_hard": "35%",
+              "difficulty_extreme": "14%",
+              "damage": "1D4"
+            },
+            {
+              "name": "Scimitar",
+              "success_chance": "65%",
+              "difficulty_hard": "32%",
+              "difficulty_extreme": "13%",
+              "damage": "1D6"
+            }
+          ],
+          "dodge": {
+            "success_chance": "60%",
+            "difficulty_hard": "30%",
+            "difficulty_extreme": "12%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Jump",
+            "value": "70%"
+          },
+          {
+            "name": "Stealth",
+            "value": "70%"
+          }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "Summon/Bind Byakhee and others.",
+        "sanity_loss": "0/1D3"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "K'n-yan, People of",
+        "subtitle": "Psychic Subterranean Dwellers",
+        "tags": [
+          "Mythos",
+          "Humanoid",
+          "Independent",
+          "Subterranean"
+        ],
+        "description": "Tall and lean, these dark-robed humanoids had black hair, dark-coppery skin, and expressionless, aquiline faces. Their long-headedness was pronounced by long and narrow, sharp-nosed faces. Their eyes were large and bulged slightly. Unlike humans, their ears had long lobes and possessed flat, rather curved, top edges.",
+        "alternative_names": [
+          "K'n-yanians",
+          "Old Ones",
+          "Tulu People",
+          "Under-dwellers"
+        ],
+        "main_entry_text": "K'n-yan is a vast, blue-lit, subterranean empire beneath the earth, said by some to be accessed in the region of Oklahoma... The K'n-yanians are an advanced race of people with spectacular abilities and knowledge. Some sources... believe that the K'n-yanians came to Earth from the stars with Great Cthulhu... Today, the K'n-yanians appear to be in a continuous search for emotional and intellectual stimuli.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+5)*5",
+            "average": 60
+          },
+          "CON": {
+            "roll": "(2D6+5)*5",
+            "average": 60
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "(2D6+11)*5",
+            "average": 90
+          },
+          "POW": {
+            "roll": "(2D6+9)*5",
+            "average": 80
+          },
+          "APP": {
+            "roll": "(2D6+5)*5",
+            "average": 60
+          },
+          "EDU": {
+            "roll": "(2D6+12)*5",
+            "average": 95
+          }
+        },
+        "derived_stats": {
+          "hit_points": "12",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 16,
+          "move": {
+            "base": 8
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Telepathy",
+            "description": "Can communicate telepathically with ease through eye contact. Can communicate without eye contact with known telepaths/slaves (1D4 MP/hour, 30 yards)."
+          },
+          {
+            "name": "Dematerialization",
+            "description": "Can regulate matter and energy to dematerialize/rematerialize organic and inorganic substances. Cost: 1D8 MP to self; 1D8+2 to objects/others. Can be used to inflict harm (inserting objects inside people)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (unarmed, weapon, or psychic attack)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D3+DB or weapon"
+            },
+            {
+              "name": "Disintegration-ray Projector",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "1D10 (burn/melt)",
+              "special_effect": "Range 20 yards. Wounds cauterize but HP are permanently lost. Malfunction on 100 (vaporizes wielder)."
+            },
+            {
+              "name": "Psychic Attack",
+              "success_chance": "Opposed POW",
+              "damage": "1D10 MP"
+            }
+          ],
+          "dodge": {
+            "success_chance": "32%",
+            "difficulty_hard": "16%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Cthulhu Mythos",
+            "value": "20%"
+          },
+          {
+            "name": "Dematerialization",
+            "value": "45%"
+          },
+          {
+            "name": "Telepathy",
+            "value": "80%"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "May dematerialize (all physical attacks deal no damage)."
+        },
+        "spells": "1D6 spells.",
+        "sanity_loss": "None."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Leng, Ghoul Hound of",
+        "subtitle": "Graveside Horrors",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Dreamlands",
+          "Canine"
+        ],
+        "description": "The amulet best described the hound's appearance: that of a quadruped with folded wings, crouched and ready to pounce. Its head was repellent, something vaguely canine, with enormous fangs and eyes that spoke of an ancient hunger and malignancy. Its skin was furry in places, while in others it seemed caked in grave mold or soil.",
+        "alternative_names": [
+          "Dragvals",
+          "Dark Seekers",
+          "Flesh Rippers",
+          "Grave Beasts"
+        ],
+        "main_entry_text": "Ghoul hounds are believed to come from the hidden Plateau of Leng where numerous realities are said to co-exist... Some speculate that the hounds were once creatures living on the plateau that have been transformed by proximity to dimensional nexus points... Relentless hunters, ghoul hounds seek out their target, each night drawing closer until they pounce to either rip their prey limb from limb or carry them away to answer for their crimes.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          },
+          "CON": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "DEX": {
+            "roll": "(2D6+9)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "POW": {
+            "roll": "(2D6+5)*5",
+            "average": 60
+          }
+        },
+        "derived_stats": {
+          "hit_points": "15",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 12,
+          "move": {
+            "base": 10,
+            "special": "12 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Death Cry",
+            "description": "Baying is bone-chilling. Those hearing it must make Sanity roll (0/1D2 loss)."
+          },
+          {
+            "name": "Death Stare",
+            "description": "May stare into prey's eyes (opposed POW roll). If victim loses, they are transfixed/frozen until the hound attacks. Victim comprehends why they are hunted (1/1D6 Sanity loss)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "2 (claws) or 1 (bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "65%",
+              "difficulty_hard": "32%",
+              "difficulty_extreme": "13%",
+              "damage": "1D8+DB (claw) or 1D8+4+DB (bite)"
+            }
+          ],
+          "dodge": {
+            "success_chance": "50%",
+            "difficulty_hard": "25%",
+            "difficulty_extreme": "10%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Jump",
+            "value": "90%"
+          },
+          {
+            "name": "Listen",
+            "value": "75%"
+          },
+          {
+            "name": "Track (Scent)",
+            "value": "90%"
+          }
+        ],
+        "armor": {
+          "rating": "3-point thick fur and hard skin"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D6"
       }
     }
   ]
