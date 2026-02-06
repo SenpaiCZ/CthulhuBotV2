@@ -10423,6 +10423,928 @@
         "spells": "10% chance to know 1D3 spells.",
         "sanity_loss": "0/1D6"
       }
+    },
+    {
+      "monster_entry": {
+        "name": "Xo tl'mi-go",
+        "subtitle": "Children of the Kingdom",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Independent"
+        ],
+        "description": "Activity. Those captured are usually eaten by the xo tl'mi-go community, although it is said they favor capturing children to raise them as their own, using strange drugs, magic, or ritual to transform a human child into a xo tl'mi-go.",
+        "alternative_names": [
+          "Children of the Kingdom"
+        ],
+        "main_entry_text": "Little is known of their origins, but they appear to be a distinct race. They suffer from photophobia and cannot tolerate strong light; even a flashlight beam causes them to back away, while very strong light (daylight or intense beams) may harm their senses. They are adapted to the dark and suffer no penalties for operating in total darkness.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "CON": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          }
+        },
+        "derived_stats": {
+          "hit_points": "15",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 10,
+          "move": {
+            "base": 9
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (claw, rake, bite, or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D4+DB or by weapon"
+            },
+            {
+              "name": "Bite",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "1D4+2+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "26%",
+            "difficulty_hard": "12%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "80%"
+          },
+          {
+            "name": "Jump",
+            "value": "60%"
+          },
+          {
+            "name": "Listen",
+            "value": "75%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "70%"
+          },
+          {
+            "name": "Stealth",
+            "value": "80%"
+          }
+        ],
+        "armor": {
+          "rating": "1-point rubbery slick skin"
+        },
+        "spells": "None; those with INT 70+ may know 1D4 spells.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Yaddith, Denizen of",
+        "subtitle": "Alien Sorcerer-Scientists",
+        "tags": [
+          "Mythos",
+          "Alien",
+          "Scientist",
+          "Sorcerer"
+        ],
+        "description": "Curious beings from the dead planet of Yaddith, who fled that world's destruction. Sorcerous scientists, the Yaddithians are humanoid, with two legs and arms, and tapering head possessing a short trunk-like proboscis. Their rugose skin is partially squamous, with articulated joints that give it the appearance of an insect crossed with a mammal.",
+        "alternative_names": [
+          "The Nug-Soth",
+          "Travelers",
+          "Yaddithians"
+        ],
+        "main_entry_text": "Yaddithians fled their home world when their efforts to prevent an infestation of dholes came to naught. Subsequently, they traveled far by means of strange technology, and have shown a particular interest in our solar system, specifically regarding Earth and Mars. Brilliant scientists and powerful wizards, the Yaddithians have developed devices, known as \"light-wave envelopes,\" which can convey small groups through space.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "CON": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "INT": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "13",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 13,
+          "move": {
+            "base": 9
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (claws or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D4+DB"
+            },
+            {
+              "name": "Tube Pistol",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D6+2",
+              "special_effect": "Alien beam weapon."
+            },
+            {
+              "name": "Tube Rifle",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "2D6+2",
+              "special_effect": "Alien beam weapon."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "70%"
+          },
+          {
+            "name": "Disguise (Human)",
+            "value": "60%"
+          },
+          {
+            "name": "Science (various)",
+            "value": "90%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "45%"
+          },
+          {
+            "name": "Stealth",
+            "value": "50%"
+          },
+          {
+            "name": "Throw",
+            "value": "45%"
+          }
+        ],
+        "armor": {
+          "rating": "2-point chitinous shell"
+        },
+        "spells": "70% chance to know 1D6+2 spells.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Horse of the Invisible",
+        "subtitle": "Ghostly Steed-like Creatures",
+        "tags": [
+          "Folklore",
+          "Ghost",
+          "Invisible"
+        ],
+        "description": "Powerful entities that are completely powerless, silent, and invisible during daylight hours. Between sundown and sunrise, however, they are terrifying and powerful entities. They may be summoned or attracted by intense suffering.",
+        "alternative_names": [
+          "Night Mares",
+          "Spirit Steeds"
+        ],
+        "main_entry_text": "A horse of the invisible is tied to a specific lair until dispelled back to their home plane or slain. They possess telekinetic powers while invisible and immaterial (pushing objects/people). To physically manifest, a horse must expend magic points. Once coalesced, it can maintain its form between sundown and sunrise. If reduced to zero hit points while physical, it dispels until the next sundown. Truly killing it requires reducing its POW to zero.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+16)*5",
+            "average": 150
+          },
+          "CON": {
+            "roll": "(4D6+10)*5",
+            "average": 120
+          },
+          "SIZ": {
+            "roll": "(4D6+20)*5",
+            "average": 170
+          },
+          "DEX": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "INT": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "POW": {
+            "roll": "SIZ*1.5",
+            "average": 255
+          }
+        },
+        "derived_stats": {
+          "hit_points": "29",
+          "damage_bonus": "+3D6",
+          "build": 4,
+          "magic_points": 51,
+          "move": {
+            "base": 14,
+            "special": "20 incorporeal"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (hooves) or 1 (bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "75%",
+              "difficulty_hard": "37%",
+              "difficulty_extreme": "15%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Bite",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D4+DB",
+              "special_effect": "Victims killed by a single bite are bitten in half (head/torso never found)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "50%",
+            "difficulty_hard": "25%",
+            "difficulty_extreme": "10%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Suffers 1 damage from all physical attacks; magical weapons deal normal damage. Regenerates fully at sundown unless POW reduced to zero."
+        },
+        "sanity_loss": "0/1D6 to encounter corporeal form; 0/1D2 to hear hooves/neighing."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Jersey Devil",
+        "subtitle": "Haunter of the Pine Barrens",
+        "tags": [
+          "Folklore",
+          "Cryptid"
+        ],
+        "description": "A hooved, flying bipedal creature said to inhabit the Pine Barrens of Southern New Jersey. Bizarre tracks of single-file hoof prints are often the only evidence.",
+        "alternative_names": [
+          "Leeds Devil"
+        ],
+        "main_entry_text": "This monster is believed responsible for killing livestock. Its tracks start and end abruptly, are always in a perfectly straight line\u2014even going up and over roofs. Use this profile to suit other strange creatures lurking at the fringes of civilization, such as the Almas, Barmanu, Chupacabra, Fouke Monster, or Skunk Ape.",
+        "characteristics": {
+          "STR": {
+            "roll": "90",
+            "average": 90
+          },
+          "CON": {
+            "roll": "110",
+            "average": 110
+          },
+          "SIZ": {
+            "roll": "85",
+            "average": 85
+          },
+          "DEX": {
+            "roll": "70",
+            "average": 70
+          },
+          "INT": {
+            "roll": "70",
+            "average": 70
+          },
+          "POW": {
+            "roll": "70",
+            "average": 70
+          }
+        },
+        "derived_stats": {
+          "hit_points": "19",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 14,
+          "move": {
+            "base": 7,
+            "special": "9 flying"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (hooves)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "80%",
+              "difficulty_hard": "40%",
+              "difficulty_extreme": "16%",
+              "damage": "1D6+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Listen",
+            "value": "80%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "80%"
+          },
+          {
+            "name": "Stealth",
+            "value": "90%"
+          }
+        ],
+        "armor": {
+          "rating": "2-point tough hide"
+        },
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Lake Monster",
+        "subtitle": "Mysterious Watery Wonders",
+        "tags": [
+          "Folklore",
+          "Cryptid",
+          "Aquatic"
+        ],
+        "description": "Large, elusive creatures that generally possess long eel-like bodies or short, squat bodies with long tails and very long necks. They have small heads and typically are equipped with four paddle-like flippers.",
+        "alternative_names": [
+          "Nessie",
+          "Ogopogo",
+          "Champ",
+          "Chessie"
+        ],
+        "main_entry_text": "Lake monsters may grow up to 16 or more yards/meters long. Some claim that these mysterious creatures are descendants of the surviving specimens of prehistoric species (plesiosaurs). Usually timid and shy away from humans, but might attack if forced into a situation where they could not escape, or if their young were threatened.",
+        "characteristics": {
+          "STR": {
+            "roll": "(6D6+15)*5",
+            "average": 180
+          },
+          "CON": {
+            "roll": "(6D6+11)*5",
+            "average": 160
+          },
+          "SIZ": {
+            "roll": "(8D6+20)*5",
+            "average": 240
+          },
+          "DEX": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          },
+          "INT": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "POW": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "30",
+          "damage_bonus": "+4D6",
+          "build": 5,
+          "magic_points": 16,
+          "move": {
+            "base": 7,
+            "special": "12 swimming"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (flipper bash, bite) or 1 (tail bash)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "2D6"
+            },
+            {
+              "name": "Tail Bash",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "50%",
+            "difficulty_hard": "25%",
+            "difficulty_extreme": "10%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Listen",
+            "value": "80%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "90%"
+          },
+          {
+            "name": "Stealth",
+            "value": "90%"
+          }
+        ],
+        "armor": {
+          "rating": "12-point tough hide"
+        },
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Man-Eating Plant",
+        "subtitle": "Coniferous Carnivores",
+        "tags": [
+          "Folklore",
+          "Plant"
+        ],
+        "description": "Can take on any form, from gigantic versions of real plants to fantastical creations like serpentine-tendrilled trees or enticing flowers that close around their intended prey. Some emit caustic acids, some have blood sucking thorns, others have vines or leaves that snare or crush.",
+        "alternative_names": [
+          "Demon Vines",
+          "Vampire Vine",
+          "Death Tree"
+        ],
+        "main_entry_text": "Legends and pulp fiction are full of exotic jungles populated by man-eating plants. Carnivorous plants may be sentient, intelligent, and able to move, or they may be rooted to the spot. Such plants can occur naturally in deep, uncharted locations, be mutants, or creations of crazed scientists.",
+        "characteristics": {
+          "STR": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "CON": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "SIZ": {
+            "roll": "(6D6+10)*5",
+            "average": 155
+          },
+          "DEX": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "INT": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "22",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 10,
+          "move": {
+            "base": "0 or 6"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (varies)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "DB"
+            },
+            {
+              "name": "Trap (mnvr)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "DB per round",
+              "description": "Uses body or portion to trap prey. Caught prey is held and consumed (slowly or fast). Escape with opposed STR or Hard/Extreme DEX."
+            }
+          ],
+          "dodge": {
+            "success_chance": "30% (if mobile)"
+          }
+        },
+        "skills": [
+          {
+            "name": "Entice/Lure Prey",
+            "value": "70%"
+          },
+          {
+            "name": "Sense Prey",
+            "value": "70%"
+          }
+        ],
+        "armor": {
+          "rating": "Varies (usually 1D6-point leathery stems/bark)",
+          "modifiers": "Regenerates 1D6 or more per round."
+        },
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Megalodon",
+        "subtitle": "Big-Tooth Shark",
+        "tags": [
+          "Folklore",
+          "Prehistoric",
+          "Aquatic"
+        ],
+        "description": "The largest specimen of shark ever discovered, possessing teeth 7 inches (18 cm) long, and a bite radius of approximately 6 feet (1.8 m).",
+        "alternative_names": [
+          "Giant Shark"
+        ],
+        "main_entry_text": "This creature (living approximately 23 to 3.6 million years ago) could grow to lengths of up 100 feet (30 m) and weigh up to 100 tons or more. In most other respects it was like the great white sharks of today, constantly swimming and feeding on whatever it could find.",
+        "characteristics": {
+          "STR": {
+            "roll": "(10D6+40)*5",
+            "average": 375
+          },
+          "CON": {
+            "roll": "(8D6+35)*5",
+            "average": 315
+          },
+          "SIZ": {
+            "roll": "(10D6+50)*5",
+            "average": 425
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "POW": {
+            "roll": "(2D6+12)*5",
+            "average": 95
+          }
+        },
+        "derived_stats": {
+          "hit_points": "74",
+          "damage_bonus": "+9D6",
+          "build": 10,
+          "magic_points": 19,
+          "move": {
+            "base": 10
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "70%",
+              "difficulty_hard": "35%",
+              "difficulty_extreme": "14%",
+              "damage": "DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "35%",
+            "difficulty_hard": "17%",
+            "difficulty_extreme": "7%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Scent Blood/Prey",
+            "value": "90%"
+          }
+        ],
+        "armor": {
+          "rating": "10-point skin"
+        },
+        "sanity_loss": "1/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Mummy",
+        "subtitle": "Husks of Horror",
+        "tags": [
+          "Folklore",
+          "Undead"
+        ],
+        "description": "Undead beings similar to intelligent zombies. Some act as temple guardians.",
+        "alternative_names": [
+          "The Bandaged Ones"
+        ],
+        "main_entry_text": "Like zombies, mummies must be hacked apart to make them cease action. Contrary to popular belief, many mummies lack bandage wrappings and can move relatively swiftly. Some mummies cannot naturally regenerate magic points.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "CON": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          }
+        },
+        "derived_stats": {
+          "hit_points": "14",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 15,
+          "move": {
+            "base": 6
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (strike) or 1 (strangle)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "70%",
+              "difficulty_hard": "35%",
+              "difficulty_extreme": "14%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Strangle (mnvr)",
+              "success_chance": "70%",
+              "difficulty_hard": "35%",
+              "difficulty_extreme": "14%",
+              "damage": "1D6+DB per round"
+            }
+          ],
+          "dodge": {
+            "success_chance": "17%",
+            "difficulty_hard": "8%",
+            "difficulty_extreme": "3%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Stealth",
+            "value": "50%"
+          }
+        ],
+        "armor": {
+          "rating": "2-point tough skin",
+          "modifiers": "Impaling weapons deal half damage; bullets deal 1 damage. Fire deals normal damage first 2 rounds, then double damage."
+        },
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Sasquatch",
+        "subtitle": "Giant Hairy Hominid",
+        "tags": [
+          "Folklore",
+          "Cryptid",
+          "Humanoid"
+        ],
+        "description": "Standing over 7 feet (2 m) tall and covered in a reddish brown-colored thick hair.",
+        "alternative_names": [
+          "Bigfoot",
+          "Yeti",
+          "Skunk Ape",
+          "Momo",
+          "Abominable Snowman"
+        ],
+        "main_entry_text": "Elusive, hairy giant hominids who prowl the remote corners of the world. Sasquatch seem to be nocturnal and omnivorous. They are intelligent and generally shy, but can be aggressive if threatened.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+12)*5",
+            "average": 130
+          },
+          "CON": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "SIZ": {
+            "roll": "(4D6+12)*5",
+            "average": 130
+          },
+          "DEX": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "INT": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "21",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 10,
+          "move": {
+            "base": 10
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (fist, rock)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D4+DB"
+            },
+            {
+              "name": "Throw Rock",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D8+Half DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "45%",
+            "difficulty_hard": "22%",
+            "difficulty_extreme": "9%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "40%"
+          },
+          {
+            "name": "Listen",
+            "value": "50%"
+          },
+          {
+            "name": "Stealth",
+            "value": "70%"
+          },
+          {
+            "name": "Throw",
+            "value": "60%"
+          }
+        ],
+        "armor": {
+          "rating": "1-point skin/fur"
+        },
+        "sanity_loss": "0/1D4"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Zombie",
+        "subtitle": "The Unquiet Dead",
+        "tags": [
+          "Folklore",
+          "Undead"
+        ],
+        "description": "The dead brought back to life. They may be slow or fast, exist to perform a task or consume the living.",
+        "alternative_names": [
+          "Walking Dead",
+          "Ghouls (Classic Cinema)",
+          "Rotters"
+        ],
+        "main_entry_text": "Zombies may be created by magic, chemical spills, wrath of gods, or science. Most have low POW (05) and minimal INT, under control of a creator or are animalistic eating machines. Some may be indestructible, requiring dismemberment.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "CON": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "INT": {
+            "roll": "(1D4+2)*5",
+            "average": 20
+          },
+          "POW": {
+            "roll": "05",
+            "average": 5
+          }
+        },
+        "derived_stats": {
+          "hit_points": "14",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 1,
+          "move": {
+            "base": "6 (shambling) / 8 (fast)"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (rip, tear, bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "1D3+DB or by weapon"
+            }
+          ],
+          "dodge": {
+            "success_chance": "Rarely dodge"
+          }
+        },
+        "skills": [
+          {
+            "name": "Listen",
+            "value": "80%"
+          },
+          {
+            "name": "Spot the Living",
+            "value": "60%"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Major wound results in loss of limb. Otherwise ignore damage except to head (one penalty die to target head)."
+        },
+        "sanity_loss": "0/1D4 to encounter fresh zombie; 1/1D6 to encounter decaying corpse."
+      }
     }
   ]
 }
