@@ -6971,6 +6971,540 @@
         "spells": "30% chance of knowing 1D3 spells; if a gift from a deity, knows 1D6+.",
         "sanity_loss": "0/1D6; 1/1D6+2 if the face is known."
       }
+    },
+    {
+      "monster_entry": {
+        "name": "Reanimates",
+        "subtitle": "Undead Experiments",
+        "tags": [
+          "Mythos",
+          "Undead",
+          "Scientific Creation"
+        ],
+        "description": "At first, its outline was human, but venturing closer I beheld a thing no longer human. What had once been a man was now a mockery of life, frantic and bereft of nuance, it was bestial. Wounds that had clearly ended the natural life of the thing were now festering sores. It howled in rage and its eyes revealed the sorrow and pain of a thousand torments.",
+        "alternative_names": [
+          "Undead",
+          "West's Children",
+          "Zombies"
+        ],
+        "main_entry_text": "Reanimates are human zombies created through the injection of certain chemical compounds into a corpse... At best, West's reanimated corpses were near-mindless parodies of their former selves, and, at worst, they were mindless things capable only of lashing out and destroying all around them. Stuck in a state between life and death, unable to truly die, and slowly rotting away, many of West's failed experiments still roam.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "CON": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "INT": {
+            "roll": "1D3*5",
+            "average": 10
+          },
+          "POW": {
+            "roll": "10",
+            "average": 10
+          }
+        },
+        "derived_stats": {
+          "hit_points": "13",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 2,
+          "move": {
+            "base": 9
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (punch, rip, kick, bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D6+DB or weapon"
+            }
+          ],
+          "dodge": {
+            "success_chance": "N/A"
+          }
+        },
+        "skills": [
+          {
+            "name": "Sense Life",
+            "value": "40%"
+          },
+          {
+            "name": "Sense Life of Creator",
+            "value": "80%"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Suffers half damage from mundane melee weapons; minimum damage from bullets; immune to heat, cold, and electricity; cannot be drowned or suffocated; normal damage from fire or acid."
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D6. 1/1D8 for a truly horrible 'not fresh' specimen or former friend."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "S'glhuo, Denizens of",
+        "subtitle": "Living Sound",
+        "tags": [
+          "Mythos",
+          "Extra-Dimensional",
+          "Sound"
+        ],
+        "description": "From outside our world they come, creatures best described as sentient sound, although at times they seem to take on semi-physical forms that resemble tall, thin figures with blank, pupil-less eyes and a skin of blue scales that seem to constantly ripple.",
+        "alternative_names": [
+          "Living Sound",
+          "Tru'nembrians"
+        ],
+        "main_entry_text": "In the Gulf of S'glhuo, in a strange and distant universe, all the worlds and their inhabitants are composed of sound. When able to enter our world, they may take on semi-corporeal shapes looking vaguely reptilian... The denizens of S'glhuo can mentally project messages over incredible distances. Humans pick up these messages as dreams or inner voices.",
+        "characteristics": {
+          "STR": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "CON": {
+            "roll": "n/a",
+            "average": "n/a"
+          },
+          "SIZ": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "DEX": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "INT": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "POW": {
+            "roll": "(6D6+1)*5",
+            "average": 110
+          }
+        },
+        "derived_stats": {
+          "hit_points": "22",
+          "damage_bonus": "n/a",
+          "build": "n/a",
+          "magic_points": 22,
+          "move": {
+            "base": "40 (Sound) / 18 (Reptilian)"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (sonic)",
+          "attacks": [
+            {
+              "name": "Sonic Blast",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "1D6",
+              "special_effect": "Ignores mundane armor and cannot be dodged. Causes eardrums to bleed and ruptures flesh."
+            }
+          ],
+          "dodge": {
+            "success_chance": "42%",
+            "difficulty_hard": "21%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Immune to all physical damage. Vulnerable to certain spells affecting INT/POW and discordant sounds (1D4-1D6 damage)."
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D2 (sound); 0/1D4 (reptilian form)."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Sand-Dweller",
+        "subtitle": "Desert Lurkers",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Ancient"
+        ],
+        "description": "They are not like earthly carbon-based forms, as the people of the sands are comprised of silicon crystal material... Over time, these sand-dwellers accumulate crusts of sand and silicates around their bodies, forming a rudimentary armor while also acting as camouflage. Many appear in human-like bipedal shapes but others have differing forms. Know them by their two large black eyes, small nose, misshapen, cruel mouths of sharp teeth, and claw-like feet and hands.",
+        "alternative_names": [
+          "Crystal Folk",
+          "Desert Horrors",
+          "Gem Stealers",
+          "People of the Sands"
+        ],
+        "main_entry_text": "To some scholars, sand-dwellers appear to be an offshoot of hominid evolutionary development... while others suggest that they are unlike other earthly forms and comprised of silicon crystal material. Sand-dwellers are reported to be immortal... In practical terms, sand-dwellers look like moving sand sculptures. Their primary habitat is the Great Hive, which reaches downwards to the horrific Abyss of Yoth.",
+        "characteristics": {
+          "STR": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "CON": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "SIZ": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "14-15",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 10,
+          "move": {
+            "base": 7
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Sand Form",
+            "description": "Particularly ancient sand-dwellers may alter their shape... Two or more may be combined to form larger individuals for ritual purposes or when need arises. Costs 5 MP, lasts one hour."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "2 (unarmed, claws, bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "1D6+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "30%",
+            "difficulty_hard": "15%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Listen",
+            "value": "60%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "50%"
+          },
+          {
+            "name": "Stealth",
+            "value": "55%"
+          }
+        ],
+        "armor": {
+          "rating": "3-point rough hide"
+        },
+        "spells": "30% chance of knowing 1D6 spells.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Serpent People",
+        "subtitle": "Full Atavism",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Ancient",
+          "Sorcerer"
+        ],
+        "description": "Tall and slender they were, with scaled skin upon humanoid forms dressed in robes or tunics, with two legs and arms, a long neck, and a strong tail. Ophidian heads possessing two eyes, a lipless mouth containing a forked tongue, and simple holes for ears. Indeed, these majestic snakes did craft wondrous science and magic.",
+        "alternative_names": [
+          "First Ones",
+          "Ophidians",
+          "Serpent Kin",
+          "Snake People"
+        ],
+        "main_entry_text": "Serpent people are a refined and cultured race whose first kingdom, Valusia, flourished before even dinosaurs walked the Earth... They were great sorcerers, devoting their energy to magical workings and brewing potent poisons... A few lurking remnants of the serpent race survive, hibernating in sealed chambers hidden deep in the earth... waking to assess whether the time has come to repopulate the planet.",
+        "characteristics": {
+          "STR": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "CON": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "SIZ": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "10-11",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 13,
+          "move": {
+            "base": 8
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (unarmed or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D3+DB"
+            },
+            {
+              "name": "Bite",
+              "success_chance": "35%",
+              "difficulty_hard": "17%",
+              "difficulty_extreme": "7%",
+              "damage": "1D8 + poison",
+              "special_effect": "Victim must succeed in an Extreme CON roll or suffer 1D8 damage."
+            }
+          ],
+          "dodge": {
+            "success_chance": "32%",
+            "difficulty_hard": "16%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Intimidate",
+            "value": "60%"
+          },
+          {
+            "name": "Language (Naacal)",
+            "value": "70%"
+          },
+          {
+            "name": "Science (Biology)",
+            "value": "40%"
+          },
+          {
+            "name": "Science (Chemistry)",
+            "value": "40%"
+          }
+        ],
+        "armor": {
+          "rating": "1-point scales"
+        },
+        "spells": "2D6 spells.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Shaggai, Human Hybrids of",
+        "subtitle": "Shan-Human Hybrids",
+        "tags": [
+          "Mythos",
+          "Hybrid",
+          "Insectoid"
+        ],
+        "description": "Born of an egg, at first seeming human... Reborn, the true shaggai emerges, a giant wasp-like-humanoid insect-creature with iridescent skin, multi-faceted eyes, a proboscis, and wings.",
+        "alternative_names": [
+          "Insect People",
+          "Iridescent Ones",
+          "The Joined",
+          "Space Wasps"
+        ],
+        "main_entry_text": "The shaggai are a hybrid race, half-human and half-shan. They hatch from a maggot-like egg cell as human babies, continuing to grow and develop as humans until they reach puberty, at which time they molt into enormous humanoid insect-like creatures... Shaggai do not possess any of the abilities of their shan ancestors... They derive sustenance through a combination of shan-like photosynthesis and the consumption of food.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "CON": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "SIZ": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "DEX": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          }
+        },
+        "derived_stats": {
+          "hit_points": "12",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 11,
+          "move": {
+            "base": 6,
+            "special": "20 flying"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 or 4 (claws) or 1 (proboscis)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D4+DB"
+            },
+            {
+              "name": "Proboscis Attack",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D3 + APP loss",
+              "special_effect": "Shoots caustic acid (1 yard range). Dissolves flesh causing 1D3 damage + APP loss. Acid continues to damage until washed off. Eats through armor."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "armor": {
+          "rating": "4-point chitinous shell"
+        },
+        "spells": "None (Queens know 1D6 spells).",
+        "sanity_loss": "0/1D8 (Full Form); 1/1D6 to witness metamorphosis."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Shan (Insect from Shaggai)",
+        "subtitle": "Mental Parasites",
+        "tags": [
+          "Mythos",
+          "Alien",
+          "Parasite",
+          "Insectoid"
+        ],
+        "description": "It is written the Shan were marooned here, unable to return to the void... When revealed, they are insect-like, possessing large eyes, tendrils, and ten legs, all festooned with shining black tentacles. Beneath their carapace is a pale underbelly into which their legs can fold. Able to leap from human to human by flying on their two semi-circular wings comprised of triangular scales.",
+        "alternative_names": [
+          "Brain Bugs",
+          "The Hidden",
+          "Pain Seekers",
+          "Shaggaians",
+          "The Voice Within"
+        ],
+        "main_entry_text": "The insects from Shaggai are para-dimensional insect beings... The shan are a fugitive race, their home planet or dimension, known as Shaggai, was destroyed... Unfortunately, those who came to Earth found they could not escape, as the planet's atmosphere contains a certain component that prevents them from teleporting away... Unable to move on from Earth's confines, the shan have sought to manipulate humanity, possessing key people to advance their alien agenda.",
+        "characteristics": {
+          "STR": {
+            "roll": "1D3*5",
+            "average": 10
+          },
+          "CON": {
+            "roll": "1D3*5",
+            "average": 10
+          },
+          "SIZ": {
+            "roll": "05",
+            "average": 5
+          },
+          "DEX": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "INT": {
+            "roll": "(2D6+9)*5",
+            "average": 80
+          },
+          "POW": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          }
+        },
+        "derived_stats": {
+          "hit_points": "1",
+          "damage_bonus": "n/a",
+          "build": -2,
+          "magic_points": 16,
+          "move": {
+            "base": 4,
+            "special": "20 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Meld",
+            "description": "Can phase into a target's brain (cost 1 MP). If shan wins opposed POW, it settles in. Host may be unaware."
+          },
+          {
+            "name": "Mental Attack",
+            "description": "Once inside, can inject memories and thoughts. At night, can pre-program host. Progressively causes insanity."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (nerve whip)",
+          "attacks": [
+            {
+              "name": "Nerve Whip",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "Special (Agony)",
+              "special_effect": "Projects pallid light. Opposed POW roll: Shan wins = target writhes in agony (incapacitated). Shan fails = target suffers penalty die. Beam can be continued."
+            }
+          ],
+          "dodge": {
+            "success_chance": "70%",
+            "difficulty_hard": "35%",
+            "difficulty_extreme": "14%"
+          }
+        },
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "80% chance of knowing 2D10 spells.",
+        "sanity_loss": "0/1D6"
+      }
     }
   ]
 }
