@@ -9283,6 +9283,613 @@
         "spells": "10% chance to know 1D6 spells (Contact Tsathoggua, Call Ossadagowah, Contact Formless Spawn).",
         "sanity_loss": "1D4/1D8+2"
       }
+    },
+    {
+      "monster_entry": {
+        "name": "Ubbo-Sathla, Brood of",
+        "subtitle": "The Lurching Ones",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Ubbo-Sathla",
+          "Primitive"
+        ],
+        "description": "Gray-white, some translucent, some multi-colored, they mimic protozoa-amoebas, stentors, didymium, and euglena-yet on a much greater scale. Some lurch while others scurry... while others preen and tend like birds upon an elephant, picking and eating parasites from the god's body.",
+        "alternative_names": [
+          "Attendants",
+          "Gelifines",
+          "Lurching Horrors",
+          "Spawn of Ubbo-Sathla"
+        ],
+        "main_entry_text": "Ubbo-Sathla constantly produces offspring from its formless mass. Most are immediately snatched up and devoured, although many escape. Those surviving this initial culling tend to remain close, fulfilling every whim and urge of their primal, mindless sire. Generally, they are encountered only in Ubbo-Sathla's primal grotto... No two spawns are exactly alike. They are similar in appearance to giant versions of protozoans and other one-celled creatures, each as strange and unwholesome as the next.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+4)*5 (Average) / (6D10+6)*5 (Greater)",
+            "average": "90 / 195"
+          },
+          "CON": {
+            "roll": "(4D6+2)*5 (Average) / (4D6+8)*5 (Greater)",
+            "average": "80 / 110"
+          },
+          "SIZ": {
+            "roll": "(2D6+8)*5 (Average) / (6D10+10)*5 (Greater)",
+            "average": "75 / 215"
+          },
+          "DEX": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "INT": {
+            "roll": "05",
+            "average": 5
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "15 (Average) / 32 (Greater)",
+          "damage_bonus": "+1D6 (Average) / +4D6 (Greater)",
+          "build": "2 (Average) / 5 (Greater)",
+          "magic_points": 10,
+          "move": {
+            "base": 8
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (grab, leap, jump)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "DB"
+            },
+            {
+              "name": "Grab (Maneuver)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D6 per round",
+              "description": "Attacks with sticky filaments or pseudopods to pull target into mass. Consumes by squirting digestive juices (1D6 damage). Opposed STR to escape. For every 5 damage suffered, victim loses 1D10 APP."
+            },
+            {
+              "name": "Jump/Leap (Maneuver)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D6 per round",
+              "description": "Leaps onto target to smother/digest."
+            }
+          ],
+          "dodge": {
+            "success_chance": "35%",
+            "difficulty_hard": "17%",
+            "difficulty_extreme": "7%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Jump",
+            "value": "50%"
+          },
+          {
+            "name": "Spot Prey",
+            "value": "60%"
+          },
+          {
+            "name": "Stealth",
+            "value": "60%"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Impaling weapons (incl. bullets) deal minimum damage; fire and enchanted weapons deal normal damage."
+        },
+        "spells": "None.",
+        "sanity_loss": "1/1D8"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Voor",
+        "subtitle": "Subterranean Horrors",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Subterranean"
+        ],
+        "description": "Small humanoids with pale and hairless whitish bodies, covered with glistening slime. Their heads are reminiscent of an infant, with puffy and swollen flesh within which are set nostril slits and a crude sphincter-like mouth. There are no eyes, just smooth wet skin. They wore no clothing and moved in a manner that suggested a snake twisting and writhing. They are repugnant and horrid.",
+        "alternative_names": [
+          "Boggarts",
+          "Creepers",
+          "Goblins",
+          "Lurkers",
+          "Stranglers"
+        ],
+        "main_entry_text": "In the ancient past, before the Ice Age, the voor were a powerful and prosperous race, building cities and worshipping strange gods. With the rise of humanity, the voor were driven underground and forgotten... Generations of living in the lightless worlds beneath the earth, the voor found no use for their eyes, developing into blind, albino-like creatures who hunt by sound and smell alone. Today, it can be assumed the voor are close to extinction... Voors continue to practice their worship of dark gods, including holding sacrifices to entities like Tsathoggua, Abhoth, Atlach-Nacha, and Ubbo-Sathla.",
+        "characteristics": {
+          "STR": {
+            "roll": "3D3*5",
+            "average": 30
+          },
+          "CON": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "SIZ": {
+            "roll": "(2D3+3)*5",
+            "average": 35
+          },
+          "DEX": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "9",
+          "damage_bonus": "-1",
+          "build": -1,
+          "magic_points": 10,
+          "move": {
+            "base": 8
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (claw, bite, weapon, strangulation)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D4-1 (min 1) or weapon"
+            },
+            {
+              "name": "Strangulation (Maneuver)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D2 per round",
+              "description": "If successful surprise attack, holds throat. Victim suffers 1D2 damage/round. May lose consciousness (CON roll) at half HP. Opposed STR to break free."
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "80%"
+          },
+          {
+            "name": "Listen",
+            "value": "95%"
+          },
+          {
+            "name": "Scent Prey",
+            "value": "60%"
+          },
+          {
+            "name": "Stealth",
+            "value": "70%"
+          }
+        ],
+        "armor": {
+          "rating": "None",
+          "modifiers": "Direct sunlight causes 1 damage per round."
+        },
+        "spells": "None; shaman-like priest may know 1D6 spells.",
+        "sanity_loss": "0/1D4"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Voormis",
+        "subtitle": "Savage Humanoids",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Subterranean"
+        ],
+        "description": "Three-toed humanoids, covered in brown or umber-colored fur, who crouch and stand half-erect. Their hands end in sharp, talon-like claws, and their faces are canine in aspect. Emitting both guttural cries and sharp, high-pitched shrieks, they are aggressive of nature, cruel, and wish to make war on others.",
+        "alternative_names": [
+          "People Under the Mountain",
+          "Sasquatch",
+          "Trolls",
+          "Virmis",
+          "Yeti"
+        ],
+        "main_entry_text": "The voormis are a race of primitive humanoids that dwell in caverns, other forgotten places, and the Dreamlands. Possibly now extinct, rumors persist of isolated tribes existing in the northern hemisphere. These creatures are thought to be the ancestors of the sasquatch and yeti, and their mutated cousins have given rise to folklore concerning trolls. Normally nocturnal, voormis are savage and cunning hunters... Mutated or primal voormis are distinct from normal voormis, being significantly larger, more brutal, and bestial.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+8)*5 (Avg) / (4D6+16)*5 (Mutated)",
+            "average": "75 / 150"
+          },
+          "CON": {
+            "roll": "(2D6+5)*5 (Avg) / (4D6+6)*5 (Mutated)",
+            "average": "60 / 100"
+          },
+          "SIZ": {
+            "roll": "(2D6+3)*5 (Avg) / (4D6+14)*5 (Mutated)",
+            "average": "50 / 140"
+          },
+          "DEX": {
+            "roll": "(2D6+5)*5",
+            "average": 60
+          },
+          "INT": {
+            "roll": "(2D6+1)*5 (Avg) / 2D6*5 (Mutated)",
+            "average": "40 / 35"
+          },
+          "POW": {
+            "roll": "(2D6+5)*5 (Avg) / (2D6+1)*5 (Mutated)",
+            "average": "60 / 40"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "11 (Average) / 24 (Mutated)",
+          "damage_bonus": "+1D4 (Average) / +3D6 (Mutated)",
+          "build": "1 (Average) / 4 (Mutated)",
+          "magic_points": "12 (Average) / 8 (Mutated)",
+          "move": {
+            "base": "9 (Average) / 8 (Mutated)"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "3 (Avg: claws, bite) or 1 (weapon) / 1 (Mutated: claw, bite)",
+          "attacks": [
+            {
+              "name": "Fighting (Average)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D6+DB or spear 1D6+DB"
+            },
+            {
+              "name": "Bite (Average)",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D4"
+            },
+            {
+              "name": "Fighting (Mutated)",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6+DB or club 1D8+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "30%",
+            "difficulty_hard": "15%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Listen",
+            "value": "50%"
+          },
+          {
+            "name": "Scent",
+            "value": "75%"
+          },
+          {
+            "name": "Stealth",
+            "value": "30%"
+          },
+          {
+            "name": "Track",
+            "value": "75%"
+          }
+        ],
+        "armor": {
+          "rating": "2-point thick fur (Average) / 4-point thick hide and fur (Mutated)"
+        },
+        "spells": "None; shaman may know Contact Formless Spawn, Contact Tsathoggua, Evil Eye, Shrivelling.",
+        "sanity_loss": "0/1D6 (Average); 1/1D6+1 (Mutated)."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Wind-Walker",
+        "subtitle": "Chosen of Ithaqua",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Ithaqua",
+          "Mutant"
+        ],
+        "description": "Once men, they now dance upon the cold winds and their howl freezes the blood. Called by the Great Wind-Walker to hear its chilling song are they who forsake all others to be blessed by his touch. Growing hoof-like growths where once were feet, while ice water instead of blood flows through their veins. Bestial and skeletal things, with a deaths-head face, hoar-frosted hair, and long boney fingers and hooked nails.",
+        "alternative_names": [
+          "Children of Ithaqua",
+          "The Ice-Hearted",
+          "Sky Dancers",
+          "Wind Furies"
+        ],
+        "main_entry_text": "Humans directly touched by the Great Wind-Walker, Ithaqua, may become transformed into wind-walkers... As the transformation takes hold (anywhere between 24 to 48 hours or more), the urges are less controllable, grow stronger, and last longer. Eventually, nothing of the person they once were remains... Wind-walkers tend to be found only in the region of the North Pole; thus, North America, Canada, Russia, Norway, and Greenland.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+3)*5",
+            "average": 85
+          },
+          "CON": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "SIZ": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "DEX": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "16",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": "10-11",
+          "move": {
+            "base": 8,
+            "special": "80 flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Sky Dance",
+            "description": "Some wind-walkers possess the ability to \"run\" through the air, a means of travel akin to flying."
+          },
+          {
+            "name": "Ice Heart",
+            "description": "The only way to kill a wind-walker is to plunge a burning stake/knife into its cold heart, cut it out and burn it to ashes (penalty die to attack heart). If not destroyed, it rises again at next sunset."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "2 (claws, bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D8+DB"
+            },
+            {
+              "name": "Bite",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D4 + Terror/Curse",
+              "special_effect": "Victim must make POW roll or be struck with absolute terror (frozen or flee) for 1D6+1 rounds. Bitten person has cumulative 1% chance of becoming a wind-walker."
+            }
+          ],
+          "dodge": {
+            "success_chance": "45%",
+            "difficulty_hard": "22%",
+            "difficulty_extreme": "9%"
+          }
+        },
+        "skills": [
+          {
+            "name": "None (transformed humans retain skills)",
+            "value": "Variable"
+          }
+        ],
+        "armor": {
+          "rating": "6-point ice/thick hide",
+          "modifiers": "Immune to cold."
+        },
+        "spells": "50% chance to know 1D3 spells (Ithaqua/Cold related).",
+        "sanity_loss": "0/1D6 to encounter; 0/1D2 to hear howl."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Xiclotl, Being from",
+        "subtitle": "Tree-like Aliens",
+        "tags": [
+          "Mythos",
+          "Alien",
+          "Slave Race"
+        ],
+        "description": "They originate from another world unknown to us. Beings that look like bizarre metal trees, with cylindrical \"trunks\" and \"branches.\" Rising to 16 feet in height, their six branch-like arms circle the central trunk... Rising from the top of the trunk is an oval-shaped head containing a large and open orifice through which it feeds.",
+        "alternative_names": [
+          "Tree Monsters",
+          "Xiclotlans"
+        ],
+        "main_entry_text": "These carnivorous aliens come from the planet of Xiclotl... Not a spacefaring race, these entities were brought to Earth by the Shan (insects from Shaggai) who first visited Xiclotl, enslaving the planet's inhabitants... The Shan use the easily controlled Xiclotlans as a labor force, sometimes using them to guard their secrets on Earth.",
+        "characteristics": {
+          "STR": {
+            "roll": "(4D6+20)*5",
+            "average": 170
+          },
+          "CON": {
+            "roll": "(4D6+20)*5",
+            "average": 170
+          },
+          "SIZ": {
+            "roll": "(4D6+30)*5",
+            "average": 220
+          },
+          "DEX": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "INT": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "POW": {
+            "roll": "(2D6+5)*5",
+            "average": 60
+          }
+        },
+        "derived_stats": {
+          "hit_points": "39",
+          "damage_bonus": "+4D6",
+          "build": 5,
+          "magic_points": 12,
+          "move": {
+            "base": 7
+          }
+        },
+        "combat": {
+          "attacks_per_round": "6 (strike, seize, rip)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "DB",
+              "special_effect": "May simultaneously use all six of their branch-like tentacles."
+            },
+            {
+              "name": "Seize (Maneuver)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "Devour (1D6) or Crush (DB)",
+              "description": "May swallow creatures up to half its SIZ (DB damage per round). Otherwise, seized victims may be devoured (1D6/round) or crushed (DB). Opposed DEX or STR to escape."
+            }
+          ],
+          "dodge": {
+            "success_chance": "35%",
+            "difficulty_hard": "17%",
+            "difficulty_extreme": "7%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Stealth (Woodland)",
+            "value": "50%"
+          }
+        ],
+        "armor": {
+          "rating": "6-point hide",
+          "modifiers": "Cold-based attacks deal double damage."
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Y'golonac, Servant of",
+        "subtitle": "Whispering Horrors",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Y'golonac"
+        ],
+        "description": "With folds of flabby skin, they seem like nightmarish babies or children, drooling and wretched. Blind, they have empty sockets, as though their lord has ripped out their eyes... Perhaps most terrible are the palms, each possessing a tooth-filled mouth. It is from these mouths, rather than the drooling ones on their faces, through which they speak and rend and eat.",
+        "alternative_names": [
+          "The Brood",
+          "Chosen of the Defiler",
+          "Demon Children of Y'golonac",
+          "The Fleshy Ones"
+        ],
+        "main_entry_text": "Y'golonac's brood is plentiful and abundant. Attending to their lord's needs and desires, these small creatives appear as deformed humanoids... Sometimes naked, sometimes cloaked in dirty and tattered rags... Most believe both Y'golonac and its servants are bound and imprisoned... When ritual summoning or other arcane workings temporarily free the deity, it brings its servants with it.",
+        "characteristics": {
+          "STR": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "CON": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "SIZ": {
+            "roll": "2D4*5",
+            "average": 25
+          },
+          "DEX": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "INT": {
+            "roll": "10",
+            "average": 10
+          },
+          "POW": {
+            "roll": "2D6*5",
+            "average": 35
+          }
+        },
+        "derived_stats": {
+          "hit_points": "7",
+          "damage_bonus": "-2",
+          "build": -2,
+          "magic_points": 7,
+          "move": {
+            "base": 9
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Corrupting Influence",
+            "description": "Exposure to whispers for several days causes corruption. Countered by daily POW roll. Failure leads to consumption by vice and loss of 1D8 Sanity/day. 5 failures leads to total servitude."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "3 (bite)",
+          "attacks": [
+            {
+              "name": "Bite",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D6-2 (min 1)",
+              "special_effect": "Mouths in each palm and face bite. Usually swarm opponents."
+            }
+          ],
+          "dodge": {
+            "success_chance": "25%",
+            "difficulty_hard": "12%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Stealth",
+            "value": "80%"
+          },
+          {
+            "name": "Whisper Y'golonac's Words",
+            "value": "100%"
+          }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D4; 1/1D6+1 for a group."
+      }
     }
   ]
 }
