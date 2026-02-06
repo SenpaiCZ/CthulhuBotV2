@@ -3075,7 +3075,7 @@
         "description": "Some may once have been human... others were greatly bestial with elongated snouts equipped with pointed teeth and receding foreheads conveying a canine-like aspect. They walked on two legs, although some seemed more comfortable moving on all fours. Their skin ranged from pale white to gray and brown, and in places, their rubbery flesh was coated in grave mold... Their hands ended in long claw-tipped fingers, and their feet were more akin to a goat's hooves.",
         "alternative_names": [
           "Dark Kin",
-          "Gh\u00fcls",
+          "Ghüls",
           "Fiends",
           "Corpse Eaters",
           "Grave Lurkers",
@@ -3327,7 +3327,7 @@
           },
           {
             "name": "Generate Cold",
-            "description": "Can drop temperature by 20\u00b0F (approx 11\u00b0C) per 1 MP spent for one hour in a 100-yard radius."
+            "description": "Can drop temperature by 20°F (approx 11°C) per 1 MP spent for one hour in a 100-yard radius."
           }
         ],
         "combat": {
@@ -3567,6 +3567,493 @@
         },
         "spells": "30% chance to know 1D3 spells.",
         "sanity_loss": "1/1D3 (increase to 1/1D6 for particularly horrific mutations)."
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Great Old Ones, Larvae of the",
+        "subtitle": "Juvenile Cosmic Horrors",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Larva"
+        ],
+        "description": "Frightful bulbous sacks from which erupt claws, crooked-tipped wings, or tentacles, these wet and steaming \"eggs\" are like some isolated internal organ able to convey itself about and treat with the world around it. When birthed free of the sack-like egg, the larvae are monstrous to behold, giving vision to the things they will one day grow to become.",
+        "alternative_names": [
+          "Children of the Gods",
+          "Dho-Spawn",
+          "Festering Things",
+          "Kin of the Old Ones",
+          "Spawn of the Stars"
+        ],
+        "main_entry_text": "The larvae of the Great Old Ones are the undeveloped, immature, juvenile things that may one day grow and develop into full-fledged Great Old Ones. While it's assumed that most larvae are spawned by the Great Old Ones themselves, some are rumored to take form through alien science or sorcery. Potentially discovered as eggs, but more likely to be encountered in juvenile form. All larval Great Old Ones are unique in appearance, attributes, and abilities.",
+        "characteristics": {
+          "STR": {
+            "roll": "(6D6+7)*5",
+            "average": 140
+          },
+          "CON": {
+            "roll": "(6D6+6)*5",
+            "average": 135
+          },
+          "SIZ": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          },
+          "DEX": {
+            "roll": "(4D6+3)*5",
+            "average": 85
+          },
+          "INT": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          },
+          "POW": {
+            "roll": "6D6*5",
+            "average": "115-120"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "21",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 24,
+          "move": {
+            "base": "1D10-1 (varies)"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Aura of Pain",
+            "description": "Costs 3 MP per round. Sends out waves of pain (5 yards). Causes 1 damage per round and halves movement/imposes penalty die on physical actions."
+          },
+          {
+            "name": "Maddening Influence",
+            "description": "Costs 5 MP. Unleashes psychic waves (10 yards). Forces Sanity roll (1D6/1D10 loss). Grants +1D4/+1D8 Cthulhu Mythos."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1D6+1 (varies: claws, bite, tentacle crush, sound)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "DB or 1D6+1 (sound)"
+            }
+          ],
+          "dodge": {
+            "success_chance": "45%",
+            "difficulty_hard": "22%",
+            "difficulty_extreme": "9%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Varies",
+            "value": "40-80%"
+          }
+        ],
+        "armor": {
+          "rating": "4-point skin (varies)",
+          "modifiers": "Bullets deal minimum damage; immune to cold, fire, and chemical-based attacks."
+        },
+        "spells": "Knows 1D6 spells.",
+        "sanity_loss": "1/1D10 to 1D6/2D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Green Abyss, Spawn of the",
+        "subtitle": "Deep Singers",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Zoth Syra",
+          "Yoth Kala",
+          "Aquatic"
+        ],
+        "description": "Gelatinous things with an elastic-rubber-like flesh, larger than a man, they pulsate and swell, sending forth pseudopods or tentacles to taste the air and search for prey. They make wet, plopping sounds as they move; their black-green flesh dripping a foul blue substance that seems to extrude like sweat. At the center is a sphincter-like orifice... Above the sphincter rises a worm-like tentacle, able to extend outward to feel the vibrations around it somewhat like a snake's tongue.",
+        "alternative_names": [
+          "Deep Spawn",
+          "Kraken Brood",
+          "Monstrous Jellyfish",
+          "Sea Slime"
+        ],
+        "main_entry_text": "The spawn of the Green Abyss herald from outer space and came to this planet long ago to inhabit oceans and watery places. While similar to shoggoths, in some respects, the spawn are utterly alien and possess great intelligence. They tend to remain in deep waters, occasionally swimming to the surface to hold what appear to be strange rituals when certain cosmic alignments take place. Some have alleged the spawn are actually part of deep one society.",
+        "characteristics": {
+          "STR": {
+            "roll": "10D6*5",
+            "average": 175
+          },
+          "CON": {
+            "roll": "7D6*5",
+            "average": "120-125"
+          },
+          "SIZ": {
+            "roll": "(7D6+25)*5",
+            "average": "245-250"
+          },
+          "DEX": {
+            "roll": "1D6*5",
+            "average": 15
+          },
+          "INT": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "POW": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          }
+        },
+        "derived_stats": {
+          "hit_points": "36-37",
+          "damage_bonus": "+4D6",
+          "build": 5,
+          "magic_points": 17,
+          "move": {
+            "base": 8,
+            "special": "12 swimming"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Hypnotic Song",
+            "description": "Able to \"sing\" alien melodies that influence those who hear them. Listeners must win an opposed POW roll or fall under the creature's command. Victim can attempt to break the spell every round with an Extreme POW roll."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1D3 (strike, whip) or 1 (crush)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "Half DB"
+            },
+            {
+              "name": "Crush",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "DB",
+              "description": "Rolls over and crushes using its bulk."
+            }
+          ],
+          "dodge": {
+            "success_chance": "30% (in water)",
+            "difficulty_hard": "15%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Immune to mundane weapons; fire, electrical, and chemical based attacks cause harm; regenerates 1D3 hit points per round (death at zero hit points)."
+        },
+        "spells": "15% chance of knowing 1D4 spells.",
+        "sanity_loss": "1D6/2D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Hastur, Spawn of",
+        "subtitle": "Unspeakable Guardians of Hali",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Hastur",
+          "Aquatic"
+        ],
+        "description": "They swim among the bones and terrors of the Lake of Hali, ever-present guardians of lost Carcosa... the faces of the Hali spawn, whose bodies better resemble octopoid sacks with many limbs: things of many feeling arms and dark mottled flesh, whose hideous faces break open to reveal gaping maws of gnashing and rending teeth.",
+        "alternative_names": [
+          "Guardians of the Court",
+          "The King's Hounds",
+          "Sunken Ones",
+          "Watchers in the Water"
+        ],
+        "main_entry_text": "The spawn of Hastur appear to be amphibious, spending most of their time lurking in the foul waters of the Lake of Hali or else upon its banks. Some spawn possess limited flight capabilities and can make short excursions over land. Atop their heads is usually a human-seeming face, although some are more skull-like than others. Such creatures are rarely found beyond the shores of Carcosa where they act as guardians.",
+        "characteristics": {
+          "STR": {
+            "roll": "(6D6+10)*5",
+            "average": 155
+          },
+          "CON": {
+            "roll": "(3D6+6)*5",
+            "average": "80-85"
+          },
+          "SIZ": {
+            "roll": "(6D6+10)*5",
+            "average": 155
+          },
+          "DEX": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(4D6+3)*5",
+            "average": 85
+          }
+        },
+        "derived_stats": {
+          "hit_points": "23-24",
+          "damage_bonus": "+3D6",
+          "build": 4,
+          "magic_points": 17,
+          "move": {
+            "base": 4,
+            "special": "12 swimming / 8 flying"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (tentacles) or 1 (body bash or grab and hold)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "Half DB (tentacles) or Full DB (body smash)"
+            },
+            {
+              "name": "Grab and Hold (Maneuver)",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "Crush (DB) or Bite (1D6+2)",
+              "description": "If successful, may crush victim (DB damage) or pull victim into gaping maw (1D6+2 damage). If held for 3 rounds, victim is swallowed whole on 4th round (death)."
+            }
+          ],
+          "dodge": {
+            "success_chance": "30%",
+            "difficulty_hard": "15%",
+            "difficulty_extreme": "6%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Detect Prey",
+            "value": "45%"
+          },
+          {
+            "name": "Stealth",
+            "value": "40%"
+          }
+        ],
+        "armor": {
+          "rating": "6-point thick and rubbery hide"
+        },
+        "spells": "Call Hastur, plus 1D6 spells.",
+        "sanity_loss": "1D6/2D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Hell Leech",
+        "subtitle": "Giant Devourers",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Aquatic"
+        ],
+        "description": "Massive, as large as a man, they lie below the water, their dark forms glistening when they break the surface. With their reaching tentacles they latch on and then their harp teeth they bite and tear, opening the veins to let the blood pour out and turn the waters red.",
+        "alternative_names": [
+          "Blood Devils",
+          "River Kings",
+          "Swamp Lurkers",
+          "Water Demons"
+        ],
+        "main_entry_text": "Best described as something like an enormous pulpy black leech, they swim and loiter in waters found in jungles and strange plateaus. Unlike normal leeches whose bites are painless, a bite from a hell leech is akin to having one's flesh ripped off by a wire grater. Their mouths contain rows of densely packed serrated teeth able to easily tear through soft flesh and clothing.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "CON": {
+            "roll": "(2D6+10)*5",
+            "average": 85
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "INT": {
+            "roll": "1D6*5",
+            "average": 15
+          },
+          "POW": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          }
+        },
+        "derived_stats": {
+          "hit_points": "15",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 13,
+          "move": {
+            "base": 12,
+            "special": "swimming"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (tentacles) or 1 (lunge)",
+          "attacks": [
+            {
+              "name": "Fighting (Lunge)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D4+DB + poison"
+            },
+            {
+              "name": "Tentacle Latch (Maneuver)",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "None (latch only)",
+              "description": "Latches onto prey. On following round, can automatically bite."
+            },
+            {
+              "name": "Blood Drain",
+              "success_chance": "Automatic on bite",
+              "damage": "3D6 STR drain per round",
+              "description": "A successful bite releases poison (Hard CON to resist; failure = paralysis). Mouth latches on and drains blood (3D6 STR/round). Death at 0 STR."
+            }
+          ],
+          "dodge": {
+            "success_chance": "20%",
+            "difficulty_hard": "10%",
+            "difficulty_extreme": "4%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Detect Prey",
+            "value": "45%"
+          },
+          {
+            "name": "Leap",
+            "value": "50%"
+          },
+          {
+            "name": "Stealth",
+            "value": "80%"
+          }
+        ],
+        "armor": {
+          "rating": "2-point slimy hide",
+          "modifiers": "Fire attacks cause double damage."
+        },
+        "spells": "None.",
+        "sanity_loss": "1/1D4"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Hunting Horror",
+        "subtitle": "Great Viperine Flyers",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Nyarlathotep",
+          "Avian"
+        ],
+        "description": "Enormous viper-like creatures, 120 hands in length, with twisting worm-or rope-like bodies upon distorted misshapen heads. On great leathery wings they fly like some monstrous bat, with fearsome claws to clutch and tear, and a mouth of needle fangs. Their form continually shifts and changes, twitching and writhing, and is blasphemous to behold.",
+        "alternative_names": [
+          "Flesh Tearers",
+          "Hounds of the Faceless One",
+          "Sky Devils",
+          "Winged Death"
+        ],
+        "main_entry_text": "Believed to have some form of affinity with the Crawling Chaos, Nyarlathotep, hunting horrors are thought to undertake their master's bidding across the cosmos and other dimensions. Sometimes acting as heralds or go-betweens for their dark master, they bring Nyarlathotep's word to cultists. They move swiftly and are relentless hunters, able to navigate the darkest of places without hindrance.",
+        "characteristics": {
+          "STR": {
+            "roll": "(5D6+12)*5",
+            "average": "145-150"
+          },
+          "CON": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "SIZ": {
+            "roll": "(5D6+24)*5",
+            "average": "205-210"
+          },
+          "DEX": {
+            "roll": "(3D6+3)*5",
+            "average": 65
+          },
+          "INT": {
+            "roll": "(1D6+12)*5",
+            "average": 75
+          },
+          "POW": {
+            "roll": "6D6*5",
+            "average": 105
+          }
+        },
+        "derived_stats": {
+          "hit_points": "25-26",
+          "damage_bonus": "+3D6",
+          "build": 4,
+          "magic_points": 21,
+          "move": {
+            "base": 7,
+            "special": "11 flying"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "2 (claws, bite, crush, tail grasp)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "65%",
+              "difficulty_hard": "32%",
+              "difficulty_extreme": "13%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Grasp (Maneuver)",
+              "success_chance": "65%",
+              "difficulty_hard": "32%",
+              "difficulty_extreme": "13%",
+              "damage": "Held",
+              "description": "The tail can wrap and hold a target. Victim can attempt to break loose with opposed STR roll. Hunting horror gains bonus die to bite attacks against held victim."
+            }
+          ],
+          "dodge": {
+            "success_chance": "35%",
+            "difficulty_hard": "17%",
+            "difficulty_extreme": "7%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Spot Hidden",
+            "value": "60%"
+          },
+          {
+            "name": "Stealth",
+            "value": "70%"
+          }
+        ],
+        "armor": {
+          "rating": "9-point tough skin",
+          "modifiers": "May suffer damage from strong light (optional: 1D6 per round in daylight)."
+        },
+        "spells": "25% chance of knowing 2D10 spells.",
+        "sanity_loss": "0/1D10"
       }
     }
   ]
