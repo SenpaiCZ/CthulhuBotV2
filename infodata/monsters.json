@@ -8096,6 +8096,615 @@
         "spells": "Knows 1D10+5 spells.",
         "sanity_loss": "1D3/1D10"
       }
+    },
+    {
+      "monster_entry": {
+        "name": "Space Eater",
+        "subtitle": "Monstrous Light",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Alien",
+          "Incorporeal"
+        ],
+        "description": "A shimmering column of bedazzling light composed of multiple ever-twisting and fluctuating beams... The being of light send out limbs, each ending in fronds, or rather hand-like fingers. One of these shot forward to Murfy, touching his forehead and boring through flesh and skull into his brain.",
+        "alternative_names": [
+          "Angels",
+          "Light Bringers",
+          "The Others"
+        ],
+        "main_entry_text": "Space eaters are a monstrous interstellar race of incorporeal beings who appear as shafts of light. While insubstantial, they are able to form temporary limbs to interact with the physical world. Such limbs are used for attacking and capturing prey on which they feed by sucking out brain matter. Their arrival on Earth tends to be accompanied by a droning sound and a sudden temperature drop.",
+        "characteristics": {
+          "STR": {
+            "roll": "2D6*5 (limbs only)",
+            "average": 35
+          },
+          "CON": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "SIZ": {
+            "roll": "(8D6+6)*5",
+            "average": 170
+          },
+          "DEX": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "INT": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "POW": {
+            "roll": "(4D6+6)*5",
+            "average": 100
+          }
+        },
+        "derived_stats": {
+          "hit_points": "24",
+          "damage_bonus": "n/a",
+          "build": 3,
+          "magic_points": 20,
+          "move": {
+            "base": "5 floating / flying"
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Light Burn",
+            "description": "By expending 5 MP, can increase luminescence to cause 1D4 rounds of temporary blindness (CON roll fails). Continuing for subsequent rounds increases cost and severity (permanent blindness or death of the entity)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (swipe, slice, or consume)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "60%",
+              "difficulty_hard": "30%",
+              "difficulty_extreme": "12%",
+              "damage": "1D6"
+            },
+            {
+              "name": "Consume",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "2D10 INT/POW + 1D10 SAN",
+              "description": "Latches to head and bores hole. Drains 2D10 INT and POW per round. Victim dies if INT or POW reaches zero. Causes 1D10 Sanity loss per round."
+            }
+          ],
+          "dodge": {
+            "success_chance": "26%",
+            "difficulty_hard": "13%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "armor": {
+          "rating": "None",
+          "modifiers": "Can be harmed only with magic or fire-based attacks; cold and mundane weapons have no effect."
+        },
+        "spells": "30% chance to know 1D6 spells.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Spectral Hunter",
+        "subtitle": "Monstrous Guardians",
+        "tags": [
+          "Mythos",
+          "Construct",
+          "Guardian",
+          "Invisible"
+        ],
+        "description": "Invisible, one must procure the correct device to realize their horrific image. Large, hideous humanoids, and taller than most men. Their flesh is rubbery and mottled dark, their form horribly thin, with a distended abdomen. Hands and feet seem abnormally large... more like crab claws or pincers. A long and tapering nose sits below a pair of large red eyes.",
+        "alternative_names": [
+          "Guardian Spirits",
+          "Lurkers",
+          "The Mantioshi",
+          "Sacred Ones",
+          "Unseen Devils"
+        ],
+        "main_entry_text": "Spectral hunters are created from the bodies of willing human volunteers who agree to be transformed into monsters to guard sacred or important sites, tombs, and other locations. They do not speak and are invisible, but may manifest at will. These entities are formidable foes but possess a key weakness arising from the fact that certain forms of light make them visible to the human eye. Another weakness derives from them being physically tied to a specific location by an artifact.",
+        "characteristics": {
+          "STR": {
+            "roll": "6D6*5",
+            "average": 105
+          },
+          "CON": {
+            "roll": "(2D6+1)*5",
+            "average": 40
+          },
+          "SIZ": {
+            "roll": "(4D6+4)*5",
+            "average": 90
+          },
+          "DEX": {
+            "roll": "(2D6+3)*5",
+            "average": 50
+          },
+          "INT": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "POW": {
+            "roll": "(4D6+2)*5",
+            "average": 80
+          }
+        },
+        "derived_stats": {
+          "hit_points": "13",
+          "damage_bonus": "+1D6",
+          "build": 2,
+          "magic_points": 16,
+          "move": {
+            "base": 8
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Invisible",
+            "description": "Invisibility imposes one penalty die on attempts to hit them, and grants them a bonus die to hit others."
+          },
+          {
+            "name": "Binding",
+            "description": "Bound to a specific vessel. Cannot move more than one mile from it. If vessel is damaged, hunter suffers 1D8 damage. If destroyed, hunter is dispelled (or killed if Chant of Dismissal is spoken)."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (claw, strike, bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Bite",
+              "success_chance": "30%",
+              "difficulty_hard": "15%",
+              "difficulty_extreme": "6%",
+              "damage": "2D6+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Stealth",
+            "value": "90%"
+          },
+          {
+            "name": "Spot Hidden",
+            "value": "30%"
+          }
+        ],
+        "armor": {
+          "rating": "1-point hide",
+          "modifiers": "Immune to mundane weapons."
+        },
+        "spells": "30% chance to know 1D6 spells.",
+        "sanity_loss": "1/1D6+2"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Sphinx, Children of the",
+        "subtitle": "Ancient Warriors",
+        "tags": [
+          "Mythos",
+          "Servitor",
+          "Nyarlathotep",
+          "Animal-headed"
+        ],
+        "description": "They wait beneath the sands, birthed by the Great Sphinx. Each shaped as man and beast, with the heads of bulls, ibises, falcons, cats, crocodiles, hippopotamuses, and jackals. Robed, they guard the secret ways and enact the will of their masters, using ancient weapons to smite the unworthy.",
+        "alternative_names": [
+          "Animal-Headed Ones",
+          "Beast Men",
+          "Children of the Sands",
+          "The Pharaoh's Chosen"
+        ],
+        "main_entry_text": "The children of the Sphinx appear as human-animal composites arising from Egyptian wildlife and mythology. These monstrosities come in great variety, usually with human bodies with animal, bird, or reptilian heads. Said to be the guardians and army of the Black Pharaoh, the children of the Sphinx can be encountered in tombs and catacombs associated to this avatar of Nyarlathotep.",
+        "characteristics": {
+          "STR": {
+            "roll": "4D6*5",
+            "average": 70
+          },
+          "CON": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "SIZ": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "DEX": {
+            "roll": "2D6*5",
+            "average": 35
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "14",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 10,
+          "move": {
+            "base": 7
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (varies; natural unarmed or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "50%",
+              "difficulty_hard": "25%",
+              "difficulty_extreme": "10%",
+              "damage": "1D3+DB or weapon (e.g. khopesh 1D6+DB)"
+            },
+            {
+              "name": "Bite/Claw (Cat/Falcon)",
+              "success_chance": "50%",
+              "damage": "1D4+DB"
+            },
+            {
+              "name": "Beak stab/Rip (Vulture)",
+              "success_chance": "50%",
+              "damage": "2D3+DB"
+            },
+            {
+              "name": "Bite (Crocodile)",
+              "success_chance": "50%",
+              "damage": "1D8+1+DB"
+            },
+            {
+              "name": "Horn gore (Bull)",
+              "success_chance": "50%",
+              "damage": "2D6+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "20%",
+            "difficulty_hard": "10%",
+            "difficulty_extreme": "4%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Listen",
+            "value": "45%"
+          },
+          {
+            "name": "Stealth",
+            "value": "40%"
+          }
+        ],
+        "armor": {
+          "rating": "4-point defense (1-point skin and 3-point armor)"
+        },
+        "spells": "None.",
+        "sanity_loss": "0/1D8"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Star Vampire",
+        "subtitle": "Star Raveners",
+        "tags": [
+          "Mythos",
+          "Independent",
+          "Alien",
+          "Invisible",
+          "Vampire"
+        ],
+        "description": "It moved about unseen, noticeable by only a waft of foul-smelling air and a weird chittering sound. Soon, its form was clear for us to see: for it began to feed... It was a bulging, pulsating sack of jelly from which a multitude of tentacular trunks emerged, each tipped with suckers to latch onto its victims. Supping on the offered lifeforce, it grew, bloated with the blood... Just a ravenous maw and collection of suckered trunks and wicked talons.",
+        "alternative_names": [
+          "Blood Suckers",
+          "The Creeping Hunger",
+          "Devourers",
+          "Star Beast",
+          "Star Child"
+        ],
+        "main_entry_text": "Horrors that swim through the depths of space, they may descend to or be summoned to Earth. These loathsome things are normally invisible, their presence signaled by a sort of ghoulish tittering sound. While and after feeding, they become visible for at least 6 rounds through the blood they drink. Bestial and ravenous, they hunt down prey, feed, and then rest.",
+        "characteristics": {
+          "STR": {
+            "roll": "(6D6+5)*5",
+            "average": 130
+          },
+          "CON": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "SIZ": {
+            "roll": "(4D6+12)*5",
+            "average": 130
+          },
+          "DEX": {
+            "roll": "(1D6+6)*5",
+            "average": 40
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "(1D6+12)*5",
+            "average": 75
+          }
+        },
+        "derived_stats": {
+          "hit_points": "19",
+          "damage_bonus": "+2D6",
+          "build": 3,
+          "magic_points": 15,
+          "move": {
+            "base": 8,
+            "special": "9 flying"
+          }
+        },
+        "combat": {
+          "attacks_per_round": "3 (strike, rip, seize, bite)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Seize (Maneuver)",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "Held",
+              "description": "Target is seized. On following round, can use bite attack to drain blood."
+            },
+            {
+              "name": "Bite",
+              "success_chance": "Automatic if seized",
+              "damage": "3D10 STR blood drain",
+              "description": "Drains 3D10 STR per round. Victim regains 1D10 STR per day if they survive."
+            }
+          ],
+          "dodge": {
+            "success_chance": "25%",
+            "difficulty_hard": "12%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Titter Horrifically",
+            "value": "90%"
+          }
+        ],
+        "armor": {
+          "rating": "4-point hide",
+          "modifiers": "Bullets deal halved damaged. Invisible (penalty die to hit)."
+        },
+        "spells": "30% chance of knowing 1D3 spells.",
+        "sanity_loss": "1/1D10"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Swine Folk",
+        "subtitle": "Magic Leeches",
+        "tags": [
+          "Mythos",
+          "Human Mutant",
+          "Subterranean"
+        ],
+        "description": "Grotesque once-humans... humanoids but with strange and swine-like faces. Their noses were snouts and their eyes little more than red dots in pale-white-pink leathery skin... About their hairless heads, their ears were extended and pig-like... What might have once been hands were webbed and gnarled claws.",
+        "alternative_names": [
+          "Once Men",
+          "The Ones Before",
+          "Herdlings",
+          "Snorting Lurkers"
+        ],
+        "main_entry_text": "Swine people are a once-human race of subterranean dwellers who seem attracted to magic and spell casting; they seem to be particularly drawn to magical Gates. Some sorcerers suggest that these creatures are drawn to \"feed\" on magical vibrations. On Earth, they may be found in deep or wild places far away from society, but they may also be found in other dimensions or strange places, as well as Earth's Dreamlands.",
+        "characteristics": {
+          "STR": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "CON": {
+            "roll": "(2D6+8)*5",
+            "average": 75
+          },
+          "SIZ": {
+            "roll": "(2D6+6)*5",
+            "average": 65
+          },
+          "DEX": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "INT": {
+            "roll": "(2D6+4)*5",
+            "average": 55
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "14",
+          "damage_bonus": "+1D4",
+          "build": 1,
+          "magic_points": 10,
+          "move": {
+            "base": 8
+          }
+        },
+        "combat": {
+          "attacks_per_round": "1 (claw, bite, tusk gore)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D6+DB"
+            },
+            {
+              "name": "Tusk Gore",
+              "success_chance": "40%",
+              "difficulty_hard": "20%",
+              "difficulty_extreme": "8%",
+              "damage": "1D6+2+DB"
+            }
+          ],
+          "dodge": {
+            "success_chance": "40%",
+            "difficulty_hard": "20%",
+            "difficulty_extreme": "8%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "80%"
+          },
+          {
+            "name": "Listen",
+            "value": "60%"
+          },
+          {
+            "name": "Scent Magic",
+            "value": "80%"
+          },
+          {
+            "name": "Stealth",
+            "value": "60%"
+          },
+          {
+            "name": "Track",
+            "value": "65%"
+          }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "None; those with INT 70+ may know 1D3 spells.",
+        "sanity_loss": "0/1D6"
+      }
+    },
+    {
+      "monster_entry": {
+        "name": "Tcho-Tcho",
+        "subtitle": "Mythos-Tainted Humans",
+        "tags": [
+          "Mythos",
+          "Humanoid",
+          "Cannibal"
+        ],
+        "description": "In the main, they were below average human height... While the majority had thick dark hair, the older and balding ones revealed their heads to be dome-shaped. Apart from these more noticeable features, they appeared human in every way except for their teeth, which appeared to have been filed into sharp points or else crooked.",
+        "alternative_names": [
+          "Cannibals",
+          "The Chosen People",
+          "The Favored"
+        ],
+        "main_entry_text": "Consensus suggests that the tcho-tcho are humans tainted by years of proximity to the Mythos, corrupting their genetics in varying degrees... What can be certain is that the tcho-tcho are not bound by any particular locale, as they may be encountered almost anywhere in the world... Those tcho-tcho who maintain and promote the Old Ways of cannibalism and sacrifice to such beings as Shub-Niggurath, Chaugnar Faugn, and Nyarlathotep are like a cancer to society.",
+        "characteristics": {
+          "STR": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "CON": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "SIZ": {
+            "roll": "(2D6+2)*5",
+            "average": 45
+          },
+          "DEX": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "INT": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          },
+          "POW": {
+            "roll": "3D6*5",
+            "average": "50-55"
+          }
+        },
+        "derived_stats": {
+          "hit_points": "9-10",
+          "damage_bonus": "0",
+          "build": 0,
+          "magic_points": 10,
+          "move": {
+            "base": 9
+          }
+        },
+        "powers_and_abilities": [
+          {
+            "name": "Black Lotus Affinity",
+            "description": "Mythos-aware tcho-tcho have an affinity with the black lotus, able to derive powerful drugs from this plant."
+          }
+        ],
+        "combat": {
+          "attacks_per_round": "1 (unarmed or weapon)",
+          "attacks": [
+            {
+              "name": "Fighting",
+              "success_chance": "45%",
+              "difficulty_hard": "22%",
+              "difficulty_extreme": "9%",
+              "damage": "1D3+DB or by weapon type"
+            }
+          ],
+          "dodge": {
+            "success_chance": "26%",
+            "difficulty_hard": "13%",
+            "difficulty_extreme": "5%"
+          }
+        },
+        "skills": [
+          {
+            "name": "Climb",
+            "value": "60%"
+          },
+          {
+            "name": "Intimidate",
+            "value": "40%"
+          },
+          {
+            "name": "Stealth",
+            "value": "60%"
+          },
+          {
+            "name": "Track",
+            "value": "50%"
+          }
+        ],
+        "armor": {
+          "rating": "None"
+        },
+        "spells": "Varies; 1D3 to 1D6 (priests know min. 3 spells).",
+        "sanity_loss": "No Sanity loss for seeing a tcho-tcho; 0/1D6 loss for realizing they are cannibals."
+      }
     }
   ]
 }
