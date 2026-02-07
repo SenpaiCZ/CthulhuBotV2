@@ -23,21 +23,30 @@
                 <ul class="navbar-nav">
                     {% if is_admin %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                            Admin
+                        <a class="nav-link dropdown-toggle" href="#" id="keeperDropdown" role="button" data-bs-toggle="dropdown">
+                            Keeper Tools
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/admin">Admin Dashboard</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">Keeper Tools</h6></li>
                             <li><a class="dropdown-item" href="/monsters">Monsters</a></li>
                             <li><a class="dropdown-item" href="/deities">Deities</a></li>
                             <li><a class="dropdown-item" href="/admin/game_settings">Game Settings</a></li>
+                            <li><a class="dropdown-item" href="/admin/browse/infodata">Info Data</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="audioDropdown" role="button" data-bs-toggle="dropdown">
+                            Audio
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="/admin/soundboard">Soundboard</a></li>
                             <li><a class="dropdown-item" href="/admin/music">Music Bot</a></li>
-                            <li><a class="dropdown-item" href="/admin/browse/infodata">Info Data</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">Server Admin</h6></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="serverAdminDropdown" role="button" data-bs-toggle="dropdown">
+                            Server Administration
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="/admin/reactionroles">Reaction Roles</a></li>
                             <li><a class="dropdown-item" href="/admin/karma">Karma System</a></li>
                             <li><a class="dropdown-item" href="/admin/prefixes">Server Prefixes</a></li>
@@ -46,6 +55,14 @@
                             <li><a class="dropdown-item" href="/admin/deleter">Auto Deleter</a></li>
                             <li><a class="dropdown-item" href="/admin/backup">Backup System</a></li>
                             <li><a class="dropdown-item" href="/admin/browse/data">Data Files</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                            Admin
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/admin">Admin Dashboard</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/logout">Logout</a></li>
                         </ul>
