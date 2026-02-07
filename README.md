@@ -76,6 +76,8 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 *   `reactionrole` (alias: `rr`): 🎭 Setup a reaction role on a message (Admin).
 
 ### 🧠 Keeper Resources
+*   `monster`: 👹 Consult the grimoire for a monster's stats and lore.
+*   `deity`: 👁️ Consult the pantheon for a deity's description and cult info.
 *   `changeluck`: 🍀 Modify the server's maximum luck spend threshold (Default: 10).
 *   `occupationinfo`: 💼 Lookup occupation details.
 *   `skillinfo`: 📚 Lookup skill details.
