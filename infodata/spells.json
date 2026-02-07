@@ -1,0 +1,4058 @@
+{
+  "spells": [
+    {
+      "spell_entry": {
+        "name": "Accursed Eye",
+        "alternate_names": [
+          "The Devil's Eye",
+          "Sight of the Spectre",
+          "Eibon's Gaze"
+        ],
+        "category": "Communication, Harmful",
+        "costs": {
+          "magic_points": "6",
+          "sanity": "1D4",
+          "components": "A small piece of unwholesome flesh"
+        },
+        "casting_time": "30 minutes",
+        "range": "Touch (to implant)",
+        "effect": {
+          "description": "Allows the caster to see out of another's eye socket. The target's eye must first be removed and replaced with a piece of unwholesome flesh. Over 1D10 hours a new eye grows. Once complete, the caster can meditate to see through it. After 1D6+1 days, the eye explodes causing 1D8+2 damage.",
+          "damage": "1D8+2 (when eye explodes)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Activation",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Harmful, Influencing Others",
+        "costs": {
+          "magic_points": "Variable (5+)",
+          "sanity": "1D4",
+          "components": "Specifically attuned crystal"
+        },
+        "casting_time": "1+ minutes",
+        "range": "10 feet (with crystal)",
+        "effect": {
+          "description": "Activates hidden mi-go modifications in a target. Caster concentrates for minutes equal to MP expended. Each MP provides +5% chance of success. Requires opposed POW roll if target is unwilling. Causes serious side effects ranging from bad dreams to sanity loss and stat changes.",
+          "opposed_roll": "Opposed POW"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Alter Weather",
+        "alternate_names": [
+          "Master the Elements",
+          "Rain Dance",
+          "Gatherer of Storms"
+        ],
+        "category": "Environmental",
+        "costs": {
+          "magic_points": "10+",
+          "sanity": "1",
+          "components": "Chanting/Song"
+        },
+        "casting_time": "3+ minutes",
+        "range": "2 miles (radius)",
+        "effect": {
+          "description": "Moderates or exacerbates weather. Every 10 MP changes one level of weather (Cloud Cover, Wind Direction, Wind Speed, Temperature, Precipitation). Base radius is 2 miles; +10 MP per additional mile. Lasts 30 minutes per 10 MP.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Anathema",
+        "alternate_names": [
+          "Censure",
+          "Tongue of Dismissal"
+        ],
+        "category": "Dreamlands",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "Instantaneous",
+        "range": "Earshot",
+        "effect": {
+          "description": "Dreamlands only. Dispels certain magic spells being maintained by MP expenditure within earshot. Beings brought by Call or Summon spells must make opposed POW roll or be forced back.",
+          "opposed_roll": "Opposed POW (vs Summoned beings)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Animate Flesh Thing",
+        "alternate_names": [
+          "Ye Lively Meat",
+          "Gathering of the Boiling Brawn"
+        ],
+        "category": "Making Monsters",
+        "costs": {
+          "magic_points": "Variable (1 per 5 SIZ)",
+          "sanity": "1D6",
+          "components": "Dead skin and flesh"
+        },
+        "casting_time": "3 minutes",
+        "range": "Touch/Close",
+        "effect": {
+          "description": "Animates dead skin and flesh into a sentient mass able to attack. 1 MP per 5 SIZ points animated. Lives for 24 hours unless killed, then melts into oily smear.",
+          "damage": "Varies by size (Flesh Thing stats: 1D4 damage + smother)"
+        },
+        "deeper_magic": "Greater expenditure of magic points (5 per 5 SIZ points) can increase the potency and abilities of the creature."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Animate Mummy",
+        "alternate_names": [
+          "Ritual of Mumia"
+        ],
+        "category": "Making Monsters",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D10",
+          "components": "Prepared mummy"
+        },
+        "casting_time": "1+ hour",
+        "range": "Touch",
+        "effect": {
+          "description": "Animates a prepared mummy. The mummy has double its life STR, 1.5x CON, and 2/3 DEX. Retains skills and spells.",
+          "damage": "None"
+        },
+        "deeper_magic": "With a 40-day ritual, the caster may perform full mummification on a deceased human and bring them to life."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Appear Human",
+        "alternate_names": [
+          "Glamour",
+          "Guile of Beauty",
+          "Cloak of the Animal"
+        ],
+        "category": "Transformation",
+        "costs": {
+          "magic_points": "5+",
+          "sanity": "1"
+        },
+        "casting_time": "5+ rounds",
+        "range": "Self",
+        "effect": {
+          "description": "Allows anthropomorphic creatures to appear human. Generates illusory APP of 3D6x5. Each extra MP adds 1D3x5 APP. Lasts hours equal to 1/5th caster's POW. Flaws may appear (1D100 roll vs remaining MPx5).",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Apportion Ka",
+        "alternate_names": [
+          "Imbue Essence",
+          "Extraction of the Will",
+          "The Deathless Breath"
+        ],
+        "category": "Extending Life, Protection",
+        "costs": {
+          "magic_points": "10",
+          "pow": "5 (permanent per organ)",
+          "sanity": "2D10 (per organ)"
+        },
+        "casting_time": "1 day per organ",
+        "range": "Self",
+        "effect": {
+          "description": "Transfers life essence into vital organs which are then removed and hidden. Grants invulnerability to specific attacks (e.g. lung removal prevents drowning). Brain cannot be removed. Death only occurs if brain is destroyed.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Ariadne's Twine",
+        "alternate_names": [
+          "Unlock Bewilderment",
+          "Unraveling the Convolutions of Stone"
+        ],
+        "category": "Other",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 day",
+        "range": "Touch",
+        "effect": {
+          "description": "Fills target's mind with a 3D map of any maze/labyrinth entered. Target cannot get lost. Duration: Sunrise to midnight following casting. Unwilling targets resist with POW.",
+          "opposed_roll": "Opposed POW (if unwilling)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Ascend the Stairs of Immortality",
+        "alternate_names": [
+          "Sense Pathway to the Realm of Elder Beings",
+          "Devine Thy Ascension",
+          "Locate Expanse of Those Who Dwell Elsewhere"
+        ],
+        "category": "Travel and Transportation",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "1",
+          "components": "Elixir of Immortality"
+        },
+        "casting_time": "6 hours",
+        "range": "Self",
+        "effect": {
+          "description": "Meditate for 6 hours with Elixir. Grants innate sense of when/where the Ivory Stair (portal to Elder realm) will appear. Prophetic knowledge valid for 3 weeks.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Assist Dreamer",
+        "alternate_names": [
+          "Visitation of Dreams",
+          "Beckoning of Pnath",
+          "Recitation of Sleep"
+        ],
+        "category": "Travel and Transportation",
+        "costs": {
+          "magic_points": "8"
+        },
+        "casting_time": "Instantaneous",
+        "range": "Self",
+        "effect": {
+          "description": "Cast in Waking World upon sleeping. Catapults dreamer directly to the Vale of Pnath in the Dreamlands.",
+          "damage": "None"
+        },
+        "deeper_magic": "Variations exist allowing travel to specific Dreamlands locations."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Attract Fish",
+        "alternate_names": [
+          "Gather the Abundance of the Sea"
+        ],
+        "category": "Other",
+        "costs": {
+          "magic_points": "4",
+          "components": "Bait mixed with caster's blood"
+        },
+        "casting_time": "5 minutes",
+        "range": "1 mile radius",
+        "effect": {
+          "description": "Summons 1D100 local fish to the location within 1 hour.",
+          "damage": "None"
+        },
+        "deeper_magic": "Deep One variant uses a talisman instead of blood bait. May attract less wholesome things."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Attune Crystal",
+        "alternate_names": [
+          "Empower Crystal",
+          "Mental Acclimatization of the Stone"
+        ],
+        "category": "Enchantments",
+        "costs": {
+          "pow": "5+",
+          "sanity": "1D4",
+          "components": "High quality crystal"
+        },
+        "casting_time": "1+ hour",
+        "range": "Touch",
+        "effect": {
+          "description": "Prepares a crystal for the Activation spell. Every 5 POW invested grants +10% success chance for Activation. Lasts as long as caster lives.",
+          "damage": "None"
+        },
+        "deeper_magic": "Using mi-go crystal grants +20% success per 5 POW."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Augury",
+        "alternate_names": [
+          "Augur",
+          "Scry",
+          "Cast the Runes",
+          "The Eye of Destiny"
+        ],
+        "category": "Folk",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "1D2",
+          "components": "Scrying tools (cards, tea leaves, etc.)"
+        },
+        "casting_time": "5+ minutes",
+        "range": "Self",
+        "effect": {
+          "description": "Grants portents of the future. Chance of understanding is roll <= POW. Portents may be vague or cryptic.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Awake Abhoth",
+        "alternate_names": [
+          "Rise O' Tenant of N'Kai",
+          "Threefold Ritual of Awakening the Feaster"
+        ],
+        "category": "Bringing Forth Monsters and Gods",
+        "costs": {
+          "magic_points": "12",
+          "sanity": "1D10+2"
+        },
+        "casting_time": "36 hours",
+        "range": "Global/Dimensional",
+        "effect": {
+          "description": "Awakens the Great Old One Abhoth. Takes the form of three rituals proving faithfulness. Outcomes are uncertain.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Awaken Chuma",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Bringing Forth Monsters and Gods",
+        "costs": {
+          "magic_points": "8+",
+          "sanity": "1D8",
+          "components": "Living sacrifice (POW 50+), Image of god"
+        },
+        "casting_time": "1+ hour",
+        "range": "Visual",
+        "effect": {
+          "description": "Brings vision of Chuma (Yibb-Tstll) from Dreamlands. Chance of success = 10% per 8 MP. Yibb-Tstll's blood drains sacrifice's POW. Manifests in body when POW reaches 0.",
+          "damage": "5 POW drain per 30 mins to sacrifice"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Awaken The Great Tortoise",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "magic_points": "5+",
+          "sanity": "1D6"
+        },
+        "casting_time": "1+ hour",
+        "range": "Localized",
+        "effect": {
+          "description": "Summons chthonians to burrow/dance, causing earthquakes. 5 MP per Richter scale point. Chance of Shudde M'ell appearing if scale > 5.",
+          "damage": "Earthquake damage"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Awaken the Beast",
+        "alternate_names": [
+          "Regression",
+          "Reversion of the Soul",
+          "Two Feet Four Feet"
+        ],
+        "category": "Folk",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "1D8",
+          "components": "Pound of human flesh (consumed by target)"
+        },
+        "casting_time": "1D3 hours",
+        "range": "Touch/Visual",
+        "effect": {
+          "description": "Transforms human into animal permanently over 1D6+2 days. Target must eat human flesh. Caster must win opposed POW. Target loses INT and Sanity as they transform.",
+          "opposed_roll": "Opposed POW",
+          "damage": "Sanity loss"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Awaken the Inner Light",
+        "alternate_names": [
+          "Diet of Cleansing and Energy",
+          "Meditation of Yha-P'Tan"
+        ],
+        "category": "Other",
+        "costs": {
+          "magic_points": "1 (for circle)",
+          "sanity": "None (gain 5 on success)",
+          "components": "Strict diet/meditation"
+        },
+        "casting_time": "1 month",
+        "range": "Self",
+        "effect": {
+          "description": "Ritual to augment POW. Daily meditation for 1 month. Extreme POW roll at end. Success: +5 POW, +5 SAN, age 5 years. Failure: No benefit.",
+          "damage": "Aging 5 years"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Awaking/Dispelling the God Within",
+        "alternate_names": [
+          "Imbue Kernel of the Child of Destiny",
+          "Gestation of Outer Being",
+          "Transformation of the Eternal Void"
+        ],
+        "category": "Making Monsters",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1D3",
+          "components": "Star-seed, Milk of Shub-Niggurath"
+        },
+        "casting_time": "1 hour",
+        "range": "Touch",
+        "effect": {
+          "description": "Implants star-seed in creature. 5% success per MP. +10% with Music roll. Seed grows, absorbing host, then bursts forth. Reversal ritual exists to purge seed.",
+          "damage": "Death (eventual)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Awful Doom of Cerrit",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Dreamlands",
+        "costs": {
+          "magic_points": "9+",
+          "sanity": "1D10"
+        },
+        "casting_time": "1 round",
+        "range": "20 yards",
+        "effect": {
+          "description": "Dreamlands only. Silvery thread strikes target. Molten lead runs through bones. Target incapacitated. 3D10 CON loss per round maintained.",
+          "damage": "3D10 CON reduction per round"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Azure Flame",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Harmful, Combat",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "1D3"
+        },
+        "casting_time": "1 round",
+        "range": "30 yards",
+        "effect": {
+          "description": "Dreamlands only. Casts a bolt of blue flame that does not burn but shocks with cold energy. Inflicts 1D6+2 damage. Ignores physical armor.",
+          "damage": "1D6+2"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Bait Human",
+        "alternate_names": [
+          "Fool's Gold",
+          "Lure of the Siren",
+          "Trap of the Unwary"
+        ],
+        "category": "Influencing Others",
+        "costs": {
+          "magic_points": "1",
+          "sanity": "0"
+        },
+        "casting_time": "1 round",
+        "range": "Touch/Object",
+        "effect": {
+          "description": "Enchants an object (book, gem, etc.) to seem incredibly desirable. Anyone viewing it must make a POW roll or be compelled to seize it. Lasts 1D6 hours.",
+          "opposed_roll": "Opposed POW"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Banishment of Yde Etad",
+        "alternate_names": [
+          "Dismissal of the Interloper",
+          "Return to Origin"
+        ],
+        "category": "Banishing",
+        "costs": {
+          "magic_points": "Variable (1 per 10 POW)",
+          "sanity": "1D6",
+          "components": "Sigil of Yde Etad"
+        },
+        "casting_time": "1D3 rounds",
+        "range": "Visual",
+        "effect": {
+          "description": "Banishes a summoned entity back to its home dimension. Caster spends 1 MP for every 10 POW of the creature. Requires an opposed POW roll. The creature vanishes instantly if successful.",
+          "opposed_roll": "Opposed POW"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Barrier of Pain",
+        "alternate_names": [
+          "Wall of Agony",
+          "Shield of Suffering"
+        ],
+        "category": "Protection",
+        "costs": {
+          "magic_points": "6",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 round",
+        "range": "Self/Touch",
+        "effect": {
+          "description": "Creates an invisible barrier around the caster or target. Anyone attempting to cross it or attack the protected person physically suffers wracking pain (penalty die on all actions). Lasts 1D6+4 rounds.",
+          "damage": "Pain (penalty die)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Become Spectral",
+        "alternate_names": [
+          "Walk Between Worlds",
+          "Ghost Form"
+        ],
+        "category": "Transformation",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "Self",
+        "effect": {
+          "description": "Turns the caster's body insubstantial and invisible. They can pass through solid objects but cannot interact with the physical world. Lasts for 1D6+1 minutes or until dismissed.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Bespeak the End of the Day",
+        "alternate_names": [
+          "Prophecy of Doom",
+          "Vision of the Final Hour"
+        ],
+        "category": "Divination",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D8"
+        },
+        "casting_time": "1 hour",
+        "range": "Self",
+        "effect": {
+          "description": "Allows the caster to see the moment of their own death or the end of the world (if imminent). The vision is often abstract or symbolic. Provides no context, just the imagery.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Bestow Glimpse of Truth",
+        "alternate_names": [
+          "Open the Third Eye",
+          "Gift of Madness",
+          "See the Unseen"
+        ],
+        "category": "Influencing Others, Harmful",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "Touch/Visual",
+        "effect": {
+          "description": "Forces the target to perceive the true nature of the cosmos for a split second. Target loses 1/1D6 Sanity and gains +1 Cthulhu Mythos skill. If they go temporarily insane, they gain a specific insight.",
+          "damage": "1/1D6 Sanity"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Bind Enemy",
+        "alternate_names": [
+          "Hold Person",
+          "Chains of the Mind"
+        ],
+        "category": "Combat, Harmful",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": " paralyzes a target. Caster matches POW vs Target's POW. If successful, target cannot move or act physically. Caster must concentrate to maintain. Target can attempt POW roll each round to break free.",
+          "opposed_roll": "Opposed POW"
+        },
+        "deeper_magic": "If 20+ MP are spent, the binding becomes physical, manifesting as ghostly chains or vines that hold the target even if the caster's concentration breaks."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Bind Soul",
+        "alternate_names": [
+          "Trap Spirit",
+          "Soul Cage",
+          "Vessel of the Essence"
+        ],
+        "category": "Binding, Soul Magic",
+        "costs": {
+          "magic_points": "10",
+          "pow": "5 (permanent)",
+          "sanity": "2D6",
+          "components": "Specially prepared vessel (jar, box, gem)"
+        },
+        "casting_time": "1 hour",
+        "range": "Touch (at moment of death)",
+        "effect": {
+          "description": "Captures the soul of a dying creature into a vessel. The soul is trapped indefinitely. The vessel can be destroyed to release the soul. Used often to interrogate the dead or power other spells.",
+          "damage": "None"
+        },
+        "deeper_magic": "The caster can siphon MP from the trapped soul daily."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Black Binding",
+        "alternate_names": [
+          "Create Zombie",
+          "Ritual of the Undying"
+        ],
+        "category": "Reanimation",
+        "costs": {
+          "magic_points": "16",
+          "sanity": "1D6",
+          "components": "Fresh corpse, ritual liquid"
+        },
+        "casting_time": "1 hour",
+        "range": "Touch",
+        "effect": {
+          "description": "Animates a corpse into a zombie servant. The zombie has stats based on its life but is mindless. Liquid poured into the mouth is essential. Requires the caster's blood in the mix.",
+          "damage": "None"
+        },
+        "deeper_magic": "If performed on a consecrated altar, the zombie retains 1D6 INT and can follow complex orders."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Black Box",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Enchantments, Artifacts",
+        "costs": {
+          "magic_points": "20",
+          "pow": "10 (permanent)",
+          "sanity": "2D10",
+          "components": "Intricate metal box"
+        },
+        "casting_time": "1 week",
+        "range": "Touch",
+        "effect": {
+          "description": "Enchants a box to summon a dimension-hopping entity when opened. The entity usually serves the opener for one task before vanishing.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Bless Blade",
+        "alternate_names": [
+          "Imbue Weapon",
+          "Sanctify Steel",
+          "Edge of the Elders"
+        ],
+        "category": "Combat, Enchantment",
+        "costs": {
+          "pow": "5 (permanent)",
+          "sanity": "1D4",
+          "components": "Knife or dagger of pure metal (silver, iron, gold)"
+        },
+        "casting_time": "1 hour",
+        "range": "Touch",
+        "effect": {
+          "description": "Permanently enchants a blade to harm Mythos entities that are normally immune to physical damage. The blade does not gain extra damage, but bypasses immunity.",
+          "damage": "Standard weapon damage (magical)"
+        },
+        "deeper_magic": "If 10 POW is sacrificed, the blade inflicts +1D6 damage against Mythos entities."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Blight/Bless Crop",
+        "alternate_names": [
+          "Farmer's Boon/Curse",
+          "Ritual of the Harvest",
+          "Withering of the Field"
+        ],
+        "category": "Folk, Environmental",
+        "costs": {
+          "magic_points": "6",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 hour (at night)",
+        "range": "1 acre per 6 MP",
+        "effect": {
+          "description": "Causes crops in a defined area to either wither and die overnight or grow with supernatural vigor and abundance. Can be used to starve a village or ensure prosperity.",
+          "damage": "Economic/Environmental"
+        },
+        "deeper_magic": "Sacrificing a sentient being (POW 50+) during the ritual makes the effect permanent for that land."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Bliss",
+        "alternate_names": [
+          "Ecstasy of the Void",
+          "Peace of the Grave"
+        ],
+        "category": "Mind Control, Helpful",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "0"
+        },
+        "casting_time": "1 round",
+        "range": "Touch",
+        "effect": {
+          "description": "Induces a state of utter calm and euphoria in the target. Removes all fear, anxiety, and temporary insanity effects for 1D6 hours. Target is compliant and peaceful.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Bloat",
+        "alternate_names": [
+          "Curse of the Swollen Form",
+          "The Puffer's Doom"
+        ],
+        "category": "Harmful, Transformation",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "30 yards",
+        "effect": {
+          "description": "Causes the target's body to swell rapidly with gas and fluid. Target suffers 1D6 damage per 5 MP spent. If damage exceeds half max HP, skin bursts. Extremely painful and grotesque.",
+          "damage": "1D6 per 5 MP"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Body Warping of Gorgoroth",
+        "alternate_names": [
+          "Flesh Moulding",
+          "Visage of the Beast"
+        ],
+        "category": "Transformation, Harmful",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D6"
+        },
+        "casting_time": "2 rounds",
+        "range": "Touch",
+        "effect": {
+          "description": "Allows the caster to warp the physical form of the target. Can change facial features, lengthen limbs, or fuse digits. Permanent until reversed. Unwilling targets resist with CON.",
+          "opposed_roll": "Opposed CON"
+        },
+        "deeper_magic": "Caster can grant functional natural weapons (claws/fangs) dealing 1D6 damage."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Breath of Pazzuzu",
+        "alternate_names": [
+          "Wind of the Demon",
+          "Pestilential Breath"
+        ],
+        "category": "Harmful, Environmental",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 round",
+        "range": "Cone (10 yards)",
+        "effect": {
+          "description": "Exhales a swarm of biting insects or a cloud of toxic gas. Causes 1D6 damage per 5 MP spent to all in the cone. Visually terrifying.",
+          "damage": "1D6 per 5 MP"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Breath of the Deep",
+        "alternate_names": [
+          "The Drowning",
+          "Lung-Fill",
+          "Sea's Embrace"
+        ],
+        "category": "Combat, Harmful",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Fills the target's lungs with seawater. Target begins drowning immediately (CON rolls required to stay conscious/alive). Must be dispelled or water removed medically to survive.",
+          "damage": "Drowning (suffocation)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Bring Haboob",
+        "alternate_names": [
+          "Summon Sandstorm",
+          "Dust Devil's Call"
+        ],
+        "category": "Environmental",
+        "costs": {
+          "magic_points": "20",
+          "sanity": "1D6"
+        },
+        "casting_time": "10 minutes",
+        "range": "1 mile radius",
+        "effect": {
+          "description": "Summons a massive sandstorm/dust storm. Visibility reduced to zero. Winds cause damage to structures. Lasts 1 hour.",
+          "damage": "Environmental"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Bring Pestilence",
+        "alternate_names": [
+          "Plague Call",
+          "Curse of the Locusts",
+          "Summon Swarm"
+        ],
+        "category": "Environmental, Harmful",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D6"
+        },
+        "casting_time": "10 minutes",
+        "range": "1 mile radius",
+        "effect": {
+          "description": "Summons a swarm of pests (locusts, rats, flies) to infest an area. They devour crops and food stores. Can cause disease outbreak.",
+          "damage": "Economic/Disease"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Bury the Dead",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Folk, Utility",
+        "costs": {
+          "magic_points": "2",
+          "sanity": "0"
+        },
+        "casting_time": "10 minutes",
+        "range": "Touch (corpse)",
+        "effect": {
+          "description": "Rapidly sinks a corpse into the earth as if buried. The ground closes over it, leaving no trace. Useful for hiding evidence.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Butcher's Cleaver",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Combat, Enchantment",
+        "costs": {
+          "magic_points": "3",
+          "sanity": "1D2",
+          "components": "Cleaver or knife"
+        },
+        "casting_time": "1 round",
+        "range": "Touch (weapon)",
+        "effect": {
+          "description": "Enchants a bladed weapon to deal grievous wounds. Weapon deals +1D6 damage for 1D6 rounds. Wounds bleed profusely.",
+          "damage": "+1D6"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "By the True Name Thy Power is Sapped",
+        "alternate_names": [
+          "Dread Curse of Azathoth"
+        ],
+        "category": "Combat, Harmful",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Drains 3D6 POW from the target permanently. Target must make opposed POW roll. If failed, POW is lost. If reduced to 0, target dies.",
+          "damage": "3D6 POW drain"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Ahtu",
+        "alternate_names": [
+          "Call Spiraling Worm"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Specific locations in Africa",
+        "effect": {
+          "description": "Calls Ahtu, an avatar of Nyarlathotep. Requires a special amulet (three-lobed eye in flames) and self-mutilation.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Aku-Shin Kage",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Special",
+        "effect": {
+          "description": "Calls Aku-Shin Kage (Nyarlathotep avatar) into a blood-painted samurai armor. Requires moonless night. Avatar possesses the armor and bleeds.",
+          "damage": "1 HP every 3 rounds to a victim"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Arwassa",
+        "alternate_names": [
+          "Unite the Headless One"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Special",
+        "effect": {
+          "description": "Summons Arwassa on the first night of the new moon. Requires SIZ 500 sacrifice (including one human).",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Avatar of The Skinless One",
+        "alternate_names": [
+          "Transfiguration of Living Hell"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "12",
+          "pow": "5",
+          "sanity": "6"
+        },
+        "casting_time": "680 seconds",
+        "range": "Touch (Object or Being)",
+        "effect": {
+          "description": "Possesses an object or being with the avatar of The Skinless One for 24 hours. Possessed host gains horrific traits.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Azathoth",
+        "alternate_names": [
+          "Petition of Chaos",
+          "The Unspeakable Vowel of The Shaggai",
+          "Summon the Demi-Urge"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Outside at night",
+        "effect": {
+          "description": "Extremely dangerous. Calls Azathoth. Likely destroys the caster/area unless appeased.",
+          "damage": "Potential total destruction"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Bugg-Shash",
+        "alternate_names": [
+          "Bring Forth He Who Comes in Darkness"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Darkness",
+        "effect": {
+          "description": "Summons Bugg-Shash. No dismissal spell exists. Will not leave without a victim.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Cthugha",
+        "alternate_names": [
+          "Evocation of the Fiery Burning Doom",
+          "The Fomalhaut Convention"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Clear night (Fomalhaut visible)",
+        "effect": {
+          "description": "Summons Cthugha via flame. Requires Fomalhaut visibility.",
+          "damage": "None"
+        },
+        "deeper_magic": "Variant 'Summon Cthugha' requires human sacrifice and falsely claims binding power."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Cyaegha",
+        "alternate_names": [
+          "Release the Waiting Dark"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Dunkelhugel/Darkness",
+        "effect": {
+          "description": "Summons Cyaegha. Requires sacrifice (manifests inside victim). Only works if imprisonment is broken or at specific sites.",
+          "damage": "Destroys sacrifice"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Daoloth",
+        "alternate_names": [
+          "Configuration of the Render of the Veils"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Darkness",
+        "effect": {
+          "description": "Summons Daoloth into the Pentacle of Planes. Requires icon, nightgaunt skull, black candles, metal rod. Failure risks possession/death.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call El Negro",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Anywhere at night",
+        "effect": {
+          "description": "Calls El Negro (Nyarlathotep avatar) to bargain.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Forth The Worm",
+        "alternate_names": [
+          "Awaken/Create Crawling One",
+          "Transfiguration of Tulzscha",
+          "Grant Form of One Thousand Slippery Crawlers"
+        ],
+        "category": "Resurrection",
+        "costs": {
+          "magic_points": "10",
+          "pow": "15",
+          "sanity": "1D3"
+        },
+        "casting_time": "10 hours",
+        "range": "Touch (corpse)",
+        "effect": {
+          "description": "Resurrects a dead person (dead 2+ weeks) as a Crawling One. Requires 10 hours of chanting.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Ghatanothoa",
+        "alternate_names": [
+          "Revocation of T'yog's Confinement",
+          "Raise Up the Medusa"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Continent of Mu",
+        "effect": {
+          "description": "Summons Ghatanothoa. Only works on Mu. Viewing the god causes petrification.",
+          "damage": "Petrification (viewing)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Gla'aki",
+        "alternate_names": [
+          "Beseech the Master Beneath the Water",
+          "Raise Ga-Luki"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Brichester Lake/Water with Shard",
+        "effect": {
+          "description": "Summons Gla'aki from water. Requires crystal shard if not at Brichester Lake.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Gol-Goroth",
+        "alternate_names": [
+          "Call Out Master of the Stone"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Consecrated Monolith",
+        "effect": {
+          "description": "Summons Gol-Goroth atop a monolith. Requires 1000-year-old stone, bonfires, dancing, blood sacrifice.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Hastur",
+        "alternate_names": [
+          "The Darke Ritual of the One Who Walks in Shadow",
+          "The Yellow Petition"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Stone V-pattern",
+        "effect": {
+          "description": "Calls Hastur. Requires 9 stone blocks in V-pattern. Only works when Aldebaran is visible. Byakhee grant bonus.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Horned Man",
+        "alternate_names": [
+          "Call Upon Good Puck",
+          "The Dance of Wisdom and Strife",
+          "Ye Revelations of Old Nick"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Summons the Horned Man (Nyarlathotep avatar). Chooses one summoner to 'dance' (grants +5 POW).",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Iod",
+        "alternate_names": [
+          "Summon the Hunter"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Hilltop",
+        "effect": {
+          "description": "Summons Iod. Requires warding circle with pentagram to survive.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Ithaqua",
+        "alternate_names": [
+          "The Seven Oaths of the North Wind",
+          "Invoke the Ice God"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Far North/High Snowy Mountain",
+        "effect": {
+          "description": "Focuses Ithaqua. Requires 10ft snow mound. Freezing temperatures.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Keeper of the Moonlens",
+        "alternate_names": [
+          "The Rhyme of the Lens",
+          "Summons of the Master"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Goatswood, England",
+        "effect": {
+          "description": "Calls Keeper of the Moonlens. Only works on specific nights in Goatswood. Requires sacrifice.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call La Llorona",
+        "alternate_names": [
+          "Petition of She Who Weeps",
+          "The Wailing Summons of the Drowner"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Near fresh water",
+        "effect": {
+          "description": "Calls La Llorona (Shub-Niggurath avatar). Night, waning moon. Requires designation of sacrifice.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Lightning",
+        "alternate_names": [
+          "Mastery of Elementals",
+          "Call Fire and Brimstone"
+        ],
+        "category": "Combat",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D2"
+        },
+        "casting_time": "5 minutes",
+        "range": "Visual",
+        "effect": {
+          "description": "Calls a bolt of lightning to strike a target (6D6 damage). Requires storm clouds.",
+          "damage": "6D6"
+        },
+        "deeper_magic": "Caster can bend elements with immediate effect (instantaneous)."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call M'guleloc",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Night",
+        "effect": {
+          "description": "Rare spell. Summons M'guleloc. Requires sacrifice to avoid being eaten.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Mappo No Ryûjin",
+        "alternate_names": [
+          "Invoke Herald of the End",
+          "Abolish the Elder Seal and Unleash Leviathan Bringer of Destruction"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D20"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Special",
+        "effect": {
+          "description": "Calls the Great Dragon of Mappo. Requires Japanese Imperial Regalia, stone pillars, jade stones, and massive blood sacrifice.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Nyogtha",
+        "alternate_names": [
+          "Petition Thy Dark Master Through the Rigorous Chanting and Wailing",
+          "Call Favor From HE Who Dwells Below"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Cavern entrance",
+        "effect": {
+          "description": "Invokes Nyogtha for a boon.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Ossadogowah",
+        "alternate_names": [
+          "Produce Son of Tsathoggua"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Special (Algol visible)",
+        "effect": {
+          "description": "Calls Ossadogowah. +25% if on stone tower. +10% if near marsh/frogs.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Rlim Shaikorth",
+        "alternate_names": [
+          "Chant of Lonely Yikilth",
+          "Arise Visitation of the Ice God"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "North or South Pole",
+        "effect": {
+          "description": "Calls Rlim Shaikorth.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Saaitii",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Darkness",
+        "effect": {
+          "description": "Summons Saaitii. Requires sacrifice.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Shub-Niggurath",
+        "alternate_names": [
+          "The Sacred Rites of Union",
+          "Bring Forth The Carnal Desire of the Wood Nymph"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Wilderness/Altar",
+        "effect": {
+          "description": "Calls Shub-Niggurath. Requires consecrated altar, dark of the moon. Fresh blood grants bonus. Dark Young grant bonus.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Skinless One",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "100",
+          "sanity": "Variable"
+        },
+        "casting_time": "1 day",
+        "range": "Special",
+        "effect": {
+          "description": "Calls The Skinless One. Requires up to 100 human sacrifices. Each sacrifice grants +1% chance.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call The Beast",
+        "alternate_names": [
+          "Entreat Abu Hol",
+          "Grand Rite of the Father of Terror"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Great Sphinx, Egypt",
+        "effect": {
+          "description": "Summons The Beast (Nyarlathotep avatar) into the Sphinx.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call The Black",
+        "alternate_names": [
+          "Black Blood",
+          "Curse of Black Blood",
+          "Sanguineous Atrabilious"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "magic_points": "20",
+          "pow": "10",
+          "sanity": "2D6"
+        },
+        "casting_time": "3 hours",
+        "range": "Visual",
+        "effect": {
+          "description": "Summons 'The Black' (blood of Yibb-Tstll) to suffocate a target. Target makes CON rolls (increasing difficulty) or loses HP.",
+          "damage": "Suffocation"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Yibb-Tstll",
+        "alternate_names": [
+          "Summon Forth the Sleeper of Kled",
+          "Beckon the Mother of Night"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Special",
+        "effect": {
+          "description": "Calls Yibb-Tstll. Cast by 13 people at midnight on first day of year.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Yig",
+        "alternate_names": [
+          "Petition the Father of Serpents",
+          "Supplication of Venom"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Swamp/Jungle/Desert",
+        "effect": {
+          "description": "Summons Yig. Requires snakes/serpent folk (POW 500+ total) present.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Yog-Sothoth",
+        "alternate_names": [
+          "The Forbidden Song of the Key",
+          "The Yah-Zek Channelling"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable (group casting)",
+          "sanity": "1D10"
+        },
+        "casting_time": "1-100 minutes",
+        "range": "Stone Tower (10 yards high)",
+        "effect": {
+          "description": "Calls Yog-Sothoth. Requires stone tower, open area, cloudless sky, sacrifice.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Zombie",
+        "alternate_names": [
+          "Summon the Dead",
+          "Petition of the Graveless Ones"
+        ],
+        "category": "Summoning",
+        "costs": {
+          "magic_points": "2",
+          "sanity": "1D3"
+        },
+        "casting_time": "4 rounds",
+        "range": "1 mile",
+        "effect": {
+          "description": "Calls all zombies within 1 mile to the caster's circle. Zombies are held at circle's edge until dawn.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Call Zu-Che-Quon",
+        "alternate_names": [
+          "Rise up the Silent Darkness"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "15",
+          "sanity": "1D10"
+        },
+        "casting_time": "5 rounds",
+        "range": "Bell ringing",
+        "effect": {
+          "description": "Calls Zu-Che-Quon. Requires three enchanted bells to be rung continuously.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Candle Communication",
+        "alternate_names": [
+          "Flame Tongue",
+          "The Breath of Flame",
+          "The Sorcerer's Letter"
+        ],
+        "category": "Communication",
+        "costs": {
+          "magic_points": "5+",
+          "sanity": "1"
+        },
+        "casting_time": "Instantaneous",
+        "range": "10+ miles",
+        "effect": {
+          "description": "Allows voice communication between two casters holding lit candles. Base 10 miles. +1 MP per 100 miles.",
+          "damage": "None"
+        },
+        "deeper_magic": "Up to four wizards may hold a simultaneous conversation/send images."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Cascades of Florin",
+        "alternate_names": [
+          "Bright Waters",
+          "The Churning Draining"
+        ],
+        "category": "Dreamlands",
+        "costs": {
+          "magic_points": "Variable (POW)",
+          "sanity": "1D4"
+        },
+        "casting_time": "2 rounds",
+        "range": "10-100 yards",
+        "effect": {
+          "description": "Dreamlands only. Torrent of golden liquid drains 1D6 MP per 5 POW spent.",
+          "damage": "1D6 MP per 5 POW"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Cast Circle",
+        "alternate_names": [
+          "Partition of H'Tan",
+          "The Elder Cordon"
+        ],
+        "category": "Protection",
+        "costs": {
+          "magic_points": "3+",
+          "sanity": "1D3"
+        },
+        "casting_time": "5 minutes",
+        "range": "Circle",
+        "effect": {
+          "description": "Creates a barrier against specific unnatural creatures (byakhee, deep ones, etc.). Costs 3 MP + 1 per person protected. Lasts 1 hour.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Cast Out Shan",
+        "alternate_names": [
+          "Rite of Extraction",
+          "Cleansing of the Most Foul Shaggai",
+          "Ward of the Five Points"
+        ],
+        "category": "Banishing",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1+"
+        },
+        "casting_time": "1 hour",
+        "range": "Pentagram",
+        "effect": {
+          "description": "Expels a shan from a host. Requires pentagram and vervain. Pentagram wards against re-entry for 12 hours.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Cast Out The Devil",
+        "alternate_names": [
+          "The Rite of Exorcism",
+          "Compel the Demon",
+          "Soul Murder"
+        ],
+        "category": "Banishing",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 day",
+        "range": "Touch",
+        "effect": {
+          "description": "Frees a target from possession. Requires opposed POW roll.",
+          "opposed_roll": "Opposed POW"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Casting the Runes",
+        "alternate_names": [
+          "The Fiendish Ploy",
+          "Death Gift"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "pow": "10",
+          "sanity": "1D8"
+        },
+        "casting_time": "2 hours",
+        "range": "Delivery",
+        "effect": {
+          "description": "Sends a demon to kill the recipient of a runic parchment. Demon appears after 2 weeks.",
+          "damage": "Demon attack (5D10 POW drain)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Cause Disease",
+        "alternate_names": [
+          "Zura's Gift",
+          "Ye Blighte of Woeful Humors",
+          "The Purple and Black Pox"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "magic_points": "8+",
+          "sanity": "1D4"
+        },
+        "casting_time": "5 rounds",
+        "range": "Visual/Touch item",
+        "effect": {
+          "description": "Inflicts feverish illness. Target loses 1D6 STR, CON, DEX per day for MP invested days. Requires item of target buried with poison.",
+          "damage": "Stat loss"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Cause/Cure Blindness",
+        "alternate_names": [
+          "Blindness",
+          "Grant Sight",
+          "Shade of Darkness",
+          "The Pharaoh's Curse"
+        ],
+        "category": "Harmful/Healing",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "2D6 (Cause) / None (Cure)"
+        },
+        "casting_time": "1 day",
+        "range": "Visual",
+        "effect": {
+          "description": "Causes permanent blindness or cures it. Requires opposed POW roll.",
+          "opposed_roll": "Opposed POW"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Channeling God",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Summoning",
+        "costs": {
+          "magic_points": "10",
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "3D6 hours",
+        "range": "Touch",
+        "effect": {
+          "description": "Creates a vessel (art) for a Muse from Beyond. Requires Extreme Art/Craft success.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Chant of Thoth",
+        "alternate_names": [
+          "The Rite of Cerebral Acuity",
+          "The Song of Erudite Addition",
+          "The Scholars' Chorus"
+        ],
+        "category": "Enhancement",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D4"
+        },
+        "casting_time": "30 minutes",
+        "range": "Self",
+        "effect": {
+          "description": "Increases mental faculties. Grants bonus die to intellectual problem solving.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Chant of Warding",
+        "alternate_names": [
+          "Song of Yig",
+          "Cantu Protegentibus",
+          "Song of Zenqaba"
+        ],
+        "category": "Protection",
+        "costs": {
+          "magic_points": "12 (per day)"
+        },
+        "casting_time": "3 minutes (3 times a day)",
+        "range": "Self/Domicile",
+        "effect": {
+          "description": "Protects against Yig and his children. Requires casting at sunrise, midday, sunset.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Charm Animal",
+        "alternate_names": [
+          "Goodwill of the Forest",
+          "The Traveler's Touch"
+        ],
+        "category": "Folk",
+        "costs": {
+          "magic_points": "Variable (1 per 5 SIZ)"
+        },
+        "casting_time": "1 round",
+        "range": "Touch",
+        "effect": {
+          "description": "Causes animal to treat caster as friend for 24 hours. Cannot command.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Chasm to Hell",
+        "alternate_names": [
+          "The Devil's Summons",
+          "Send Thy Neighbour to the Flames Below"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "pow": "15",
+          "sanity": "2D6"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Opens a fissure to swallow the target. Creatures may emerge to drag them down.",
+          "damage": "Death"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Chime of Tezchaptl",
+        "alternate_names": [
+          "The Minstrel's Backlash",
+          "Harmonic Concordance",
+          "The Jester's Bell"
+        ],
+        "category": "Enchantment",
+        "costs": {
+          "magic_points": "10",
+          "pow": "10",
+          "sanity": "1D6"
+        },
+        "casting_time": "6 hours",
+        "range": "Touch",
+        "effect": {
+          "description": "Enchants a bell to absorb musical spells (Song of Hastur, etc.). Can release absorbed spell energy back at caster.",
+          "damage": "1D6 per 2 MP absorbed"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Circle of Nausea",
+        "alternate_names": [
+          "Ward of Pulsating Efflugence",
+          "The Foetid Barrier"
+        ],
+        "category": "Protection",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "2"
+        },
+        "casting_time": "5 minutes",
+        "range": "Circle",
+        "effect": {
+          "description": "Creates protective circle. Approachers must win opposed POW or vomit/retreat. Requires 4 enchanted opals.",
+          "damage": "Nausea"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Circle of Warding",
+        "alternate_names": [
+          "The Elder Geometry"
+        ],
+        "category": "Protection",
+        "costs": {
+          "magic_points": "Variable"
+        },
+        "casting_time": "1 hour per MP",
+        "range": "Circle",
+        "effect": {
+          "description": "Prevents summoned beings from crossing. Opposed POW roll vs (MP x 5).",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Cleansing Flame of Vorvadoss",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Banishing",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1D4"
+        },
+        "casting_time": "3 rounds",
+        "range": "Visual",
+        "effect": {
+          "description": "Drives back extra-dimensional entities. Group casting allowed. Opposed roll (MP x 5) vs POW.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Cleansing Ritual",
+        "alternate_names": [
+          "Restoration of the Flesh"
+        ],
+        "category": "Healing",
+        "costs": {
+          "magic_points": "14",
+          "pow": "5",
+          "sanity": "1D4"
+        },
+        "casting_time": "24 hours",
+        "range": "Touch",
+        "effect": {
+          "description": "Restores target to natural state. Removes curses, blights, foreign objects.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Cloak of Fire",
+        "alternate_names": [
+          "Cthugha's Embrace",
+          "Dance of Blazing Death",
+          "The Burning Time"
+        ],
+        "category": "Combat/Defense",
+        "costs": {
+          "magic_points": "12",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "Self",
+        "effect": {
+          "description": "Wreathes caster in fire. Doubles MOV, bonus die to DEX. Attacks against caster have penalty die. Unarmed attackers take 1D6 damage. Touches deal 1D6 damage (caster takes half).",
+          "damage": "1D6"
+        },
+        "deeper_magic": "Caster can unleash tentacle of flame (1D8 damage) for 6 MP."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Cloud Memory",
+        "alternate_names": [
+          "Befuddle",
+          "Dumbfound",
+          "Mystify"
+        ],
+        "category": "Mental",
+        "costs": {
+          "magic_points": "1D6",
+          "sanity": "1D2"
+        },
+        "casting_time": "Instantaneous",
+        "range": "Visual",
+        "effect": {
+          "description": "Blocks conscious memory of a specific event. Requires opposed POW roll.",
+          "opposed_roll": "Opposed POW"
+        },
+        "deeper_magic": "Bonus die to POW roll for 10 extra MP."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Clutch of Nyogtha",
+        "alternate_names": [
+          "The Vile Wrench",
+          "The Insidious Wrath of the Dark Wizard",
+          "Ye Loathsome Tickle"
+        ],
+        "category": "Combat",
+        "costs": {
+          "magic_points": "1+",
+          "sanity": "1D20"
+        },
+        "casting_time": "Instantaneous",
+        "range": "Conversational",
+        "effect": {
+          "description": "Crushes target's heart (1D3 damage/round). Paralyzes target. Chest bursts at 0 HP. Requires concentration and MP expenditure.",
+          "damage": "1D3/round"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Come and See Me",
+        "alternate_names": [
+          "Glamor",
+          "Mortal Attraction",
+          "Instill the Leaping Flutters upon thy Heart's Desire"
+        ],
+        "category": "Folk",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 day",
+        "range": "Candle",
+        "effect": {
+          "description": "Incites love in target. Requires candle with target's hair/nail. Caster gains +20 APP and bonus die to Charm/Persuade vs target.",
+          "opposed_roll": "Opposed POW"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Command Animal",
+        "alternate_names": [
+          "Beast Mastery",
+          "Call Forth the Crawling Ones for Thy Bidding",
+          "Compel (Animal)",
+          "Speak with (Animal)"
+        ],
+        "category": "Folk",
+        "costs": {
+          "magic_points": "1",
+          "sanity": "1D3"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Commands specific animal species to obey one order. Specific per species.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Command Ghost",
+        "alternate_names": [
+          "Compel Spirit",
+          "Whisper of Ashes",
+          "Dead Tongue"
+        ],
+        "category": "Folk",
+        "costs": {
+          "magic_points": "10+",
+          "sanity": "1D3"
+        },
+        "casting_time": "10 minutes",
+        "range": "Grave",
+        "effect": {
+          "description": "Compels ghost to answer questions. Requires blood on grave. Opposed POW roll.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Command Plants",
+        "alternate_names": [
+          "Burden of Growth",
+          "Bend Limb and Leaf to thy Will"
+        ],
+        "category": "Control",
+        "costs": {
+          "magic_points": "2+",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Controls plants (vines, branches). 2 MP per sq yard.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Command Shoggoth",
+        "alternate_names": [
+          "Bind Creature of Darkness to Thy Will",
+          "Control the Thousand-Eyed Beast"
+        ],
+        "category": "Control",
+        "costs": {
+          "magic_points": "2",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 hour",
+        "range": "1-2 miles",
+        "effect": {
+          "description": "Compels shoggoth to obey one command. Cost doubles each repeat casting.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Command of The Bloody Tongue",
+        "alternate_names": [
+          "Silence",
+          "Speak Not Thy Ill Lies"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "1D6"
+        },
+        "casting_time": "Instantaneous",
+        "range": "Visual",
+        "effect": {
+          "description": "Seals target's mouth with flesh. Opposed POW roll.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Compel Flesh",
+        "alternate_names": [
+          "Create Unthinking Servant",
+          "Zombification",
+          "The Rite of the Islands"
+        ],
+        "category": "Control",
+        "costs": {
+          "magic_points": "5+",
+          "sanity": "3"
+        },
+        "casting_time": "1 round",
+        "range": "Bound Soul",
+        "effect": {
+          "description": "Makes individual a zombie. Target must have soul bound. 1 MP per 10 rounds.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Concentric Rings of the Worm",
+        "alternate_names": [
+          "The Coiling and Twisting Armor",
+          "The Coils of Restless Harmony"
+        ],
+        "category": "Dreamlands",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D4"
+        },
+        "casting_time": "3 rounds",
+        "range": "Self",
+        "effect": {
+          "description": "Dreamlands only. Creates barrier reducing damage by 6D6. Lasts 5 rounds.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Conjuration of The Turua",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Summoning",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "13 (Total)"
+        },
+        "casting_time": "4+ days",
+        "range": "Water",
+        "effect": {
+          "description": "Four part ritual to summon Turua (tentacled horror). Requires nature purification, egg in mouth, trance, sacrifice.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Conjure Glass of Mortlan",
+        "alternate_names": [
+          "Visions of Things That Were",
+          "Shadows of the Past"
+        ],
+        "category": "Divination",
+        "costs": {
+          "magic_points": "6",
+          "sanity": "1D8"
+        },
+        "casting_time": "10 minutes",
+        "range": "Scrying device",
+        "effect": {
+          "description": "Views scenes from the past. Viewer loses 1D6 SAN. Requires scrying device and enchanted brazier.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Consume Likeness",
+        "alternate_names": [
+          "Snake Skin Cloak",
+          "The Valusian Mantle",
+          "The Gift of Yig"
+        ],
+        "category": "Transformation",
+        "costs": {
+          "magic_points": "10 (per 6 hours)",
+          "pow": "5",
+          "sanity": "1D20"
+        },
+        "casting_time": "Several days",
+        "range": "Self",
+        "effect": {
+          "description": "Assumes likeness of consumed person. Caster consumes victim. Reverts if injured.",
+          "damage": "None"
+        },
+        "deeper_magic": "Can recollect memories for additional MP."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Consume Memories",
+        "alternate_names": [
+          "Wisdom of the Forbidden Fruit",
+          "Imbibe thy Enemies' Will"
+        ],
+        "category": "Enhancement",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D10"
+        },
+        "casting_time": "1D6 rounds",
+        "range": "Touch (brain)",
+        "effect": {
+          "description": "Absorbs memories/skills of consumed fresh brain for 24 hours.",
+          "damage": "None"
+        },
+        "deeper_magic": "Permanently absorb memories for 20 POW."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Abhoth",
+        "alternate_names": [
+          "Aklo of the Sabaoth"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Dream/Location",
+        "effect": {
+          "description": "Contacts Abhoth. Opposed POW roll. Success: telepathy/possession. Failure: coma.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Aku-Shin Kage",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Moonless night/Cave",
+        "effect": {
+          "description": "Contacts Aku-Shin Kage. Appears as shadow. Possesses victim (bleeds).",
+          "damage": "1 HP/3 rounds to host"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Azathoth",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Clear night",
+        "effect": {
+          "description": "Transports caster to Azathoth's Court. Hard POW roll. Failure = incineration.",
+          "damage": "Incineration"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Bokrug",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Dreamlands swamp",
+        "effect": {
+          "description": "Dreamlands only. Contacts Bokrug. Only responds if interested.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Byatis",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Severn Valley",
+        "effect": {
+          "description": "Contacts Byatis. Vision. POW roll to avoid hypnosis. Requires willingness to free deity.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Chaugnar Faugn",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Self",
+        "effect": {
+          "description": "Requires gorging on lavish meal. Sends visions/nightmares.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Child of The Sphinx",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "3",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "20 miles",
+        "effect": {
+          "description": "Attracts Child of Sphinx. Requires clay figurine and burning herbs.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Chthonian",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Earthquake zones",
+        "effect": {
+          "description": "Contacts Chthonian. Requires location with recent quakes.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Cthulhu",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Responds in dreams. May cause artistic mania.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Deep One",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "3",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Ocean",
+        "effect": {
+          "description": "Throw inscribed stones into water. Contacts Deep Ones.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Eihort",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "magic_points": "1",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Costs 1 MP instead of 5 POW. Appears in dream or person. Extracts 5 POW on first contact.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Elder Thing",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "3",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Atlantic Ridge/Antarctica",
+        "effect": {
+          "description": "Chant to contact Elder Things.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Emerald Lama",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Chant mantra 108 times. Vision of Green Lama. Answers 3 questions in riddles. Leaves obsession mark.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Flying Polyp",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "9",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Underground cities",
+        "effect": {
+          "description": "Contact Flying Polyps. Requires communication shaft.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Formless Spawn",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "3",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Tsathoggua temple/N'Kai",
+        "effect": {
+          "description": "Contacts Formless Spawn.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Ghoul",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Graveyards",
+        "effect": {
+          "description": "Contacts Ghouls. Moonlit old burial places.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Ghroth",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D8/5D10"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Astronomy",
+        "effect": {
+          "description": "Requires Astronomy roll. Attunes to Ghroth. High Sanity loss. No benefit.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Gla'aki",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Near water/shards",
+        "effect": {
+          "description": "Contacts Gla'aki. Usually sends servants first. Discusses servitude.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Gnoph-Keh",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "6",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Frozen wastes",
+        "effect": {
+          "description": "Contacts Gnoph-Keh. Requires Singing roll and ice effigy.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Hound of Tindalos",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "7",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Angle 120 degrees",
+        "effect": {
+          "description": "Contacts Hound. Mark space with geometric formulae. Dangerous.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Human (Mi-Go)",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "3"
+        },
+        "casting_time": "1 round",
+        "range": "Telepathic",
+        "effect": {
+          "description": "Mi-Go spell. Telepathic link to human servant. Costs human 1 SAN per 5 rounds.",
+          "damage": "1 SAN/5 rounds (human)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Iod",
+        "alternate_names": [
+          "Call to the Hunter"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Bright light",
+        "effect": {
+          "description": "Stare into bright light. POW roll to avoid blindness. Iod speaks to mind.",
+          "damage": "Blindness (possible)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Koth",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Burn incense/diagrams. Hard Luck roll. Avatar visits at full moon.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Lloigor",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "3+",
+          "sanity": "1D3"
+        },
+        "casting_time": "5 rounds",
+        "range": "60 miles of lloigor",
+        "effect": {
+          "description": "Contacts lloigor in dreams. Demands 1D6 MP.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Masters",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Contacts Ascended Masters of Shamballah.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Mi-Go",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "High mountains",
+        "effect": {
+          "description": "Contacts Mi-Go.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Moon-Beast",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "3",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Dreamlands (Moon/Black Galleys)",
+        "effect": {
+          "description": "Contacts Moon-Beasts. Often sends servants.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Nodens",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Remote/High place",
+        "effect": {
+          "description": "Contacts Nodens. Responds later. Aid is esoteric.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Nyarlathotep",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Contacts Nyarlathotep. Appears at gatherings or to individuals. Gifts have sting.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Nyarlatophis",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Contacts Nyarlatophis (Nyarlathotep avatar).",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Othuyeg",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Rare spell. Contacts Othuyeg via dreams (28 days). SAN loss. POW roll or become obsessed.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Pazzuzu",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Graves/Death",
+        "effect": {
+          "description": "Contacts Pazzuzu (Nyarlathotep avatar). Extreme POW roll. Deadly breath.",
+          "damage": "Death (breath)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Rat-Thing",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "2",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Contacts Rat-Things. Offerings required.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Sand-Dweller",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "3",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Desert",
+        "effect": {
+          "description": "Contacts Sand-Dwellers.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Servitor of The Outer Gods",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "14",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Starry night",
+        "effect": {
+          "description": "Contacts Servitor. Luck roll. Requires sacrifice. Performs one task.",
+          "damage": "Devours caster (if sacrifice inadequate)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Shub-Niggurath",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Wilderness/Altar",
+        "effect": {
+          "description": "Contacts Shub-Niggurath. Blood sacrifice. Sends herald.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Spirits of the Dead",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "3+",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "River",
+        "effect": {
+          "description": "Contacts dead. Tent with water jugs. Group casting.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Star-Spawn of Cthulhu",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "6",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Ocean",
+        "effect": {
+          "description": "Contacts Star-Spawn.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Tomb-Herd",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "9",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Portal/Temple",
+        "effect": {
+          "description": "Contacts Tomb-Herd. Statues prepared.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Tsathoggua",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Underground",
+        "effect": {
+          "description": "Contacts Tsathoggua. Hazy vision.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Y'golonac",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Contacts Y'golonac. Desires servitude. May attack/possess.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Yig",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Contacts Yig. Sacrifice drinks poison potion. Child of Yig bursts from stomach.",
+          "damage": "Death (sacrifice)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Yithian",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Monster",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "1D3"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "100 miles",
+        "effect": {
+          "description": "Contacts Yithian occupying subject.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Yog-Sothoth",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Stone Tower",
+        "effect": {
+          "description": "Contacts Yog-Sothoth. Sacrifice offered. Risk of destruction.",
+          "damage": "None"
+        },
+        "deeper_magic": "Appears as Tawil at Umr (avatar)."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Zhar and Lloigor",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Special",
+        "effect": {
+          "description": "Tcho-Tcho ritual. Two forms: Lesser Revelation (sacrifice) or True Communion (cannibalism).",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Contact Zoth-Ommog",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Contact Deity",
+        "costs": {
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 rounds",
+        "range": "Anywhere (Idol)",
+        "effect": {
+          "description": "Contacts Zoth-Ommog. Requires enchanted idol and blood sacrifice.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Control Elements",
+        "alternate_names": [
+          "Marshal Nature's Cruelty",
+          "The Primordial Havok",
+          "Succor of the Elementals"
+        ],
+        "category": "Environmental",
+        "costs": {
+          "magic_points": "8+",
+          "sanity": "1D8"
+        },
+        "casting_time": "10 minutes",
+        "range": "Visual",
+        "effect": {
+          "description": "Controls earth, wind, fire, or water. 8 MP per 10 yards. Requires sample of element. Inflicts damage.",
+          "damage": "Variable"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Control Skin",
+        "alternate_names": [
+          "Skin Walking",
+          "Meld Flesh",
+          "Meat Sculpting"
+        ],
+        "category": "Transformation",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "30 minutes",
+        "range": "Self/Touch",
+        "effect": {
+          "description": "Melds skin of one body area. Opposed POW. Permanent for 5 POW.",
+          "damage": "None"
+        },
+        "deeper_magic": "Change entire bodies (30 MP, 6D6 SAN)."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Corruption of the Sacred",
+        "alternate_names": [
+          "Emotional Reduction",
+          "Gratification of the Seven Deadly Sins"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "pow": "20",
+          "sanity": "1D6"
+        },
+        "casting_time": "4 nights",
+        "range": "Doll",
+        "effect": {
+          "description": "Attaches hungry ghost to target. Drains POW/SAN daily. Causes baser instincts.",
+          "damage": "POW/SAN drain"
+        },
+        "deeper_magic": "Dictate specific behaviors."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Coyote Dust",
+        "alternate_names": [
+          "Slumber Powder",
+          "Witch Soil"
+        ],
+        "category": "Folk",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "1D6"
+        },
+        "casting_time": "Instantaneous",
+        "range": "10 yards",
+        "effect": {
+          "description": "Dust thrown in fire causes sleep (3D10 mins). Opposed POW.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Amulet",
+        "alternate_names": [
+          "Stone of Blessing",
+          "Healing Stone",
+          "Snake Gem"
+        ],
+        "category": "Enchantment",
+        "costs": {
+          "magic_points": "10",
+          "pow": "10",
+          "sanity": "1"
+        },
+        "casting_time": "1 week",
+        "range": "Touch",
+        "effect": {
+          "description": "Enchants gemstone amulet. Summons guardian once/24h (Heal 5 HP, +10 STR/CON/DEX/POW).",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Bad-Corpse Dust",
+        "alternate_names": [
+          "Ward of the Dead",
+          "Line of Dust",
+          "The Flesh Barrier"
+        ],
+        "category": "Protection",
+        "costs": {
+          "magic_points": "2"
+        },
+        "casting_time": "6 hours",
+        "range": "Touch",
+        "effect": {
+          "description": "Creates barrier against zombies. Requires zombie intestine, flesh.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Barrier of Naach-Tith",
+        "alternate_names": [
+          "Great Ward of Naach-Tith",
+          "The Unseen Sphere that Entraps the Demon"
+        ],
+        "category": "Protection",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1D10"
+        },
+        "casting_time": "1 minute",
+        "range": "100 yards",
+        "effect": {
+          "description": "Creates spherical barrier (100 yds). 3D10 STR per MP. Physical/Magical defense. Lasts 1D4+4 hours.",
+          "damage": "None"
+        },
+        "deeper_magic": "Increase size to 200 yards."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Bulla",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Folk",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "1"
+        },
+        "casting_time": "1 night",
+        "range": "Touch",
+        "effect": {
+          "description": "Amulet against possession for child. Lasts until age 14.",
+          "damage": "None"
+        },
+        "deeper_magic": "Create for adult."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Charm",
+        "alternate_names": [
+          "Favor of the Gods",
+          "Blessing",
+          "Gift of the Others"
+        ],
+        "category": "Folk",
+        "costs": {
+          "magic_points": "10",
+          "pow": "5"
+        },
+        "casting_time": "7 days",
+        "range": "Touch",
+        "effect": {
+          "description": "Enchants object for protection. Bonus die Luck/Dodge or Damage Reduction.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Child of The Sphinx",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Making Monsters",
+        "costs": {
+          "magic_points": "10+",
+          "pow": "10",
+          "sanity": "1D10"
+        },
+        "casting_time": "1+ months",
+        "range": "Touch",
+        "effect": {
+          "description": "Creates animal-headed golem (Child of Sphinx). Requires Paut, animal head, living donor body.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Curse Tablet",
+        "alternate_names": [
+          "Harbinger of Ill Fortune",
+          "Thine Enemies Treasures Transformed to Spit"
+        ],
+        "category": "Enchantment",
+        "costs": {
+          "magic_points": "20",
+          "sanity": "1D2"
+        },
+        "casting_time": "24+ hours",
+        "range": "Touch",
+        "effect": {
+          "description": "Curses fortune/money. Requires lead tablet buried underground. Opposed POW.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Curse Whistle",
+        "alternate_names": [
+          "Cry of the Bone Owl",
+          "Make Hoot Pipe",
+          "Instrument of Doom"
+        ],
+        "category": "Enchantment",
+        "costs": {
+          "magic_points": "30"
+        },
+        "casting_time": "1+ nights",
+        "range": "Touch",
+        "effect": {
+          "description": "Enchants owl bone pipes. Used for Soul Singing/Pipes of Madness.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Fetch Stick",
+        "alternate_names": [
+          "Death Stick",
+          "Make Dead Man Bane",
+          "Enchant Spear"
+        ],
+        "category": "Enchantment",
+        "costs": {
+          "pow": "10",
+          "sanity": "20"
+        },
+        "casting_time": "1 year",
+        "range": "Touch",
+        "effect": {
+          "description": "Enchants spear against undead. Requires human sacrifices. Destroys undead on impale.",
+          "damage": "Destroys Undead"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Flesh Creeper",
+        "alternate_names": [
+          "Flesh Familiar",
+          "The Loathsome Leech",
+          "By thy Skin thy Breath is Sucked"
+        ],
+        "category": "Making Monsters",
+        "costs": {
+          "magic_points": "3",
+          "pow": "5",
+          "sanity": "1D10"
+        },
+        "casting_time": "1 round",
+        "range": "Touch",
+        "effect": {
+          "description": "Creates Flesh Creeper from human flesh. Seeks target and asphyxiates.",
+          "damage": "Asphyxiation"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Gate Window",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Travel",
+        "costs": {
+          "magic_points": "N/A"
+        },
+        "casting_time": "Instantaneous",
+        "range": "N/A",
+        "effect": {
+          "description": "Mythos Deity/Powerful Sorcerer version of Gate. Powered by creator.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Golem",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Making Monsters",
+        "costs": {
+          "magic_points": "15",
+          "pow": "25",
+          "sanity": "1D6"
+        },
+        "casting_time": "1D6+4 days",
+        "range": "Touch",
+        "effect": {
+          "description": "Animates clay golem. Requires command word. Grows in size.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Mist of R'lyeh",
+        "alternate_names": [
+          "Ye Terrible Cloud",
+          "Breath of the Dark Sea",
+          "The Dank Fog of Sailors Lost",
+          "Raise Fog"
+        ],
+        "category": "Environmental",
+        "costs": {
+          "magic_points": "2"
+        },
+        "casting_time": "Instantaneous",
+        "range": "10x10x15 feet",
+        "effect": {
+          "description": "Creates dense mist obscuring vision.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Scrying Window",
+        "alternate_names": [
+          "Create Vision of Things Past",
+          "The Mirror of History",
+          "Glass of the Ages"
+        ],
+        "category": "Enchantment",
+        "costs": {
+          "magic_points": "98",
+          "pow": "50",
+          "sanity": "1D3"
+        },
+        "casting_time": "Weeks",
+        "range": "Touch",
+        "effect": {
+          "description": "Enchants glass to view past. Requires colored glass mosaic.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Self-Ward",
+        "alternate_names": [
+          "Rite of the Ageless Ones",
+          "The Old Bargain",
+          "Ye Boon of Eternal Youth"
+        ],
+        "category": "Protection",
+        "costs": {
+          "magic_points": "Variable",
+          "pow": "Variable",
+          "sanity": "Variable"
+        },
+        "casting_time": "Days",
+        "range": "Self",
+        "effect": {
+          "description": "Slows aging and protects from damage. Ward-bag deflects damage equal to MP invested.",
+          "damage": "None"
+        },
+        "deeper_magic": "Reverse aging by sacrificing lifeblood."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Sign of Barzai",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Enchantment",
+        "costs": {
+          "pow": "10",
+          "sanity": "1D4"
+        },
+        "casting_time": "1D4+1 hours",
+        "range": "Touch",
+        "effect": {
+          "description": "Creates emblem. Touch renders human (POW 105 or less) inactive.",
+          "damage": "None"
+        },
+        "deeper_magic": "Diagram error in Testament of Carnamagos."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Storm",
+        "alternate_names": [
+          "Gather ye Blustery Clouds",
+          "Anger of Thor"
+        ],
+        "category": "Folk",
+        "costs": {
+          "magic_points": "5"
+        },
+        "casting_time": "10 minutes",
+        "range": "Localized",
+        "effect": {
+          "description": "Summons normal storm. Obscures vision.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Zombi",
+        "alternate_names": [
+          "Blessing of the Loa",
+          "Houngan's Servant"
+        ],
+        "category": "Making Monsters",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "10"
+        },
+        "casting_time": "Days",
+        "range": "Touch",
+        "effect": {
+          "description": "Creates zombie from living victim. Poison, bury alive, ritual. Zombie is conscious but obedient.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Create Zombie",
+        "alternate_names": [
+          "Ritual of the Undying",
+          "Black Binding",
+          "The Ashen Cowl",
+          "Raising of the Dead"
+        ],
+        "category": "Making Monsters",
+        "costs": {
+          "magic_points": "16",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 week",
+        "range": "Touch",
+        "effect": {
+          "description": "Animates corpse. Ritual liquid poured. Zombie rots.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Creation of Venerability",
+        "alternate_names": [
+          "Life Leeching",
+          "The Grey Smoke of Doom"
+        ],
+        "category": "Dreamlands",
+        "costs": {
+          "magic_points": "12",
+          "sanity": "1D8"
+        },
+        "casting_time": "1 round",
+        "range": "10 yards",
+        "effect": {
+          "description": "Dreamlands only. Ages target 1D10 years. Loss of STR, CON, DEX.",
+          "damage": "Stat loss"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Creeping Loss",
+        "alternate_names": [
+          "The Desire of Flesh",
+          "Unwholesome Delectation"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "2"
+        },
+        "casting_time": "30 minutes",
+        "range": "Touch (food)",
+        "effect": {
+          "description": "Sauce causes cannibalistic nightmares. SAN loss.",
+          "damage": "None"
+        },
+        "deeper_magic": "Compels actual cannibalism."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Crystal Call",
+        "alternate_names": [
+          "Imbue Crystal of Summoning"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "pow": "50+",
+          "sanity": "1D10"
+        },
+        "casting_time": "1+ hours",
+        "range": "Touch",
+        "effect": {
+          "description": "Fashions crystal for calling Hastur. Permanent cost.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Crystal World",
+        "alternate_names": [
+          "Sphere of Fiery Redemption",
+          "The Ball of K'Petel"
+        ],
+        "category": "Dreamlands",
+        "costs": {
+          "magic_points": "8+",
+          "sanity": "1D3"
+        },
+        "casting_time": "1 round",
+        "range": "Self",
+        "effect": {
+          "description": "Dreamlands only. Glassy sphere protects caster from heat/cold. Immobile.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Curse",
+        "alternate_names": [
+          "Evil Eye",
+          "Witch Word",
+          "Hex"
+        ],
+        "category": "Folk",
+        "costs": {
+          "magic_points": "1D3",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Inflicts physical/mental harm. Opposed POW. Loss of 10 characteristic points for 1 day.",
+          "damage": "Stat loss"
+        },
+        "deeper_magic": "Target specific senses."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Curse of Apophis",
+        "alternate_names": [
+          "The Blinding Smoke",
+          "The Impenetrable Cloud of Despair"
+        ],
+        "category": "Environmental",
+        "costs": {
+          "magic_points": "6",
+          "sanity": "1D4"
+        },
+        "casting_time": "4 rounds",
+        "range": "100 yards",
+        "effect": {
+          "description": "Blocks celestial light. Reduces visibility to darkness/10 feet.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Curse of Chaugnar Faugn",
+        "alternate_names": [
+          "The Blessed Touch of Chaugnar Faugn",
+          "The Black Dreams of Tsang",
+          "Fevered Sleep of the Most Ancient Servants of the Blood"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "magic_points": "1/hour",
+          "sanity": "1D3/12 hours"
+        },
+        "casting_time": "12 hours/week",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Causes target to be devoured by Chaugnar Faugn. Visions lead to sacrifice. Requires flesh fragment.",
+          "damage": "Death"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Curse of Darkness",
+        "alternate_names": [
+          "Banishment of the Awful Foulness",
+          "The Rite of Return"
+        ],
+        "category": "Banishing",
+        "costs": {
+          "pow": "Variable",
+          "sanity": "1D6"
+        },
+        "casting_time": "3 minutes",
+        "range": "2 miles",
+        "effect": {
+          "description": "Forces extra-planar being to return. Group casting.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Curse of the Putrid Husk",
+        "alternate_names": [
+          "The Insidious Nightmare",
+          "Summon Seven Devils to Afflict Thine Enemy",
+          "Wither the Mind of the Weak"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "10"
+        },
+        "casting_time": "1 hour",
+        "range": "Anywhere",
+        "effect": {
+          "description": "Illusion of rotting skin/organs falling out. 1D10 SAN loss. Opposed INT roll.",
+          "damage": "SAN loss"
+        },
+        "deeper_magic": "Illusion affects everyone (5 MP). Physical damage (20 MP, 25 POW, 20 SAN)."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Curse of the Rat-Thing",
+        "alternate_names": [
+          "Birthing of the Rat Familiar",
+          "Transformation of Two into Four",
+          "Creation of the Rat Faced Servant"
+        ],
+        "category": "Making Monsters",
+        "costs": {
+          "magic_points": "20",
+          "pow": "5",
+          "sanity": "1D10"
+        },
+        "casting_time": "1 day",
+        "range": "Touch (corpse)",
+        "effect": {
+          "description": "Turns fresh corpse into Rat-Thing. Spirit settles in new body.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Curse of the Stone",
+        "alternate_names": [
+          "Bring Forth Ungodly Nightmares",
+          "Demons of the Mind",
+          "Ye Phantom's Bite"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "magic_points": "9",
+          "sanity": "1D10"
+        },
+        "casting_time": "2 rounds",
+        "range": "Visual",
+        "effect": {
+          "description": "Causes hallucinations. Requires ensorcelled stone tablet. SAN loss.",
+          "damage": "SAN loss"
+        },
+        "deeper_magic": "None listed."
+      }
+    }
+  ]
+}
