@@ -3,129 +3,19 @@
 {% block title %}Deities - CoC Bot{% endblock %}
 
 {% block content %}
-<style>
-    /* Custom layout for sidebar + content */
-    .dashboard-container {
-        display: flex;
-        height: calc(100vh - 100px); /* Adjust for navbar */
-        gap: 20px;
-        padding-bottom: 20px;
-    }
-
-    /* Sidebar */
-    .sidebar-panel {
-        width: 300px;
-        min-width: 300px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .sidebar-list {
-        overflow-y: auto;
-        flex-grow: 1;
-        border: 1px solid var(--bs-border-color);
-        border-radius: 0 0 var(--bs-border-radius) var(--bs-border-radius);
-    }
-
-    .list-group-item.active {
-        background-color: var(--cthulhu-green-main);
-        border-color: var(--cthulhu-green-main);
-    }
-
-    .list-group-item:hover {
-        background-color: rgba(46, 139, 87, 0.1); /* Subtle green hover */
-        color: var(--cthulhu-green-bright);
-    }
-
-    /* Main View */
-    .detail-panel {
-        flex: 1;
-        overflow-y: auto;
-        border: 1px solid var(--bs-border-color);
-        background-color: var(--cthulhu-bg-card);
-        border-radius: var(--bs-border-radius);
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Custom scrollbars */
-    .sidebar-list::-webkit-scrollbar,
-    .detail-panel::-webkit-scrollbar {
-        width: 8px;
-    }
-    .sidebar-list::-webkit-scrollbar-track,
-    .detail-panel::-webkit-scrollbar-track {
-        background: #0a0a0a;
-    }
-    .sidebar-list::-webkit-scrollbar-thumb,
-    .detail-panel::-webkit-scrollbar-thumb {
-        background: #333;
-        border-radius: 4px;
-    }
-    .sidebar-list::-webkit-scrollbar-thumb:hover,
-    .detail-panel::-webkit-scrollbar-thumb:hover {
-        background: var(--cthulhu-green-main);
-    }
-
-    /* Typography tweaks */
-    h1, h2, h3, h4, h5, h6 {
-        color: var(--cthulhu-green-main);
-    }
-
-    .stat-box {
-        background-color: rgba(255, 255, 255, 0.05);
-        border: 1px solid var(--bs-border-color);
-        border-radius: 4px;
-        padding: 10px;
-        text-align: center;
-    }
-
-    .stat-label {
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        color: var(--bs-secondary);
-        font-weight: bold;
-    }
-
-    .stat-value {
-        font-size: 1.2rem;
-        font-weight: bold;
-        color: var(--bs-body-color);
-    }
-
-    .section-header {
-        border-bottom: 1px solid var(--bs-border-color);
-        padding-bottom: 5px;
-        margin-bottom: 15px;
-        margin-top: 25px;
-        color: var(--cthulhu-green-bright);
-        font-weight: 500;
-        font-size: 1.2rem;
-    }
-
-    .quote-block {
-        font-style: italic;
-        border-left: 3px solid var(--cthulhu-green-main);
-        background: rgba(46, 139, 87, 0.05);
-        padding: 15px;
-        margin-bottom: 20px;
-        border-radius: 0 4px 4px 0;
-        color: var(--bs-secondary);
-    }
-
-    .hidden { display: none !important; }
-</style>
-
 <div class="container-fluid dashboard-container">
     <div class="sidebar-panel">
         <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
             <h5 class="m-0 text-success">Pantheon</h5>
         </div>
-        <div class="list-group list-group-flush sidebar-list bg-dark" id="monsterList">
+        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
+            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search...">
+        </div>
+        <div class="list-group list-group-flush sidebar-list" id="monsterList">
             {% if data and data.deities %}
                 {% for item in data.deities %}
                     {% set d = item.deity_entry %}
-                    <button type="button" class="list-group-item list-group-item-action bg-dark text-light border-secondary monster-list-item" onclick="showDeity({{ loop.index0 }})">
+                    <button type="button" class="list-group-item list-group-item-action monster-list-item" onclick="showDeity({{ loop.index0 }})">
                         {{ d.name }}
                     </button>
                 {% endfor %}
@@ -148,6 +38,20 @@
 </div>
 
 <script>
+    // Search Functionality
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const filter = this.value.toLowerCase();
+        const items = document.querySelectorAll('.monster-list-item');
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if(text.includes(filter)) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+    });
+
     const deities = {{ data.deities | tojson }};
 
     function showDeity(index) {
