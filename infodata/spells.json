@@ -6021,6 +6021,1162 @@
         },
         "deeper_magic": "None listed."
       }
+    },
+    {
+      "spell_entry": {
+        "name": "Gate",
+        "alternate_names": [
+          "Doorway to Other Lands",
+          "Passage of the Void",
+          "Step Through the Veil"
+        ],
+        "category": "Travel",
+        "costs": {
+          "magic_points": "Variable (POW for construction)",
+          "pow": "Variable (construction)",
+          "sanity": "1"
+        },
+        "casting_time": "Variable",
+        "range": "Location to Location",
+        "effect": {
+          "description": "Creates a permanent or temporary portal between two locations. Permanent gates cost POW to build equal to distance (Log10 miles x 5). Use costs 1 MP per 100 miles (or 1 SAN).",
+          "damage": "None"
+        },
+        "deeper_magic": "Certain powerful gates require no MP to use but exact a terrible price (aging, sanity)."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Gate of Dreams",
+        "alternate_names": [
+          "Dream Portal",
+          "Threshold of Slumber"
+        ],
+        "category": "Dreamlands, Travel",
+        "costs": {
+          "magic_points": "Variable",
+          "pow": "5+",
+          "sanity": "1"
+        },
+        "casting_time": "Hours (Creation)",
+        "range": "Physical to Dreamlands",
+        "effect": {
+          "description": "Creates a gate allowing physical entry into the Dreamlands. Requires POW investment. Use costs MP.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Gather ye Blustery Clouds",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Environmental",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "1D4"
+        },
+        "casting_time": "10 minutes",
+        "range": "Localized",
+        "effect": {
+          "description": "Causes a sudden storm to gather. Rain/Wind obscures vision.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Golden Cage of Desire",
+        "alternate_names": [
+          "Prison of Lust",
+          "Ensnare the Heart"
+        ],
+        "category": "Mind Control",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 hour",
+        "range": "Touch (Gift)",
+        "effect": {
+          "description": "Target becomes obsessed with the caster. Opposed POW roll. Obsession lasts until dispelled or object destroyed.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Graft Flesh",
+        "alternate_names": [
+          "Join the Skin",
+          "Flesh Knitting"
+        ],
+        "category": "Healing, Transformation",
+        "costs": {
+          "magic_points": "5+",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 hour",
+        "range": "Touch",
+        "effect": {
+          "description": "Attaches new flesh/limbs to a body. Can be used to heal severe wounds (regrow limbs) or create monstrosities. Requires fresh biological material.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Grasp of Cthulhu",
+        "alternate_names": [
+          "The Deep One's Hold",
+          "Tentacles of the Deep",
+          "Crushing Grip of R'lyeh"
+        ],
+        "category": "Combat",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Manifests spectral tentacles to crush a target. 1D6 STR per 2 MP. Tentacles grapple and crush (damage equal to damage bonus of the spectral STR).",
+          "damage": "Variable (Crush)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Gray Binding",
+        "alternate_names": [
+          "Create Zombie",
+          "Ritual of the Undying"
+        ],
+        "category": "Making Monsters",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 hour",
+        "range": "Touch",
+        "effect": {
+          "description": "Variant zombie creation. Uses a gray liquid distillate. Zombie is faster but decays quickly.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Great Sight",
+        "alternate_names": [
+          "Eye of the Eagle",
+          "Far Seeing"
+        ],
+        "category": "Divination",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "1"
+        },
+        "casting_time": "5 minutes",
+        "range": "Self",
+        "effect": {
+          "description": "Allows caster to see detail at great distances (miles).",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Green Decay",
+        "alternate_names": [
+          "The Mouldering",
+          "Rot of the Woods",
+          "Curse of Gla'aki"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D10"
+        },
+        "casting_time": "1 round",
+        "range": "Touch",
+        "effect": {
+          "description": "Infects target with a green, mossy rot. Target loses 1 CON per day. Sunlight slows it. Death results in transformation into a Servant of Gla'aki.",
+          "damage": "1 CON/day"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Hands of Colubra",
+        "alternate_names": [
+          "Serpent Hands",
+          "Fangs of the wrist",
+          "Yig's Grasp"
+        ],
+        "category": "Combat, Transformation",
+        "costs": {
+          "magic_points": "12",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "Self",
+        "effect": {
+          "description": "Transforms caster's hands into venomous snakes. 1D3 damage bite + potency 1D10 poison (1D10 damage). Lasts 1D6+1 rounds.",
+          "damage": "1D3 + Poison"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Healing",
+        "alternate_names": [
+          "Cure",
+          "Mend Flesh",
+          "Restoration"
+        ],
+        "category": "Healing",
+        "costs": {
+          "magic_points": "3",
+          "sanity": "1"
+        },
+        "casting_time": "1 round",
+        "range": "Touch",
+        "effect": {
+          "description": "Heals 1D6 hit points. Cannot resurrect the dead.",
+          "damage": "None"
+        },
+        "deeper_magic": "Can reattach recently severed limbs (requires high MP/SAN)."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Heart's Courage",
+        "alternate_names": [
+          "Bravery",
+          "Lion's Heart",
+          "Steadfastness"
+        ],
+        "category": "Enhancement",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 round",
+        "range": "Touch",
+        "effect": {
+          "description": "Target becomes immune to fear and panic for 1 hour. Sanity losses still apply, but no temporary insanity.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Human Shrub",
+        "alternate_names": [
+          "The Rooting",
+          "Curse of the Tree",
+          "Arboreal Transformation"
+        ],
+        "category": "Harmful, Transformation",
+        "costs": {
+          "magic_points": "20",
+          "sanity": "2D6"
+        },
+        "casting_time": "2 rounds",
+        "range": "30 yards",
+        "effect": {
+          "description": "Transforms target into a small tree or shrub. Target retains consciousness but cannot move/speak. Opposed POW roll to resist.",
+          "damage": "Transformation"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Hunger of Kazan",
+        "alternate_names": [
+          "The Devouring Void",
+          "Black Maw",
+          "Consume"
+        ],
+        "category": "Combat",
+        "costs": {
+          "magic_points": "15",
+          "sanity": "1D8"
+        },
+        "casting_time": "1 round",
+        "range": "30 yards",
+        "effect": {
+          "description": "Creates a localized singularity/mouth that consumes matter. Targets in area take 3D6 damage. Armor is useless.",
+          "damage": "3D6"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Identify Spirit",
+        "alternate_names": [
+          "Know the Ghost",
+          "Name the Shade"
+        ],
+        "category": "Divination",
+        "costs": {
+          "magic_points": "2",
+          "sanity": "1D3"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Reveals the identity/nature of a spirit or ghost. Caster knows who it was in life.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Illusion of Fire",
+        "alternate_names": [
+          "False Flame",
+          "Phantom Blaze"
+        ],
+        "category": "Illusion",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "1"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Creates realistic visual/auditory illusion of fire. No heat/damage. Targets must make INT roll to disbelieve.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Immortality",
+        "alternate_names": [
+          "Life Eternal",
+          "The Endless Breath"
+        ],
+        "category": "Extending Life",
+        "costs": {
+          "pow": "10",
+          "sanity": "1D20"
+        },
+        "casting_time": "1 month",
+        "range": "Self",
+        "effect": {
+          "description": "Halts aging. Requires complex alchemical preparation. Must be renewed every 10 years.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Imog's Song",
+        "alternate_names": [
+          "The Soothing Melody",
+          "Lullaby of the Deep"
+        ],
+        "category": "Control",
+        "costs": {
+          "magic_points": "6",
+          "sanity": "1D4"
+        },
+        "casting_time": "2 rounds",
+        "range": "Earshot",
+        "effect": {
+          "description": "Causes drowsiness and sleep. Targets must make opposed POW roll or fall asleep for 1D4 hours.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Impalement",
+        "alternate_names": [
+          "Spectral Spear",
+          "Thrust of the Invisible"
+        ],
+        "category": "Combat",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "30 yards",
+        "effect": {
+          "description": "Invisible force impales target. 1D10 damage + bleeding. Ignores armor.",
+          "damage": "1D10"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Implant Fear",
+        "alternate_names": [
+          "Terrorize",
+          "Panic",
+          "The Dread"
+        ],
+        "category": "Mental, Harmful",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Target is overwhelmed by sudden, irrational fear. Must flee or cower for 1D6 rounds. Opposed POW roll.",
+          "damage": "None"
+        },
+        "deeper_magic": "Can target specific phobias for lasting effect."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Imprison Mind",
+        "alternate_names": [
+          "Mental Cage",
+          "Soul Trap"
+        ],
+        "category": "Mind Control",
+        "costs": {
+          "magic_points": "10",
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 hour",
+        "range": "Touch",
+        "effect": {
+          "description": "Traps target's mind within their own body or an object. Target is aware but cannot act.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Incantation of the Iron",
+        "alternate_names": [
+          "Metal Ward",
+          "Strength of Steel"
+        ],
+        "category": "Protection",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "1"
+        },
+        "casting_time": "1 round",
+        "range": "Touch",
+        "effect": {
+          "description": "Strengthens metal object. Increases durability/HP of item. Weapon deals +1 damage.",
+          "damage": "+1 (Weapon)"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Incinerate",
+        "alternate_names": [
+          "Burn",
+          "Combust",
+          "Ignite"
+        ],
+        "category": "Combat",
+        "costs": {
+          "magic_points": "6",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "20 yards",
+        "effect": {
+          "description": "Target bursts into flames. 1D6 damage per round until extinguished.",
+          "damage": "1D6/round"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Induce Trance",
+        "alternate_names": [
+          "Hypnotize",
+          "Mesmerize"
+        ],
+        "category": "Control",
+        "costs": {
+          "magic_points": "3",
+          "sanity": "0"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Places target in hypnotic trance. Suggestible. Opposed POW roll.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Infallible Suggestion",
+        "alternate_names": [
+          "Command",
+          "Geas"
+        ],
+        "category": "Mind Control",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Target compelled to follow one specific instruction. Opposed POW roll. Cannot be suicidal.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Instant Encampment",
+        "alternate_names": [
+          "Traveler's Respite",
+          "The Wizard's Tent"
+        ],
+        "category": "Utility",
+        "costs": {
+          "magic_points": "5",
+          "sanity": "0"
+        },
+        "casting_time": "1 minute",
+        "range": "Touch",
+        "effect": {
+          "description": "Instantly erects a secure campsite/shelter hidden from casual view.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Invisibility",
+        "alternate_names": [
+          "Unseen Walk",
+          "Cloak of Shadows"
+        ],
+        "category": "Illusion",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 round",
+        "range": "Touch",
+        "effect": {
+          "description": "Renders target invisible. Attacking or casting spells breaks the effect.",
+          "damage": "None"
+        },
+        "deeper_magic": "Permanent invisibility (requires POW cost)."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Iron Mind",
+        "alternate_names": [
+          "Mental Fortress",
+          "Will of Steel"
+        ],
+        "category": "Protection",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "1D3"
+        },
+        "casting_time": "1 round",
+        "range": "Self",
+        "effect": {
+          "description": "Grants bonus die to resist mental attacks/sanity loss for 1 hour.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Journey to the Other Side",
+        "alternate_names": [
+          "Channel Soul to Other Place",
+          "Transport Mind",
+          "Great Journeying"
+        ],
+        "category": "Travel",
+        "costs": {
+          "magic_points": "15",
+          "sanity": "1"
+        },
+        "casting_time": "1 day",
+        "range": "Self",
+        "effect": {
+          "description": "Sends caster's spirit to another plane. Trance lasts 1D6+3 hours. High Sanity risk.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Katarien's Heat Wave",
+        "alternate_names": [
+          "Radiant Heat",
+          "Hand of Fiery Doom"
+        ],
+        "category": "Dreamlands, Environmental",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 minute",
+        "range": "10 yards",
+        "effect": {
+          "description": "Dreamlands only. Increases temperature by 3°F per MP invested. Can burn/boil enemies.",
+          "damage": "Environmental Heat"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Keenness of Two Alike",
+        "alternate_names": [
+          "Mind Melding",
+          "Twin Comprehension"
+        ],
+        "category": "Enhancement",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "1"
+        },
+        "casting_time": "1 hour",
+        "range": "Touch (blood relatives)",
+        "effect": {
+          "description": "Two blood relatives join minds. One gains bonus die to INT rolls for 1 hour.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Knot Flesh",
+        "alternate_names": [
+          "The Twisting Agony",
+          "Flesh Like Rope"
+        ],
+        "category": "Harmful, Combat",
+        "costs": {
+          "magic_points": "2D6",
+          "sanity": "1D8"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Twists target's limb into a knot. 1D8 damage, permanent 5 DEX loss. Opposed POW. Painful.",
+          "damage": "1D8 + 5 DEX loss"
+        },
+        "deeper_magic": "Permanent knotting for 5 POW."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Koshchey's Death",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Extending Life, Protection",
+        "costs": {
+          "pow": "5",
+          "sanity": "2D6"
+        },
+        "casting_time": "1 week",
+        "range": "Self (Egg)",
+        "effect": {
+          "description": "Hides life force in an egg. Caster becomes immune to death unless body destroyed or egg broken. At 0 HP, falls into coma.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Lace Curtains of Hish",
+        "alternate_names": [
+          "The Undulating Cloak",
+          "Hish's Whirling Configuration"
+        ],
+        "category": "Dreamlands",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1D4"
+        },
+        "casting_time": "2 rounds",
+        "range": "10 yards",
+        "effect": {
+          "description": "Dreamlands only. Creates distracting patterns. Enveloped targets suffer penalty die to visual skills.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Lambent Flame",
+        "alternate_names": [
+          "Fiery Digit",
+          "Fantastic Flame of Many Hues"
+        ],
+        "category": "Dreamlands",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1"
+        },
+        "casting_time": "1 round",
+        "range": "Touch",
+        "effect": {
+          "description": "Dreamlands only. Creates flame on finger. Used for light or ignition.",
+          "damage": "Minor heat"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Lame/Heal Animal",
+        "alternate_names": [
+          "Blight Beast",
+          "Hex",
+          "The Ill Wind"
+        ],
+        "category": "Folk",
+        "costs": {
+          "magic_points": "4",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 round",
+        "range": "Touch",
+        "effect": {
+          "description": "Causes animal to go lame or heals it. Lame animals cannot work/move fast.",
+          "damage": "Lameness (Temporary)"
+        },
+        "deeper_magic": "Affect whole herd."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Lassitude of Phein",
+        "alternate_names": [
+          "Torpor",
+          "Rest Now",
+          "Song of Bliss"
+        ],
+        "category": "Dreamlands",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "1D6"
+        },
+        "casting_time": "2 rounds",
+        "range": "10 feet",
+        "effect": {
+          "description": "Dreamlands only. Puts target to sleep. Opposed POW.",
+          "damage": "Sleep"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Lavender Spheres of Ptath",
+        "alternate_names": [
+          "Airy Balls of Disaster",
+          "Incredible Mesmerizing Doom"
+        ],
+        "category": "Dreamlands, Combat",
+        "costs": {
+          "magic_points": "8+",
+          "sanity": "1D6"
+        },
+        "casting_time": "1 round",
+        "range": "Visual",
+        "effect": {
+          "description": "Dreamlands only. Creates explosive spheres. Seek target. 3D6 damage area.",
+          "damage": "3D6"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Levitate",
+        "alternate_names": [
+          "Command Gravity",
+          "Tremulous Suspension"
+        ],
+        "category": "Travel",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1D6"
+        },
+        "casting_time": "Instantaneous",
+        "range": "Touch",
+        "effect": {
+          "description": "Levitates target. 1 MP per 5 SIZ. Can move target slowly.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Lift Veil",
+        "alternate_names": [
+          "Embrace the Secrets of Existence",
+          "Call Upon the Parter of Veils"
+        ],
+        "category": "Harmful, Divination",
+        "costs": {
+          "magic_points": "15",
+          "sanity": "1D6"
+        },
+        "casting_time": "3 rounds",
+        "range": "Visual",
+        "effect": {
+          "description": "Reveals higher dimensions to target. Causes massive Sanity loss (1/1D10 per round). May attract Tindalosians.",
+          "damage": "Sanity loss"
+        },
+        "deeper_magic": "See Rend Veil."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Light of Sacred Truth",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Call Deity",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1"
+        },
+        "casting_time": "Variable",
+        "range": "Visual",
+        "effect": {
+          "description": "Calls Daoloth's avatar (The Sacred Light). Grants 'Gift of Truth' (cosmic awareness). Sanity loss.",
+          "damage": "Sanity loss"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Light of Seker",
+        "alternate_names": [
+          "None known"
+        ],
+        "category": "Combat, Environmental",
+        "costs": {
+          "magic_points": "Variable"
+        },
+        "casting_time": "1 round",
+        "range": "10 feet",
+        "effect": {
+          "description": "Creates globe of light. Harms Haunter of the Dark (1D6 damage/MP). Dispels darkness.",
+          "damage": "1D6/MP vs Haunter"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Limbo Gate",
+        "alternate_names": [
+          "Journey Paths of the Dead",
+          "Portal to the Realm of Spirit",
+          "Walk the Gray"
+        ],
+        "category": "Travel",
+        "costs": {
+          "pow": "5",
+          "sanity": "1"
+        },
+        "casting_time": "1 round",
+        "range": "Touch",
+        "effect": {
+          "description": "Opens portal to Limbo dimension. Travel requires 3 MP.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Liquid Death",
+        "alternate_names": [
+          "Dissolution",
+          "Melt Flesh",
+          "The Terrible Dissolve"
+        ],
+        "category": "Combat, Harmful",
+        "costs": {
+          "magic_points": "10",
+          "sanity": "6"
+        },
+        "casting_time": "3 rounds",
+        "range": "Visual",
+        "effect": {
+          "description": "Turns target to liquid. Opposed POW. Death unless reversed or frozen.",
+          "damage": "Death"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Liquidity",
+        "alternate_names": [
+          "The Putrefying Dissolve",
+          "The Wailing Agony"
+        ],
+        "category": "Harmful",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "1D10+4"
+        },
+        "casting_time": "2 rounds",
+        "range": "Visual",
+        "effect": {
+          "description": "Causes ulcers and organ liquefaction. Opposed POW. Death in 3 rounds.",
+          "damage": "Death"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Living Clothes",
+        "alternate_names": [
+          "Cause Apparel to Adhere",
+          "The Malodorous Coat",
+          "Sheath of Death"
+        ],
+        "category": "Dreamlands, Harmful",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "1D10"
+        },
+        "casting_time": "3 rounds",
+        "range": "Visual",
+        "effect": {
+          "description": "Dreamlands only. Clothes become living flesh, crushing wearer (1D3 damage/round).",
+          "damage": "1D3/round"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Living X",
+        "alternate_names": [
+          "Immobility",
+          "Make Fast Thy Enemy"
+        ],
+        "category": "Dreamlands, Combat",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "1D6"
+        },
+        "casting_time": "2 rounds",
+        "range": "30 yards",
+        "effect": {
+          "description": "Dreamlands only. Immobilizes target in spread-eagled position. Opposed POW.",
+          "damage": "Immobilization"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Look Inward",
+        "alternate_names": [
+          "Diminish",
+          "Dwindle",
+          "Rite of Shrinkage"
+        ],
+        "category": "Transformation",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "Variable"
+        },
+        "casting_time": "1 round",
+        "range": "Self",
+        "effect": {
+          "description": "Shrinks caster. 1 MP = 5 SIZ reduction. Sanity cost 1 per 3 MP.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Look to the Future",
+        "alternate_names": [
+          "Blessing of the Bloated Woman",
+          "The Dark Pharaoh's Scourge",
+          "The Pendulum of Fools"
+        ],
+        "category": "Time",
+        "costs": {
+          "pow": "5 per year",
+          "sanity": "2D6"
+        },
+        "casting_time": "1 hour",
+        "range": "Touch",
+        "effect": {
+          "description": "Hurls voluntary target into future. 5 POW per year traveled. Target returns after hours equal to 1/5 POW.",
+          "damage": "None"
+        },
+        "deeper_magic": "Nyarlathotep may grant preordained travel."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Maggots",
+        "alternate_names": [
+          "The Seething Infestation of Pain",
+          "The Wriggling Devourers",
+          "Dark Myiasis"
+        ],
+        "category": "Harmful, Combat",
+        "costs": {
+          "magic_points": "8",
+          "sanity": "6"
+        },
+        "casting_time": "2 rounds",
+        "range": "Touch",
+        "effect": {
+          "description": "Creates maggots on target's skin. 1 damage every 4 mins. Lasts 1 hour. Sanity loss to witness/victim.",
+          "damage": "1/4 mins"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Malenkamon's Impressive Bolt",
+        "alternate_names": [
+          "Malenkamon's Castigation",
+          "Rebuke"
+        ],
+        "category": "Dreamlands, Combat",
+        "costs": {
+          "magic_points": "24",
+          "sanity": "1D8"
+        },
+        "casting_time": "3 rounds",
+        "range": "Visual",
+        "effect": {
+          "description": "Dreamlands only. Knockout bolt. Unconscious for days. Damage equal to Caster POW/10.",
+          "damage": "POW/10"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Mandrake",
+        "alternate_names": [
+          "Rite of Simulacra",
+          "To Fashion Thy Servant",
+          "The Mage's Helper"
+        ],
+        "category": "Dreamlands, Making Monsters",
+        "costs": {
+          "magic_points": "10",
+          "pow": "Variable",
+          "sanity": "1D4"
+        },
+        "casting_time": "1 week",
+        "range": "Touch",
+        "effect": {
+          "description": "Dreamlands only. Creates mandrake servant. Stats 1D6x5. POW boosts stats. Intelligent if INT boosted.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Mask of Death",
+        "alternate_names": [
+          "Assume Face",
+          "Guise of Other",
+          "Veneer of Flesh"
+        ],
+        "category": "Transformation",
+        "costs": {
+          "magic_points": "10",
+          "pow": "5",
+          "sanity": "1D6"
+        },
+        "casting_time": "2 rounds",
+        "range": "Self",
+        "effect": {
+          "description": "Wear flayed face of victim to assume likeness. Permanent until removed.",
+          "damage": "None"
+        },
+        "deeper_magic": "None listed."
+      }
+    },
+    {
+      "spell_entry": {
+        "name": "Maws of Pandemonium",
+        "alternate_names": [
+          "The Screaming Curse",
+          "Unholy Sprouting",
+          "Gibbering Calamity"
+        ],
+        "category": "Dreamlands, Harmful",
+        "costs": {
+          "magic_points": "Variable",
+          "sanity": "1D8"
+        },
+        "casting_time": "3 rounds",
+        "range": "Visual",
+        "effect": {
+          "description": "Dreamlands only. Target sprouts mouths. Drains 1 MP/minute. Unconscious at 0 MP. Opposed POW.",
+          "damage": "MP Drain"
+        },
+        "deeper_magic": "None listed."
+      }
     }
   ]
 }
