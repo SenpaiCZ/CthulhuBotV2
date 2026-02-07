@@ -8,7 +8,7 @@
 
 *   🕵️‍♂️ **Character Management**: Create, update, and manage investigator sheets, including stats, skills, and backstories.
 *   🎲 **Advanced Dice Rolling**: Interactive rolls with support for Bonus/Penalty dice, Luck spending, and Pushing rolls.
-*   🐙 **Keeper Tools**: Extensive library of game information including firearms, inventions, madness tables, phobias/manias, and NPC generation.
+*   🐙 **Keeper Tools**: Extensive library of game information including firearms, inventions, monsters, deities, madness tables, phobias/manias, and NPC generation.
 *   👊 **Pulp Cthulhu Support**: Includes Pulp Archetypes, Talents, and modified character creation rules.
 *   📜 **Session Management**: Tools to start, track, and log game sessions.
 *   🎵 **Music Bot**: High-quality music playback from YouTube with queue management, looping, and volume control.
@@ -21,6 +21,8 @@
     *   **Soundboard**: Upload and play audio clips in voice channels.
     *   **Music Control**: Manage the music queue and blacklist songs.
     *   **Game Settings**: Configure gameplay rules like Luck Threshold.
+    *   **Monsters**: Browse and view detailed statistics and lore for Cthulhu Mythos monsters.
+    *   **Deities**: Explore the pantheon of Great Old Ones and Outer Gods with detailed descriptions and cult information.
     *   **Reaction Roles**: easily configure self-assignable roles.
     *   **Auto Deleter**: Manage auto-deletion rules and bulk delete messages.
 *   📈 **Karma System**: Track user reputation with custom upvote/downvote emojis.
