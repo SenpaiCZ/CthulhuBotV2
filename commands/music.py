@@ -4,9 +4,9 @@ import asyncio
 import os
 import yt_dlp
 from functools import partial
-from dashboard.app import guild_mixers, guild_volumes
+from dashboard.app import guild_mixers, server_volumes
 from dashboard.audio_mixer import MixingAudioSource
-from loadnsave import load_music_blacklist, save_music_blacklist
+from loadnsave import load_music_blacklist, save_music_blacklist, load_server_volumes, save_server_volumes
 
 # YT-DLP options
 YTDL_OPTIONS = {
@@ -49,6 +49,11 @@ class Music(commands.Cog):
             self.blacklist = loaded
         else:
             self.blacklist = []
+
+        # Load server volumes into shared dict
+        volumes = await load_server_volumes()
+        server_volumes.update(volumes)
+
         self.check_queue_task.start()
 
     def cog_unload(self):
@@ -102,8 +107,8 @@ class Music(commands.Cog):
              if not is_playing_mixer:
                  if guild.voice_client.is_playing():
                      guild.voice_client.stop()
-                 master_vol = guild_volumes.get(str(guild_id), 0.5)
-                 source = discord.PCMVolumeTransformer(mixer, volume=master_vol)
+                 # Mixer handles volume per track now
+                 source = discord.PCMVolumeTransformer(mixer, volume=1.0)
                  guild.voice_client.play(source)
 
         url = song_info['url']
@@ -113,10 +118,18 @@ class Music(commands.Cog):
             # Could notify, but no context here
             return
 
+        # Retrieve music volume
+        vol_data = server_volumes.get(str(guild_id), {'music': 1.0, 'soundboard': 0.5})
+        music_vol = vol_data.get('music', 1.0)
+
+        # Add metadata for tracking
+        song_info['type'] = 'music'
+
         track = mixer.add_track(
             file_path=url,
             is_url=True,
             metadata=song_info,
+            volume=music_vol,
             before_options=FFMPEG_OPTIONS['before_options'],
             options=FFMPEG_OPTIONS['options']
         )
@@ -217,15 +230,23 @@ class Music(commands.Cog):
 
     @commands.command(aliases=['vol'])
     async def volume(self, ctx, vol: int):
-        """🔊 Sets the volume of the current song (0-100)."""
+        """🔊 Sets the music volume (0-100). Persists per server."""
         guild_id = str(ctx.guild.id)
+        new_vol = max(0, min(100, vol)) / 100
+
+        # Update persistent storage
+        if guild_id not in server_volumes:
+            server_volumes[guild_id] = {'music': 1.0, 'soundboard': 0.5}
+
+        server_volumes[guild_id]['music'] = new_vol
+        await save_server_volumes(server_volumes)
+
         track = self.current_track.get(guild_id)
         if track:
-            new_vol = max(0, min(100, vol)) / 100
             track.volume = new_vol
-            await ctx.send(f"🔊 Volume set to {vol}%")
+            await ctx.send(f"🔊 Music volume set to {vol}%")
         else:
-            await ctx.send("Nothing is playing.")
+            await ctx.send(f"🔊 Music volume set to {vol}% (will apply to next song)")
 
     @commands.command()
     async def loop(self, ctx):

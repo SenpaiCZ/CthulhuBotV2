@@ -14,7 +14,8 @@ from markupsafe import escape
 from loadnsave import (
     load_player_stats, load_retired_characters_data, load_settings, save_settings,
     load_soundboard_settings, save_soundboard_settings, load_music_blacklist, save_music_blacklist,
-    load_server_stats, save_server_stats, load_karma_settings, save_karma_settings,
+    load_server_stats, save_server_stats, load_server_volumes, save_server_volumes,
+    load_karma_settings, save_karma_settings,
     load_reaction_roles, save_reaction_roles,
     load_luck_stats, save_luck_stats,
     load_rss_data, save_rss_data,
@@ -28,12 +29,18 @@ from rss_utils import get_youtube_rss_url
 
 SOUNDBOARD_FOLDER = "soundboard"
 ALLOWED_EXTENSIONS = {'.mp3', '.wav', '.ogg', '.m4a', '.flac'}
-guild_volumes = {}
+server_volumes = {} # guild_id (str) -> {'music': 1.0, 'soundboard': 0.5}
 guild_mixers = {} # guild_id (str) -> MixingAudioSource
 
 app = Quart(__name__)
 app.secret_key = os.urandom(24)
 app.bot = None  # Placeholder for the Discord bot instance
+
+@app.before_serving
+async def app_startup():
+    global server_volumes
+    loaded = await load_server_volumes()
+    server_volumes.update(loaded)
 
 # Helper to check login
 def is_admin():
@@ -782,11 +789,13 @@ async def soundboard_data():
                     "paused": t.paused
                 })
 
+        vol_data = server_volumes.get(str(guild.id), {'music': 1.0, 'soundboard': 0.5})
+        sb_vol = vol_data.get('soundboard', 0.5)
         status = {
             "is_connected": voice_client is not None,
             "channel_id": str(voice_client.channel.id) if voice_client else None,
             "is_playing": voice_client.is_playing() if voice_client else False,
-            "volume": int(guild_volumes.get(str(guild.id), 0.5) * 100),
+            "volume": int(sb_vol * 100),
             "tracks": tracks
         }
         status_data[str(guild.id)] = status
@@ -864,13 +873,15 @@ async def soundboard_play():
         # Wait a moment for stop to propagate?
         # Usually fine.
 
-        master_vol = guild_volumes.get(str(guild_id), 0.5)
-        source = discord.PCMVolumeTransformer(mixer, volume=master_vol)
+        # Mixer handles volume per track now
+        source = discord.PCMVolumeTransformer(mixer, volume=1.0)
         voice_client.play(source)
 
     # Add track
     loop_setting = data.get('loop', True)
-    mixer.add_track(full_path, volume=0.5, loop=loop_setting)
+    vol_data = server_volumes.get(str(guild_id), {'music': 1.0, 'soundboard': 0.5})
+    sb_vol = vol_data.get('soundboard', 0.5)
+    mixer.add_track(full_path, volume=sb_vol, loop=loop_setting, metadata={'type': 'soundboard'})
 
     return jsonify({"status": "success"})
 
@@ -945,12 +956,22 @@ async def soundboard_volume():
     try:
         vol_float = float(volume) / 100.0
         vol_float = max(0.0, min(1.0, vol_float))
-        guild_volumes[str(guild_id)] = vol_float
 
-        guild = app.bot.get_guild(int(guild_id))
-        if guild and guild.voice_client and guild.voice_client.source:
-             if isinstance(guild.voice_client.source, discord.PCMVolumeTransformer):
-                 guild.voice_client.source.volume = vol_float
+        if str(guild_id) not in server_volumes:
+            server_volumes[str(guild_id)] = {'music': 1.0, 'soundboard': 0.5}
+
+        server_volumes[str(guild_id)]['soundboard'] = vol_float
+        await save_server_volumes(server_volumes)
+
+        # Update active soundboard tracks
+        mixer = guild_mixers.get(str(guild_id))
+        if mixer:
+            with mixer.lock:
+                for track in mixer.tracks:
+                    if track.metadata.get('type') == 'soundboard':
+                        track.volume = vol_float
+
+        # Note: We do NOT update the PCMVolumeTransformer volume anymore, as it stays at 1.0.
 
         return jsonify({"status": "success"})
     except ValueError:
@@ -1352,9 +1373,17 @@ async def music_control():
             track.loop = not track.loop
     elif action == 'volume':
         vol = data.get('volume')
+        new_vol = max(0, min(100, int(vol))) / 100
+
+        if str(guild_id) not in server_volumes:
+            server_volumes[str(guild_id)] = {'music': 1.0, 'soundboard': 0.5}
+
+        server_volumes[str(guild_id)]['music'] = new_vol
+        await save_server_volumes(server_volumes)
+
         track = music_cog.current_track.get(guild_id)
         if track:
-             track.volume = max(0, min(100, int(vol))) / 100
+             track.volume = new_vol
     elif action == 'remove':
         # Remove from queue
         index = data.get('index')
