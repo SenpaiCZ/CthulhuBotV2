@@ -5,6 +5,7 @@
 {% block content %}
 <h2 class="mb-4">Admin Dashboard</h2>
 
+<h3 class="mb-3">Keeper Tools</h3>
 <div class="row">
     <div class="col-md-6 mb-4">
         <div class="card">
@@ -36,6 +37,37 @@
     <div class="col-md-6 mb-4">
         <div class="card">
             <div class="card-body">
+                <h5 class="card-title">Soundboard</h5>
+                <p class="card-text">Play audio files in voice channels.</p>
+                <a href="/admin/soundboard" class="btn btn-success">Open Soundboard</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Music Bot</h5>
+                <p class="card-text">Manage music queue and bans.</p>
+                <a href="/admin/music" class="btn btn-info">Open Music Panel</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Info Data</h5>
+                <p class="card-text">Manage game data (Occupations, Skills, Items).</p>
+                <a href="/admin/browse/infodata" class="btn btn-secondary">Browse Info Data</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h3 class="mb-3 mt-4">Server Administration</h3>
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
                 <h5 class="card-title">Reaction Roles</h5>
                 <p class="card-text">Assign roles via message reactions.</p>
                 <a href="/admin/reactionroles" class="btn btn-primary" style="background-color: #6f42c1; border-color: #6f42c1;">Manage Roles</a>
@@ -57,42 +89,6 @@
                 <h5 class="card-title">Server Prefixes</h5>
                 <p class="card-text">Manage prefixes for each connected server.</p>
                 <a href="/admin/prefixes" class="btn btn-primary">Manage Prefixes</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Info Data</h5>
-                <p class="card-text">Manage game data (Occupations, Skills, Items).</p>
-                <a href="/admin/browse/infodata" class="btn btn-secondary">Browse Info Data</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Data Files</h5>
-                <p class="card-text">Manage raw data files (Stats, Servers, etc).</p>
-                <a href="/admin/browse/data" class="btn btn-warning">Browse Data Files</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Soundboard</h5>
-                <p class="card-text">Play audio files in voice channels.</p>
-                <a href="/admin/soundboard" class="btn btn-success">Open Soundboard</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Music Bot</h5>
-                <p class="card-text">Manage music queue and bans.</p>
-                <a href="/admin/music" class="btn btn-info">Open Music Panel</a>
             </div>
         </div>
     </div>
@@ -129,6 +125,15 @@
                 <h5 class="card-title">Backup System</h5>
                 <p class="card-text">Manage automated backups and run manual backups.</p>
                 <a href="/admin/backup" class="btn btn-secondary">Manage Backups</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Data Files</h5>
+                <p class="card-text">Manage raw data files (Stats, Servers, etc).</p>
+                <a href="/admin/browse/data" class="btn btn-warning">Browse Data Files</a>
             </div>
         </div>
     </div>
