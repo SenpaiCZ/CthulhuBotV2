@@ -4,36 +4,8 @@
 
 {% block content %}
 <style>
-    /* Custom Horror Styles */
-    @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Nosifer&family=Roboto:wght@300;400;700&display=swap');
-
-    :root {
-        --blood-red: #8a0303;
-        --blood-bright: #ff0000;
-        --dark-bg: #050505;
-        --panel-bg: #111;
-        --text-color: #d0d0d0;
-        --horror-font: 'Nosifer', cursive;
-        --sub-horror-font: 'Creepster', cursive;
-    }
-
-    /* Override Base Styles for this page */
-    body {
-        background-color: #000 !important;
-        background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23111111' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
-    }
-
-    /* Hide standard nav bar bottom border for seamless dark look */
-    .navbar {
-        border-bottom-color: var(--blood-red) !important;
-    }
-
-    .navbar-brand {
-        color: var(--blood-bright) !important;
-        text-shadow: 0 0 5px var(--blood-red);
-    }
-
-    .monster-container {
+    /* Custom layout for sidebar + content */
+    .dashboard-container {
         display: flex;
         height: calc(100vh - 100px); /* Adjust for navbar */
         gap: 20px;
@@ -41,197 +13,124 @@
     }
 
     /* Sidebar */
-    .monster-list-panel {
+    .sidebar-panel {
         width: 300px;
         min-width: 300px;
-        background: var(--panel-bg);
-        border: 2px solid var(--blood-red);
-        border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-list {
         overflow-y: auto;
-        box-shadow: 0 0 15px rgba(138, 3, 3, 0.3);
+        flex-grow: 1;
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0 0 var(--bs-border-radius) var(--bs-border-radius);
     }
 
-    .monster-list-item {
-        padding: 10px 15px;
-        border-bottom: 1px solid #333;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        color: #aaa;
-        font-family: 'Roboto', sans-serif;
+    .list-group-item.active {
+        background-color: var(--cthulhu-green-main);
+        border-color: var(--cthulhu-green-main);
     }
 
-    .monster-list-item:hover, .monster-list-item.active {
-        background-color: var(--blood-red);
-        color: #fff;
-        text-shadow: 0 0 5px #000;
-        padding-left: 25px;
-        border-left: 5px solid var(--blood-bright);
+    .list-group-item:hover {
+        background-color: rgba(46, 139, 87, 0.1); /* Subtle green hover */
+        color: var(--cthulhu-green-bright);
     }
 
     /* Main View */
-    .monster-detail-panel {
+    .detail-panel {
         flex: 1;
-        background: var(--panel-bg);
-        border: 2px solid var(--blood-red);
-        border-radius: 5px;
-        padding: 40px;
         overflow-y: auto;
-        box-shadow: 0 0 20px rgba(138, 3, 3, 0.5);
-        position: relative;
-        color: #ccc;
+        border: 1px solid var(--bs-border-color);
+        background-color: var(--cthulhu-bg-card);
+        border-radius: var(--bs-border-radius);
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     }
 
-    /* Scrollbars */
-    .monster-list-panel::-webkit-scrollbar,
-    .monster-detail-panel::-webkit-scrollbar {
+    /* Custom scrollbars to match theme */
+    .sidebar-list::-webkit-scrollbar,
+    .detail-panel::-webkit-scrollbar {
         width: 8px;
     }
-    .monster-list-panel::-webkit-scrollbar-track,
-    .monster-detail-panel::-webkit-scrollbar-track {
-        background: #000;
+    .sidebar-list::-webkit-scrollbar-track,
+    .detail-panel::-webkit-scrollbar-track {
+        background: #0a0a0a;
     }
-    .monster-list-panel::-webkit-scrollbar-thumb,
-    .monster-detail-panel::-webkit-scrollbar-thumb {
-        background: var(--blood-red);
+    .sidebar-list::-webkit-scrollbar-thumb,
+    .detail-panel::-webkit-scrollbar-thumb {
+        background: #333;
         border-radius: 4px;
     }
-
-    h1, h2, h3 {
-        font-family: var(--sub-horror-font);
-        color: var(--blood-bright);
-        text-shadow: 2px 2px 4px #000;
-        margin-bottom: 20px;
+    .sidebar-list::-webkit-scrollbar-thumb:hover,
+    .detail-panel::-webkit-scrollbar-thumb:hover {
+        background: var(--cthulhu-green-main);
     }
 
-    .monster-name {
-        font-family: var(--horror-font);
-        font-size: 3em;
-        text-align: center;
-        margin-bottom: 10px;
-        color: var(--blood-bright);
-        text-shadow: 0 0 10px var(--blood-red);
-        line-height: 1.2;
-    }
-
-    .monster-subtitle {
-        text-align: center;
-        font-style: italic;
-        color: #888;
-        margin-bottom: 30px;
-        font-size: 1.4em;
-        border-bottom: 1px solid #333;
-        padding-bottom: 20px;
-    }
-
-    /* Sections */
-    .section-title {
-        border-bottom: 2px solid var(--blood-red);
-        padding-bottom: 5px;
-        margin-top: 30px;
-        margin-bottom: 15px;
-        font-size: 1.8em;
-        color: var(--blood-bright);
-        font-family: var(--sub-horror-font);
-        letter-spacing: 2px;
-    }
-
-    .stat-block {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-        gap: 15px;
-        margin-bottom: 20px;
+    /* Typography tweaks */
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--cthulhu-green-main);
     }
 
     .stat-box {
-        background: #1a1a1a;
-        border: 1px solid #444;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 4px;
         padding: 10px;
         text-align: center;
-        border-radius: 3px;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
     }
 
     .stat-label {
-        font-weight: bold;
-        color: var(--blood-red);
-        font-size: 0.9em;
+        font-size: 0.8rem;
         text-transform: uppercase;
+        color: var(--bs-secondary);
+        font-weight: bold;
     }
 
     .stat-value {
-        font-size: 1.4em;
-        color: #eee;
+        font-size: 1.2rem;
         font-weight: bold;
+        color: var(--bs-body-color);
     }
 
-    .tag-badge {
-        background-color: #222;
-        color: #aaa;
-        padding: 4px 10px;
-        border-radius: 4px;
-        font-size: 0.8em;
-        margin-right: 5px;
-        border: 1px solid var(--blood-red);
-        display: inline-block;
-        margin-bottom: 5px;
+    .section-header {
+        border-bottom: 1px solid var(--bs-border-color);
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+        margin-top: 25px;
+        color: var(--cthulhu-green-bright);
+        font-weight: 500;
+        font-size: 1.2rem;
     }
 
     .hidden { display: none !important; }
-
-    .description-text {
-        font-family: 'Georgia', serif;
-        font-size: 1.1em;
-        line-height: 1.6;
-        color: #ddd;
-        border-left: 3px solid var(--blood-red);
-        padding-left: 15px;
-        background: rgba(138, 3, 3, 0.1);
-        padding: 15px;
-        border-radius: 0 5px 5px 0;
-    }
-
-    .main-entry-text {
-        font-family: 'Georgia', serif;
-        color: #999;
-        margin-top: 20px;
-    }
-
-    .combat-list-item {
-        background: rgba(20,20,20,0.8);
-        border: 1px solid #333;
-        margin-bottom: 5px;
-    }
-
-    .data-label {
-        color: var(--blood-red);
-        font-weight: bold;
-    }
 </style>
 
-<div class="container-fluid monster-container">
-    <div class="monster-list-panel">
-        <h3 class="text-center mt-3 sticky-top p-2" style="background: var(--panel-bg); border-bottom: 1px solid var(--blood-red); margin-top: 0 !important;">Grimoire</h3>
-        <div class="list-group list-group-flush" id="monsterList">
+<div class="container-fluid dashboard-container">
+    <div class="sidebar-panel">
+        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
+            <h5 class="m-0 text-success">Grimoire</h5>
+        </div>
+        <div class="list-group list-group-flush sidebar-list bg-dark" id="monsterList">
             {% if data and data.monsters %}
                 {% for item in data.monsters %}
                     {% set m = item.monster_entry %}
-                    <div class="monster-list-item" onclick="showMonster({{ loop.index0 }})">
+                    <button type="button" class="list-group-item list-group-item-action bg-dark text-light border-secondary monster-list-item" onclick="showMonster({{ loop.index0 }})">
                         {{ m.name }}
-                    </div>
+                    </button>
                 {% endfor %}
             {% else %}
-                <p class="text-center p-3 text-muted">No monsters found in the archives.</p>
+                <div class="p-3 text-center text-muted">No monsters found.</div>
             {% endif %}
         </div>
     </div>
 
-    <div class="monster-detail-panel" id="detailPanel">
+    <div class="detail-panel" id="detailPanel">
         <div id="monster-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
-            <h2 style="opacity: 0.3; font-size: 3em;">Select a creature...</h2>
-            <p class="text-muted">...if you dare.</p>
+            <h2 class="text-muted" style="opacity: 0.3;">Select a creature</h2>
+            <p class="text-secondary">View detailed statistics from the archives.</p>
         </div>
 
-        <!-- Details inserted here by JS -->
         <div id="monster-content" class="hidden">
             <!-- Template content populated by JS -->
         </div>
@@ -244,137 +143,153 @@
 
     function showMonster(index) {
         try {
-        const m = monsters[index].monster_entry;
-        const container = document.getElementById('monster-content');
-        const placeholder = document.getElementById('monster-placeholder');
+            const m = monsters[index].monster_entry;
+            const container = document.getElementById('monster-content');
+            const placeholder = document.getElementById('monster-placeholder');
 
-        // Highlight active item
-        document.querySelectorAll('.monster-list-item').forEach((el, i) => {
-            if(i === index) el.classList.add('active');
-            else el.classList.remove('active');
-        });
+            // Highlight active item
+            document.querySelectorAll('.monster-list-item').forEach((el, i) => {
+                if(i === index) el.classList.add('active');
+                else el.classList.remove('active');
+            });
 
-        let html = `
-            <div class="monster-name">${m.name}</div>
-            <div class="monster-subtitle">${m.subtitle || ''}</div>
-
-            <div class="text-center mb-4">
-                ${(m.tags || []).map(tag => `<span class="tag-badge">${tag}</span>`).join('')}
-            </div>
-
-            <div class="description-text mb-4">
-                ${m.description || ''}
-            </div>
-
-            <div class="main-entry-text mb-4">
-                ${m.main_entry_text || ''}
-            </div>
-
-            <div class="section-title">Characteristics</div>
-            <div class="stat-block">
-                ${Object.entries(m.characteristics || {}).map(([key, val]) => `
-                    <div class="stat-box">
-                        <div class="stat-label">${key}</div>
-                        <div class="stat-value">${val.average || val}</div>
-                        <div style="font-size: 0.7em; color: #666;">${val.roll || ''}</div>
+            let html = `
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h1 class="display-5 mb-0 text-success">${m.name}</h1>
+                        <div class="text-secondary fst-italic fs-5">${m.subtitle || ''}</div>
                     </div>
-                `).join('')}
-            </div>
-
-            <div class="section-title">Derived Stats</div>
-            <div class="stat-block">
-                <div class="stat-box"><div class="stat-label">HP</div><div class="stat-value text-danger">${m.derived_stats.hit_points}</div></div>
-                <div class="stat-box"><div class="stat-label">DB</div><div class="stat-value">${m.derived_stats.damage_bonus}</div></div>
-                <div class="stat-box"><div class="stat-label">Build</div><div class="stat-value">${m.derived_stats.build}</div></div>
-                <div class="stat-box"><div class="stat-label">MP</div><div class="stat-value text-info">${m.derived_stats.magic_points}</div></div>
-                <div class="stat-box">
-                    <div class="stat-label">Move</div>
-                    <div class="stat-value" style="font-size: 1.1em;">
-                        ${typeof m.derived_stats.move === 'object' ?
-                            `${m.derived_stats.move.base} ${m.derived_stats.move.special ? `<span style="font-size:0.7em">(${m.derived_stats.move.special})</span>` : ''}` :
-                            m.derived_stats.move}
+                    <div class="text-end">
+                         ${(m.tags || []).map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`).join('')}
                     </div>
                 </div>
-            </div>
 
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="section-title">Combat</div>
-                    <p><span class="data-label">Attacks per round:</span> ${m.combat.attacks_per_round}</p>
-                    <div class="list-group list-group-flush">
-                        ${(m.combat.attacks || []).map(atk => `
-                            <div class="p-3 mb-2" style="background: rgba(50,0,0,0.2); border: 1px solid #444; border-left: 3px solid var(--blood-red);">
-                                <strong style="color: #fff; font-size: 1.1em;">${atk.name}</strong>
-                                <span class="float-end badge bg-danger">${atk.success_chance || 'Auto'}</span>
-                                <div class="mt-1">
-                                    <span class="text-danger fw-bold">Dmg: ${atk.damage}</span>
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        ${m.description ? `<p class="card-text border-start border-success border-3 ps-3">${m.description}</p>` : ''}
+                        ${m.main_entry_text ? `<p class="card-text text-muted small">${m.main_entry_text}</p>` : ''}
+                    </div>
+                </div>
+
+                <div class="section-header">Characteristics</div>
+                <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-2 mb-4">
+                    ${Object.entries(m.characteristics || {}).map(([key, val]) => `
+                        <div class="col">
+                            <div class="stat-box h-100">
+                                <div class="stat-label">${key}</div>
+                                <div class="stat-value text-light">${val.average || val}</div>
+                                <div class="small text-muted">${val.roll || ''}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="section-header">Derived Stats</div>
+                <div class="row row-cols-2 row-cols-md-5 g-2 mb-4">
+                    <div class="col"><div class="stat-box"><div class="stat-label">HP</div><div class="stat-value text-danger">${m.derived_stats.hit_points}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">DB</div><div class="stat-value">${m.derived_stats.damage_bonus}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">Build</div><div class="stat-value">${m.derived_stats.build}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">MP</div><div class="stat-value text-info">${m.derived_stats.magic_points}</div></div></div>
+                    <div class="col">
+                        <div class="stat-box">
+                            <div class="stat-label">Move</div>
+                            <div class="stat-value">
+                                ${typeof m.derived_stats.move === 'object' ?
+                                    `${m.derived_stats.move.base} ${m.derived_stats.move.special ? `<span class="small text-muted">(${m.derived_stats.move.special})</span>` : ''}` :
+                                    m.derived_stats.move}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="section-header">Combat</div>
+                        <p class="mb-2"><span class="text-success fw-bold">Attacks per round:</span> ${m.combat.attacks_per_round}</p>
+
+                        <div class="list-group mb-3">
+                            ${(m.combat.attacks || []).map(atk => `
+                                <div class="list-group-item list-group-item-action bg-dark border-secondary">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1 text-light">${atk.name}</h6>
+                                        <span class="badge bg-danger rounded-pill">${atk.success_chance || 'Auto'}</span>
+                                    </div>
+                                    <p class="mb-1 text-danger fw-bold">Damage: ${atk.damage}</p>
+                                    ${atk.special_effect ? `<small class="text-info d-block">Effect: ${atk.special_effect}</small>` : ''}
+                                    ${atk.description ? `<small class="text-muted d-block">${atk.description}</small>` : ''}
                                 </div>
-                                ${atk.special_effect ? `<div class="small text-muted mt-1"><em>Effect: ${atk.special_effect}</em></div>` : ''}
-                                ${atk.description ? `<div class="small text-muted mt-1"><em>${atk.description}</em></div>` : ''}
-                            </div>
-                        `).join('')}
+                            `).join('')}
+                        </div>
+                        <p><span class="text-success fw-bold">Dodge:</span> ${m.combat.dodge ? (m.combat.dodge.success_chance || 'N/A') : 'N/A'}</p>
                     </div>
-                    <p class="mt-3"><span class="data-label">Dodge:</span> ${m.combat.dodge ? (m.combat.dodge.success_chance || 'N/A') : 'N/A'}</p>
+
+                    <div class="col-lg-6">
+                        <div class="section-header">Skills & Abilities</div>
+                        ${m.skills ? `
+                            <div class="mb-3">
+                                <h6 class="text-muted small text-uppercase">Skills</h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                ${m.skills.map(s => `<span class="badge bg-secondary border border-secondary">${s.name} <span class="text-warning ms-1">${s.value}</span></span>`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${m.powers_and_abilities ? `
+                            <div class="mt-4">
+                                <h6 class="text-muted small text-uppercase">Powers</h6>
+                                <ul class="list-group list-group-flush bg-transparent">
+                                ${m.powers_and_abilities.map(p => `
+                                    <li class="list-group-item bg-transparent border-secondary ps-0">
+                                        <strong class="text-warning">${p.name}:</strong> <span class="text-secondary">${p.description}</span>
+                                    </li>
+                                `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
                 </div>
 
-                <div class="col-md-6">
-                    <div class="section-title">Skills & Abilities</div>
-                    ${m.skills ? `
-                        <div class="mb-3">
-                            <span class="data-label">Skills:</span><br>
-                            <div class="d-flex flex-wrap gap-2 mt-2">
-                            ${m.skills.map(s => `<span class="badge bg-secondary">${s.name} <span class="text-warning">${s.value}</span></span>`).join('')}
+                <div class="section-header">Defenses & Magic</div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-header bg-secondary bg-opacity-10 border-secondary text-success py-1 small fw-bold">ARMOR</div>
+                            <div class="card-body">
+                                ${m.armor ? (m.armor.rating + (m.armor.modifiers ? `<br><small class="text-muted">${m.armor.modifiers}</small>` : '')) : 'None'}
                             </div>
                         </div>
-                    ` : ''}
-
-                    ${m.powers_and_abilities ? `
-                        <div class="mt-4">
-                            <span class="data-label">Powers:</span>
-                            <ul class="list-unstyled mt-2">
-                            ${m.powers_and_abilities.map(p => `<li class="mb-2"><strong class="text-warning">${p.name}:</strong> <span class="text-muted">${p.description}</span></li>`).join('')}
-                            </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-header bg-secondary bg-opacity-10 border-secondary text-success py-1 small fw-bold">SPELLS</div>
+                            <div class="card-body small">
+                                ${m.spells || 'None'}
+                            </div>
                         </div>
-                    ` : ''}
-                </div>
-            </div>
-
-            <div class="section-title">Other</div>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <div class="p-3 border border-secondary rounded" style="background: #151515; height: 100%;">
-                        <div class="data-label mb-2">Armor</div>
-                        ${m.armor ? (m.armor.rating + (m.armor.modifiers ? `<br><small class="text-muted">${m.armor.modifiers}</small>` : '')) : 'None'}
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-header bg-secondary bg-opacity-10 border-secondary text-success py-1 small fw-bold">SANITY LOSS</div>
+                            <div class="card-body text-danger">
+                                ${m.sanity_loss || 'None'}
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <div class="p-3 border border-secondary rounded" style="background: #151515; height: 100%;">
-                        <div class="data-label mb-2">Spells</div>
-                        ${m.spells || 'None'}
+
+                ${m.alternative_names ? `
+                    <div class="mt-5 pt-3 border-top border-secondary small text-muted text-center">
+                        <em>Also known as: ${m.alternative_names.join(', ')}</em>
                     </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="p-3 border border-secondary rounded" style="background: #151515; height: 100%;">
-                        <div class="data-label mb-2">Sanity Loss</div>
-                        ${m.sanity_loss || 'None'}
-                    </div>
-                </div>
-            </div>
+                ` : ''}
+            `;
 
-            ${m.alternative_names ? `
-                <div class="mt-4 pt-3 border-top border-secondary small text-muted text-center">
-                    <em>Also known as: ${m.alternative_names.join(', ')}</em>
-                </div>
-            ` : ''}
-        `;
+            container.innerHTML = html;
+            container.classList.remove('hidden');
+            placeholder.style.setProperty('display', 'none', 'important');
+            placeholder.classList.remove('d-flex');
 
-        container.innerHTML = html;
-        container.classList.remove('hidden');
-        placeholder.style.setProperty('display', 'none', 'important');
-        placeholder.classList.remove('d-flex');
-
-        // Scroll to top of detail panel
-        document.getElementById('detailPanel').scrollTop = 0;
+            document.getElementById('detailPanel').scrollTop = 0;
         } catch (e) {
             console.error(e);
             alert("Error rendering monster: " + e.message);
