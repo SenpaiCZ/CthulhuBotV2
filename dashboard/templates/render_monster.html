@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ monster.name }} - Monster Render</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/cthulhu.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .coc-sheet {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            border: 2px solid var(--cthulhu-green-dark, #2E8B57);
+            padding: 20px;
+            border-radius: 5px;
+            width: 800px;
+        }
+
+        .text-success { color: var(--cthulhu-green-bright, #00FF7F) !important; }
+        .border-success { border-color: var(--cthulhu-green-dark, #2E8B57) !important; }
+
+        .stat-box {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            padding: 5px;
+            border-radius: 5px;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .stat-label {
+            font-size: 0.8em;
+            color: #888;
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .section-header {
+            background-color: var(--cthulhu-green-dark, #2E8B57);
+            color: #fff;
+            padding: 5px 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="coc-sheet">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h1 class="display-5 mb-0 text-success">{{ monster.name }}</h1>
+                <div class="text-secondary fst-italic fs-5">{{ monster.subtitle or '' }}</div>
+            </div>
+            <div class="text-end">
+                {% if monster.tags %}
+                    {% for tag in monster.tags %}
+                        <span class="badge bg-secondary me-1">{{ tag }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                {% if monster.description %}
+                    <p class="card-text border-start border-success border-3 ps-3">{{ monster.description }}</p>
+                {% endif %}
+                {% if monster.main_entry_text %}
+                    <p class="card-text text-muted small">{{ monster.main_entry_text }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="section-header">Characteristics</div>
+        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-2 mb-4">
+            {% if monster.characteristics %}
+                {% for key, val in monster.characteristics.items() %}
+                <div class="col">
+                    <div class="stat-box">
+                        <div class="stat-label">{{ key }}</div>
+                        {% if val is mapping %}
+                            <div class="stat-value text-light">{{ val.average or val }}</div>
+                            <div class="small text-muted">{{ val.roll or '' }}</div>
+                        {% else %}
+                             <div class="stat-value text-light">{{ val }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12 text-muted small">None listed.</div>
+            {% endif %}
+        </div>
+
+        <div class="section-header">Derived Stats</div>
+        <div class="row row-cols-2 row-cols-md-5 g-2 mb-4">
+            <div class="col"><div class="stat-box"><div class="stat-label">HP</div><div class="stat-value text-danger">{{ monster.derived_stats.hit_points }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">DB</div><div class="stat-value">{{ monster.derived_stats.damage_bonus }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">Build</div><div class="stat-value">{{ monster.derived_stats.build }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">MP</div><div class="stat-value text-info">{{ monster.derived_stats.magic_points }}</div></div></div>
+            <div class="col">
+                <div class="stat-box">
+                    <div class="stat-label">Move</div>
+                    <div class="stat-value">
+                        {% if monster.derived_stats.move is mapping %}
+                            {{ monster.derived_stats.move.base }}
+                            {% if monster.derived_stats.move.special %}
+                                <span class="small text-muted" style="font-size: 0.6em;">({{ monster.derived_stats.move.special }})</span>
+                            {% endif %}
+                        {% else %}
+                            {{ monster.derived_stats.move }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="section-header">Combat</div>
+                <p class="mb-2"><span class="text-success fw-bold">Attacks per round:</span> {{ monster.combat.attacks_per_round }}</p>
+
+                <div class="list-group mb-3">
+                    {% if monster.combat.attacks %}
+                        {% for atk in monster.combat.attacks %}
+                        <div class="list-group-item bg-dark border-secondary p-2 mb-1">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1 text-light">{{ atk.name }}</h6>
+                                <span class="badge bg-danger rounded-pill">{{ atk.success_chance or 'Auto' }}</span>
+                            </div>
+                            <div class="mb-1 text-danger fw-bold small">Damage: {{ atk.damage }}</div>
+                            {% if atk.special_effect %}
+                                <small class="text-info d-block" style="font-size: 0.75em;">Effect: {{ atk.special_effect }}</small>
+                            {% endif %}
+                            {% if atk.description %}
+                                <small class="text-muted d-block" style="font-size: 0.75em;">{{ atk.description }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <p><span class="text-success fw-bold">Dodge:</span>
+                {% if monster.combat.dodge %}
+                    {{ monster.combat.dodge.success_chance or 'N/A' }}
+                {% else %}
+                    N/A
+                {% endif %}
+                </p>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="section-header">Skills & Abilities</div>
+                {% if monster.skills %}
+                    <div class="mb-3">
+                        <h6 class="text-muted small text-uppercase">Skills</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                        {% for s in monster.skills %}
+                            <span class="badge bg-secondary border border-secondary">{{ s.name }} <span class="text-warning ms-1">{{ s.value }}</span></span>
+                        {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if monster.powers_and_abilities %}
+                    <div class="mt-4">
+                        <h6 class="text-muted small text-uppercase">Powers</h6>
+                        <ul class="list-group list-group-flush bg-transparent">
+                        {% for p in monster.powers_and_abilities %}
+                            <li class="list-group-item bg-transparent border-secondary ps-0 py-1">
+                                <strong class="text-warning">{{ p.name }}:</strong> <span class="text-secondary small">{{ p.description }}</span>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="section-header">Defenses & Magic</div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header bg-secondary bg-opacity-10 border-secondary text-success py-1 small fw-bold">ARMOR</div>
+                    <div class="card-body p-2 small">
+                        {% if monster.armor %}
+                            {{ monster.armor.rating }}
+                            {% if monster.armor.modifiers %}
+                                <br><span class="text-muted">{{ monster.armor.modifiers }}</span>
+                            {% endif %}
+                        {% else %}
+                            None
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header bg-secondary bg-opacity-10 border-secondary text-success py-1 small fw-bold">SPELLS</div>
+                    <div class="card-body p-2 small">
+                        {{ monster.spells or 'None' }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-header bg-secondary bg-opacity-10 border-secondary text-success py-1 small fw-bold">SANITY LOSS</div>
+                    <div class="card-body p-2 text-danger small">
+                        {{ monster.sanity_loss or 'None' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if monster.alternative_names %}
+            <div class="mt-4 pt-2 border-top border-secondary small text-muted text-center">
+                <em>Also known as: {{ monster.alternative_names | join(', ') }}</em>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

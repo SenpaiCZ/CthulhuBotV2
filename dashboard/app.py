@@ -18,6 +18,7 @@ from loadnsave import (
     load_rss_data, save_rss_data,
     load_deleter_data, save_deleter_data,
     autoroom_load, autoroom_save,
+    load_monsters_data, load_deities_data,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -287,6 +288,54 @@ async def render_karma_notification(guild_id, user_id):
         rank_name=rank_name,
         change_type=change_type
     )
+
+@app.route('/render/monster')
+async def render_monster_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_monsters_data()
+    monsters = data.get('monsters', [])
+
+    # Find monster
+    target = None
+    name_lower = name.lower()
+
+    for item in monsters:
+        m = item.get('monster_entry')
+        if m and m.get('name', '').lower() == name_lower:
+            target = m
+            break
+
+    if not target:
+        return f"Monster '{name}' not found", 404
+
+    return await render_template('render_monster.html', monster=target)
+
+@app.route('/render/deity')
+async def render_deity_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_deities_data()
+    deities = data.get('deities', [])
+
+    # Find deity
+    target = None
+    name_lower = name.lower()
+
+    for item in deities:
+        d = item.get('deity_entry')
+        if d and d.get('name', '').lower() == name_lower:
+            target = d
+            break
+
+    if not target:
+        return f"Deity '{name}' not found", 404
+
+    return await render_template('render_deity.html', deity=target)
 
 # --- Admin Routes ---
 
