@@ -1,5 +1,4 @@
-def get_stat_emoji(stat_name):
-  stat_emojis = {
+stat_emojis = {
       "STR": ":muscle:",
       "DEX": ":runner:",
       "CON": ":heart:",
@@ -18,6 +17,7 @@ def get_stat_emoji(stat_name):
       "Move": ":person_running:",
       "Build": ":restroom: ",
       "Damage Bonus": ":mending_heart:",
+      "DB": ":mending_heart:",
       "Accounting": ":ledger:",
       "Anthropology": ":earth_americas:",
       "Appraise": ":mag:",
@@ -184,4 +184,6 @@ def get_stat_emoji(stat_name):
       "Weird Science": ":scientist:",
       "Zoology":":paw_prints:",
   }
+
+def get_stat_emoji(stat_name):
   return stat_emojis.get(stat_name, ":question:")

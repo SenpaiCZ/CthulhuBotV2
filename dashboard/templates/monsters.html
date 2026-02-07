@@ -54,6 +54,7 @@
 
     // Pass Python data to JS safely
     const monsters = {{ data.monsters | tojson }};
+    const statEmojis = {{ stat_emojis | tojson }};
 
     function showMonster(index) {
         try {
@@ -90,7 +91,7 @@
                     ${Object.entries(m.characteristics || {}).map(([key, val]) => `
                         <div class="col">
                             <div class="stat-box h-100">
-                                <div class="stat-label">${key}</div>
+                                <div class="stat-label">${statEmojis[key] || ''} ${key}</div>
                                 <div class="stat-value text-light">${val.average || val}</div>
                                 <div class="small text-muted">${val.roll || ''}</div>
                             </div>
@@ -100,13 +101,13 @@
 
                 <div class="section-header">Derived Stats</div>
                 <div class="row row-cols-2 row-cols-md-5 g-2 mb-4">
-                    <div class="col"><div class="stat-box"><div class="stat-label">HP</div><div class="stat-value text-danger">${m.derived_stats.hit_points}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">DB</div><div class="stat-value">${m.derived_stats.damage_bonus}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">Build</div><div class="stat-value">${m.derived_stats.build}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">MP</div><div class="stat-value text-info">${m.derived_stats.magic_points}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['HP'] || ''} HP</div><div class="stat-value text-danger">${m.derived_stats.hit_points}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['DB'] || ''} DB</div><div class="stat-value">${m.derived_stats.damage_bonus}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['Build'] || ''} Build</div><div class="stat-value">${m.derived_stats.build}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['MP'] || ''} MP</div><div class="stat-value text-info">${m.derived_stats.magic_points}</div></div></div>
                     <div class="col">
                         <div class="stat-box">
-                            <div class="stat-label">Move</div>
+                            <div class="stat-label">${statEmojis['Move'] || ''} Move</div>
                             <div class="stat-value">
                                 ${typeof m.derived_stats.move === 'object' ?
                                     `${m.derived_stats.move.base} ${m.derived_stats.move.special ? `<span class="small text-muted">(${m.derived_stats.move.special})</span>` : ''}` :
