@@ -3,14 +3,226 @@
 {% block title %}Home - CoC Bot{% endblock %}
 
 {% block content %}
-<div class="jumbotron">
-    <h1 class="display-4">Call of Cthulhu Bot Dashboard</h1>
-    <p class="lead">Welcome to the management interface for your Discord bot.</p>
-    <hr class="my-4">
-    <p>Use the navigation menu to browse characters or log in to manage settings.</p>
-    <a class="btn btn-primary btn-lg" href="/characters" role="button">View Characters</a>
-    {% if is_admin %}
-    <a class="btn btn-secondary btn-lg" href="/admin" role="button">Admin Panel</a>
-    {% endif %}
+<div class="p-5 mb-4 bg-body-tertiary rounded-3">
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">Call of Cthulhu Bot Dashboard</h1>
+        <p class="col-md-8 fs-4">Welcome to the management interface for your Discord bot. Manage characters, roll dice, and enhance your Call of Cthulhu games.</p>
+        <div class="d-grid gap-2 d-md-block">
+             <a class="btn btn-primary btn-lg" href="/characters" role="button">View Characters</a>
+             {% if is_admin %}
+             <a class="btn btn-secondary btn-lg" href="/admin" role="button">Admin Panel</a>
+             {% endif %}
+             <a class="btn btn-outline-light btn-lg" href="https://github.com/SenpaiCZ/CthulhuBotV2" target="_blank" role="button"><i class="bi bi-github"></i> GitHub</a>
+        </div>
+    </div>
+</div>
+
+<div class="row align-items-md-stretch mb-4">
+    <div class="col-md-6">
+        <div class="h-100 p-5 text-bg-dark rounded-3">
+          <h2>Features</h2>
+          <ul class="list-unstyled">
+              <li>🕵️‍♂️ <strong>Character Management</strong>: Create and manage investigator sheets.</li>
+              <li>🎲 <strong>Advanced Dice Rolling</strong>: Interactive rolls with Bonus/Penalty dice.</li>
+              <li>🎵 <strong>Music Bot</strong>: High-quality music playback from YouTube.</li>
+              <li>📈 <strong>Karma System</strong>: Track user reputation.</li>
+              <li>🎭 <strong>Reaction Roles</strong>: Self-assignable roles.</li>
+              <li>🔊 <strong>Soundboard</strong>: Play audio clips in voice channels.</li>
+          </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="h-100 p-5 bg-body-tertiary border rounded-3">
+          <h2>Keeper Tools</h2>
+          <p>Access an extensive library of game information including firearms, inventions, monsters, deities, madness tables, phobias/manias, and NPC generation directly from Discord or this dashboard.</p>
+          {% if is_admin %}
+           <a class="btn btn-outline-secondary" href="/admin/monsters">Browse Monsters</a>
+           <a class="btn btn-outline-secondary" href="/admin/deities">Browse Deities</a>
+          {% else %}
+           <p class="text-muted">Login as Admin to access Keeper Tools.</p>
+          {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="mb-5">
+    <h2>Commands</h2>
+    <div class="accordion" id="commandsAccordion">
+
+        <!-- Cthulhu & Investigator Tools -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    🐙 Cthulhu & Investigator Tools
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#commandsAccordion">
+                <div class="accordion-body">
+                    <ul>
+                        <li><code>newinvestigator</code> (alias: <code>newinv</code>): 🕵️‍♂️ Start the character creation wizard.</li>
+                        <li><code>mychar</code>: 📜 View your character sheet.</li>
+                        <li><code>autochar</code>: 🤖 Generate random stats for your investigator (Standard CoC 7e rules).</li>
+                        <li><code>stat</code>: 📊 View or edit specific stats.</li>
+                        <li><code>rename</code>: 🏷️ Rename your character.</li>
+                        <li><code>renameskill</code>: ✏️ Rename a skill on your sheet.</li>
+                        <li><code>deleteinvestigator</code>: 🗑️ Delete a character.</li>
+                        <li><code>addbackstory</code>: 📖 Add backstory elements.</li>
+                        <li><code>updatebackstory</code>: 🔄 Update backstory elements.</li>
+                        <li><code>removebackstory</code>: ❌ Remove backstory elements.
+                        <li><code>generatebackstory</code>: 🎲 Generate a random backstory.</li>
+                        <li><code>retire</code>: 👴 Retire an active character.</li>
+                        <li><code>unretire</code>: 👶 Bring a retired character back.</li>
+                        <li><code>printcharacter</code> (aliases: <code>pchar</code>, <code>printchar</code>): 🖼️ Generate an image of your character sheet.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dice Rolling & Session -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                    🎲 Dice Rolling & Session
+                </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#commandsAccordion">
+                <div class="accordion-body">
+                    <ul>
+                        <li><code>newroll</code> (aliases: <code>roll</code>, <code>d</code>, <code>nd</code>): 🎲 Perform a dice roll or skill check. Interactive interface allows for Bonus/Penalty dice and Luck spending.</li>
+                        <li><code>showluck</code>: 🍀 Display current luck.</li>
+                        <li><code>startsession</code>: 🎬 Start a new game session.</li>
+                        <li><code>showsession</code>: 📝 Show current session details.
+                        <li><code>wipesession</code>: 🧹 Clear session data.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Music & Sound -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                    🎵 Music & Sound
+                </button>
+            </h2>
+            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#commandsAccordion">
+                <div class="accordion-body">
+                    <ul>
+                        <li><code>play</code> (alias: <code>p</code>): 🎵 Play a song from YouTube.</li>
+                        <li><code>skip</code> (alias: <code>s</code>): ⏭️ Skip the current song.</li>
+                        <li><code>stop</code> (aliases: <code>leave</code>, <code>disconnect</code>): 🛑 Stop music, clear queue, and disconnect.</li>
+                        <li><code>volume</code> (alias: <code>vol</code>): 🔊 Set playback volume (0-100).</li>
+                        <li><code>loop</code>: 🔁 Toggle song looping.</li>
+                        <li><code>queue</code> (alias: <code>q</code>): 🎼 View the current music queue.</li>
+                        <li><code>nowplaying</code> (alias: <code>np</code>): 💿 Show the currently playing song.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Karma System -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingFour">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                    📈 Karma System
+                </button>
+            </h2>
+            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#commandsAccordion">
+                <div class="accordion-body">
+                    <ul>
+                        <li><code>setupkarma</code>: ⚙️ Interactive setup wizard for the karma system.</li>
+                        <li><code>setupkarmaroles</code>: 🧙 Interactive wizard to manage rank roles.</li>
+                        <li><code>karma</code> (alias: <code>k</code>): 🌟 Check karma for yourself or another user.</li>
+                        <li><code>leaderboard</code> (aliases: <code>top</code>): 🏆 Show the Karma leaderboard.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reaction Roles -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingFive">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                    🎭 Reaction Roles
+                </button>
+            </h2>
+            <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#commandsAccordion">
+                <div class="accordion-body">
+                    <ul>
+                        <li><code>reactionrole</code> (alias: <code>rr</code>): 🎭 Setup a reaction role on a message (Admin).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Keeper Resources -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingSix">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
+                    🧠 Keeper Resources
+                </button>
+            </h2>
+            <div id="collapseSix" class="accordion-collapse collapse" aria-labelledby="headingSix" data-bs-parent="#commandsAccordion">
+                <div class="accordion-body">
+                    <ul>
+                        <li><code>changeluck</code>: 🍀 Modify the server's maximum luck spend threshold (Default: 10).</li>
+                        <li><code>occupationinfo</code>: 💼 Lookup occupation details.</li>
+                        <li><code>skillinfo</code>: 📚 Lookup skill details.</li>
+                        <li><code>createnpc</code>: 👤 Generate an NPC.</li>
+                        <li><code>randomname</code>: 🏷️ Generate a random name (1920s).</li>
+                        <li><code>macguffin</code>: 🏺 Generate a MacGuffin.
+                        <li><code>loot</code>: 💰 Generate random loot.</li>
+                        <li><code>archetypeinfo</code>: 🦸‍♂️ Lookup archetype info (Pulp).</li>
+                        <li><code>firearms</code>: 🔫 Lookup firearm statistics.</li>
+                        <li><code>inventions</code>: 💡 Lookup invention details.</li>
+                        <li><code>talents</code>: 🌟 Lookup talent info.</li>
+                        <li><code>years</code>: 📅 Historical info for different years.</li>
+                        <li><code>madness</code>: 🤪 Consult madness rules.</li>
+                        <li><code>madnessAlone</code>: 🌑 Madness tables for solo investigators.</li>
+                        <li><code>insaneTalents</code>: 🩸 Lookup insane talents.</li>
+                        <li><code>phobia</code>: 😨 Random phobia.</li>
+                        <li><code>mania</code>: 🤩 Random mania.</li>
+                        <li><code>poisons</code>: 🧪 Lookup poison info.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- General & Admin -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingSeven">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeven" aria-expanded="false" aria-controls="collapseSeven">
+                    🛠️ General & Admin
+                </button>
+            </h2>
+            <div id="collapseSeven" class="accordion-collapse collapse" aria-labelledby="headingSeven" data-bs-parent="#commandsAccordion">
+                <div class="accordion-body">
+                    <ul>
+                        <li><code>autoroomkick</code>: 👢 Kick user from auto-room.</li>
+                        <li><code>autoroomlock</code>: 🔒 Lock auto-room.
+                        <li><code>autoroomunlock</code>: 🔓 Unlock auto-room.</li>
+                        <li><code>reportbug</code>: 🐛 Report a bug to the developer.</li>
+                        <li><code>repeatafterme</code>: 🦜 Make the bot repeat a message.</li>
+                        <li><code>uptime</code>: ⏱️ Check bot uptime.</li>
+                        <li><code>autoroomsetup</code>: ⚙️ Interactive setup wizard for Auto Rooms.</li>
+                        <li><code>autoroomset</code>: ⚙️ Configure auto-rooms (Legacy).</li>
+                        <li><code>changeprefix</code>: ❗ Change the bot's command prefix for the server.</li>
+                        <li><code>ping</code>: 🏓 Check latency.</li>
+                        <li><code>addreaction</code>: ➕ Add a smart reaction.</li>
+                        <li><code>removereaction</code>: ➖ Remove a smart reaction.
+                        <li><code>listreactions</code>: 📋 List all smart reactions.</li>
+                        <li><code>youtube</code>: 📺 Setup YouTube channel notifications.</li>
+                        <li><code>unsubscribe</code>: 🔕 Unsubscribe from YouTube notifications.</li>
+                        <li><code>deleter</code>: 🗑️ Delete the last X messages in the current channel.</li>
+                        <li><code>autodeleter</code>: 🤖 Interactive wizard to setup auto-deletion rules.</li>
+                        <li><code>stopdeleter</code>: 🛑 Stop auto-deletion for a channel.</li>
+                        <li><code>rss</code>: 📰 Add a specific RSS feed manually.</li>
+                        <li><code>rsssetup</code>: 📰 Interactive setup wizard for RSS feeds.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
 {% endblock %}
