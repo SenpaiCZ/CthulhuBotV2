@@ -344,17 +344,13 @@ async def admin_dashboard():
     if not is_admin(): return redirect(url_for('login'))
     return await render_template('admin_dashboard.html')
 
-@app.route('/admin/monsters')
+@app.route('/monsters')
 async def admin_monsters():
-    if not is_admin(): return redirect(url_for('login'))
-
     monsters_data = await _load_json_file(INFODATA_FOLDER, 'monsters.json')
     return await render_template('monsters.html', data=monsters_data)
 
-@app.route('/admin/deities')
+@app.route('/deities')
 async def admin_deities():
-    if not is_admin(): return redirect(url_for('login'))
-
     deities_data = await _load_json_file(INFODATA_FOLDER, 'deities.json')
     return await render_template('deities.html', data=deities_data)
 
