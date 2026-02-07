@@ -69,6 +69,13 @@ async def save_server_stats(server_stats):
     await _save_json_file(DATA_FOLDER, 'server_stats.json', server_stats)
     _SERVER_STATS_CACHE = server_stats.copy()
 
+# --- Server Volumes ---
+async def load_server_volumes():
+    return await _load_json_file(DATA_FOLDER, 'server_volumes.json')
+
+async def save_server_volumes(volumes):
+    await _save_json_file(DATA_FOLDER, 'server_volumes.json', volumes)
+
 # --- Smart React ---
 async def smartreact_load():
     return await _load_json_file(DATA_FOLDER, 'smart_react.json')
