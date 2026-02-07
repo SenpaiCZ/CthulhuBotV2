@@ -1,4 +1,6 @@
 import os
+import sys
+import subprocess
 import json
 import re
 from collections import Counter
@@ -1800,3 +1802,40 @@ async def backup_run():
         return jsonify({"status": "success", "filename": result})
     else:
         return jsonify({"status": "error", "message": result}), 500
+
+@app.route('/api/admin/update', methods=['POST'])
+async def admin_update_bot():
+    if not is_admin(): return "Unauthorized", 401
+
+    updater_script = "updater.py"
+    if not os.path.exists(updater_script):
+        return jsonify({"status": "error", "message": "Updater script not found"}), 500
+
+    pid = str(os.getpid())
+    python_exe = sys.executable
+
+    try:
+        if os.name == 'nt':
+            subprocess.Popen([python_exe, updater_script, pid],
+                             creationflags=subprocess.CREATE_NEW_CONSOLE)
+        else:
+            subprocess.Popen([python_exe, updater_script, pid],
+                             start_new_session=True)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+    # We need to shut down the bot/app.
+    # Since this is running in Hypercorn via bot.py (which imports app),
+    # we can try to close the bot if available, or just exit.
+
+    if app.bot:
+        await app.bot.close()
+
+    # We schedule a sys.exit shortly to allow the response to return
+    app.add_background_task(shutdown_process)
+
+    return jsonify({"status": "success", "message": "Update started. Bot is restarting..."})
+
+async def shutdown_process():
+    await asyncio.sleep(1)
+    sys.exit(0)

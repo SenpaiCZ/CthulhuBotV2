@@ -137,5 +137,38 @@
             </div>
         </div>
     </div>
+    <div class="col-md-6 mb-4">
+        <div class="card border-danger">
+            <div class="card-body">
+                <h5 class="card-title text-danger">System Update</h5>
+                <p class="card-text">Update the bot to the latest version from GitHub and restart.</p>
+                <button class="btn btn-danger" onclick="confirmUpdate()">Update Bot</button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+async function confirmUpdate() {
+    if (confirm("Are you sure you want to update the bot? This will restart the system.")) {
+        try {
+            const response = await fetch('/api/admin/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                alert(data.message);
+                // Optionally disable UI or show loader
+            } else {
+                alert('Update failed: ' + data.message);
+            }
+        } catch (error) {
+            alert('Error connecting to server: ' + error);
+        }
+    }
+}
+</script>
 {% endblock %}
