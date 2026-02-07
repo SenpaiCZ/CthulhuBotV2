@@ -35,12 +35,10 @@
         <div class="h-100 p-5 bg-body-tertiary border rounded-3">
           <h2>Keeper Tools</h2>
           <p>Access an extensive library of game information including firearms, inventions, monsters, deities, madness tables, phobias/manias, and NPC generation directly from Discord or this dashboard.</p>
-          {% if is_admin %}
-           <a class="btn btn-outline-secondary" href="/admin/monsters">Browse Monsters</a>
-           <a class="btn btn-outline-secondary" href="/admin/deities">Browse Deities</a>
-          {% else %}
-           <p class="text-muted">Login as Admin to access Keeper Tools.</p>
-          {% endif %}
+           <a class="btn btn-outline-secondary" href="/characters">Active Characters</a>
+           <a class="btn btn-outline-secondary" href="/retired">Retired Characters</a>
+           <a class="btn btn-outline-secondary" href="/monsters">Browse Monsters</a>
+           <a class="btn btn-outline-secondary" href="/deities">Browse Deities</a>
         </div>
     </div>
 </div>
