@@ -53,6 +53,7 @@
     });
 
     const deities = {{ data.deities | tojson }};
+    const statEmojis = {{ stat_emojis | tojson }};
 
     function showDeity(index) {
         try {
@@ -154,14 +155,14 @@
                 <div class="section-header">Physical Manifestation <span class="fs-6 text-muted ms-2 fw-normal">${pm.title || ''}</span></div>
 
                 <div class="row row-cols-4 row-cols-md-8 g-2 mb-4">
-                    <div class="col"><div class="stat-box"><div class="stat-label">STR</div><div class="stat-value">${chars.STR || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">CON</div><div class="stat-value">${chars.CON || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">SIZ</div><div class="stat-value">${chars.SIZ || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">DEX</div><div class="stat-value">${chars.DEX || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">HP</div><div class="stat-value text-danger">${chars.HP || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">DB</div><div class="stat-value">${chars.DB || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">Build</div><div class="stat-value">${chars.Build || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">Move</div><div class="stat-value">${chars.Move || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['STR'] || ''} STR</div><div class="stat-value">${chars.STR || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['CON'] || ''} CON</div><div class="stat-value">${chars.CON || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['SIZ'] || ''} SIZ</div><div class="stat-value">${chars.SIZ || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['DEX'] || ''} DEX</div><div class="stat-value">${chars.DEX || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['HP'] || ''} HP</div><div class="stat-value text-danger">${chars.HP || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['DB'] || ''} DB</div><div class="stat-value">${chars.DB || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['Build'] || ''} Build</div><div class="stat-value">${chars.Build || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['Move'] || ''} Move</div><div class="stat-value">${chars.Move || '-'}</div></div></div>
                 </div>
 
                 <div class="row">

@@ -313,7 +313,7 @@ async def render_monster_view():
     if not target:
         return f"Monster '{name}' not found", 404
 
-    return await render_template('render_monster.html', monster=target)
+    return await render_template('render_monster.html', monster=target, emojis=emojis, emoji_lib=emoji)
 
 @app.route('/render/deity')
 async def render_deity_view():
@@ -337,7 +337,7 @@ async def render_deity_view():
     if not target:
         return f"Deity '{name}' not found", 404
 
-    return await render_template('render_deity.html', deity=target)
+    return await render_template('render_deity.html', deity=target, emojis=emojis, emoji_lib=emoji)
 
 # --- Admin Routes ---
 
@@ -349,12 +349,14 @@ async def admin_dashboard():
 @app.route('/monsters')
 async def admin_monsters():
     monsters_data = await _load_json_file(INFODATA_FOLDER, 'monsters.json')
-    return await render_template('monsters.html', data=monsters_data)
+    stat_emojis = {k: emoji.emojize(v, language='alias') for k, v in emojis.stat_emojis.items()}
+    return await render_template('monsters.html', data=monsters_data, stat_emojis=stat_emojis)
 
 @app.route('/deities')
 async def admin_deities():
     deities_data = await _load_json_file(INFODATA_FOLDER, 'deities.json')
-    return await render_template('deities.html', data=deities_data)
+    stat_emojis = {k: emoji.emojize(v, language='alias') for k, v in emojis.stat_emojis.items()}
+    return await render_template('deities.html', data=deities_data, stat_emojis=stat_emojis)
 
 @app.route('/admin/browse/<folder_name>')
 async def browse_files(folder_name):
