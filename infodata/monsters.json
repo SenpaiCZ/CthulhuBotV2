@@ -2,7 +2,7 @@
   "monsters": [
     {
       "monster_entry": {
-        "name": "Abhoth, Spawn of",
+        "name": "Spawn of Abhoth",
         "subtitle": "Slimy Progeny",
         "tags": [
           "Mythos",
@@ -305,7 +305,7 @@
     },
     {
       "monster_entry": {
-        "name": "Atlach-Nacha, Daughter of",
+        "name": "Daughter of Atlach-Nacha",
         "subtitle": "Hideous Spiders",
         "tags": [
           "Mythos",
@@ -724,7 +724,7 @@
     },
     {
       "monster_entry": {
-        "name": "Chaugnar Faugn, Brother of (Lesser)",
+        "name": "Brother of Chaugnar Faugn (Lesser)",
         "subtitle": "Vampiric Horrors",
         "tags": [
           "Mythos",
@@ -1212,7 +1212,7 @@
     },
     {
       "monster_entry": {
-        "name": "Crystallizers of Dreams, Guardian of",
+        "name": "Guardian of Crystallizers of Dreams",
         "subtitle": "Dream Creepers",
         "tags": [
           "Mythos",
@@ -1303,7 +1303,7 @@
     },
     {
       "monster_entry": {
-        "name": "Cthulhu, Star-Spawn of",
+        "name": "Star-Spawn of Cthulhu",
         "subtitle": "Satraps of the Sleeper",
         "tags": [
           "Mythos",
@@ -1390,7 +1390,7 @@
     },
     {
       "monster_entry": {
-        "name": "Cthulhu, Thrall of",
+        "name": "Thrall of Cthulhu",
         "subtitle": "Servants of the Sleeper",
         "tags": [
           "Mythos",
@@ -2338,7 +2338,7 @@
     },
     {
       "monster_entry": {
-        "name": "Eihort, Broodling of",
+        "name": "Broodling of Eihort",
         "subtitle": "Gestalt Servants",
         "tags": [
           "Mythos",
@@ -3179,7 +3179,7 @@
     },
     {
       "monster_entry": {
-        "name": "Gla'aki, Servant of",
+        "name": "Servant of Gla'aki",
         "subtitle": "Decaying Slaves",
         "tags": [
           "Mythos",
@@ -3571,7 +3571,7 @@
     },
     {
       "monster_entry": {
-        "name": "Great Old Ones, Larvae of the",
+        "name": "Larvae of the Great Old Ones",
         "subtitle": "Juvenile Cosmic Horrors",
         "tags": [
           "Mythos",
@@ -3665,7 +3665,7 @@
     },
     {
       "monster_entry": {
-        "name": "Green Abyss, Spawn of the",
+        "name": "Spawn of the Green Abyss",
         "subtitle": "Deep Singers",
         "tags": [
           "Mythos",
@@ -3759,7 +3759,7 @@
     },
     {
       "monster_entry": {
-        "name": "Hastur, Spawn of",
+        "name": "Spawn of Hastur",
         "subtitle": "Unspeakable Guardians of Hali",
         "tags": [
           "Mythos",
@@ -4167,7 +4167,7 @@
     },
     {
       "monster_entry": {
-        "name": "Ithaqua, Spawn of",
+        "name": "Spawn of Ithaqua",
         "subtitle": "The Ice-Blessed",
         "tags": [
           "Mythos",
@@ -4295,7 +4295,7 @@
     },
     {
       "monster_entry": {
-        "name": "K'n-yan, People of",
+        "name": "People of K'n-yan",
         "subtitle": "Psychic Subterranean Dwellers",
         "tags": [
           "Mythos",
@@ -4418,7 +4418,7 @@
     },
     {
       "monster_entry": {
-        "name": "King in Yellow, Courtiers of the",
+        "name": "Courtiers of the King in Yellow",
         "subtitle": "Pallid Dancers",
         "tags": [
           "Mythos",
@@ -4518,7 +4518,7 @@
     },
     {
       "monster_entry": {
-        "name": "L'gy'hx, Inhabitants of",
+        "name": "Inhabitants of L'gy'hx",
         "subtitle": "Multi-limbed Metal Aliens",
         "tags": [
           "Mythos",
@@ -4636,7 +4636,7 @@
     },
     {
       "monster_entry": {
-        "name": "Leng, Ghoul Hound of",
+        "name": "Ghoul Hound of Leng",
         "subtitle": "Graveside Horrors",
         "tags": [
           "Mythos",
@@ -5873,7 +5873,7 @@
     },
     {
       "monster_entry": {
-        "name": "Nyogtha, Spawn of",
+        "name": "Spawn of Nyogtha",
         "subtitle": "Children of Darkness",
         "tags": [
           "Mythos",
@@ -5980,7 +5980,7 @@
     },
     {
       "monster_entry": {
-        "name": "Nyogtha, Spawn of (Variant)",
+        "name": "Spawn of Nyogtha (Variant)",
         "subtitle": "Children of Darkness",
         "tags": [
           "Mythos",
@@ -6072,7 +6072,7 @@
     },
     {
       "monster_entry": {
-        "name": "Old Ones, Fosterlings of the",
+        "name": "Fosterlings of the Old Ones",
         "subtitle": "Children of Alien Gods",
         "tags": [
           "Mythos",
@@ -6160,7 +6160,7 @@
     },
     {
       "monster_entry": {
-        "name": "Old Ones, Fosterlings of the (Variant)",
+        "name": "Fosterlings of the Old Ones (Variant)",
         "subtitle": "Children of Alien Gods",
         "tags": [
           "Mythos",
@@ -6242,7 +6242,7 @@
     },
     {
       "monster_entry": {
-        "name": "Outer Gods, Larvae of the",
+        "name": "Larvae of the Outer Gods",
         "subtitle": "Spawn of Impossible Alien Forces",
         "tags": [
           "Mythos",
@@ -6319,7 +6319,7 @@
     },
     {
       "monster_entry": {
-        "name": "Outer Gods, Larvae of the (Variant)",
+        "name": "Larvae of the Outer Gods (Variant)",
         "subtitle": "Spawn of Impossible Alien Forces",
         "tags": [
           "Mythos",
@@ -6396,7 +6396,7 @@
     },
     {
       "monster_entry": {
-        "name": "Outer Gods, Servitor of the",
+        "name": "Servitor of the Outer Gods",
         "subtitle": "The Piping Ones",
         "tags": [
           "Mythos",
@@ -6489,7 +6489,7 @@
     },
     {
       "monster_entry": {
-        "name": "Outer Gods, Servitor of the (Variant)",
+        "name": "Servitor of the Outer Gods (Variant)",
         "subtitle": "The Piping Ones",
         "tags": [
           "Mythos",
@@ -7058,7 +7058,7 @@
     },
     {
       "monster_entry": {
-        "name": "S'glhuo, Denizens of",
+        "name": "Denizens of S'glhuo",
         "subtitle": "Living Sound",
         "tags": [
           "Mythos",
@@ -7333,7 +7333,7 @@
     },
     {
       "monster_entry": {
-        "name": "Shaggai, Human Hybrids of",
+        "name": "Human Hybrids of Shaggai",
         "subtitle": "Shan-Human Hybrids",
         "tags": [
           "Mythos",
@@ -7802,7 +7802,7 @@
     },
     {
       "monster_entry": {
-        "name": "Shoggoth, Proto",
+        "name": "Proto Shoggoth",
         "subtitle": "Shape-Shifters",
         "tags": [
           "Mythos",
@@ -7893,7 +7893,7 @@
     },
     {
       "monster_entry": {
-        "name": "Shub-Niggurath, Child of",
+        "name": "Child of Shub-Niggurath",
         "subtitle": "Seeds of the Mother",
         "tags": [
           "Mythos",
@@ -7998,7 +7998,7 @@
     },
     {
       "monster_entry": {
-        "name": "Shub-Niggurath, Dark Young of",
+        "name": "Dark Young of Shub-Niggurath",
         "subtitle": "Stomping Horrors",
         "tags": [
           "Mythos",
@@ -8296,7 +8296,7 @@
     },
     {
       "monster_entry": {
-        "name": "Sphinx, Children of the",
+        "name": "Children of the Sphinx",
         "subtitle": "Ancient Warriors",
         "tags": [
           "Mythos",
@@ -8793,7 +8793,7 @@
     },
     {
       "monster_entry": {
-        "name": "Tindalos, Hounds of",
+        "name": "Hounds of Tindalos",
         "subtitle": "Strange-Angled Beasts",
         "tags": [
           "Mythos",
@@ -8894,7 +8894,7 @@
     },
     {
       "monster_entry": {
-        "name": "Tindalos, Lords of",
+        "name": "Lords of Tindalos",
         "subtitle": "Masters of Angular Time",
         "tags": [
           "Mythos",
@@ -9193,7 +9193,7 @@
     },
     {
       "monster_entry": {
-        "name": "Tsathoggua, Scions of",
+        "name": "Scions of Tsathoggua",
         "subtitle": "Chittering Toad Things",
         "tags": [
           "Mythos",
@@ -9286,7 +9286,7 @@
     },
     {
       "monster_entry": {
-        "name": "Ubbo-Sathla, Brood of",
+        "name": "Brood of Ubbo-Sathla",
         "subtitle": "The Lurching Ones",
         "tags": [
           "Mythos",
@@ -9710,7 +9710,7 @@
     },
     {
       "monster_entry": {
-        "name": "Xiclotl, Being from",
+        "name": "Being from Xiclotl",
         "subtitle": "Tree-like Aliens",
         "tags": [
           "Mythos",
@@ -9800,7 +9800,7 @@
     },
     {
       "monster_entry": {
-        "name": "Y'golonac, Servant of",
+        "name": "Servant of Y'golonac",
         "subtitle": "Whispering Horrors",
         "tags": [
           "Mythos",
@@ -9893,7 +9893,7 @@
     },
     {
       "monster_entry": {
-        "name": "Yig, Children of",
+        "name": "Children of Yig",
         "subtitle": "Monstrous Snakes",
         "tags": [
           "Mythos",
@@ -9970,7 +9970,7 @@
     },
     {
       "monster_entry": {
-        "name": "Yig, Spawn of",
+        "name": "Spawn of Yig",
         "subtitle": "Blessed of the Snake God",
         "tags": [
           "Mythos",
@@ -10076,7 +10076,7 @@
     },
     {
       "monster_entry": {
-        "name": "Yith, Great Race of (Beetle Form)",
+        "name": "Great Race of Yith (Beetle Form)",
         "subtitle": "Future Hive Minds",
         "tags": [
           "Mythos",
@@ -10162,7 +10162,7 @@
     },
     {
       "monster_entry": {
-        "name": "Yith, Great Race of (Cone Form)",
+        "name": "Great Race of Yith (Cone Form)",
         "subtitle": "Time Brains",
         "tags": [
           "Mythos",
@@ -10256,7 +10256,7 @@
     },
     {
       "monster_entry": {
-        "name": "Yog-Sothoth, Children of",
+        "name": "Children of Yog-Sothoth",
         "subtitle": "Outer God Progeny",
         "tags": [
           "Mythos",
@@ -10528,7 +10528,7 @@
     },
     {
       "monster_entry": {
-        "name": "Yaddith, Denizen of",
+        "name": "Denizen of Yaddith",
         "subtitle": "Alien Sorcerer-Scientists",
         "tags": [
           "Mythos",
