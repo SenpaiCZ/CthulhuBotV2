@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ deity.name }} - Deity Render</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/cthulhu.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .coc-sheet {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            border: 2px solid var(--cthulhu-green-dark, #2E8B57);
+            padding: 20px;
+            border-radius: 5px;
+            width: 800px;
+        }
+
+        .text-success { color: var(--cthulhu-green-bright, #00FF7F) !important; }
+        .border-success { border-color: var(--cthulhu-green-dark, #2E8B57) !important; }
+
+        .stat-box {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            padding: 5px;
+            border-radius: 5px;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .stat-label {
+            font-size: 0.8em;
+            color: #888;
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .section-header {
+            background-color: var(--cthulhu-green-dark, #2E8B57);
+            color: #fff;
+            padding: 5px 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+        .quote-block {
+            border-left: 3px solid #666;
+            padding-left: 15px;
+            font-style: italic;
+            color: #bbb;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="coc-sheet">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h1 class="display-5 mb-0 text-success">{{ deity.name }}</h1>
+                <div class="text-secondary fst-italic fs-5">{{ deity.classification or 'Unknown Entity' }}</div>
+            </div>
+            <div class="text-end">
+                {% if deity.other_names %}
+                    {% for name in deity.other_names %}
+                        <span class="badge bg-secondary me-1">{{ name }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        {% if deity.description_quote %}
+            <div class="quote-block">"{{ deity.description_quote }}"</div>
+        {% endif %}
+
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                {% if deity.main_entry_text %}
+                    <p class="card-text text-light">{{ deity.main_entry_text }}</p>
+                {% else %}
+                    <em class="text-muted">No main entry text available.</em>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Cult Column -->
+            <div class="col-lg-6">
+                <div class="card border-secondary bg-dark h-100">
+                    <div class="card-header border-secondary bg-transparent text-success fw-bold">Cult & Worship</div>
+                    <div class="card-body p-2">
+                        {% if deity.cult %}
+                            <p class="card-text small text-secondary">{{ deity.cult.text or '' }}</p>
+                            {% if deity.cult.possible_blessings %}
+                                <hr class="border-secondary">
+                                <h6 class="card-subtitle mb-2 text-muted small text-uppercase">Possible Blessings</h6>
+                                <ul class="list-unstyled mb-0 small">
+                                    {% for b in deity.cult.possible_blessings %}
+                                        <li class="mb-2"><strong class="text-success">{{ b.name }}:</strong> <span class="text-secondary small">{{ b.description }}</span></li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted small">No cult information.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Encounters & Magic Column -->
+            <div class="col-lg-6">
+                <div class="card border-secondary bg-dark mb-3">
+                    <div class="card-header border-secondary bg-transparent text-success fw-bold">Encounters & Aura</div>
+                    <div class="card-body p-2 small">
+                        <p class="mb-1"><strong class="text-light">Encounters:</strong> <span class="text-muted">{{ deity.encounters or 'None detailed.' }}</span></p>
+                        <p class="mb-0"><strong class="text-light">Aura:</strong> <span class="text-muted">{{ deity.aura or 'None detailed.' }}</span></p>
+                    </div>
+                </div>
+
+                <div class="card border-secondary bg-dark">
+                     <div class="card-header border-secondary bg-transparent text-success fw-bold">Magic & Powers</div>
+                     <div class="card-body p-2">
+                        <div class="row mb-3">
+                            <div class="col-4 text-center border-end border-secondary">
+                                <div class="small text-muted">POW</div>
+                                <div class="fw-bold text-light">{{ deity.magic.pow if deity.magic else 'N/A' }}</div>
+                            </div>
+                            <div class="col-4 text-center border-end border-secondary">
+                                <div class="small text-muted">MP</div>
+                                <div class="fw-bold text-info">{{ deity.magic.magic_points if deity.magic else 'N/A' }}</div>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="small text-muted">Sanity</div>
+                                <div class="fw-bold text-danger">{{ deity.sanity_loss or 'N/A' }}</div>
+                            </div>
+                        </div>
+                        <p class="small text-secondary mb-2"><strong>Spells:</strong> {{ deity.magic.spells if deity.magic else 'None' }}</p>
+                        {% if deity.powers %}
+                            <h6 class="text-muted small text-uppercase mt-3">Special Powers</h6>
+                            <ul class="list-unstyled mb-0 small">
+                                {% for p in deity.powers %}
+                                    <li class="mb-1"><strong class="text-warning">{{ p.name }}:</strong> <span class="text-muted">{{ p.description }}</span></li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Physical Manifestation Section -->
+        {% set pm = deity.physical_manifestation or {} %}
+        {% set chars = pm.characteristics or {} %}
+        {% set combat = pm.combat or {} %}
+        {% set armor = pm.armor or {} %}
+
+        <div class="section-header">Physical Manifestation <span class="fs-6 text-muted ms-2 fw-normal">{{ pm.title or '' }}</span></div>
+
+        <div class="row row-cols-4 row-cols-md-8 g-2 mb-4">
+            <div class="col"><div class="stat-box"><div class="stat-label">STR</div><div class="stat-value">{{ chars.STR or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">CON</div><div class="stat-value">{{ chars.CON or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">SIZ</div><div class="stat-value">{{ chars.SIZ or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">DEX</div><div class="stat-value">{{ chars.DEX or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">HP</div><div class="stat-value text-danger">{{ chars.HP or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">DB</div><div class="stat-value">{{ chars.DB or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">Build</div><div class="stat-value">{{ chars.Build or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">Move</div><div class="stat-value">{{ chars.Move or '-' }}</div></div></div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-7">
+                <h6 class="text-success fw-bold">Combat Capabilities</h6>
+                <p class="small text-muted mb-2">{{ combat.description or '' }}</p>
+                <p class="mb-2"><span class="fw-bold text-light">Attacks per round:</span> {{ combat.attacks_per_round or 'N/A' }}</p>
+
+                {% if combat.attacks %}
+                    <div class="list-group list-group-flush border rounded border-secondary mb-3">
+                        {% for atk in combat.attacks %}
+                        <div class="list-group-item bg-dark border-secondary p-2">
+                            <div class="d-flex justify-content-between">
+                                <strong class="text-light">{{ atk.name }}</strong>
+                                <span class="text-danger fw-bold">{{ atk.damage or '' }}</span>
+                            </div>
+                            <div class="small text-secondary">Success: {{ atk.success_chance or '' }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-5">
+                {% if combat.special_maneuvers %}
+                    <h6 class="text-success fw-bold">Special Maneuvers</h6>
+                    <ul class="list-group list-group-flush bg-transparent mb-3">
+                        {% for sm in combat.special_maneuvers %}
+                            <li class="list-group-item bg-transparent border-0 px-0 py-1"><strong class="text-warning">{{ sm.name }}:</strong> <span class="text-secondary small">{{ sm.description }}</span></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <div class="card bg-secondary bg-opacity-10 border-secondary">
+                    <div class="card-body py-2">
+                        <div class="small text-uppercase text-success fw-bold">Armor</div>
+                        <div class="fs-5 fw-bold text-light">{{ armor.rating or 'None' }}</div>
+                        <div class="small text-muted">{{ armor.notes or '' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -91,6 +91,12 @@ async def save_session_data(session_data):
     await _save_json_file(DATA_FOLDER, 'session_data.json', session_data)
 
 # --- Info Data (Read-only mostly) ---
+async def load_monsters_data():
+    return await _load_json_file(INFODATA_FOLDER, 'monsters.json')
+
+async def load_deities_data():
+    return await _load_json_file(INFODATA_FOLDER, 'deities.json')
+
 async def load_madness_group_data():
     return await _load_json_file(INFODATA_FOLDER, 'madness_with_group.json')
 
