@@ -4,36 +4,8 @@
 
 {% block content %}
 <style>
-    /* Custom Horror Styles */
-    @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Nosifer&family=Roboto:wght@300;400;700&display=swap');
-
-    :root {
-        --blood-red: #8a0303;
-        --blood-bright: #ff0000;
-        --dark-bg: #050505;
-        --panel-bg: #111;
-        --text-color: #d0d0d0;
-        --horror-font: 'Nosifer', cursive;
-        --sub-horror-font: 'Creepster', cursive;
-    }
-
-    /* Override Base Styles for this page */
-    body {
-        background-color: #000 !important;
-        background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23111111' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
-    }
-
-    /* Hide standard nav bar bottom border for seamless dark look */
-    .navbar {
-        border-bottom-color: var(--blood-red) !important;
-    }
-
-    .navbar-brand {
-        color: var(--blood-bright) !important;
-        text-shadow: 0 0 5px var(--blood-red);
-    }
-
-    .monster-container {
+    /* Custom layout for sidebar + content */
+    .dashboard-container {
         display: flex;
         height: calc(100vh - 100px); /* Adjust for navbar */
         gap: 20px;
@@ -41,201 +13,132 @@
     }
 
     /* Sidebar */
-    .monster-list-panel {
+    .sidebar-panel {
         width: 300px;
         min-width: 300px;
-        background: var(--panel-bg);
-        border: 2px solid var(--blood-red);
-        border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-list {
         overflow-y: auto;
-        box-shadow: 0 0 15px rgba(138, 3, 3, 0.3);
+        flex-grow: 1;
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0 0 var(--bs-border-radius) var(--bs-border-radius);
     }
 
-    .monster-list-item {
-        padding: 10px 15px;
-        border-bottom: 1px solid #333;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        color: #aaa;
-        font-family: 'Roboto', sans-serif;
+    .list-group-item.active {
+        background-color: var(--cthulhu-green-main);
+        border-color: var(--cthulhu-green-main);
     }
 
-    .monster-list-item:hover, .monster-list-item.active {
-        background-color: var(--blood-red);
-        color: #fff;
-        text-shadow: 0 0 5px #000;
-        padding-left: 25px;
-        border-left: 5px solid var(--blood-bright);
+    .list-group-item:hover {
+        background-color: rgba(46, 139, 87, 0.1); /* Subtle green hover */
+        color: var(--cthulhu-green-bright);
     }
 
     /* Main View */
-    .monster-detail-panel {
+    .detail-panel {
         flex: 1;
-        background: var(--panel-bg);
-        border: 2px solid var(--blood-red);
-        border-radius: 5px;
-        padding: 40px;
         overflow-y: auto;
-        box-shadow: 0 0 20px rgba(138, 3, 3, 0.5);
-        position: relative;
-        color: #ccc;
+        border: 1px solid var(--bs-border-color);
+        background-color: var(--cthulhu-bg-card);
+        border-radius: var(--bs-border-radius);
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     }
 
-    /* Scrollbars */
-    .monster-list-panel::-webkit-scrollbar,
-    .monster-detail-panel::-webkit-scrollbar {
+    /* Custom scrollbars */
+    .sidebar-list::-webkit-scrollbar,
+    .detail-panel::-webkit-scrollbar {
         width: 8px;
     }
-    .monster-list-panel::-webkit-scrollbar-track,
-    .monster-detail-panel::-webkit-scrollbar-track {
-        background: #000;
+    .sidebar-list::-webkit-scrollbar-track,
+    .detail-panel::-webkit-scrollbar-track {
+        background: #0a0a0a;
     }
-    .monster-list-panel::-webkit-scrollbar-thumb,
-    .monster-detail-panel::-webkit-scrollbar-thumb {
-        background: var(--blood-red);
+    .sidebar-list::-webkit-scrollbar-thumb,
+    .detail-panel::-webkit-scrollbar-thumb {
+        background: #333;
         border-radius: 4px;
     }
-
-    h1, h2, h3 {
-        font-family: var(--sub-horror-font);
-        color: var(--blood-bright);
-        text-shadow: 2px 2px 4px #000;
-        margin-bottom: 20px;
+    .sidebar-list::-webkit-scrollbar-thumb:hover,
+    .detail-panel::-webkit-scrollbar-thumb:hover {
+        background: var(--cthulhu-green-main);
     }
 
-    .monster-name {
-        font-family: var(--horror-font);
-        font-size: 3em;
-        text-align: center;
-        margin-bottom: 10px;
-        color: var(--blood-bright);
-        text-shadow: 0 0 10px var(--blood-red);
-        line-height: 1.2;
-    }
-
-    .monster-subtitle {
-        text-align: center;
-        font-style: italic;
-        color: #888;
-        margin-bottom: 30px;
-        font-size: 1.4em;
-        border-bottom: 1px solid #333;
-        padding-bottom: 20px;
-    }
-
-    /* Sections */
-    .section-title {
-        border-bottom: 2px solid var(--blood-red);
-        padding-bottom: 5px;
-        margin-top: 30px;
-        margin-bottom: 15px;
-        font-size: 1.8em;
-        color: var(--blood-bright);
-        font-family: var(--sub-horror-font);
-        letter-spacing: 2px;
-    }
-
-    .stat-block {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-        gap: 15px;
-        margin-bottom: 20px;
+    /* Typography tweaks */
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--cthulhu-green-main);
     }
 
     .stat-box {
-        background: #1a1a1a;
-        border: 1px solid #444;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 4px;
         padding: 10px;
         text-align: center;
-        border-radius: 3px;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
     }
 
     .stat-label {
-        font-weight: bold;
-        color: var(--blood-red);
-        font-size: 0.9em;
+        font-size: 0.8rem;
         text-transform: uppercase;
+        color: var(--bs-secondary);
+        font-weight: bold;
     }
 
     .stat-value {
-        font-size: 1.4em;
-        color: #eee;
+        font-size: 1.2rem;
         font-weight: bold;
+        color: var(--bs-body-color);
     }
 
-    .tag-badge {
-        background-color: #222;
-        color: #aaa;
-        padding: 4px 10px;
-        border-radius: 4px;
-        font-size: 0.8em;
-        margin-right: 5px;
-        border: 1px solid var(--blood-red);
-        display: inline-block;
-        margin-bottom: 5px;
+    .section-header {
+        border-bottom: 1px solid var(--bs-border-color);
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+        margin-top: 25px;
+        color: var(--cthulhu-green-bright);
+        font-weight: 500;
+        font-size: 1.2rem;
+    }
+
+    .quote-block {
+        font-style: italic;
+        border-left: 3px solid var(--cthulhu-green-main);
+        background: rgba(46, 139, 87, 0.05);
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 0 4px 4px 0;
+        color: var(--bs-secondary);
     }
 
     .hidden { display: none !important; }
-
-    .description-text {
-        font-family: 'Georgia', serif;
-        font-size: 1.1em;
-        line-height: 1.6;
-        color: #ddd;
-        border-left: 3px solid var(--blood-red);
-        padding-left: 15px;
-        background: rgba(138, 3, 3, 0.1);
-        padding: 15px;
-        border-radius: 0 5px 5px 0;
-        margin-bottom: 20px;
-    }
-
-    .quote-text {
-        font-family: 'Georgia', serif;
-        font-style: italic;
-        font-size: 1.2em;
-        color: #aaa;
-        padding: 10px 20px;
-        border-left: 4px solid #555;
-        margin-bottom: 20px;
-        background: rgba(20, 20, 20, 0.5);
-    }
-
-    .main-entry-text {
-        font-family: 'Georgia', serif;
-        color: #999;
-        margin-top: 20px;
-        margin-bottom: 20px;
-    }
-
-    .data-label {
-        color: var(--blood-red);
-        font-weight: bold;
-    }
 </style>
 
-<div class="container-fluid monster-container">
-    <div class="monster-list-panel">
-        <h3 class="text-center mt-3 sticky-top p-2" style="background: var(--panel-bg); border-bottom: 1px solid var(--blood-red); margin-top: 0 !important;">Pantheon</h3>
-        <div class="list-group list-group-flush" id="monsterList">
+<div class="container-fluid dashboard-container">
+    <div class="sidebar-panel">
+        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
+            <h5 class="m-0 text-success">Pantheon</h5>
+        </div>
+        <div class="list-group list-group-flush sidebar-list bg-dark" id="monsterList">
             {% if data and data.deities %}
                 {% for item in data.deities %}
                     {% set d = item.deity_entry %}
-                    <div class="monster-list-item" onclick="showDeity({{ loop.index0 }})">
+                    <button type="button" class="list-group-item list-group-item-action bg-dark text-light border-secondary monster-list-item" onclick="showDeity({{ loop.index0 }})">
                         {{ d.name }}
-                    </div>
+                    </button>
                 {% endfor %}
             {% else %}
-                <p class="text-center p-3 text-muted">No deities found.</p>
+                <div class="p-3 text-center text-muted">No deities found.</div>
             {% endif %}
         </div>
     </div>
 
-    <div class="monster-detail-panel" id="detailPanel">
+    <div class="detail-panel" id="detailPanel">
         <div id="monster-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
-            <h2 style="opacity: 0.3; font-size: 3em;">Select a deity...</h2>
-            <p class="text-muted">...and despair.</p>
+            <h2 class="text-muted" style="opacity: 0.3;">Select a Deity</h2>
+            <p class="text-secondary">Explore the cosmic entities.</p>
         </div>
 
         <div id="monster-content" class="hidden">
@@ -266,109 +169,131 @@
             const armor = pm.armor || {};
 
             let html = `
-                <div class="monster-name">${d.name}</div>
-                <div class="monster-subtitle">${d.classification || 'Unknown Entity'}</div>
-
-                <div class="text-center mb-4">
-                    ${(d.other_names || []).map(name => `<span class="tag-badge">${name}</span>`).join('')}
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h1 class="display-5 mb-0 text-success">${d.name}</h1>
+                        <div class="text-secondary fst-italic fs-5">${d.classification || 'Unknown Entity'}</div>
+                    </div>
+                    <div class="text-end">
+                        ${(d.other_names || []).map(name => `<span class="badge bg-secondary me-1">${name}</span>`).join('')}
+                    </div>
                 </div>
 
-                ${d.description_quote ? `<div class="quote-text">"${d.description_quote}"</div>` : ''}
+                ${d.description_quote ? `<div class="quote-block">"${d.description_quote}"</div>` : ''}
 
-                <div class="main-entry-text">
-                    ${d.main_entry_text || ''}
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        ${d.main_entry_text ? `<p class="card-text text-light">${d.main_entry_text}</p>` : '<em class="text-muted">No main entry text available.</em>'}
+                    </div>
                 </div>
 
-                <!-- Cult Section -->
-                ${d.cult ? `
-                    <div class="section-title">Cult</div>
-                    <p>${d.cult.text || ''}</p>
-                    ${d.cult.possible_blessings ? `
-                        <p class="data-label">Possible Blessings:</p>
-                        <ul>
-                            ${d.cult.possible_blessings.map(b => `<li><strong class="text-light">${b.name}:</strong> <span class="text-muted">${b.description}</span></li>`).join('')}
-                        </ul>
-                    ` : ''}
-                ` : ''}
-
-                <!-- Encounters & Aura -->
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <div class="p-3 border border-secondary rounded mb-3" style="background: #151515;">
-                            <span class="data-label">Encounters</span>
-                            <p class="small text-muted mb-0">${d.encounters || 'None detailed.'}</p>
+                <div class="row g-4">
+                    <!-- Cult Column -->
+                    <div class="col-lg-6">
+                        <div class="card border-secondary bg-dark h-100">
+                            <div class="card-header border-secondary bg-transparent text-success fw-bold">Cult & Worship</div>
+                            <div class="card-body">
+                                ${d.cult ? `
+                                    <p class="card-text small text-secondary">${d.cult.text || ''}</p>
+                                    ${d.cult.possible_blessings ? `
+                                        <hr class="border-secondary">
+                                        <h6 class="card-subtitle mb-2 text-muted small text-uppercase">Possible Blessings</h6>
+                                        <ul class="list-unstyled mb-0">
+                                            ${d.cult.possible_blessings.map(b => `<li class="mb-2"><strong class="text-success">${b.name}:</strong> <span class="text-secondary small">${b.description}</span></li>`).join('')}
+                                        </ul>
+                                    ` : ''}
+                                ` : '<p class="text-muted">No cult information.</p>'}
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="p-3 border border-secondary rounded mb-3" style="background: #151515;">
-                            <span class="data-label">Aura</span>
-                            <p class="small text-muted mb-0">${d.aura || 'None detailed.'}</p>
+
+                    <!-- Encounters & Magic Column -->
+                    <div class="col-lg-6">
+                        <div class="card border-secondary bg-dark mb-3">
+                            <div class="card-header border-secondary bg-transparent text-success fw-bold">Encounters & Aura</div>
+                            <div class="card-body">
+                                <p class="mb-1"><strong class="text-light">Encounters:</strong> <span class="text-muted">${d.encounters || 'None detailed.'}</span></p>
+                                <p class="mb-0"><strong class="text-light">Aura:</strong> <span class="text-muted">${d.aura || 'None detailed.'}</span></p>
+                            </div>
+                        </div>
+
+                        <div class="card border-secondary bg-dark">
+                             <div class="card-header border-secondary bg-transparent text-success fw-bold">Magic & Powers</div>
+                             <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-4 text-center border-end border-secondary">
+                                        <div class="small text-muted">POW</div>
+                                        <div class="fw-bold text-light">${d.magic ? d.magic.pow : 'N/A'}</div>
+                                    </div>
+                                    <div class="col-4 text-center border-end border-secondary">
+                                        <div class="small text-muted">MP</div>
+                                        <div class="fw-bold text-info">${d.magic ? d.magic.magic_points : 'N/A'}</div>
+                                    </div>
+                                    <div class="col-4 text-center">
+                                        <div class="small text-muted">Sanity</div>
+                                        <div class="fw-bold text-danger">${d.sanity_loss || 'N/A'}</div>
+                                    </div>
+                                </div>
+                                <p class="small text-secondary mb-2"><strong>Spells:</strong> ${d.magic ? d.magic.spells : 'None'}</p>
+                                ${d.powers ? `
+                                    <h6 class="text-muted small text-uppercase mt-3">Special Powers</h6>
+                                    <ul class="list-unstyled mb-0 small">
+                                        ${d.powers.map(p => `<li class="mb-1"><strong class="text-warning">${p.name}:</strong> <span class="text-muted">${p.description}</span></li>`).join('')}
+                                    </ul>
+                                ` : ''}
+                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="section-title">Magic & Powers</div>
-                <div class="row">
-                    <div class="col-md-4">
-                        <p><span class="data-label">POW:</span> ${d.magic ? d.magic.pow : 'N/A'}</p>
-                        <p><span class="data-label">Magic Points:</span> ${d.magic ? d.magic.magic_points : 'N/A'}</p>
-                        <p><span class="data-label">Sanity Loss:</span> ${d.sanity_loss || 'N/A'}</p>
-                    </div>
-                    <div class="col-md-8">
-                        <p><span class="data-label">Spells:</span> ${d.magic ? d.magic.spells : 'None'}</p>
-                        ${d.powers ? `
-                            <p class="data-label mt-2">Powers:</p>
-                            <ul>
-                                ${d.powers.map(p => `<li><strong class="text-light">${p.name}:</strong> <span class="text-muted">${p.description}</span></li>`).join('')}
-                            </ul>
-                        ` : ''}
-                    </div>
-                </div>
+                <!-- Physical Manifestation Section -->
+                <div class="section-header">Physical Manifestation <span class="fs-6 text-muted ms-2 fw-normal">${pm.title || ''}</span></div>
 
-                <!-- Physical Manifestation -->
-                <div class="section-title">Physical Manifestation</div>
-                <div class="mb-2 text-center text-muted small"><em>${pm.title || ''}</em></div>
-
-                <div class="stat-block">
-                    <div class="stat-box"><div class="stat-label">STR</div><div class="stat-value">${chars.STR || '-'}</div></div>
-                    <div class="stat-box"><div class="stat-label">CON</div><div class="stat-value">${chars.CON || '-'}</div></div>
-                    <div class="stat-box"><div class="stat-label">SIZ</div><div class="stat-value">${chars.SIZ || '-'}</div></div>
-                    <div class="stat-box"><div class="stat-label">DEX</div><div class="stat-value">${chars.DEX || '-'}</div></div>
-                    <div class="stat-box"><div class="stat-label">HP</div><div class="stat-value text-danger">${chars.HP || '-'}</div></div>
-                    <div class="stat-box"><div class="stat-label">DB</div><div class="stat-value">${chars.DB || '-'}</div></div>
-                    <div class="stat-box"><div class="stat-label">Build</div><div class="stat-value">${chars.Build || '-'}</div></div>
-                    <div class="stat-box"><div class="stat-label">Move</div><div class="stat-value">${chars.Move || '-'}</div></div>
+                <div class="row row-cols-4 row-cols-md-8 g-2 mb-4">
+                    <div class="col"><div class="stat-box"><div class="stat-label">STR</div><div class="stat-value">${chars.STR || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">CON</div><div class="stat-value">${chars.CON || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">SIZ</div><div class="stat-value">${chars.SIZ || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">DEX</div><div class="stat-value">${chars.DEX || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">HP</div><div class="stat-value text-danger">${chars.HP || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">DB</div><div class="stat-value">${chars.DB || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">Build</div><div class="stat-value">${chars.Build || '-'}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">Move</div><div class="stat-value">${chars.Move || '-'}</div></div></div>
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
-                        <p><span class="data-label">Attacks per round:</span> ${combat.attacks_per_round || 'N/A'}</p>
-                        <p class="small text-muted">${combat.description || ''}</p>
+                    <div class="col-md-7">
+                        <h6 class="text-success fw-bold">Combat Capabilities</h6>
+                        <p class="small text-muted mb-2">${combat.description || ''}</p>
+                        <p class="mb-2"><span class="fw-bold text-light">Attacks per round:</span> ${combat.attacks_per_round || 'N/A'}</p>
 
                         ${combat.attacks ? `
-                            <div class="list-group list-group-flush mt-2">
+                            <div class="list-group list-group-flush border rounded border-secondary mb-3">
                                 ${combat.attacks.map(atk => `
-                                    <div class="p-2 mb-1" style="background: rgba(50,0,0,0.2); border-left: 3px solid var(--blood-red);">
-                                        <strong>${atk.name}</strong>
-                                        <span class="float-end text-danger fw-bold">${atk.damage || ''}</span>
-                                        <div class="small">Success: ${atk.success_chance || ''}</div>
+                                    <div class="list-group-item bg-dark border-secondary">
+                                        <div class="d-flex justify-content-between">
+                                            <strong class="text-light">${atk.name}</strong>
+                                            <span class="text-danger fw-bold">${atk.damage || ''}</span>
+                                        </div>
+                                        <div class="small text-secondary">Success: ${atk.success_chance || ''}</div>
                                     </div>
                                 `).join('')}
                             </div>
                         ` : ''}
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-5">
                         ${combat.special_maneuvers ? `
-                            <p class="data-label">Special Maneuvers</p>
-                            <ul>
-                                ${combat.special_maneuvers.map(sm => `<li><strong>${sm.name}:</strong> ${sm.description}</li>`).join('')}
+                            <h6 class="text-success fw-bold">Special Maneuvers</h6>
+                            <ul class="list-group list-group-flush bg-transparent mb-3">
+                                ${combat.special_maneuvers.map(sm => `<li class="list-group-item bg-transparent border-0 px-0 py-1"><strong class="text-warning">${sm.name}:</strong> <span class="text-secondary small">${sm.description}</span></li>`).join('')}
                             </ul>
                         ` : ''}
 
-                        <div class="mt-3 p-3 border border-secondary rounded" style="background: #151515;">
-                            <div class="data-label">Armor</div>
-                            <div>${armor.rating || 'None'}</div>
-                            <div class="small text-muted mt-1">${armor.notes || ''}</div>
+                        <div class="card bg-secondary bg-opacity-10 border-secondary">
+                            <div class="card-body py-2">
+                                <div class="small text-uppercase text-success fw-bold">Armor</div>
+                                <div class="fs-5 fw-bold text-light">${armor.rating || 'None'}</div>
+                                <div class="small text-muted">${armor.notes || ''}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
