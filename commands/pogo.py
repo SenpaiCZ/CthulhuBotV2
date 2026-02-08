@@ -25,6 +25,22 @@ class PokemonGo(commands.Cog):
         if cached_events:
             self.events = cached_events
 
+            # Migration: Add timestamp if missing
+            need_save = False
+            for ev in self.events:
+                if 'timestamp' not in ev:
+                    try:
+                        dt = datetime.datetime.fromisoformat(ev['start_time'])
+                        # Treat naive as local, just like scrape_events
+                        ev['timestamp'] = int(dt.timestamp())
+                        need_save = True
+                    except Exception as e:
+                        print(f"Error migrating event {ev.get('title')}: {e}")
+                        ev['timestamp'] = 0
+
+            if need_save:
+                await save_pogo_events(self.events)
+
         # Initial scrape if empty
         if not self.events:
             await self.scrape_events()
@@ -102,13 +118,19 @@ class PokemonGo(commands.Cog):
                 heading_span = text_div.find(class_='event-tag-badge')
                 heading = heading_span.text.strip() if heading_span else "Event"
 
+                # Calculate timestamp for Discord
+                # We reuse the logic from "Calculating..." block but apply it generally
+                # start_date is naive (local system time)
+                timestamp = int(start_date.timestamp())
+
                 events.append({
                     'title': title,
                     'link': link,
                     'image': image_url,
                     'start_time': start_date.isoformat(), # Store as naive ISO string
                     'time_text': time_str,
-                    'type': heading
+                    'type': heading,
+                    'timestamp': timestamp
                 })
 
             # Sort by date
@@ -195,7 +217,7 @@ class PokemonGo(commands.Cog):
         for ev in upcoming_week_events:
             start_dt = datetime.datetime.fromisoformat(ev['start_time'])
             day_name = start_dt.strftime("%A")
-            description += f"**{day_name}**: [{ev['title']}]({ev['link']}) ({ev['time_text']})\n"
+            description += f"**{day_name}**: [{ev['title']}]({ev['link']}) ({ev['time_text']} - <t:{ev['timestamp']}:R>)\n"
 
         embed.description = description
 
@@ -235,18 +257,7 @@ class PokemonGo(commands.Cog):
             embed.set_thumbnail(url=next_event['image'])
 
         # Calculate time until
-        start_dt = datetime.datetime.fromisoformat(next_event['start_time'])
-        time_diff = start_dt - now
-        minutes_until = int(time_diff.total_seconds() / 60)
-        hours_until = minutes_until // 60
-        mins_rem = minutes_until % 60
-
-        time_str = ""
-        if hours_until > 0:
-            time_str += f"{hours_until}h "
-        time_str += f"{mins_rem}m"
-
-        description = f"**Starts in:** {time_str}\n**Time:** {next_event['time_text']}\n**Type:** {next_event['type']}"
+        description = f"**Starts:** <t:{next_event['timestamp']}:R>\n**Time:** {next_event['time_text']}\n**Type:** {next_event['type']}"
         embed.description = description
 
         try:
@@ -309,7 +320,7 @@ class PokemonGo(commands.Cog):
             for ev in events:
                 embed.add_field(
                     name=ev['title'],
-                    value=f"**Type:** {ev['type']}\n**Time:** {ev['time_text']}\n[Link]({ev['link']})",
+                    value=f"**Type:** {ev['type']}\n**Time:** {ev['time_text']} (<t:{ev['timestamp']}:R>)\n[Link]({ev['link']})",
                     inline=False
                 )
 
@@ -353,7 +364,7 @@ class PokemonGo(commands.Cog):
                     if ev['image']:
                         embed.set_thumbnail(url=ev['image'])
 
-                    description = f"**Starts in:** {int(minutes_until)} minutes\n**Time:** {ev['time_text']}\n**Type:** {ev['type']}"
+                    description = f"**Starts:** <t:{ev['timestamp']}:R>\n**Time:** {ev['time_text']}\n**Type:** {ev['type']}"
                     embed.description = description
 
                     try:
@@ -401,7 +412,7 @@ class PokemonGo(commands.Cog):
             for ev in upcoming_week_events:
                 start_dt = datetime.datetime.fromisoformat(ev['start_time'])
                 day_name = start_dt.strftime("%A")
-                description += f"**{day_name}**: [{ev['title']}]({ev['link']}) ({ev['time_text']})\n"
+                description += f"**{day_name}**: [{ev['title']}]({ev['link']}) ({ev['time_text']} - <t:{ev['timestamp']}:R>)\n"
 
             embed.description = description
 
