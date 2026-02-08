@@ -253,3 +253,16 @@ async def load_reaction_roles():
 
 async def save_reaction_roles(roles_data):
     await _save_json_file(DATA_FOLDER, 'reaction_roles.json', roles_data)
+
+# --- Pokemon GO Data ---
+async def load_pogo_settings():
+    return await _load_json_file(DATA_FOLDER, 'pogo_settings.json')
+
+async def save_pogo_settings(settings):
+    await _save_json_file(DATA_FOLDER, 'pogo_settings.json', settings)
+
+async def load_pogo_events():
+    return await _load_json_file(DATA_FOLDER, 'pogo_events.json')
+
+async def save_pogo_events(events):
+    await _save_json_file(DATA_FOLDER, 'pogo_events.json', events)

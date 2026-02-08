@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block title %}Pokemon GO{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Pokemon GO Events</h2>
+<p class="text-muted">Manage event notifications and settings.</p>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Event Data</strong>
+                <button class="btn btn-sm btn-primary" id="refresh-btn" onclick="refreshEvents()">
+                    <i class="bi bi-arrow-clockwise"></i> Force Update
+                </button>
+            </div>
+            <div class="card-body">
+                <p>Last scrape found <span id="event-count" class="fw-bold">0</span> upcoming events.</p>
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-sm table-hover" id="events-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Event</th>
+                                <th>Type</th>
+                                <th>Link</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <strong>Server Configuration</strong>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="guild-select" class="form-label">Select Server</label>
+                    <select class="form-select" id="guild-select">
+                        <option value="" selected disabled>Select Server...</option>
+                    </select>
+                </div>
+
+                <form id="config-form" class="d-none">
+                    <input type="hidden" id="guild-id">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="channel-select" class="form-label">Notification Channel</label>
+                            <select class="form-select" id="channel-select">
+                                <option value="">None</option>
+                            </select>
+                            <div class="form-text">Where notifications will be sent.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="role-select" class="form-label">Notification Role</label>
+                            <select class="form-select" id="role-select">
+                                <option value="">None</option>
+                            </select>
+                            <div class="form-text">Role to ping (optional).</div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="daily-summary">
+                                <label class="form-check-label" for="daily-summary">Enable Daily Summary (08:00 AM)</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="weekly-summary">
+                                <label class="form-check-label" for="weekly-summary">Enable Weekly Summary (Sunday 20:00)</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="event-start">
+                                <label class="form-check-label" for="event-start">Enable Event Start Notification</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="advance-minutes" class="form-label">Advance Notification Time (Minutes)</label>
+                            <input type="number" class="form-control" id="advance-minutes" min="5" max="1440" value="120">
+                            <div class="form-text">How many minutes before event start to notify (Default: 120 = 2 hours).</div>
+                        </div>
+
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-success" id="save-btn">
+                                <span id="save-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                Save Settings
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let globalData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchData();
+
+    document.getElementById('guild-select').addEventListener('change', (e) => {
+        loadGuildConfig(e.target.value);
+    });
+
+    document.getElementById('config-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await saveConfig();
+    });
+});
+
+async function fetchData() {
+    try {
+        const response = await fetch('/api/pokemon/data');
+        const data = await response.json();
+        globalData = data;
+
+        // Populate Events
+        const tbody = document.querySelector('#events-table tbody');
+        tbody.innerHTML = '';
+        document.getElementById('event-count').textContent = data.events.length;
+
+        data.events.forEach(ev => {
+            const tr = document.createElement('tr');
+            // Format date nicely
+            let dateStr = ev.start_time.replace('T', ' ');
+            tr.innerHTML = `
+                <td>${dateStr}</td>
+                <td>${ev.title}</td>
+                <td><span class="badge bg-secondary">${ev.type}</span></td>
+                <td><a href="${ev.link}" target="_blank">Link</a></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Populate Guild Select if not already populated
+        const select = document.getElementById('guild-select');
+        if (select.options.length <= 1) {
+            data.guilds.forEach(guild => {
+                const option = document.createElement('option');
+                option.value = guild.id;
+                option.textContent = guild.name;
+                select.appendChild(option);
+            });
+        }
+
+        // If a guild is already selected, reload its config (in case of refresh)
+        if (select.value) {
+            loadGuildConfig(select.value);
+        }
+
+    } catch (error) {
+        console.error("Error loading data:", error);
+    }
+}
+
+function loadGuildConfig(guildId) {
+    if (!globalData) return;
+    const guild = globalData.guilds.find(g => g.id === guildId);
+    if (!guild) return;
+
+    const form = document.getElementById('config-form');
+    form.classList.remove('d-none');
+    document.getElementById('guild-id').value = guildId;
+
+    // Channels
+    const channelSelect = document.getElementById('channel-select');
+    channelSelect.innerHTML = '<option value="">None</option>';
+    guild.channels.forEach(ch => {
+        const opt = document.createElement('option');
+        opt.value = ch.id;
+        opt.textContent = ch.name;
+        channelSelect.appendChild(opt);
+    });
+    channelSelect.value = guild.config.channel_id;
+
+    // Roles
+    const roleSelect = document.getElementById('role-select');
+    roleSelect.innerHTML = '<option value="">None</option>';
+    guild.roles.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = r.name;
+        roleSelect.appendChild(opt);
+    });
+    roleSelect.value = guild.config.role_id;
+
+    // Toggles
+    document.getElementById('daily-summary').checked = guild.config.daily_summary_enabled;
+    document.getElementById('weekly-summary').checked = guild.config.weekly_summary_enabled;
+    document.getElementById('event-start').checked = guild.config.event_start_enabled;
+
+    // Number
+    document.getElementById('advance-minutes').value = guild.config.advance_minutes;
+}
+
+async function saveConfig() {
+    const guildId = document.getElementById('guild-id').value;
+    const btn = document.getElementById('save-btn');
+    const spinner = document.getElementById('save-spinner');
+
+    btn.disabled = true;
+    spinner.classList.remove('d-none');
+
+    const payload = {
+        guild_id: guildId,
+        channel_id: document.getElementById('channel-select').value,
+        role_id: document.getElementById('role-select').value,
+        daily_summary_enabled: document.getElementById('daily-summary').checked,
+        weekly_summary_enabled: document.getElementById('weekly-summary').checked,
+        event_start_enabled: document.getElementById('event-start').checked,
+        advance_minutes: document.getElementById('advance-minutes').value
+    };
+
+    try {
+        const response = await fetch('/api/pokemon/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const res = await response.json();
+        if (res.status === 'success') {
+            alert("Settings saved!");
+            // Update local globalData to reflect changes without full reload
+            const guild = globalData.guilds.find(g => g.id === guildId);
+            if (guild) {
+                guild.config = payload;
+            }
+        } else {
+            alert("Error: " + res.message);
+        }
+    } catch (e) {
+        alert("Failed to save settings.");
+    } finally {
+        btn.disabled = false;
+        spinner.classList.add('d-none');
+    }
+}
+
+async function refreshEvents() {
+    const btn = document.getElementById('refresh-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
+
+    try {
+        const response = await fetch('/api/pokemon/refresh', { method: 'POST' });
+        const res = await response.json();
+        if (res.status === 'success') {
+            await fetchData(); // Reload table
+            alert(`Updated! Found ${res.count} events.`);
+        } else {
+            alert("Error: " + res.message);
+        }
+    } catch (e) {
+        alert("Failed to refresh events.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Force Update';
+    }
+}
+</script>
+{% endblock %}
