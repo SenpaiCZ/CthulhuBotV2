@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Giveaway Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1>🎉 Giveaway Management</h1>
+        <p class="lead">Create and manage giveaways for your server.</p>
+    </div>
+</div>
+
+<div class="row" id="loading">
+    <div class="col-12 text-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Loading giveaways...</p>
+    </div>
+</div>
+
+<div id="dashboard-content" style="display: none;">
+
+    <!-- Guild Selector -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <label for="guildSelect" class="form-label">Select Server:</label>
+            <select class="form-select" id="guildSelect" onchange="loadGuildData()">
+                <!-- Populated by JS -->
+            </select>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Create Giveaway Form -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Create New Giveaway</h5>
+                </div>
+                <div class="card-body">
+                    <form id="createForm">
+                        <div class="mb-3">
+                            <label for="channelSelect" class="form-label">Channel</label>
+                            <select class="form-select" id="channelSelect" required>
+                                <option value="" disabled selected>Select Channel...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="giveawayTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="giveawayTitle" placeholder="e.g. Steam Key Giveaway" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="giveawayDesc" class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" id="giveawayDesc" rows="3" placeholder="Description of the prize..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="prizeSecret" class="form-label">Prize Secret (Hidden)</label>
+                            <input type="text" class="form-control" id="prizeSecret" placeholder="e.g. AAAAA-BBBBB-CCCCC" required>
+                            <div class="form-text">This will be sent via DM to the winner automatically.</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">Create Giveaway</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Giveaways -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Active Giveaways</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="activeTable">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Channel</th>
+                                    <th>Entries</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="noActive" class="text-center text-muted py-3" style="display: none;">
+                        No active giveaways.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Past Giveaways -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover" id="historyTable">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Winner</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let allData = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchData();
+
+        document.getElementById('createForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            createGiveaway();
+        });
+    });
+
+    async function fetchData() {
+        try {
+            const response = await fetch('/api/giveaway/data');
+            const data = await response.json();
+            allData = data.guilds;
+
+            populateGuildSelect();
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard-content').style.display = 'block';
+
+            // Load first guild if available
+            if (allData.length > 0) {
+                loadGuildData();
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            alert('Failed to load giveaway data.');
+        }
+    }
+
+    function populateGuildSelect() {
+        const select = document.getElementById('guildSelect');
+        select.innerHTML = '';
+        allData.forEach((guild, index) => {
+            const option = document.createElement('option');
+            option.value = index; // Use index to reference array
+            option.text = guild.name;
+            select.appendChild(option);
+        });
+    }
+
+    function loadGuildData() {
+        const index = document.getElementById('guildSelect').value;
+        const guild = allData[index];
+        if (!guild) return;
+
+        // Populate Channel Select
+        const channelSelect = document.getElementById('channelSelect');
+        channelSelect.innerHTML = '<option value="" disabled selected>Select Channel...</option>';
+        guild.channels.forEach(channel => {
+            const opt = document.createElement('option');
+            opt.value = channel.id;
+            opt.text = `#${channel.name}`;
+            channelSelect.appendChild(opt);
+        });
+
+        // Populate Active Table
+        const activeTbody = document.querySelector('#activeTable tbody');
+        activeTbody.innerHTML = '';
+        let hasActive = false;
+
+        // Populate History Table
+        const historyTbody = document.querySelector('#historyTable tbody');
+        historyTbody.innerHTML = '';
+
+        guild.giveaways.forEach(gw => {
+            if (gw.status === 'active') {
+                hasActive = true;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${escapeHtml(gw.title)}</strong></td>
+                    <td><span class="badge bg-light text-dark">${escapeHtml(gw.channel_name)}</span></td>
+                    <td>${gw.participant_count}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="endGiveaway('${guild.id}', '${gw.message_id}')">End</button>
+                    </td>
+                `;
+                activeTbody.appendChild(tr);
+            } else {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${escapeHtml(gw.title)}</td>
+                    <td>${gw.winner_name ? '<span class="badge bg-success">' + escapeHtml(gw.winner_name) + '</span>' : '<span class="badge bg-secondary">None</span>'}</td>
+                    <td><span class="badge bg-secondary">${gw.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-warning" onclick="rerollGiveaway('${guild.id}', '${gw.message_id}')">Reroll</button>
+                    </td>
+                `;
+                historyTbody.appendChild(tr);
+            }
+        });
+
+        document.getElementById('noActive').style.display = hasActive ? 'none' : 'block';
+    }
+
+    async function createGiveaway() {
+        const index = document.getElementById('guildSelect').value;
+        const guild = allData[index];
+
+        const channelId = document.getElementById('channelSelect').value;
+        const title = document.getElementById('giveawayTitle').value;
+        const desc = document.getElementById('giveawayDesc').value;
+        const prize = document.getElementById('prizeSecret').value;
+
+        if (!channelId || !title || !prize) {
+            alert("Please fill in all required fields.");
+            return;
+        }
+
+        const btn = document.querySelector('#createForm button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = "Creating...";
+
+        try {
+            const response = await fetch('/api/giveaway/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    guild_id: guild.id,
+                    channel_id: channelId,
+                    title: title,
+                    description: desc,
+                    prize_secret: prize
+                })
+            });
+
+            const result = await response.json();
+            if (result.status === 'success') {
+                alert("Giveaway Created!");
+                document.getElementById('createForm').reset();
+                fetchData(); // Reload data
+            } else {
+                alert("Error: " + result.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("An error occurred.");
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Create Giveaway";
+        }
+    }
+
+    async function endGiveaway(guildId, messageId) {
+        if (!confirm("Are you sure you want to end this giveaway? A winner will be picked immediately.")) return;
+
+        try {
+            const response = await fetch('/api/giveaway/end', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    guild_id: guildId,
+                    message_id: messageId
+                })
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                alert(result.message);
+                fetchData();
+            } else {
+                alert("Error: " + result.message);
+            }
+        } catch (e) {
+            alert("Error: " + e);
+        }
+    }
+
+    async function rerollGiveaway(guildId, messageId) {
+        if (!confirm("Are you sure you want to reroll the winner for this giveaway?")) return;
+
+        try {
+            const response = await fetch('/api/giveaway/reroll', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    guild_id: guildId,
+                    message_id: messageId
+                })
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                alert(result.message);
+                fetchData();
+            } else {
+                alert("Error: " + result.message);
+            }
+        } catch (e) {
+            alert("Error: " + e);
+        }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return "";
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+{% endblock %}
