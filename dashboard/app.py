@@ -1491,6 +1491,71 @@ async def soundboard_delete_file():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/api/soundboard/file/rename', methods=['POST'])
+async def soundboard_rename_file():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    file_path = data.get('file_path')
+    new_name = data.get('new_name')
+
+    if not file_path or not new_name:
+        return jsonify({"status": "error", "message": "Missing file_path or new_name"}), 400
+
+    # Basic path validation
+    if '..' in file_path:
+        return jsonify({"status": "error", "message": "Invalid path"}), 400
+
+    full_old_path = os.path.join(SOUNDBOARD_FOLDER, file_path)
+
+    # Ensure it is inside soundboard folder
+    if not os.path.abspath(full_old_path).startswith(os.path.abspath(SOUNDBOARD_FOLDER)):
+        return jsonify({"status": "error", "message": "Path traversal detected"}), 400
+
+    if not os.path.exists(full_old_path):
+        return jsonify({"status": "error", "message": "File not found"}), 404
+
+    if not os.path.isfile(full_old_path):
+        return jsonify({"status": "error", "message": "Target is not a file"}), 400
+
+    # Sanitize new name and preserve extension
+    safe_new_name = sanitize_filename(new_name)
+    ext = os.path.splitext(file_path)[1]
+
+    new_filename = f"{safe_new_name}{ext}"
+
+    # Determine directory of the file (it might be in a subfolder)
+    directory = os.path.dirname(full_old_path)
+    full_new_path = os.path.join(directory, new_filename)
+
+    # Relative path for settings
+    rel_directory = os.path.dirname(file_path)
+
+    if rel_directory:
+        new_rel_path = os.path.join(rel_directory, new_filename)
+    else:
+        new_rel_path = new_filename
+
+    # Fix potential path separator issues for settings key consistency
+    new_rel_path = new_rel_path.replace('\\', '/')
+
+    if os.path.exists(full_new_path):
+        return jsonify({"status": "error", "message": "A file with that name already exists"}), 400
+
+    try:
+        os.rename(full_old_path, full_new_path)
+
+        # Migrate settings
+        settings = await load_soundboard_settings()
+        if 'files' in settings and file_path in settings['files']:
+            settings['files'][new_rel_path] = settings['files'][file_path]
+            del settings['files'][file_path]
+            await save_soundboard_settings(settings)
+
+        return jsonify({"status": "success", "new_path": new_rel_path})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/api/soundboard/upload', methods=['POST'])
 async def soundboard_upload():
     if not is_admin(): return "Unauthorized", 401
