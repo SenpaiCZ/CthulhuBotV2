@@ -238,50 +238,79 @@
         if (filesContainer.childElementCount === 0) {
              filesContainer.innerHTML = '';
 
-            const createTable = (files) => {
-                const table = document.createElement('table');
-                table.className = 'table table-hover table-sm align-middle mb-0';
+            const createGrid = (files, folderColor) => {
+                const container = document.createElement('div');
+                container.className = 'container-fluid p-3';
+                const row = document.createElement('div');
+                row.className = 'row g-3';
 
-                const thead = document.createElement('thead');
-                thead.innerHTML = `
-                    <tr>
-                        <th style="width: 60%">File Name</th>
-                        <th style="width: 20%" class="text-center">Loop</th>
-                        <th style="width: 20%" class="text-center">Play Once</th>
-                    </tr>
-                `;
-                table.appendChild(thead);
-
-                const tbody = document.createElement('tbody');
                 files.forEach(file => {
-                    const tr = document.createElement('tr');
-                    // Escape single quotes for the onclick handler
+                    const col = document.createElement('div');
+                    col.className = 'col-6 col-md-4 col-lg-3'; // Responsive grid: 2 cols mobile, 3 tablet, 4 desktop
+
+                    // Fetch saved settings for this file
+                    const fileSettings = currentData.settings?.files?.[file.path] || {};
+                    const savedVol = fileSettings.volume !== undefined ? fileSettings.volume : 100;
+                    const savedLoop = fileSettings.loop !== undefined ? fileSettings.loop : false;
                     const safePath = file.path.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
-                    const nameTd = document.createElement('td');
-                    nameTd.textContent = file.name;
-                    tr.appendChild(nameTd);
+                    col.innerHTML = `
+                        <div class="card h-100 shadow-sm sound-card" style="cursor: pointer; transition: transform 0.1s;">
+                            <div class="card-body d-flex flex-column justify-content-between p-2" style="background-color: ${folderColor || '#f8f9fa'}; min-height: 100px;">
+                                <h6 class="card-title text-center text-truncate fw-bold mb-2" title="${file.name}" style="pointer-events: none; user-select: none; text-shadow: 0 1px 3px rgba(0,0,0,0.8); color: white;">
+                                    ${file.name}
+                                </h6>
+                            </div>
+                            <div class="card-footer p-2 bg-light d-flex align-items-center justify-content-between stop-prop">
+                                <div class="d-flex align-items-center flex-grow-1 me-2" title="Volume">
+                                    <input type="range" class="form-range sound-vol" min="0" max="100" value="${savedVol}" data-path="${safePath}">
+                                </div>
+                                <div class="form-check form-switch m-0" title="Loop">
+                                    <input class="form-check-input sound-loop" type="checkbox" ${savedLoop ? 'checked' : ''} data-path="${safePath}">
+                                </div>
+                            </div>
+                        </div>
+                    `;
 
-                    const loopTd = document.createElement('td');
-                    loopTd.className = "text-center";
-                    loopTd.innerHTML = `
-                            <button class="btn btn-outline-primary btn-sm" onclick="playSound('${safePath}', true)">
-                                🔁
-                            </button>`;
-                    tr.appendChild(loopTd);
+                    // Add click listener to card body (play)
+                    const card = col.querySelector('.sound-card');
+                    card.onclick = (e) => {
+                        // If clicking controls, do nothing (handled by stop-prop logic but double check)
+                        if (e.target.closest('.stop-prop')) return;
 
-                    const onceTd = document.createElement('td');
-                    onceTd.className = "text-center";
-                    onceTd.innerHTML = `
-                            <button class="btn btn-outline-secondary btn-sm" onclick="playSound('${safePath}', false)">
-                                ▶
-                            </button>`;
-                    tr.appendChild(onceTd);
+                        // Animate click
+                        card.style.transform = "scale(0.95)";
+                        setTimeout(() => card.style.transform = "scale(1)", 100);
 
-                    tbody.appendChild(tr);
+                        // Get current UI values
+                        const volInput = col.querySelector('.sound-vol');
+                        const loopInput = col.querySelector('.sound-loop');
+                        const vol = parseInt(volInput.value);
+                        const loop = loopInput.checked;
+
+                        playSound(file.path, loop, vol);
+                    };
+
+                    // Add listeners to controls to save settings
+                    const volInput = col.querySelector('.sound-vol');
+                    const loopInput = col.querySelector('.sound-loop');
+
+                    // Stop propagation to prevent play on control click
+                    col.querySelector('.stop-prop').onclick = (e) => e.stopPropagation();
+
+                    volInput.onchange = (e) => {
+                        saveFileSettings(file.path, parseInt(e.target.value), loopInput.checked);
+                    };
+                    // Also prevent drag from triggering click if possible, mostly handled by stopPropagation on click
+
+                    loopInput.onchange = (e) => {
+                        saveFileSettings(file.path, parseInt(volInput.value), e.target.checked);
+                    };
+
+                    row.appendChild(col);
                 });
-                table.appendChild(tbody);
-                return table;
+                container.appendChild(row);
+                return container;
             };
 
             if (currentData.files.Root) {
@@ -290,7 +319,7 @@
                 rootCard.innerHTML = '<div class="card-header">Uncategorized</div><div class="card-body p-0" id="root-files"></div>';
                 filesContainer.appendChild(rootCard);
                 const rootBody = rootCard.querySelector('#root-files');
-                rootBody.appendChild(createTable(currentData.files.Root));
+                rootBody.appendChild(createGrid(currentData.files.Root, '#ffffff'));
             }
 
             Object.keys(currentData.files).forEach((key, index) => {
@@ -311,7 +340,7 @@
                         </button>
                         <input type="color" class="form-control form-control-color form-control-sm" value="${folderColor || '#f8f9fa'}" title="Choose folder color">
                     </div>
-                    <div id="${safeKey}" class="collapse">
+                    <div id="${safeKey}" class="collapse show">
                         <div class="card-body p-0" id="body-${safeKey}"></div>
                     </div>
                 `;
@@ -328,7 +357,7 @@
                 colorInput.onclick = (e) => e.stopPropagation();
 
                 const body = card.querySelector(`#body-${safeKey}`);
-                body.appendChild(createTable(currentData.files[key]));
+                body.appendChild(createGrid(currentData.files[key], folderColor));
             });
 
             if (Object.keys(currentData.files).length === 0) {
@@ -339,6 +368,16 @@
 
     async function saveFolderColor(folderName, color) {
         await apiCall('/api/soundboard/folder/color', { folder_name: folderName, color: color });
+    }
+
+    async function saveFileSettings(filePath, volume, loop) {
+        await apiCall('/api/soundboard/file/settings', {
+            file_path: filePath,
+            volume: volume,
+            loop: loop
+        });
+        // We do NOT call fetchData() here to avoid refreshing the UI and disrupting the user interaction (e.g. dragging slider)
+        // Update local data cache instead if needed, but UI is already authoritative for current state.
     }
 
     // --- Actions ---
@@ -379,15 +418,20 @@
         await apiCall('/api/soundboard/volume', { guild_id: selectedGuildId, volume: parseInt(e.target.value) });
     };
 
-    async function playSound(filePath, loop) {
+    async function playSound(filePath, loop, volume) {
         if (!selectedGuildId) return;
         const channelId = document.getElementById('channelSelect').value;
         if (!channelId) { showError("Please select a voice channel!"); return; }
+
+        // Convert 0-100 volume to 0.0-1.0 modifier
+        const modifier = volume / 100.0;
+
         await apiCall('/api/soundboard/play', {
              guild_id: selectedGuildId,
              channel_id: channelId,
              file_path: filePath,
-             loop: loop
+             loop: loop,
+             volume_modifier: modifier
         });
     }
 
