@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}Spells - CoC Bot{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-container">
+    <div class="sidebar-panel">
+        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
+            <h5 class="m-0 text-success">Grimoire</h5>
+        </div>
+        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
+            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search...">
+        </div>
+        <div class="list-group list-group-flush sidebar-list" id="spellList">
+            {% if data and data.spells %}
+                {% for item in data.spells %}
+                    {% set s = item.spell_entry %}
+                    <button type="button" class="list-group-item list-group-item-action spell-list-item" onclick="showSpell({{ loop.index0 }})">
+                        {{ s.name }}
+                    </button>
+                {% endfor %}
+            {% else %}
+                <div class="p-3 text-center text-muted">No spells found.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-panel" id="detailPanel">
+        <div id="spell-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
+            <h2 class="text-muted" style="opacity: 0.3;">Select a spell</h2>
+            <p class="text-secondary">View detailed incantations from the archives.</p>
+        </div>
+
+        <div id="spell-content" class="hidden">
+            <!-- Template content populated by JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Search Functionality
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const filter = this.value.toLowerCase();
+        const items = document.querySelectorAll('.spell-list-item');
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if(text.includes(filter)) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+    });
+
+    // Pass Python data to JS safely
+    const spells = {{ data.spells | tojson }};
+
+    function showSpell(index) {
+        try {
+            const s = spells[index].spell_entry;
+            const container = document.getElementById('spell-content');
+            const placeholder = document.getElementById('spell-placeholder');
+
+            // Highlight active item
+            document.querySelectorAll('.spell-list-item').forEach((el, i) => {
+                if(i === index) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+
+            let html = `
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h1 class="display-5 mb-0 text-success">${s.name}</h1>
+                        <div class="text-secondary fst-italic fs-5">${s.category || 'Unknown Category'}</div>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        ${s.effect && s.effect.description ? `<p class="card-text border-start border-success border-3 ps-3">${s.effect.description}</p>` : ''}
+                    </div>
+                </div>
+
+                <div class="section-header">Costs & Casting</div>
+                <div class="row row-cols-2 row-cols-md-4 g-2 mb-4">
+                    <div class="col">
+                        <div class="stat-box h-100">
+                            <div class="stat-label">Magic Points</div>
+                            <div class="stat-value text-info">${s.costs && s.costs.magic_points ? s.costs.magic_points : 'None'}</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stat-box h-100">
+                            <div class="stat-label">Sanity</div>
+                            <div class="stat-value text-danger">${s.costs && s.costs.sanity ? s.costs.sanity : 'None'}</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stat-box h-100">
+                            <div class="stat-label">Casting Time</div>
+                            <div class="stat-value text-light">${s.casting_time || 'Instantaneous'}</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stat-box h-100">
+                            <div class="stat-label">Range</div>
+                            <div class="stat-value text-light">${s.range || 'Touch'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                ${s.costs && s.costs.components ? `
+                <div class="mb-3">
+                    <h6 class="text-success fw-bold">Components:</h6>
+                    <p class="text-light">${s.costs.components}</p>
+                </div>` : ''}
+
+                <div class="row">
+                    <div class="col-lg-6">
+                        ${s.effect && s.effect.damage ? `
+                        <div class="mb-3">
+                            <div class="card bg-dark border-secondary">
+                                <div class="card-body">
+                                    <h6 class="card-title text-danger">Damage</h6>
+                                    <p class="card-text fs-5 fw-bold">${s.effect.damage}</p>
+                                </div>
+                            </div>
+                        </div>` : ''}
+                    </div>
+
+                    <div class="col-lg-6">
+                        ${s.effect && s.effect.opposed_roll ? `
+                        <div class="mb-3">
+                            <div class="card bg-dark border-secondary">
+                                <div class="card-body">
+                                    <h6 class="card-title text-warning">Opposed Roll</h6>
+                                    <p class="card-text fs-5 fw-bold">${s.effect.opposed_roll}</p>
+                                </div>
+                            </div>
+                        </div>` : ''}
+                    </div>
+                </div>
+
+                ${s.deeper_magic ? `
+                <div class="mt-4">
+                    <div class="section-header">Deeper Magic</div>
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-body">
+                            <p class="card-text text-light fst-italic">${s.deeper_magic}</p>
+                        </div>
+                    </div>
+                </div>` : ''}
+
+                ${s.alternate_names ? `
+                    <div class="mt-5 pt-3 border-top border-secondary small text-muted text-center">
+                        <em>Also known as: ${s.alternate_names.join(', ')}</em>
+                    </div>
+                ` : ''}
+            `;
+
+            container.innerHTML = html;
+            container.classList.remove('hidden');
+            placeholder.style.setProperty('display', 'none', 'important');
+            placeholder.classList.remove('d-flex');
+
+            document.getElementById('detailPanel').scrollTop = 0;
+        } catch (e) {
+            console.error(e);
+            alert("Error rendering spell: " + e.message);
+        }
+    }
+</script>
+{% endblock %}

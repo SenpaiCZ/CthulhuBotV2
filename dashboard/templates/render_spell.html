@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ spell.name }} - Spell Render</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/cthulhu.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .coc-sheet {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            border: 2px solid var(--cthulhu-green-dark, #2E8B57);
+            padding: 20px;
+            border-radius: 5px;
+            width: 800px;
+        }
+
+        .text-success { color: var(--cthulhu-green-bright, #00FF7F) !important; }
+        .border-success { border-color: var(--cthulhu-green-dark, #2E8B57) !important; }
+
+        .stat-box {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            padding: 5px;
+            border-radius: 5px;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .stat-label {
+            font-size: 0.8em;
+            color: #888;
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .section-header {
+            background-color: var(--cthulhu-green-dark, #2E8B57);
+            color: #fff;
+            padding: 5px 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="coc-sheet">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h1 class="display-5 mb-0 text-success">{{ spell.name }}</h1>
+                <div class="text-secondary fst-italic fs-5">{{ spell.category or 'Unknown Category' }}</div>
+            </div>
+        </div>
+
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                {% if spell.effect and spell.effect.description %}
+                    <p class="card-text border-start border-success border-3 ps-3">{{ spell.effect.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="section-header">Costs & Casting</div>
+        <div class="row row-cols-2 row-cols-md-4 g-2 mb-4">
+            <div class="col">
+                <div class="stat-box">
+                    <div class="stat-label">Magic Points</div>
+                    <div class="stat-value text-info">{{ spell.costs.magic_points if spell.costs and spell.costs.magic_points else 'None' }}</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="stat-box">
+                    <div class="stat-label">Sanity</div>
+                    <div class="stat-value text-danger">{{ spell.costs.sanity if spell.costs and spell.costs.sanity else 'None' }}</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="stat-box">
+                    <div class="stat-label">Casting Time</div>
+                    <div class="stat-value text-light">{{ spell.casting_time or 'Instantaneous' }}</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="stat-box">
+                    <div class="stat-label">Range</div>
+                    <div class="stat-value text-light">{{ spell.range or 'Touch' }}</div>
+                </div>
+            </div>
+        </div>
+
+        {% if spell.costs and spell.costs.components %}
+        <div class="mb-3 p-2 bg-dark border border-secondary rounded">
+            <strong class="text-success text-uppercase small">Components:</strong>
+            <span class="text-light ms-2">{{ spell.costs.components }}</span>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-lg-6">
+                {% if spell.effect and spell.effect.damage %}
+                <div class="mb-3">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-body p-2">
+                            <h6 class="card-title text-danger small text-uppercase mb-1">Damage</h6>
+                            <p class="card-text fw-bold">{{ spell.effect.damage }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-6">
+                {% if spell.effect and spell.effect.opposed_roll %}
+                <div class="mb-3">
+                    <div class="card bg-dark border-secondary">
+                        <div class="card-body p-2">
+                            <h6 class="card-title text-warning small text-uppercase mb-1">Opposed Roll</h6>
+                            <p class="card-text fw-bold">{{ spell.effect.opposed_roll }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if spell.deeper_magic %}
+        <div class="mt-4">
+            <div class="section-header">Deeper Magic</div>
+            <div class="card bg-dark border-secondary">
+                <div class="card-body">
+                    <p class="card-text text-light fst-italic">{{ spell.deeper_magic }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if spell.alternate_names %}
+            <div class="mt-4 pt-2 border-top border-secondary small text-muted text-center">
+                <em>Also known as: {{ spell.alternate_names | join(', ') }}</em>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
