@@ -93,6 +93,20 @@ def format_custom_emoji(text):
 
 app.add_template_filter(format_custom_emoji, 'format_custom_emoji')
 
+def parse_pulp_talent(text):
+    if not isinstance(text, str):
+        return {"name": "Unknown", "description": str(text)}
+
+    # Pattern: **Name**: Description
+    match = re.match(r'\*\*(.*?)\*\*:\s*(.*)', text)
+    if match:
+        return {"name": match.group(1), "description": match.group(2)}
+
+    # Fallback if no bold name
+    return {"name": "Talent", "description": text}
+
+app.add_template_filter(parse_pulp_talent, 'parse_pulp_talent')
+
 def sanitize_filename(filename):
     """Sanitizes a filename to ensure it is safe for the filesystem."""
     # Keep only alphanumeric, dot, dash, underscore

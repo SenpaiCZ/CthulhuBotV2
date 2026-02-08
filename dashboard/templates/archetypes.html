@@ -52,6 +52,11 @@
 
     const data = {{ data | tojson }};
 
+    function formatBold(text) {
+        if (!text) return '';
+        return text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
     function showItem(key) {
         const txt = document.createElement("textarea");
         txt.innerHTML = key;
@@ -77,7 +82,7 @@
                 <div class="col-12">
                     <div class="card bg-dark border-secondary mb-4">
                         <div class="card-body">
-                            <p class="card-text border-start border-success border-3 ps-3">${item.description}</p>
+                            <p class="card-text border-start border-success border-3 ps-3">${formatBold(item.description)}</p>
                         </div>
                     </div>
 
@@ -85,7 +90,7 @@
                     <ul class="list-group list-group-flush bg-transparent">
                         ${(item.adjustments || []).map(adj => `
                             <li class="list-group-item bg-transparent border-secondary ps-0 py-2 text-light">
-                                ${adj}
+                                ${formatBold(adj)}
                             </li>
                         `).join('')}
                     </ul>
