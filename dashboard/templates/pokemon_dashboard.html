@@ -91,6 +91,17 @@
                             <div class="form-text">How many minutes before event start to notify (Default: 120 = 2 hours).</div>
                         </div>
 
+                        <div class="col-12">
+                            <hr>
+                            <h6 class="mb-3">Manual Actions (No Ping)</h6>
+                            <button type="button" class="btn btn-info text-white me-2" id="push-weekly-btn" onclick="pushWeekly()">
+                                <i class="bi bi-calendar-week"></i> Push Weekly Summary
+                            </button>
+                            <button type="button" class="btn btn-warning text-dark" id="push-next-btn" onclick="pushNext()">
+                                <i class="bi bi-skip-forward"></i> Push Next Event
+                            </button>
+                        </div>
+
                         <div class="col-12 text-end">
                             <button type="submit" class="btn btn-success" id="save-btn">
                                 <span id="save-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
@@ -267,6 +278,68 @@ async function refreshEvents() {
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Force Update';
+    }
+}
+
+async function pushWeekly() {
+    const guildId = document.getElementById('guild-id').value;
+    if (!guildId) return;
+
+    if (!confirm("Are you sure you want to push the weekly summary to this server?")) return;
+
+    const btn = document.getElementById('push-weekly-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+
+    try {
+        const response = await fetch('/api/pokemon/push_weekly', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({guild_id: guildId})
+        });
+        const res = await response.json();
+        if (res.status === 'success') {
+            alert("Weekly summary sent!");
+        } else {
+            alert("Error: " + res.message);
+        }
+    } catch (e) {
+        alert("Failed to send request.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+async function pushNext() {
+    const guildId = document.getElementById('guild-id').value;
+    if (!guildId) return;
+
+    if (!confirm("Are you sure you want to push the next event notification to this server?")) return;
+
+    const btn = document.getElementById('push-next-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+
+    try {
+        const response = await fetch('/api/pokemon/push_next', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({guild_id: guildId})
+        });
+        const res = await response.json();
+        if (res.status === 'success') {
+            alert("Next event notification sent!");
+        } else {
+            alert("Error: " + res.message);
+        }
+    } catch (e) {
+        alert("Failed to send request.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
 </script>

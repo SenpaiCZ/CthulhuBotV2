@@ -147,6 +147,98 @@ class PokemonGo(commands.Cog):
         events = await self.scrape_events()
         await msg.edit(content=f"Updated! Found {len(events)} upcoming events.")
 
+    async def send_weekly_summary_to_guild(self, guild_id, ping=True):
+        """Sends weekly summary to a specific guild immediately."""
+        config = self.settings.get(str(guild_id))
+        if not config: return False, "Guild not configured"
+
+        channel_id = config.get('channel_id')
+        if not channel_id: return False, "Channel not configured"
+
+        channel = self.bot.get_channel(channel_id)
+        if not channel: return False, "Channel not found"
+
+        now = datetime.datetime.now()
+        next_week_end = now + datetime.timedelta(days=7)
+
+        upcoming_week_events = []
+        for ev in self.events:
+            start_dt = datetime.datetime.fromisoformat(ev['start_time'])
+            if now < start_dt <= next_week_end:
+                upcoming_week_events.append(ev)
+
+        if not upcoming_week_events:
+            return False, "No upcoming events this week"
+
+        role_id = config.get('role_id')
+        ping_str = f"<@&{role_id}>" if role_id and ping else ""
+
+        embed = discord.Embed(title="📅 Events This Week", color=0x00FFFF)
+
+        description = ""
+        for ev in upcoming_week_events:
+            start_dt = datetime.datetime.fromisoformat(ev['start_time'])
+            day_name = start_dt.strftime("%A")
+            description += f"**{day_name}**: [{ev['title']}]({ev['link']}) ({ev['time_text']})\n"
+
+        embed.description = description
+
+        try:
+            await channel.send(f"{ping_str} Here is the summary for the upcoming week!", embed=embed)
+            return True, "Sent"
+        except Exception as e:
+            return False, f"Failed to send: {e}"
+
+    async def send_next_event_to_guild(self, guild_id, ping=True):
+        """Sends the next upcoming event to a specific guild immediately."""
+        config = self.settings.get(str(guild_id))
+        if not config: return False, "Guild not configured"
+
+        channel_id = config.get('channel_id')
+        if not channel_id: return False, "Channel not configured"
+
+        channel = self.bot.get_channel(channel_id)
+        if not channel: return False, "Channel not found"
+
+        now = datetime.datetime.now()
+        next_event = None
+        for ev in self.events:
+            start_dt = datetime.datetime.fromisoformat(ev['start_time'])
+            if start_dt > now:
+                next_event = ev
+                break
+
+        if not next_event:
+            return False, "No upcoming events found"
+
+        role_id = config.get('role_id')
+        ping_str = f"<@&{role_id}>" if role_id and ping else ""
+
+        embed = discord.Embed(title=f"Upcoming Event: {next_event['title']}", url=next_event['link'], color=0xFFA500)
+        if next_event['image']:
+            embed.set_thumbnail(url=next_event['image'])
+
+        # Calculate time until
+        start_dt = datetime.datetime.fromisoformat(next_event['start_time'])
+        time_diff = start_dt - now
+        minutes_until = int(time_diff.total_seconds() / 60)
+        hours_until = minutes_until // 60
+        mins_rem = minutes_until % 60
+
+        time_str = ""
+        if hours_until > 0:
+            time_str += f"{hours_until}h "
+        time_str += f"{mins_rem}m"
+
+        description = f"**Starts in:** {time_str}\n**Time:** {next_event['time_text']}\n**Type:** {next_event['type']}"
+        embed.description = description
+
+        try:
+            await channel.send(f"{ping_str} Next upcoming event:", embed=embed)
+            return True, "Sent"
+        except Exception as e:
+            return False, f"Failed to send: {e}"
+
     # --- Tasks ---
 
     @tasks.loop(hours=24)
