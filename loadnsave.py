@@ -266,3 +266,10 @@ async def load_pogo_events():
 
 async def save_pogo_events(events):
     await _save_json_file(DATA_FOLDER, 'pogo_events.json', events)
+
+# --- Giveaway Data ---
+async def load_giveaway_data():
+    return await _load_json_file(DATA_FOLDER, 'giveaway_data.json')
+
+async def save_giveaway_data(data):
+    await _save_json_file(DATA_FOLDER, 'giveaway_data.json', data)

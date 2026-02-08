@@ -78,7 +78,8 @@ class CustomHelpCommand(commands.DefaultHelpCommand):
                 "deleter",
                 "autodeleter",
                 "stopdeleter",
-                "rss"
+                "rss",
+                "giveaway"
             ],
             "NIU": [
             ],

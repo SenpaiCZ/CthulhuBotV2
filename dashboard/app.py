@@ -24,6 +24,7 @@ from loadnsave import (
     load_deleter_data, save_deleter_data,
     autoroom_load, autoroom_save,
     load_pogo_settings, save_pogo_settings, load_pogo_events, save_pogo_events,
+    load_giveaway_data,
     load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
     load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
     load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
@@ -2606,6 +2607,196 @@ async def pokemon_push_next():
         return jsonify({"status": "success", "message": msg})
     else:
         return jsonify({"status": "error", "message": msg}), 500
+
+# --- Giveaway Routes ---
+
+@app.route('/admin/giveaway')
+async def admin_giveaway():
+    if not is_admin(): return redirect(url_for('login'))
+    return await render_template('giveaway_dashboard.html')
+
+@app.route('/api/giveaway/data')
+async def giveaway_data():
+    if not is_admin(): return "Unauthorized", 401
+
+    if not app.bot:
+        return jsonify({"guilds": []})
+
+    data = await load_giveaway_data()
+    guilds_data = []
+
+    for guild in app.bot.guilds:
+        guild_id_str = str(guild.id)
+
+        # Channels
+        channels = []
+        for channel in guild.text_channels:
+             channels.append({"id": str(channel.id), "name": channel.name})
+
+        # Giveaways for this guild
+        guild_giveaways = []
+        if guild_id_str in data:
+            for msg_id, gw in data[guild_id_str].items():
+                gw_copy = gw.copy()
+                gw_copy['message_id'] = msg_id
+
+                # Fetch participant count
+                gw_copy['participant_count'] = len(gw.get('participants', []))
+
+                # Resolve channel name
+                chan = guild.get_channel(int(gw['channel_id']))
+                gw_copy['channel_name'] = chan.name if chan else "Unknown Channel"
+
+                # Resolve winner name
+                if 'winner_id' in gw:
+                    mem = guild.get_member(int(gw['winner_id']))
+                    gw_copy['winner_name'] = mem.display_name if mem else f"User {gw['winner_id']}"
+
+                guild_giveaways.append(gw_copy)
+
+        # Sort by status (active first) then title
+        guild_giveaways.sort(key=lambda x: (x['status'] == 'ended', x['title']))
+
+        guilds_data.append({
+            "id": guild_id_str,
+            "name": guild.name,
+            "channels": channels,
+            "giveaways": guild_giveaways
+        })
+
+    return jsonify({"guilds": guilds_data})
+
+@app.route('/api/giveaway/create', methods=['POST'])
+async def giveaway_create():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    channel_id = data.get('channel_id')
+    title = data.get('title')
+    description = data.get('description')
+    prize_secret = data.get('prize_secret')
+
+    if not all([guild_id, channel_id, title, prize_secret]):
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    try:
+        guild = app.bot.get_guild(int(guild_id))
+        if not guild:
+            return jsonify({"status": "error", "message": "Guild not found"}), 404
+
+        channel = guild.get_channel(int(channel_id))
+        if not channel:
+            return jsonify({"status": "error", "message": "Channel not found"}), 404
+
+        # Create Embed
+        embed = discord.Embed(title=f"🎉 GIVEAWAY: {title}", description=description, color=discord.Color.gold())
+        embed.add_field(name="How to win?", value="React with 🎉 to enter!\nKarma increases your chance to win!", inline=False)
+        embed.set_footer(text=f"Hosted by Admins")
+
+        # Import View
+        from commands.giveaway import GiveawayView
+        view = GiveawayView()
+
+        message = await channel.send(embed=embed, view=view)
+
+        # Save Data
+        gw_data = await load_giveaway_data()
+        if str(guild_id) not in gw_data:
+            gw_data[str(guild_id)] = {}
+
+        from loadnsave import save_giveaway_data
+
+        gw_data[str(guild_id)][str(message.id)] = {
+            "creator_id": app.bot.user.id, # Bot created via dashboard
+            "channel_id": int(channel_id),
+            "title": title,
+            "description": description,
+            "prize_secret": prize_secret,
+            "status": "active",
+            "participants": []
+        }
+
+        await save_giveaway_data(gw_data)
+
+        return jsonify({"status": "success", "message_id": str(message.id)})
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/giveaway/end', methods=['POST'])
+async def giveaway_end():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    message_id = data.get('message_id')
+
+    if not guild_id or not message_id:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    cog = app.bot.get_cog("Giveaway")
+    if not cog:
+        return jsonify({"status": "error", "message": "Giveaway Cog not loaded"}), 500
+
+    # Execute end logic via Cog
+    # I need to update Giveaway cog to have a public method or just call a helper
+    # I'll rely on calling `_end_giveaway_logic` or similar which I will add to Cog,
+    # OR since I am in app.py, I can just use the command function if it wasn't a command.
+    # But it IS a command.
+
+    # I'll manually implement the logic here using helper functions I'll assume exist or copy-paste (DRY violation but safe for now)
+    # Actually, calling a command function is hard.
+    # Best way: Add `api_end_giveaway` to Cog in next step.
+    # I will assume `cog.api_end_giveaway(guild_id, message_id)` exists.
+
+    try:
+        if hasattr(cog, 'api_end_giveaway'):
+             success, msg = await cog.api_end_giveaway(guild_id, message_id)
+             if success:
+                 return jsonify({"status": "success", "message": msg})
+             else:
+                 return jsonify({"status": "error", "message": msg}), 500
+        else:
+             return jsonify({"status": "error", "message": "API method not implemented on Cog"}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/giveaway/reroll', methods=['POST'])
+async def giveaway_reroll():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    message_id = data.get('message_id')
+
+    if not guild_id or not message_id:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    cog = app.bot.get_cog("Giveaway")
+    if not cog:
+        return jsonify({"status": "error", "message": "Giveaway Cog not loaded"}), 500
+
+    try:
+        if hasattr(cog, 'api_reroll_giveaway'):
+             success, msg = await cog.api_reroll_giveaway(guild_id, message_id)
+             if success:
+                 return jsonify({"status": "success", "message": msg})
+             else:
+                 return jsonify({"status": "error", "message": msg}), 500
+        else:
+             return jsonify({"status": "error", "message": "API method not implemented on Cog"}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/admin/update', methods=['POST'])
 async def admin_update_bot():
