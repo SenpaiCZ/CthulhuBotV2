@@ -35,21 +35,22 @@
                             <li><a class="dropdown-item" href="/monsters">Monsters</a></li>
                             <li><a class="dropdown-item" href="/deities">Deities</a></li>
                             <li><a class="dropdown-item" href="/spells">Spells</a></li>
-                            <li><a class="dropdown-item" href="/weapons">Weapons</a></li>
-                            <li><a class="dropdown-item" href="/poisons">Poisons</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">Pulp & Insanity</h6></li>
+                            <li><h6 class="dropdown-header">Pulp</h6></li>
                             <li><a class="dropdown-item" href="/archetypes">Archetypes</a></li>
-                            <li><a class="dropdown-item" href="/pulp_talents">Pulp Talents</a></li>
+                            <li><a class="dropdown-item" href="/pulp_talents">Talents</a></li>
                             <li><a class="dropdown-item" href="/insane_talents">Insane Talents</a></li>
-                            <li><a class="dropdown-item" href="/manias">Manias</a></li>
-                            <li><a class="dropdown-item" href="/phobias">Phobias</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><h6 class="dropdown-header">Reference</h6></li>
                             <li><a class="dropdown-item" href="/skills">Skills</a></li>
                             <li><a class="dropdown-item" href="/inventions">Inventions</a></li>
                             <li><a class="dropdown-item" href="/years">Years</a></li>
+                            <li><a class="dropdown-item" href="/manias">Mania</a></li>
+                            <li><a class="dropdown-item" href="/phobias">Phobia</a></li>
+                            <li><a class="dropdown-item" href="/weapons">Weapons</a></li>
+                            <li><a class="dropdown-item" href="/poisons">Poisons</a></li>
                             <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Administration</h6></li>
                             <li><a class="dropdown-item" href="/admin/game_settings">Game Settings</a></li>
                             <li><a class="dropdown-item" href="/admin/browse/infodata">Info Data</a></li>
                         </ul>
@@ -68,15 +69,21 @@
                             Server Administration
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Automatization</h6></li>
+                            <li><a class="dropdown-item" href="/admin/autorooms">Auto rooms</a></li>
+                            <li><a class="dropdown-item" href="/admin/deleter">Auto Deleter</a></li>
                             <li><a class="dropdown-item" href="/admin/reactionroles">Reaction Roles</a></li>
                             <li><a class="dropdown-item" href="/admin/karma">Karma System</a></li>
-                            <li><a class="dropdown-item" href="/admin/prefixes">Server Prefixes</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Information</h6></li>
                             <li><a class="dropdown-item" href="/admin/rss">RSS Feeds</a></li>
-                            <li><a class="dropdown-item" href="/admin/pokemon">Pokemon GO</a></li>
-                            <li><a class="dropdown-item" href="/admin/autorooms">Auto Rooms</a></li>
-                            <li><a class="dropdown-item" href="/admin/deleter">Auto Deleter</a></li>
-                            <li><a class="dropdown-item" href="/admin/backup">Backup System</a></li>
+                            <li><a class="dropdown-item" href="/admin/pokemon">Pokemon Go</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Server</h6></li>
+                            <li><a class="dropdown-item" href="/admin/prefixes">Server Prefixes</a></li>
                             <li><a class="dropdown-item" href="/admin/browse/data">Data Files</a></li>
+                            <li><a class="dropdown-item" href="/admin/backup">Backup System</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="confirmUpdate(); return false;">System Update</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -100,5 +107,29 @@
     <div class="container mt-4">
         {% block content %}{% endblock %}
     </div>
+
+    <script>
+    async function confirmUpdate() {
+        if (confirm("Are you sure you want to update the bot? This will restart the system.")) {
+            try {
+                const response = await fetch('/api/admin/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert(data.message);
+                    // Optionally disable UI or show loader
+                } else {
+                    alert('Update failed: ' + data.message);
+                }
+            } catch (error) {
+                alert('Error connecting to server: ' + error);
+            }
+        }
+    }
+    </script>
 </body>
 </html>
