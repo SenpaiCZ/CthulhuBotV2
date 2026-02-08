@@ -137,8 +137,8 @@ async def load_names_last_data():
 async def load_archetype_data():
     return await _load_json_file(INFODATA_FOLDER, 'archetype_info.json')
 
-async def load_firearms_data():
-    return await _load_json_file(INFODATA_FOLDER, 'firearms_info.json')
+async def load_weapons_data():
+    return await _load_json_file(INFODATA_FOLDER, 'weapons.json')
 
 async def load_inventions_data():
     return await _load_json_file(INFODATA_FOLDER, 'inventions_info.json')

@@ -23,6 +23,7 @@ from loadnsave import (
     autoroom_load, autoroom_save,
     load_pogo_settings, save_pogo_settings, load_pogo_events, save_pogo_events,
     load_monsters_data, load_deities_data, load_spells_data,
+    load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -371,6 +372,30 @@ async def render_spell_view():
 
     return await render_template('render_spell.html', spell=target, emojis=emojis, emoji_lib=emoji)
 
+@app.route('/render/weapon')
+async def render_weapon_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_weapons_data()
+
+    # Find weapon (case-insensitive lookup in dict keys)
+    target_key = None
+    name_lower = name.lower()
+
+    for key in data.keys():
+        if key.lower() == name_lower:
+            target_key = key
+            break
+
+    if not target_key:
+        return f"Weapon '{name}' not found", 404
+
+    weapon = data[target_key]
+
+    return await render_template('render_weapon.html', weapon=weapon, weapon_name=target_key)
+
 # --- Admin Routes ---
 
 @app.route('/admin')
@@ -395,6 +420,11 @@ async def admin_spells():
     spells_data = await _load_json_file(INFODATA_FOLDER, 'spells.json')
     stat_emojis = {k: emoji.emojize(v, language='alias') for k, v in emojis.stat_emojis.items()}
     return await render_template('spells.html', data=spells_data, stat_emojis=stat_emojis)
+
+@app.route('/weapons')
+async def admin_weapons():
+    weapons_data = await load_weapons_data()
+    return await render_template('weapons.html', data=weapons_data)
 
 @app.route('/admin/browse/<folder_name>')
 async def browse_files(folder_name):
@@ -861,6 +891,51 @@ async def soundboard_folder_color():
 
     return jsonify({"status": "success"})
 
+@app.route('/api/soundboard/file/settings', methods=['POST'])
+async def soundboard_file_settings():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    file_path = data.get('file_path')
+    volume = data.get('volume')
+    loop = data.get('loop')
+
+    if not file_path or volume is None or loop is None:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    # Security check
+    if '..' in file_path:
+        return jsonify({"status": "error", "message": "Invalid file path"}), 400
+
+    try:
+        vol_int = int(volume)
+        if vol_int < 0 or vol_int > 100: raise ValueError
+        loop_bool = bool(loop)
+    except ValueError:
+         return jsonify({"status": "error", "message": "Invalid volume or loop value"}), 400
+
+    settings = await load_soundboard_settings()
+    if 'files' not in settings:
+        settings['files'] = {}
+
+    # If defaults (100% vol, loop off), remove entry to save space
+    if vol_int == 100 and not loop_bool:
+        if file_path in settings['files']:
+            del settings['files'][file_path]
+    else:
+        settings['files'][file_path] = {
+            "volume": vol_int,
+            "loop": loop_bool
+        }
+
+    # Clean up if files dict is empty (optional, but cleaner)
+    if not settings['files']:
+        del settings['files']
+
+    await save_soundboard_settings(settings)
+
+    return jsonify({"status": "success"})
+
 @app.route('/api/soundboard/play', methods=['POST'])
 async def soundboard_play():
     if not is_admin(): return "Unauthorized", 401
@@ -910,9 +985,28 @@ async def soundboard_play():
 
     # Add track
     loop_setting = data.get('loop', True)
+    volume_modifier = data.get('volume_modifier', 1.0) # Individual file volume modifier
+
+    try:
+        volume_modifier = float(volume_modifier)
+        volume_modifier = max(0.0, min(1.0, volume_modifier))
+    except ValueError:
+        volume_modifier = 1.0
+
     vol_data = server_volumes.get(str(guild_id), {'music': 1.0, 'soundboard': 0.5})
     sb_vol = vol_data.get('soundboard', 0.5)
-    mixer.add_track(full_path, volume=sb_vol, loop=loop_setting, metadata={'type': 'soundboard'})
+
+    final_vol = sb_vol * volume_modifier
+
+    mixer.add_track(
+        full_path,
+        volume=final_vol,
+        loop=loop_setting,
+        metadata={
+            'type': 'soundboard',
+            'volume_modifier': volume_modifier
+        }
+    )
 
     return jsonify({"status": "success"})
 
@@ -1000,7 +1094,8 @@ async def soundboard_volume():
             with mixer.lock:
                 for track in mixer.tracks:
                     if track.metadata.get('type') == 'soundboard':
-                        track.volume = vol_float
+                        mod = track.metadata.get('volume_modifier', 1.0)
+                        track.volume = vol_float * mod
 
         # Note: We do NOT update the PCMVolumeTransformer volume anymore, as it stays at 1.0.
 

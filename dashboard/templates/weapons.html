@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Weapons - CoC Bot{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-container">
+    <div class="sidebar-panel">
+        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
+            <h5 class="m-0 text-success">Armory</h5>
+        </div>
+        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
+            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search...">
+        </div>
+        <div class="list-group list-group-flush sidebar-list" id="weaponList">
+            {% if data %}
+                {% for name in data.keys()|sort %}
+                    <button type="button" class="list-group-item list-group-item-action weapon-list-item" data-name="{{ name }}" onclick="showWeapon(this.dataset.name)">
+                        {{ name }}
+                    </button>
+                {% endfor %}
+            {% else %}
+                <div class="p-3 text-center text-muted">No weapons found.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-panel" id="detailPanel">
+        <div id="weapon-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
+            <h2 class="text-muted" style="opacity: 0.3;">Select a weapon</h2>
+            <p class="text-secondary">View detailed statistics from the armory.</p>
+        </div>
+
+        <div id="weapon-content" class="hidden">
+            <!-- Template content populated by JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Search Functionality
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const filter = this.value.toLowerCase();
+        const items = document.querySelectorAll('.weapon-list-item');
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if(text.includes(filter)) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+    });
+
+    // Pass Python data to JS safely
+    const weapons = {{ data | tojson }};
+
+    function showWeapon(name) {
+        try {
+            const w = weapons[name];
+            const container = document.getElementById('weapon-content');
+            const placeholder = document.getElementById('weapon-placeholder');
+
+            // Highlight active item
+            document.querySelectorAll('.weapon-list-item').forEach((el) => {
+                if(el.textContent.trim() === name) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+
+            let html = `
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h1 class="display-5 mb-0 text-success">${name}</h1>
+                        <div class="text-secondary fst-italic fs-5">${w.year || ''}</div>
+                    </div>
+                    <div class="text-end">
+                         <span class="badge bg-secondary me-1">${w.cost || ''}</span>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        <p class="card-text border-start border-success border-3 ps-3">${w.description || ''}</p>
+                    </div>
+                </div>
+
+                <div class="section-header">Statistics</div>
+                <div class="row row-cols-2 row-cols-md-3 g-2 mb-4">
+                    <div class="col"><div class="stat-box"><div class="stat-label">Damage</div><div class="stat-value text-danger">${w.damage || ''}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">Range</div><div class="stat-value">${w.range || ''}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">Capacity</div><div class="stat-value">${w.capacity || ''}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">Shots/Round</div><div class="stat-value">${w.shots_per_round || ''}</div></div></div>
+                    <div class="col"><div class="stat-box"><div class="stat-label">Malfunction</div><div class="stat-value text-warning">${w.malfunction || ''}</div></div></div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+            container.classList.remove('hidden');
+            placeholder.style.setProperty('display', 'none', 'important');
+            placeholder.classList.remove('d-flex');
+
+            document.getElementById('detailPanel').scrollTop = 0;
+        } catch (e) {
+            console.error(e);
+            alert("Error rendering weapon: " + e.message);
+        }
+    }
+</script>
+{% endblock %}
