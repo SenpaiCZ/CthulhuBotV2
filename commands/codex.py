@@ -4,7 +4,13 @@ import asyncio
 from playwright.async_api import async_playwright
 import io
 import urllib.parse
-from loadnsave import load_monsters_data, load_deities_data, load_spells_data, load_settings
+import re
+from loadnsave import (
+    load_monsters_data, load_deities_data, load_spells_data, load_settings,
+    load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
+    load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
+    load_inventions_data, load_years_data
+)
 import difflib
 
 class Codex(commands.Cog):
@@ -60,118 +66,6 @@ class Codex(commands.Cog):
                 await ctx.send(f"An error occurred while generating the image: {e}")
             print(f"Codex Error: {e}")
 
-    @commands.command()
-    async def monster(self, ctx, *, name: str):
-        """
-        Displays a monster sheet from the grimoire.
-        Usage: !monster <name>
-        """
-        data = await load_monsters_data()
-        monsters = data.get('monsters', [])
-
-        # Build map of name -> full object
-        monster_map = {}
-        for item in monsters:
-            m = item.get('monster_entry')
-            if m and m.get('name'):
-                monster_map[m['name']] = m
-
-        matches = self._find_matches(name, list(monster_map.keys()))
-
-        if not matches:
-            await ctx.send(f"No monster found matching '{name}'.")
-            return
-
-        if len(matches) == 1:
-            target_name = matches[0]
-            quoted_name = urllib.parse.quote(target_name)
-            url = f"/render/monster?name={quoted_name}"
-            await self._render_and_send(ctx, url, target_name, "monster")
-        elif len(matches) < 25:
-            # Dropdown Selector
-            view = SelectionView(ctx, matches, "monster", self)
-            await ctx.send(f"Multiple monsters found for '{name}'. Please select one:", view=view)
-        else:
-            # Too many matches, list them textually
-            response = f"Found {len(matches)} matches for '{name}'. Please be more specific:\n"
-            # Join as many as fit
-            match_list = ", ".join(matches)
-            if len(match_list) > 1900:
-                match_list = match_list[:1900] + "..."
-            await ctx.send(response + match_list)
-
-    @commands.command()
-    async def spell(self, ctx, *, name: str):
-        """
-        Displays a spell from the archives.
-        Usage: !spell <name>
-        """
-        data = await load_spells_data()
-        spells = data.get('spells', [])
-
-        spell_map = {}
-        for item in spells:
-            s = item.get('spell_entry')
-            if s and s.get('name'):
-                spell_map[s['name']] = s
-
-        matches = self._find_matches(name, list(spell_map.keys()))
-
-        if not matches:
-            await ctx.send(f"No spell found matching '{name}'.")
-            return
-
-        if len(matches) == 1:
-            target_name = matches[0]
-            quoted_name = urllib.parse.quote(target_name)
-            url = f"/render/spell?name={quoted_name}"
-            await self._render_and_send(ctx, url, target_name, "spell")
-        elif len(matches) < 25:
-             view = SelectionView(ctx, matches, "spell", self)
-             await ctx.send(f"Multiple spells found for '{name}'. Please select one:", view=view)
-        else:
-            response = f"Found {len(matches)} matches for '{name}'. Please be more specific:\n"
-            match_list = ", ".join(matches)
-            if len(match_list) > 1900:
-                match_list = match_list[:1900] + "..."
-            await ctx.send(response + match_list)
-
-    @commands.command()
-    async def deity(self, ctx, *, name: str):
-        """
-        Displays a deity sheet from the pantheon.
-        Usage: !deity <name>
-        """
-        data = await load_deities_data()
-        deities = data.get('deities', [])
-
-        deity_map = {}
-        for item in deities:
-            d = item.get('deity_entry')
-            if d and d.get('name'):
-                deity_map[d['name']] = d
-
-        matches = self._find_matches(name, list(deity_map.keys()))
-
-        if not matches:
-            await ctx.send(f"No deity found matching '{name}'.")
-            return
-
-        if len(matches) == 1:
-            target_name = matches[0]
-            quoted_name = urllib.parse.quote(target_name)
-            url = f"/render/deity?name={quoted_name}"
-            await self._render_and_send(ctx, url, target_name, "deity")
-        elif len(matches) < 25:
-             view = SelectionView(ctx, matches, "deity", self)
-             await ctx.send(f"Multiple deities found for '{name}'. Please select one:", view=view)
-        else:
-            response = f"Found {len(matches)} matches for '{name}'. Please be more specific:\n"
-            match_list = ", ".join(matches)
-            if len(match_list) > 1900:
-                match_list = match_list[:1900] + "..."
-            await ctx.send(response + match_list)
-
     def _find_matches(self, query, choices):
         query_lower = query.lower()
         exact_match = None
@@ -188,10 +82,6 @@ class Codex(commands.Cog):
         if exact_match:
             return [exact_match]
 
-        # If no substring matches, try fuzzy? Or just stick to substring?
-        # User asked for "Fuzzy/partial matching".
-        # Usually substring is "partial".
-        # Let's add fuzzy if no partial matches found.
         if not partial_matches:
             # difflib.get_close_matches(word, possibilities, n, cutoff)
             fuzzy = difflib.get_close_matches(query, choices, n=5, cutoff=0.6)
@@ -199,6 +89,130 @@ class Codex(commands.Cog):
 
         partial_matches.sort()
         return partial_matches
+
+    async def _handle_lookup(self, ctx, name, loader_func, type_slug, data_key=None, keys_only=False, flatten_pulp=False):
+        """
+        Generic lookup handler.
+        loader_func: async function to load data
+        type_slug: url slug part (e.g. 'monster', 'spell')
+        data_key: if the loaded json has a wrapper key (e.g. 'monsters'), provide it.
+        keys_only: if the data is a flat dict, use keys as choices.
+        flatten_pulp: special handling for pulp talents (Dict[Category, List[String]])
+        """
+        data = await loader_func()
+
+        choices = []
+        if flatten_pulp:
+            # Pulp talents: Dict[Category, List[String "Name: Desc"]]
+            pulp_map = {} # Name -> Full String (or Name)
+            for category, talents in data.items():
+                for t_str in talents:
+                    match = re.match(r'\*\*(.*?)\*\*:\s*(.*)', t_str)
+                    if match:
+                        t_name = match.group(1)
+                        pulp_map[t_name] = t_name # Just store name for matching
+            choices = list(pulp_map.keys())
+        elif data_key:
+            # List of objects
+            items = data.get(data_key, [])
+            # Assuming standard structure {entry: {name: ...}}
+            # Need custom logic if different
+            entry_key = type_slug + "_entry"
+            for item in items:
+                entry = item.get(entry_key)
+                if entry and entry.get('name'):
+                    choices.append(entry['name'])
+        elif keys_only:
+            # Dict[Name, Data]
+            choices = list(data.keys())
+        else:
+            # Should not happen with current usage, but fallback
+            choices = list(data.keys())
+
+        matches = self._find_matches(name, choices)
+
+        if not matches:
+            await ctx.send(f"No {type_slug.replace('_', ' ')} found matching '{name}'.")
+            return
+
+        if len(matches) == 1:
+            target_name = matches[0]
+            quoted_name = urllib.parse.quote(target_name)
+            url = f"/render/{type_slug}?name={quoted_name}"
+            await self._render_and_send(ctx, url, target_name, type_slug)
+        elif len(matches) < 25:
+             view = SelectionView(ctx, matches, type_slug, self)
+             await ctx.send(f"Multiple {type_slug.replace('_', ' ')}s found for '{name}'. Please select one:", view=view)
+        else:
+            response = f"Found {len(matches)} matches for '{name}'. Please be more specific:\n"
+            match_list = ", ".join(matches)
+            if len(match_list) > 1900:
+                match_list = match_list[:1900] + "..."
+            await ctx.send(response + match_list)
+
+    @commands.command()
+    async def monster(self, ctx, *, name: str):
+        """Displays a monster sheet."""
+        await self._handle_lookup(ctx, name, load_monsters_data, "monster", data_key="monsters")
+
+    @commands.command()
+    async def spell(self, ctx, *, name: str):
+        """Displays a spell."""
+        await self._handle_lookup(ctx, name, load_spells_data, "spell", data_key="spells")
+
+    @commands.command()
+    async def deity(self, ctx, *, name: str):
+        """Displays a deity sheet."""
+        await self._handle_lookup(ctx, name, load_deities_data, "deity", data_key="deities")
+
+    @commands.command(aliases=['cArchetype', 'ainfo', 'archetypeinfo'])
+    async def archetype(self, ctx, *, name: str):
+        """Displays a Pulp Cthulhu Archetype."""
+        await self._handle_lookup(ctx, name, load_archetype_data, "archetype", keys_only=True)
+
+    @commands.command(aliases=['cTalents', 'tinfo', 'talents'])
+    async def talent(self, ctx, *, name: str):
+        """Displays a Pulp Talent."""
+        await self._handle_lookup(ctx, name, load_pulp_talents_data, "pulp_talent", flatten_pulp=True)
+
+    @commands.command(aliases=['italent', 'insanetalent'])
+    async def insane(self, ctx, *, name: str):
+        """Displays an Insane Talent."""
+        await self._handle_lookup(ctx, name, load_madness_insane_talent_data, "insane_talent", keys_only=True)
+
+    @commands.command()
+    async def mania(self, ctx, *, name: str):
+        """Displays a Mania."""
+        await self._handle_lookup(ctx, name, load_manias_data, "mania", keys_only=True)
+
+    @commands.command()
+    async def phobia(self, ctx, *, name: str):
+        """Displays a Phobia."""
+        await self._handle_lookup(ctx, name, load_phobias_data, "phobia", keys_only=True)
+
+    @commands.command(aliases=['poisons'])
+    async def poison(self, ctx, *, name: str):
+        """Displays a Poison."""
+        await self._handle_lookup(ctx, name, load_poisons_data, "poison", keys_only=True)
+
+    @commands.command(aliases=['skillinfo'])
+    async def skill(self, ctx, *, name: str):
+        """Displays a Skill description."""
+        await self._handle_lookup(ctx, name, load_skills_data, "skill", keys_only=True)
+
+    @commands.command(aliases=['inventions'])
+    async def invention(self, ctx, *, decade: str):
+        """Displays Inventions for a specific decade (e.g., 1920s)."""
+        # "1920" -> try "1920s"
+        if not decade.endswith('s') and decade.isdigit():
+             decade += 's'
+        await self._handle_lookup(ctx, decade, load_inventions_data, "invention", keys_only=True)
+
+    @commands.command(aliases=['years'])
+    async def year(self, ctx, *, year: str):
+        """Displays events for a specific year (e.g., 1920)."""
+        await self._handle_lookup(ctx, year, load_years_data, "year", keys_only=True)
+
 
 class SelectionView(discord.ui.View):
     def __init__(self, ctx, options, type_name, cog):
@@ -208,7 +222,7 @@ class SelectionView(discord.ui.View):
         self.type_name = type_name
 
         # Create select menu
-        select = discord.ui.Select(placeholder=f"Select a {type_name}...", min_values=1, max_values=1)
+        select = discord.ui.Select(placeholder=f"Select a {type_name.replace('_', ' ')}...", min_values=1, max_values=1)
 
         for option in options:
             # Select options have a max length of 100 chars for label

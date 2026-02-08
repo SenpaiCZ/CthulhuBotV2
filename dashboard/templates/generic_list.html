@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - CoC Bot{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-container">
+    <div class="sidebar-panel">
+        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
+            <h5 class="m-0 text-success">{{ title }}</h5>
+        </div>
+        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
+            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search...">
+        </div>
+        <div class="list-group list-group-flush sidebar-list" id="itemList">
+            {% if data %}
+                {% for key in data.keys() | sort %}
+                    <button type="button" class="list-group-item list-group-item-action item-list-item" onclick="showItem('{{ key | escape }}')">
+                        {{ key }}
+                    </button>
+                {% endfor %}
+            {% else %}
+                <div class="p-3 text-center text-muted">No items found.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-panel" id="detailPanel">
+        <div id="item-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
+            <h2 class="text-muted" style="opacity: 0.3;">Select an item</h2>
+            <p class="text-secondary">View details.</p>
+        </div>
+
+        <div id="item-content" class="hidden p-4">
+            <!-- Template content populated by JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Search Functionality
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const filter = this.value.toLowerCase();
+        const items = document.querySelectorAll('.item-list-item');
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if(text.includes(filter)) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+    });
+
+    // Pass Python data to JS safely
+    const data = {{ data | tojson }};
+
+    function showItem(key) {
+        // Key might need unescaping if it was escaped in onclick
+        // But since we use tojson for the data object, we just need to match the key
+        // The key passed to this function is the raw string from Jinja loop (escaped for HTML attr)
+        // Actually, best to use index or handle escaping carefully.
+        // Let's iterate to find match or just use data[key] if key is clean.
+        // Simple way: data[key] works if key is exact string.
+
+        // HTML decode the key if necessary (simple approach)
+        const txt = document.createElement("textarea");
+        txt.innerHTML = key;
+        const decodedKey = txt.value;
+
+        const item = data[decodedKey];
+        const container = document.getElementById('item-content');
+        const placeholder = document.getElementById('item-placeholder');
+
+        if (!item) {
+            console.error("Item not found:", decodedKey);
+            return;
+        }
+
+        // Highlight active item
+        document.querySelectorAll('.item-list-item').forEach(el => {
+            if(el.textContent.trim() === decodedKey) el.classList.add('active');
+            else el.classList.remove('active');
+        });
+
+        // Parse custom formatting if needed (simple markdown like :emoji: is handled better server side but here we just display raw or basic)
+        // Since the user asked for nice page rendering via Playwright, the text rendering in JS admin dashboard is less critical for fancy layout,
+        // but we should try to make it readable.
+
+        let html = `
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h1 class="display-5 mb-0 text-success">${decodedKey}</h1>
+            </div>
+
+            <div class="card bg-dark border-secondary">
+                <div class="card-body">
+                    <p class="card-text text-light" style="white-space: pre-wrap;">${item}</p>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+        container.classList.remove('hidden');
+        placeholder.style.setProperty('display', 'none', 'important');
+        placeholder.classList.remove('d-flex');
+    }
+</script>
+{% endblock %}
