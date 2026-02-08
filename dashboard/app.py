@@ -28,7 +28,7 @@ from loadnsave import (
     load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
     load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
     load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
-    load_inventions_data, load_years_data,
+    load_inventions_data, load_years_data, load_occupations_data,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -719,6 +719,11 @@ async def admin_inventions():
 async def admin_years():
     data = await load_years_data()
     return await render_template('timeline_list.html', data=data, title="Years Timeline")
+
+@app.route('/occupations')
+async def admin_occupations():
+    data = await load_occupations_data()
+    return await render_template('occupations.html', data=data)
 
 @app.route('/admin/browse/<folder_name>')
 async def browse_files(folder_name):
