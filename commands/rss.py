@@ -137,7 +137,7 @@ class rss(commands.Cog):
   @commands.command()
   async def rss(self, ctx, link: str):
       """
-      `[p]rss link` - Add an RSS subscription to the channel where the command was sent from.
+      `[p]rss link` - Add an RSS subscription or YouTube channel to the channel where the command was sent from.
       """
       try:
           # Check for YouTube RSS
@@ -204,7 +204,7 @@ class rss(commands.Cog):
   @commands.command()
   async def rsssetup(self, ctx):
       """
-      Wizard to setup a new RSS feed subscription.
+      Wizard to setup a new RSS feed or YouTube subscription.
       """
 
       def check(m):

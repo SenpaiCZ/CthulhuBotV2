@@ -76,8 +76,6 @@ class CustomHelpCommand(commands.DefaultHelpCommand):
                 "addreaction",
                 "removereaction",
                 "listreactions",
-                "youtube",
-                "unsubscribe",
                 "deleter",
                 "autodeleter",
                 "stopdeleter",
