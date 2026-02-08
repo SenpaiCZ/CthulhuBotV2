@@ -23,6 +23,9 @@ from loadnsave import (
     autoroom_load, autoroom_save,
     load_pogo_settings, save_pogo_settings, load_pogo_events, save_pogo_events,
     load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
+    load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
+    load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
+    load_inventions_data, load_years_data,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -395,6 +398,207 @@ async def render_weapon_view():
 
     return await render_template('render_weapon.html', weapon=weapon, weapon_name=target_key)
 
+# --- New Render Routes ---
+
+@app.route('/render/archetype')
+async def render_archetype_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_archetype_data()
+    # Archetype data is Dict[Name, Info]
+
+    target_key = None
+    name_lower = name.lower()
+
+    for key in data.keys():
+        if key.lower() == name_lower:
+            target_key = key
+            break
+
+    if not target_key:
+        return f"Archetype '{name}' not found", 404
+
+    return await render_template('render_archetype.html', archetype=data[target_key], name=target_key, emojis=emojis, emoji_lib=emoji)
+
+@app.route('/render/pulp_talent')
+async def render_pulp_talent_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_pulp_talents_data()
+    # Dict[Category, List[String]]
+
+    target_talent = None
+    name_lower = name.lower()
+
+    for category, talents in data.items():
+        for t_str in talents:
+            # Parse "**Name**: Desc"
+            match = re.match(r'\*\*(.*?)\*\*:\s*(.*)', t_str)
+            if match:
+                t_name = match.group(1)
+                t_desc = match.group(2)
+                if t_name.lower() == name_lower:
+                    target_talent = {
+                        "name": t_name,
+                        "description": t_desc,
+                        "category": category
+                    }
+                    break
+        if target_talent:
+            break
+
+    if not target_talent:
+        return f"Talent '{name}' not found", 404
+
+    return await render_template('render_pulp_talent.html', talent=target_talent, emojis=emojis, emoji_lib=emoji)
+
+@app.route('/render/insane_talent')
+async def render_insane_talent_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_madness_insane_talent_data()
+
+    target_key = None
+    name_lower = name.lower()
+    for key in data.keys():
+        if key.lower() == name_lower:
+            target_key = key
+            break
+
+    if not target_key:
+        return f"Insane Talent '{name}' not found", 404
+
+    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Insane Talent", emojis=emojis, emoji_lib=emoji)
+
+@app.route('/render/mania')
+async def render_mania_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_manias_data()
+
+    target_key = None
+    name_lower = name.lower()
+    for key in data.keys():
+        if key.lower() == name_lower:
+            target_key = key
+            break
+
+    if not target_key:
+        return f"Mania '{name}' not found", 404
+
+    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Mania", emojis=emojis, emoji_lib=emoji)
+
+@app.route('/render/phobia')
+async def render_phobia_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_phobias_data()
+
+    target_key = None
+    name_lower = name.lower()
+    for key in data.keys():
+        if key.lower() == name_lower:
+            target_key = key
+            break
+
+    if not target_key:
+        return f"Phobia '{name}' not found", 404
+
+    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Phobia", emojis=emojis, emoji_lib=emoji)
+
+@app.route('/render/poison')
+async def render_poison_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_poisons_data()
+
+    target_key = None
+    name_lower = name.lower()
+    for key in data.keys():
+        if key.lower() == name_lower:
+            target_key = key
+            break
+
+    if not target_key:
+        return f"Poison '{name}' not found", 404
+
+    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Poison", emojis=emojis, emoji_lib=emoji)
+
+@app.route('/render/skill')
+async def render_skill_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_skills_data()
+
+    target_key = None
+    name_lower = name.lower()
+    for key in data.keys():
+        if key.lower() == name_lower:
+            target_key = key
+            break
+
+    if not target_key:
+        return f"Skill '{name}' not found", 404
+
+    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Skill", emojis=emojis, emoji_lib=emoji)
+
+@app.route('/render/invention')
+async def render_invention_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_inventions_data()
+
+    target_key = None
+    name_lower = name.lower()
+    # Inventions keys are decades (e.g. "1920s")
+    for key in data.keys():
+        if key.lower() == name_lower:
+            target_key = key
+            break
+
+    if not target_key:
+        return f"Invention decade '{name}' not found", 404
+
+    return await render_template('render_timeline.html', title=target_key, events=data[target_key], type="Inventions", emojis=emojis, emoji_lib=emoji)
+
+@app.route('/render/year')
+async def render_year_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_years_data()
+
+    target_key = None
+    name_lower = name.lower()
+    # Keys are years (e.g. "1920")
+    for key in data.keys():
+        if key.lower() == name_lower:
+            target_key = key
+            break
+
+    if not target_key:
+        return f"Year '{name}' not found", 404
+
+    return await render_template('render_timeline.html', title=target_key, events=data[target_key], type="Timeline", emojis=emojis, emoji_lib=emoji)
+
+
 # --- Admin Routes ---
 
 @app.route('/admin')
@@ -426,6 +630,53 @@ async def admin_weapons():
     if not weapons_data:
         print(f"Warning: Weapons data is empty or file not found. Path: {os.path.join(INFODATA_FOLDER, 'weapons.json')} CWD: {os.getcwd()}")
     return await render_template('weapons.html', data=weapons_data)
+
+# --- New Admin Views ---
+
+@app.route('/archetypes')
+async def admin_archetypes():
+    data = await load_archetype_data()
+    return await render_template('archetypes.html', data=data)
+
+@app.route('/pulp_talents')
+async def admin_pulp_talents():
+    data = await load_pulp_talents_data()
+    return await render_template('pulp_talents.html', data=data)
+
+@app.route('/insane_talents')
+async def admin_insane_talents():
+    data = await load_madness_insane_talent_data()
+    return await render_template('generic_list.html', data=data, title="Insane Talents")
+
+@app.route('/manias')
+async def admin_manias():
+    data = await load_manias_data()
+    return await render_template('generic_list.html', data=data, title="Manias")
+
+@app.route('/phobias')
+async def admin_phobias():
+    data = await load_phobias_data()
+    return await render_template('generic_list.html', data=data, title="Phobias")
+
+@app.route('/poisons')
+async def admin_poisons():
+    data = await load_poisons_data()
+    return await render_template('generic_list.html', data=data, title="Poisons")
+
+@app.route('/skills')
+async def admin_skills():
+    data = await load_skills_data()
+    return await render_template('generic_list.html', data=data, title="Skills")
+
+@app.route('/inventions')
+async def admin_inventions():
+    data = await load_inventions_data()
+    return await render_template('timeline_list.html', data=data, title="Inventions")
+
+@app.route('/years')
+async def admin_years():
+    data = await load_years_data()
+    return await render_template('timeline_list.html', data=data, title="Years Timeline")
 
 @app.route('/admin/browse/<folder_name>')
 async def browse_files(folder_name):
