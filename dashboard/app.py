@@ -420,7 +420,14 @@ async def render_archetype_view():
     if not target_key:
         return f"Archetype '{name}' not found", 404
 
-    return await render_template('render_archetype.html', archetype=data[target_key], name=target_key, emojis=emojis, emoji_lib=emoji)
+    # Process emojis
+    archetype = data[target_key]
+    if 'description' in archetype:
+        archetype['description'] = emoji.emojize(archetype['description'], language='alias')
+    if 'adjustments' in archetype:
+        archetype['adjustments'] = [emoji.emojize(adj, language='alias') for adj in archetype['adjustments']]
+
+    return await render_template('render_archetype.html', archetype=archetype, name=target_key, emojis=emojis, emoji_lib=emoji)
 
 @app.route('/render/pulp_talent')
 async def render_pulp_talent_view():
@@ -636,6 +643,12 @@ async def admin_weapons():
 @app.route('/archetypes')
 async def admin_archetypes():
     data = await load_archetype_data()
+    # Process emojis in descriptions and adjustments
+    for key, archetype in data.items():
+        if 'description' in archetype:
+            archetype['description'] = emoji.emojize(archetype['description'], language='alias')
+        if 'adjustments' in archetype:
+            archetype['adjustments'] = [emoji.emojize(adj, language='alias') for adj in archetype['adjustments']]
     return await render_template('archetypes.html', data=data)
 
 @app.route('/pulp_talents')
