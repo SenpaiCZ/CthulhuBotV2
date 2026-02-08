@@ -37,7 +37,6 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 ### 🐙 Cthulhu & Investigator Tools
 *   `newinvestigator` (alias: `newinv`): 🕵️‍♂️ Start the character creation wizard.
 *   `mychar`: 📜 View your character sheet.
-*   `autochar`: 🤖 Generate random stats for your investigator (Standard CoC 7e rules).
 *   `stat`: 📊 View or edit specific stats.
 *   `rename`: 🏷️ Rename your character.
 *   `renameskill`: ✏️ Rename a skill on your sheet.
@@ -52,7 +51,7 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 
 ### 🎲 Dice Rolling & Session
 *   `newroll` (aliases: `roll`, `d`, `nd`): 🎲 Perform a dice roll or skill check. Interactive interface allows for Bonus/Penalty dice and Luck spending.
-*   `showluck`: 🍀 Display current luck.
+*   `showluck`: 🍀 Show the luck threshold for the server.
 *   `startsession`: 🎬 Start a new game session.
 *   `showsession`: 📝 Show current session details.
 *   `wipesession`: 🧹 Clear session data.
@@ -107,7 +106,7 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 *   `autoroomsetup`: ⚙️ Interactive setup wizard for Auto Rooms.
 *   `autoroomset`: ⚙️ Configure auto-rooms (Legacy).
 *   `changeprefix`: ❗ Change the bot's command prefix for the server.
-*   `ping`: 🏓 Check latency.
+*   `ping`: 🏓 Basic check to see if the bot is responsive.
 *   `addreaction`: ➕ Add a smart reaction.
 *   `removereaction`: ➖ Remove a smart reaction.
 *   `listreactions`: 📋 List all smart reactions.

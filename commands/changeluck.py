@@ -42,7 +42,7 @@ class changeluck(commands.Cog):
   @commands.command()
   async def showluck(self, ctx):
       """
-      `[p]showluck` - Show the luck settings for the server.
+      `[p]showluck` - Show the luck threshold for the server.
       """
       server_id = str(ctx.guild.id)  # Get the server's ID as a string
       server_stats = await load_luck_stats()

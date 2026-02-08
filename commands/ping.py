@@ -10,7 +10,7 @@ class ping(commands.Cog):
   @commands.command()
   async def ping(self, ctx):
     """
-    `[p]ping` - Just a simple ping pong command for testing.
+    `[p]ping` - Basic check to see if the bot is responsive.
     """
     await ctx.send("Pong!")
 
