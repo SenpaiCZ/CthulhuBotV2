@@ -16,7 +16,6 @@ class CustomHelpCommand(commands.DefaultHelpCommand):
             "Character creation": [
                 "newinvestigator",
                 "mychar",
-                "autochar",
                 "stat",
                 "rename",
                 "renameskill",
