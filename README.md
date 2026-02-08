@@ -28,7 +28,7 @@
 *   📈 **Karma System**: Track user reputation with custom upvote/downvote emojis.
 *   🎭 **Reaction Roles**: Allow users to assign roles to themselves by reacting to messages.
 *   🔊 **Soundboard**: Admin-controlled soundboard to play audio clips in voice channels.
-*   🛠️ **Utility & Admin**: Auto-rooms, auto-moderation, YouTube feed integration, and RSS feeds.
+*   🛠️ **Utility & Admin**: Auto-rooms, auto-moderation, RSS and YouTube feed integration.
 
 ## Commands
 
@@ -111,13 +111,11 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 *   `addreaction`: ➕ Add a smart reaction.
 *   `removereaction`: ➖ Remove a smart reaction.
 *   `listreactions`: 📋 List all smart reactions.
-*   `youtube`: 📺 Setup YouTube channel notifications.
-*   `unsubscribe`: 🔕 Unsubscribe from YouTube notifications.
 *   `deleter`: 🗑️ Delete the last X messages in the current channel.
 *   `autodeleter`: 🤖 Interactive wizard to setup auto-deletion rules.
 *   `stopdeleter`: 🛑 Stop auto-deletion for a channel.
-*   `rss`: 📰 Add a specific RSS feed manually.
-*   `rsssetup`: 📰 Interactive setup wizard for RSS feeds.
+*   `rss`: 📰 Add a specific RSS feed or YouTube channel manually.
+*   `rsssetup`: 📰 Interactive setup wizard for RSS/YouTube feeds.
 
 ## Installation
 
@@ -197,7 +195,6 @@ If you prefer to install manually, follow these steps.
     ```json
     {
         "token": "YOUR_DISCORD_BOT_TOKEN",
-        "youtubetoken": "YOUR_YOUTUBE_API_KEY",
         "enable_dashboard": true,
         "admin_password": "SetAStrongPasswordHere"
     }
@@ -283,7 +280,6 @@ To keep the bot running in the background and start automatically on boot:
     ```json
     {
         "token": "YOUR_DISCORD_BOT_TOKEN",
-        "youtubetoken": "YOUR_YOUTUBE_API_KEY",
         "enable_dashboard": true,
         "admin_password": "SetAStrongPasswordHere"
     }
@@ -321,7 +317,6 @@ To make the bot start automatically when you log in:
 2.  Go to the **Tools** pane and select **Secrets**.
 3.  Add the following secrets (Environment Variables):
     *   `DISCORD_TOKEN`: Your Discord Bot Token.
-    *   `YOUTUBE_API_KEY`: Your YouTube Data API Key (Optional).
 4.  Run the bot. The `config.json` file serves as a template with default values.
 
 ---
@@ -336,7 +331,6 @@ The bot prioritizes configuration in the following order:
 ```json
 {
     "token": "YOUR_DISCORD_BOT_TOKEN",
-    "youtubetoken": "YOUR_YOUTUBE_API_KEY",
     "enable_dashboard": true,
     "admin_password": "your_secure_password"
 }

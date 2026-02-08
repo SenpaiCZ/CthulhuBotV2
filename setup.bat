@@ -42,7 +42,6 @@ if not exist "config.json" (
     echo Creating config.json template...
     echo {> config.json
     echo     "token": "YOUR_DISCORD_BOT_TOKEN",>> config.json
-    echo     "youtubetoken": "YOUR_YOUTUBE_API_KEY",>> config.json
     echo     "enable_dashboard": true,>> config.json
     echo     "admin_password": "your_secure_password">> config.json
     echo }>> config.json

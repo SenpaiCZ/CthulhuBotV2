@@ -39,7 +39,6 @@ if [ ! -f "config.json" ]; then
     echo "Creating config.json template..."
     echo '{
     "token": "YOUR_DISCORD_BOT_TOKEN",
-    "youtubetoken": "YOUR_YOUTUBE_API_KEY",
     "enable_dashboard": true,
     "admin_password": "your_secure_password"
 }' > config.json
