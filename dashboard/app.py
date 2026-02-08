@@ -3,6 +3,8 @@ import sys
 import subprocess
 import json
 import re
+import zipfile
+import shutil
 from collections import Counter
 import discord
 import asyncio
@@ -90,6 +92,14 @@ def format_custom_emoji(text):
     return text
 
 app.add_template_filter(format_custom_emoji, 'format_custom_emoji')
+
+def sanitize_filename(filename):
+    """Sanitizes a filename to ensure it is safe for the filesystem."""
+    # Keep only alphanumeric, dot, dash, underscore
+    clean = re.sub(r'[^a-zA-Z0-9_.-]', '_', filename)
+    # Remove leading/trailing dots/spaces
+    clean = clean.strip('. ')
+    return clean or 'unnamed'
 
 def get_soundboard_files():
     structure = {}
@@ -1371,6 +1381,177 @@ async def soundboard_volume():
         return jsonify({"status": "success"})
     except ValueError:
         return jsonify({"status": "error", "message": "Invalid volume"}), 400
+
+# --- File Management Routes ---
+
+@app.route('/api/soundboard/folder/create', methods=['POST'])
+async def soundboard_create_folder():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    folder_name = data.get('folder_name')
+
+    if not folder_name:
+        return jsonify({"status": "error", "message": "Missing folder_name"}), 400
+
+    safe_name = sanitize_filename(folder_name)
+    target_path = os.path.join(SOUNDBOARD_FOLDER, safe_name)
+
+    if os.path.exists(target_path):
+        return jsonify({"status": "error", "message": "Folder already exists"}), 400
+
+    try:
+        os.makedirs(target_path)
+        return jsonify({"status": "success", "folder": safe_name})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/soundboard/folder/delete', methods=['POST'])
+async def soundboard_delete_folder():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    folder_name = data.get('folder_name')
+
+    if not folder_name:
+        return jsonify({"status": "error", "message": "Missing folder_name"}), 400
+
+    safe_name = sanitize_filename(folder_name)
+    target_path = os.path.join(SOUNDBOARD_FOLDER, safe_name)
+
+    # Protect root
+    if os.path.abspath(target_path) == os.path.abspath(SOUNDBOARD_FOLDER):
+         return jsonify({"status": "error", "message": "Cannot delete root folder"}), 400
+
+    if not os.path.exists(target_path):
+        return jsonify({"status": "error", "message": "Folder not found"}), 404
+
+    try:
+        shutil.rmtree(target_path)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/soundboard/file/delete', methods=['POST'])
+async def soundboard_delete_file():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    file_path = data.get('file_path')
+
+    if not file_path:
+        return jsonify({"status": "error", "message": "Missing file_path"}), 400
+
+    # Basic path validation
+    if '..' in file_path:
+        return jsonify({"status": "error", "message": "Invalid path"}), 400
+
+    full_path = os.path.join(SOUNDBOARD_FOLDER, file_path)
+
+    # Ensure it is inside soundboard folder
+    if not os.path.abspath(full_path).startswith(os.path.abspath(SOUNDBOARD_FOLDER)):
+        return jsonify({"status": "error", "message": "Path traversal detected"}), 400
+
+    if not os.path.exists(full_path):
+        return jsonify({"status": "error", "message": "File not found"}), 404
+
+    if not os.path.isfile(full_path):
+        return jsonify({"status": "error", "message": "Not a file"}), 400
+
+    try:
+        os.remove(full_path)
+        # Clean up settings if any
+        settings = await load_soundboard_settings()
+        if 'files' in settings and file_path in settings['files']:
+            del settings['files'][file_path]
+            await save_soundboard_settings(settings)
+
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/soundboard/upload', methods=['POST'])
+async def soundboard_upload():
+    if not is_admin(): return "Unauthorized", 401
+
+    form = await request.form
+    files = await request.files
+    folder = form.get('folder', '') # Optional subfolder (must exist, or be root)
+
+    uploaded_files = files.getlist('files')
+    if not uploaded_files:
+        return jsonify({"status": "error", "message": "No files uploaded"}), 400
+
+    results = []
+
+    for file in uploaded_files:
+        if not file.filename: continue
+
+        filename = sanitize_filename(file.filename)
+        ext = os.path.splitext(filename)[1].lower()
+
+        if ext == '.zip':
+            # Create folder from zip name
+            zip_folder_name = os.path.splitext(filename)[0]
+            extract_dir = os.path.join(SOUNDBOARD_FOLDER, zip_folder_name)
+
+            if not os.path.exists(extract_dir):
+                os.makedirs(extract_dir)
+
+            try:
+                # We need to save the file stream to disk temporarily
+                file_bytes = file.read()
+                # Check if async
+                if asyncio.iscoroutine(file_bytes):
+                    file_bytes = await file_bytes
+
+                temp_zip_path = os.path.join(SOUNDBOARD_FOLDER, f"temp_{filename}")
+
+                with open(temp_zip_path, 'wb') as f:
+                    f.write(file_bytes)
+
+                with zipfile.ZipFile(temp_zip_path, 'r') as zip_ref:
+                    for member in zip_ref.namelist():
+                        # Skip directories
+                        if member.endswith('/'): continue
+
+                        # Get basename to flatten structure
+                        base_name = os.path.basename(member)
+                        if not base_name: continue
+
+                        m_ext = os.path.splitext(base_name)[1].lower()
+                        if m_ext in ALLOWED_EXTENSIONS:
+                            target_file = os.path.join(extract_dir, sanitize_filename(base_name))
+                            with open(target_file, 'wb') as out_f:
+                                out_f.write(zip_ref.read(member))
+
+                os.remove(temp_zip_path)
+                results.append(f"Unzipped {filename} to {zip_folder_name}/")
+            except Exception as e:
+                results.append(f"Error unzipping {filename}: {str(e)}")
+
+        elif ext in ALLOWED_EXTENSIONS:
+            # Determine target directory
+            save_dir = SOUNDBOARD_FOLDER
+            if folder and folder != 'Root':
+                safe_folder = sanitize_filename(folder)
+                potential_dir = os.path.join(SOUNDBOARD_FOLDER, safe_folder)
+                if os.path.exists(potential_dir) and os.path.isdir(potential_dir):
+                    save_dir = potential_dir
+
+            target_path = os.path.join(save_dir, filename)
+            try:
+                res = file.save(target_path)
+                if asyncio.iscoroutine(res):
+                    await res
+
+                results.append(f"Uploaded {filename}")
+            except Exception as e:
+                results.append(f"Error saving {filename}: {str(e)}")
+        else:
+            results.append(f"Skipped {filename} (invalid type)")
+
+    return jsonify({"status": "success", "results": results})
 
 # --- Track Control Endpoints ---
 
