@@ -2095,6 +2095,54 @@ async def pokemon_refresh():
 
     return jsonify({"status": "success", "count": len(events)})
 
+@app.route('/api/pokemon/push_weekly', methods=['POST'])
+async def pokemon_push_weekly():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+
+    if not guild_id:
+        return jsonify({"status": "error", "message": "Missing guild_id"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    cog = app.bot.get_cog("PokemonGo")
+    if not cog:
+        return jsonify({"status": "error", "message": "PokemonGo Cog not loaded"}), 500
+
+    success, msg = await cog.send_weekly_summary_to_guild(guild_id, ping=False)
+
+    if success:
+        return jsonify({"status": "success", "message": msg})
+    else:
+        return jsonify({"status": "error", "message": msg}), 500
+
+@app.route('/api/pokemon/push_next', methods=['POST'])
+async def pokemon_push_next():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+
+    if not guild_id:
+        return jsonify({"status": "error", "message": "Missing guild_id"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    cog = app.bot.get_cog("PokemonGo")
+    if not cog:
+        return jsonify({"status": "error", "message": "PokemonGo Cog not loaded"}), 500
+
+    success, msg = await cog.send_next_event_to_guild(guild_id, ping=False)
+
+    if success:
+        return jsonify({"status": "success", "message": msg})
+    else:
+        return jsonify({"status": "error", "message": msg}), 500
+
 @app.route('/api/admin/update', methods=['POST'])
 async def admin_update_bot():
     if not is_admin(): return "Unauthorized", 401
