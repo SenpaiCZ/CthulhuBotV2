@@ -47,6 +47,36 @@
         Status: <span id="connectionStatus">Disconnected</span>
     </div>
 
+    <!-- File Management Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">File Management</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- Create Folder -->
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Create New Folder</label>
+                    <div class="input-group">
+                        <input type="text" id="newFolderName" class="form-control" placeholder="Folder Name">
+                        <button class="btn btn-primary" onclick="createFolder()">Create</button>
+                    </div>
+                </div>
+                <!-- Upload Files -->
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Upload Files / Zip</label>
+                    <div class="input-group">
+                        <input type="file" id="uploadFilesInput" class="form-control" multiple accept=".mp3,.wav,.ogg,.m4a,.flac,.zip">
+                        <select class="form-select" id="uploadFolderSelect" style="max-width: 150px;">
+                            <option value="Root">Root</option>
+                            <!-- Populated by JS -->
+                        </select>
+                        <button class="btn btn-success" onclick="uploadFiles()">Upload</button>
+                    </div>
+                    <small class="text-muted">Supports audio files and .zip archives (extracted to new folder).</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Now Playing Section -->
     <div class="card mb-4 border-primary">
         <div class="card-header bg-primary text-white">Now Playing</div>
@@ -118,6 +148,24 @@
         }
 
         guildSelect.value = selectedGuildId;
+
+        // Populate Upload Folder Select
+        const uploadSelect = document.getElementById('uploadFolderSelect');
+        const currentUploadSelection = uploadSelect.value;
+        uploadSelect.innerHTML = '<option value="Root">Root</option>';
+        if (currentData.files) {
+            Object.keys(currentData.files).forEach(key => {
+                if (key !== 'Root') {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = key;
+                    uploadSelect.appendChild(opt);
+                }
+            });
+        }
+        if (currentUploadSelection && Array.from(uploadSelect.options).some(o => o.value === currentUploadSelection)) {
+             uploadSelect.value = currentUploadSelection;
+        }
 
         const guildData = currentData.guilds.find(g => g.id === selectedGuildId);
         const status = currentData.status[selectedGuildId];
@@ -265,9 +313,10 @@
                                 <div class="d-flex align-items-center flex-grow-1 me-2" title="Volume">
                                     <input type="range" class="form-range sound-vol" min="0" max="100" value="${savedVol}" data-path="${safePath}">
                                 </div>
-                                <div class="form-check form-switch m-0" title="Loop">
+                                <div class="form-check form-switch m-0 me-2" title="Loop">
                                     <input class="form-check-input sound-loop" type="checkbox" ${savedLoop ? 'checked' : ''} data-path="${safePath}">
                                 </div>
+                                <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteFile('${safePath}')" title="Delete File">🗑</button>
                             </div>
                         </div>
                     `;
@@ -338,7 +387,10 @@
                         <button class="btn btn-link text-decoration-none text-reset fw-bold p-0" type="button" data-bs-toggle="collapse" data-bs-target="#${safeKey}">
                             ${key} <span class="small">▼</span>
                         </button>
-                        <input type="color" class="form-control form-control-color form-control-sm" value="${folderColor || '#f8f9fa'}" title="Choose folder color">
+                        <div class="d-flex gap-2 align-items-center">
+                            <input type="color" class="form-control form-control-color form-control-sm" value="${folderColor || '#f8f9fa'}" title="Choose folder color">
+                            <button class="btn btn-sm btn-danger py-0 px-2" onclick="deleteFolder('${key.replace(/'/g, "\\'")}')" title="Delete Folder">🗑</button>
+                        </div>
                     </div>
                     <div id="${safeKey}" class="collapse show">
                         <div class="card-body p-0" id="body-${safeKey}"></div>
@@ -472,6 +524,69 @@
         } catch (e) {
             showError("API Error: " + e);
         }
+    }
+
+    async function createFolder() {
+        const nameInput = document.getElementById('newFolderName');
+        const name = nameInput.value;
+        if (!name) return;
+
+        await apiCall('/api/soundboard/folder/create', { folder_name: name });
+        nameInput.value = '';
+    }
+
+    async function uploadFiles() {
+        const input = document.getElementById('uploadFilesInput');
+        const folderSelect = document.getElementById('uploadFolderSelect');
+        const folder = folderSelect.value;
+        const btn = document.querySelector('button[onclick="uploadFiles()"]');
+
+        if (input.files.length === 0) {
+            showError("No files selected!");
+            return;
+        }
+
+        const formData = new FormData();
+        for (let i = 0; i < input.files.length; i++) {
+            formData.append('files', input.files[i]);
+        }
+        formData.append('folder', folder);
+
+        const originalText = btn.innerText;
+        btn.innerText = "Uploading...";
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/soundboard/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.status === 'error') {
+                showError(data.message);
+            } else {
+                if (data.results && data.results.length > 0) {
+                     console.log(data.results);
+                }
+                input.value = '';
+                fetchData();
+            }
+        } catch (e) {
+            showError("Upload Error: " + e);
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function deleteFile(path) {
+        if (!confirm("Are you sure you want to delete this file?")) return;
+        await apiCall('/api/soundboard/file/delete', { file_path: path });
+    }
+
+    async function deleteFolder(name) {
+        if (!confirm(`Are you sure you want to delete folder "${name}" and ALL its contents?`)) return;
+        await apiCall('/api/soundboard/folder/delete', { folder_name: name });
     }
 
     fetchData();
