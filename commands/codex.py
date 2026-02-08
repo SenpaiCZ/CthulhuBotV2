@@ -4,7 +4,7 @@ import asyncio
 from playwright.async_api import async_playwright
 import io
 import urllib.parse
-from loadnsave import load_monsters_data, load_deities_data, load_settings
+from loadnsave import load_monsters_data, load_deities_data, load_spells_data, load_settings
 import difflib
 
 class Codex(commands.Cog):
@@ -95,6 +95,42 @@ class Codex(commands.Cog):
             # Too many matches, list them textually
             response = f"Found {len(matches)} matches for '{name}'. Please be more specific:\n"
             # Join as many as fit
+            match_list = ", ".join(matches)
+            if len(match_list) > 1900:
+                match_list = match_list[:1900] + "..."
+            await ctx.send(response + match_list)
+
+    @commands.command()
+    async def spell(self, ctx, *, name: str):
+        """
+        Displays a spell from the archives.
+        Usage: !spell <name>
+        """
+        data = await load_spells_data()
+        spells = data.get('spells', [])
+
+        spell_map = {}
+        for item in spells:
+            s = item.get('spell_entry')
+            if s and s.get('name'):
+                spell_map[s['name']] = s
+
+        matches = self._find_matches(name, list(spell_map.keys()))
+
+        if not matches:
+            await ctx.send(f"No spell found matching '{name}'.")
+            return
+
+        if len(matches) == 1:
+            target_name = matches[0]
+            quoted_name = urllib.parse.quote(target_name)
+            url = f"/render/spell?name={quoted_name}"
+            await self._render_and_send(ctx, url, target_name, "spell")
+        elif len(matches) < 25:
+             view = SelectionView(ctx, matches, "spell", self)
+             await ctx.send(f"Multiple spells found for '{name}'. Please select one:", view=view)
+        else:
+            response = f"Found {len(matches)} matches for '{name}'. Please be more specific:\n"
             match_list = ", ".join(matches)
             if len(match_list) > 1900:
                 match_list = match_list[:1900] + "..."

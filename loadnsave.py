@@ -101,6 +101,9 @@ async def save_session_data(session_data):
 async def load_monsters_data():
     return await _load_json_file(INFODATA_FOLDER, 'monsters.json')
 
+async def load_spells_data():
+    return await _load_json_file(INFODATA_FOLDER, 'spells.json')
+
 async def load_deities_data():
     return await _load_json_file(INFODATA_FOLDER, 'deities.json')
 

@@ -21,7 +21,7 @@ from loadnsave import (
     load_rss_data, save_rss_data,
     load_deleter_data, save_deleter_data,
     autoroom_load, autoroom_save,
-    load_monsters_data, load_deities_data,
+    load_monsters_data, load_deities_data, load_spells_data,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -346,6 +346,30 @@ async def render_deity_view():
 
     return await render_template('render_deity.html', deity=target, emojis=emojis, emoji_lib=emoji)
 
+@app.route('/render/spell')
+async def render_spell_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_spells_data()
+    spells = data.get('spells', [])
+
+    # Find spell
+    target = None
+    name_lower = name.lower()
+
+    for item in spells:
+        s = item.get('spell_entry')
+        if s and s.get('name', '').lower() == name_lower:
+            target = s
+            break
+
+    if not target:
+        return f"Spell '{name}' not found", 404
+
+    return await render_template('render_spell.html', spell=target, emojis=emojis, emoji_lib=emoji)
+
 # --- Admin Routes ---
 
 @app.route('/admin')
@@ -364,6 +388,12 @@ async def admin_deities():
     deities_data = await _load_json_file(INFODATA_FOLDER, 'deities.json')
     stat_emojis = {k: emoji.emojize(v, language='alias') for k, v in emojis.stat_emojis.items()}
     return await render_template('deities.html', data=deities_data, stat_emojis=stat_emojis)
+
+@app.route('/spells')
+async def admin_spells():
+    spells_data = await _load_json_file(INFODATA_FOLDER, 'spells.json')
+    stat_emojis = {k: emoji.emojize(v, language='alias') for k, v in emojis.stat_emojis.items()}
+    return await render_template('spells.html', data=spells_data, stat_emojis=stat_emojis)
 
 @app.route('/admin/browse/<folder_name>')
 async def browse_files(folder_name):
