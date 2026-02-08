@@ -90,9 +90,39 @@
     </div>
 </div>
 
+<!-- Rename Modal -->
+<div class="modal fade" id="renameModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Rename File</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="renameFilePath">
+        <div class="mb-3">
+          <label for="renameInput" class="form-label">New Name</label>
+          <input type="text" class="form-control" id="renameInput">
+          <div class="form-text">File extension will be preserved automatically.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="submitRename()">Rename</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
     let currentData = null;
+    let previousFilesStr = null;
     let selectedGuildId = null;
+    let renameModalObj = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renameModalObj = new bootstrap.Modal(document.getElementById('renameModal'));
+    });
 
     function showError(message) {
         const errorDiv = document.getElementById('error');
@@ -283,7 +313,10 @@
 
 
         // --- Render Files ---
-        if (filesContainer.childElementCount === 0) {
+        // Check if files changed
+        const currentFilesStr = JSON.stringify(currentData.files);
+        if (currentFilesStr !== previousFilesStr) {
+             previousFilesStr = currentFilesStr;
              filesContainer.innerHTML = '';
 
             const createGrid = (files, folderColor) => {
@@ -300,13 +333,17 @@
                     const fileSettings = currentData.settings?.files?.[file.path] || {};
                     const savedVol = fileSettings.volume !== undefined ? fileSettings.volume : 100;
                     const savedLoop = fileSettings.loop !== undefined ? fileSettings.loop : false;
-                    const safePath = file.path.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    const safePath = file.path.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                    // Display name without extension
+                    const displayName = file.name.replace(/\.[^/.]+$/, "");
+                    const safeDisplayName = displayName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
                     col.innerHTML = `
                         <div class="card h-100 shadow-sm sound-card" style="cursor: pointer; transition: transform 0.1s;">
                             <div class="card-body d-flex flex-column justify-content-between p-2" style="background-color: ${folderColor || '#f8f9fa'}; min-height: 100px;">
                                 <h6 class="card-title text-center text-truncate fw-bold mb-2" title="${file.name}" style="pointer-events: none; user-select: none; text-shadow: 0 1px 3px rgba(0,0,0,0.8); color: white;">
-                                    ${file.name}
+                                    ${displayName}
                                 </h6>
                             </div>
                             <div class="card-footer p-2 bg-light d-flex align-items-center justify-content-between stop-prop">
@@ -316,7 +353,10 @@
                                 <div class="form-check form-switch m-0 me-2" title="Loop">
                                     <input class="form-check-input sound-loop" type="checkbox" ${savedLoop ? 'checked' : ''} data-path="${safePath}">
                                 </div>
-                                <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteFile('${safePath}')" title="Delete File">🗑</button>
+                                <div class="d-flex">
+                                    <button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1" onclick="openRenameModal('${safePath}', '${safeDisplayName}')" title="Rename File">✏️</button>
+                                    <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteFile('${safePath}')" title="Delete File">🗑</button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -587,6 +627,26 @@
     async function deleteFolder(name) {
         if (!confirm(`Are you sure you want to delete folder "${name}" and ALL its contents?`)) return;
         await apiCall('/api/soundboard/folder/delete', { folder_name: name });
+    }
+
+    function openRenameModal(path, currentName) {
+        document.getElementById('renameFilePath').value = path;
+        document.getElementById('renameInput').value = currentName;
+        if (renameModalObj) renameModalObj.show();
+    }
+
+    async function submitRename() {
+        const path = document.getElementById('renameFilePath').value;
+        const newName = document.getElementById('renameInput').value;
+
+        if (!newName) return;
+
+        await apiCall('/api/soundboard/file/rename', {
+            file_path: path,
+            new_name: newName
+        });
+
+        if (renameModalObj) renameModalObj.hide();
     }
 
     fetchData();
