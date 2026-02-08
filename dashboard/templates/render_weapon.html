@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ weapon_name }} - Weapon Render</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/cthulhu.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .coc-sheet {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            border: 2px solid var(--cthulhu-green-dark, #2E8B57);
+            padding: 20px;
+            border-radius: 5px;
+            width: 800px;
+        }
+
+        .text-success { color: var(--cthulhu-green-bright, #00FF7F) !important; }
+        .border-success { border-color: var(--cthulhu-green-dark, #2E8B57) !important; }
+
+        .stat-box {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            padding: 5px;
+            border-radius: 5px;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .stat-label {
+            font-size: 0.8em;
+            color: #888;
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .section-header {
+            background-color: var(--cthulhu-green-dark, #2E8B57);
+            color: #fff;
+            padding: 5px 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="coc-sheet">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h1 class="display-5 mb-0 text-success">{{ weapon_name }}</h1>
+                <div class="text-secondary fst-italic fs-5">{{ weapon.year }}</div>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-secondary me-1">{{ weapon.cost }}</span>
+            </div>
+        </div>
+
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                <p class="card-text border-start border-success border-3 ps-3">{{ weapon.description }}</p>
+            </div>
+        </div>
+
+        <div class="section-header">Statistics</div>
+        <div class="row row-cols-2 row-cols-md-3 g-2 mb-4">
+            <div class="col"><div class="stat-box"><div class="stat-label">Damage</div><div class="stat-value text-danger">{{ weapon.damage }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">Range</div><div class="stat-value">{{ weapon.range }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">Capacity</div><div class="stat-value">{{ weapon.capacity }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">Shots/Round</div><div class="stat-value">{{ weapon.shots_per_round }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">Malfunction</div><div class="stat-value text-warning">{{ weapon.malfunction }}</div></div></div>
+        </div>
+    </div>
+</body>
+</html>

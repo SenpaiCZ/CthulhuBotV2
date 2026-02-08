@@ -21,7 +21,7 @@ from loadnsave import (
     load_rss_data, save_rss_data,
     load_deleter_data, save_deleter_data,
     autoroom_load, autoroom_save,
-    load_monsters_data, load_deities_data, load_spells_data,
+    load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -370,6 +370,30 @@ async def render_spell_view():
 
     return await render_template('render_spell.html', spell=target, emojis=emojis, emoji_lib=emoji)
 
+@app.route('/render/weapon')
+async def render_weapon_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_weapons_data()
+
+    # Find weapon (case-insensitive lookup in dict keys)
+    target_key = None
+    name_lower = name.lower()
+
+    for key in data.keys():
+        if key.lower() == name_lower:
+            target_key = key
+            break
+
+    if not target_key:
+        return f"Weapon '{name}' not found", 404
+
+    weapon = data[target_key]
+
+    return await render_template('render_weapon.html', weapon=weapon, weapon_name=target_key)
+
 # --- Admin Routes ---
 
 @app.route('/admin')
@@ -394,6 +418,11 @@ async def admin_spells():
     spells_data = await _load_json_file(INFODATA_FOLDER, 'spells.json')
     stat_emojis = {k: emoji.emojize(v, language='alias') for k, v in emojis.stat_emojis.items()}
     return await render_template('spells.html', data=spells_data, stat_emojis=stat_emojis)
+
+@app.route('/weapons')
+async def admin_weapons():
+    weapons_data = await load_weapons_data()
+    return await render_template('weapons.html', data=weapons_data)
 
 @app.route('/admin/browse/<folder_name>')
 async def browse_files(folder_name):
