@@ -25,10 +25,11 @@ from loadnsave import (
     autoroom_load, autoroom_save,
     load_pogo_settings, save_pogo_settings, load_pogo_events, save_pogo_events,
     load_giveaway_data,
+    load_gamerole_settings, save_gamerole_settings,
     load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
     load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
     load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
-    load_inventions_data, load_years_data,
+    load_inventions_data, load_years_data, load_occupations_data,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -719,6 +720,11 @@ async def admin_inventions():
 async def admin_years():
     data = await load_years_data()
     return await render_template('timeline_list.html', data=data, title="Years Timeline")
+
+@app.route('/occupations')
+async def admin_occupations():
+    data = await load_occupations_data()
+    return await render_template('occupations.html', data=data)
 
 @app.route('/admin/browse/<folder_name>')
 async def browse_files(folder_name):
@@ -1485,6 +1491,71 @@ async def soundboard_delete_file():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/api/soundboard/file/rename', methods=['POST'])
+async def soundboard_rename_file():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    file_path = data.get('file_path')
+    new_name = data.get('new_name')
+
+    if not file_path or not new_name:
+        return jsonify({"status": "error", "message": "Missing file_path or new_name"}), 400
+
+    # Basic path validation
+    if '..' in file_path:
+        return jsonify({"status": "error", "message": "Invalid path"}), 400
+
+    full_old_path = os.path.join(SOUNDBOARD_FOLDER, file_path)
+
+    # Ensure it is inside soundboard folder
+    if not os.path.abspath(full_old_path).startswith(os.path.abspath(SOUNDBOARD_FOLDER)):
+        return jsonify({"status": "error", "message": "Path traversal detected"}), 400
+
+    if not os.path.exists(full_old_path):
+        return jsonify({"status": "error", "message": "File not found"}), 404
+
+    if not os.path.isfile(full_old_path):
+        return jsonify({"status": "error", "message": "Target is not a file"}), 400
+
+    # Sanitize new name and preserve extension
+    safe_new_name = sanitize_filename(new_name)
+    ext = os.path.splitext(file_path)[1]
+
+    new_filename = f"{safe_new_name}{ext}"
+
+    # Determine directory of the file (it might be in a subfolder)
+    directory = os.path.dirname(full_old_path)
+    full_new_path = os.path.join(directory, new_filename)
+
+    # Relative path for settings
+    rel_directory = os.path.dirname(file_path)
+
+    if rel_directory:
+        new_rel_path = os.path.join(rel_directory, new_filename)
+    else:
+        new_rel_path = new_filename
+
+    # Fix potential path separator issues for settings key consistency
+    new_rel_path = new_rel_path.replace('\\', '/')
+
+    if os.path.exists(full_new_path):
+        return jsonify({"status": "error", "message": "A file with that name already exists"}), 400
+
+    try:
+        os.rename(full_old_path, full_new_path)
+
+        # Migrate settings
+        settings = await load_soundboard_settings()
+        if 'files' in settings and file_path in settings['files']:
+            settings['files'][new_rel_path] = settings['files'][file_path]
+            del settings['files'][file_path]
+            await save_soundboard_settings(settings)
+
+        return jsonify({"status": "success", "new_path": new_rel_path})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/api/soundboard/upload', methods=['POST'])
 async def soundboard_upload():
     if not is_admin(): return "Unauthorized", 401
@@ -2168,6 +2239,144 @@ async def rss_update_color():
                 return jsonify({"status": "success"})
 
     return jsonify({"status": "error", "message": "Feed not found"}), 404
+
+# --- Gamer Roles Routes ---
+
+@app.route('/admin/gameroles')
+async def admin_gameroles():
+    if not is_admin(): return redirect(url_for('login'))
+    return await render_template('gameroles.html')
+
+@app.route('/api/gameroles/data')
+async def gameroles_data():
+    if not is_admin(): return "Unauthorized", 401
+
+    if not app.bot:
+        return jsonify({"guilds": []})
+
+    settings = await load_gamerole_settings()
+    guilds_data = []
+
+    for guild in app.bot.guilds:
+        guild_id_str = str(guild.id)
+        guild_settings = settings.get(guild_id_str, {})
+
+        guilds_data.append({
+            "id": guild_id_str,
+            "name": guild.name,
+            "settings": {
+                "enabled": guild_settings.get("enabled", False),
+                "color": guild_settings.get("color", "#0000FF"),
+                "ignored_activities": guild_settings.get("ignored_activities", ["Custom Status"])
+            }
+        })
+
+    return jsonify({"guilds": guilds_data})
+
+@app.route('/api/gameroles/save', methods=['POST'])
+async def gameroles_save():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+
+    if not guild_id:
+        return jsonify({"status": "error", "message": "Missing guild_id"}), 400
+
+    # Try to update via Cog first to keep cache in sync
+    if app.bot:
+        cog = app.bot.get_cog("GamerRoles")
+        if cog:
+            if 'enabled' in data:
+                await cog.update_settings(guild_id, 'enabled', bool(data.get('enabled')))
+            if 'color' in data:
+                color = data.get('color')
+                if re.match(r'^#[0-9A-Fa-f]{6}$', color):
+                    await cog.update_settings(guild_id, 'color', color)
+            return jsonify({"status": "success"})
+
+    # Fallback
+    settings = await load_gamerole_settings()
+    if str(guild_id) not in settings: settings[str(guild_id)] = {}
+
+    if 'enabled' in data:
+        settings[str(guild_id)]['enabled'] = bool(data.get('enabled'))
+
+    if 'color' in data:
+        color = data.get('color')
+        # Validate hex
+        if re.match(r'^#[0-9A-Fa-f]{6}$', color):
+            settings[str(guild_id)]['color'] = color
+
+    await save_gamerole_settings(settings)
+    return jsonify({"status": "success"})
+
+@app.route('/api/gameroles/ignore/add', methods=['POST'])
+async def gameroles_ignore_add():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    activity = data.get('activity')
+
+    if not guild_id or not activity:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if app.bot:
+        cog = app.bot.get_cog("GamerRoles")
+        if cog:
+            # We need to expose a method for list manipulation in Cog or just use update_settings with full list?
+            # Cog doesn't have a specific method for appending to ignore list exposed publicly in a simple way
+            # except `update_settings` which takes a key/value.
+            # But we need to READ the list first.
+            settings = await cog.get_settings(guild_id)
+            ignored = settings.get("ignored_activities", ["Custom Status"])
+            if activity not in ignored:
+                ignored.append(activity)
+                await cog.update_settings(guild_id, "ignored_activities", ignored)
+            return jsonify({"status": "success"})
+
+    settings = await load_gamerole_settings()
+    if str(guild_id) not in settings: settings[str(guild_id)] = {}
+
+    ignored = settings[str(guild_id)].get("ignored_activities", ["Custom Status"])
+    if activity not in ignored:
+        ignored.append(activity)
+        settings[str(guild_id)]["ignored_activities"] = ignored
+        await save_gamerole_settings(settings)
+
+    return jsonify({"status": "success"})
+
+@app.route('/api/gameroles/ignore/remove', methods=['POST'])
+async def gameroles_ignore_remove():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    activity = data.get('activity')
+
+    if not guild_id or not activity:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if app.bot:
+        cog = app.bot.get_cog("GamerRoles")
+        if cog:
+            settings = await cog.get_settings(guild_id)
+            ignored = settings.get("ignored_activities", ["Custom Status"])
+            if activity in ignored:
+                ignored.remove(activity)
+                await cog.update_settings(guild_id, "ignored_activities", ignored)
+            return jsonify({"status": "success"})
+
+    settings = await load_gamerole_settings()
+    if str(guild_id) in settings:
+        ignored = settings[str(guild_id)].get("ignored_activities", ["Custom Status"])
+        if activity in ignored:
+            ignored.remove(activity)
+            settings[str(guild_id)]["ignored_activities"] = ignored
+            await save_gamerole_settings(settings)
+
+    return jsonify({"status": "success"})
 
 # --- Auto Room Routes ---
 

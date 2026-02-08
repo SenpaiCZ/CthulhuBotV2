@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Occupations - CoC Bot{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-container">
+    <div class="sidebar-panel">
+        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
+            <h5 class="m-0 text-success">Occupations</h5>
+        </div>
+        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
+            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search...">
+        </div>
+        <div class="list-group list-group-flush sidebar-list" id="itemList">
+            {% if data %}
+                {% for key in data.keys() | sort %}
+                    <button type="button" class="list-group-item list-group-item-action item-list-item" onclick="showItem('{{ key | escape }}')">
+                        {{ key }}
+                    </button>
+                {% endfor %}
+            {% else %}
+                <div class="p-3 text-center text-muted">No occupations found.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-panel" id="detailPanel">
+        <div id="item-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
+            <h2 class="text-muted" style="opacity: 0.3;">Select an occupation</h2>
+            <p class="text-secondary">View detailed information.</p>
+        </div>
+
+        <div id="item-content" class="hidden p-4">
+            <!-- Content -->
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const filter = this.value.toLowerCase();
+        const items = document.querySelectorAll('.item-list-item');
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if(text.includes(filter)) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+    });
+
+    const data = {{ data | tojson }};
+
+    function formatBold(text) {
+        if (!text) return '';
+        return text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function showItem(key) {
+        const txt = document.createElement("textarea");
+        txt.innerHTML = key;
+        const decodedKey = txt.value;
+
+        const item = data[decodedKey];
+        const container = document.getElementById('item-content');
+        const placeholder = document.getElementById('item-placeholder');
+
+        if (!item) return;
+
+        document.querySelectorAll('.item-list-item').forEach(el => {
+            if(el.textContent.trim() === decodedKey) el.classList.add('active');
+            else el.classList.remove('active');
+        });
+
+        let html = `
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h1 class="display-5 mb-0 text-success">${decodedKey}</h1>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card bg-dark border-secondary mb-4">
+                        <div class="card-body">
+                            <p class="card-text border-start border-success border-3 ps-3">${formatBold(item.description)}</p>
+                        </div>
+                    </div>
+
+                    <div class="card bg-dark border-secondary mb-4">
+                        <div class="card-header border-secondary text-success">Stats</div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-transparent border-secondary text-light">
+                                <span class="fw-bold text-secondary">Era:</span> ${item.era || 'N/A'}
+                            </li>
+                            <li class="list-group-item bg-transparent border-secondary text-light">
+                                <span class="fw-bold text-secondary">Skill Points:</span> ${item.skill_points || 'N/A'}
+                            </li>
+                            <li class="list-group-item bg-transparent border-secondary text-light">
+                                <span class="fw-bold text-secondary">Credit Rating:</span> ${item.credit_rating || 'N/A'}
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h5 class="text-success border-bottom border-secondary pb-2 mb-3">Suggested Contacts</h5>
+                    <p class="text-light">${formatBold(item.suggested_contacts || 'None')}</p>
+
+                    <h5 class="text-success border-bottom border-secondary pb-2 mb-3 mt-4">Skills</h5>
+                    <p class="text-light">${formatBold(item.skills || 'None')}</p>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+        container.classList.remove('hidden');
+        placeholder.style.setProperty('display', 'none', 'important');
+        placeholder.classList.remove('d-flex');
+    }
+</script>
+{% endblock %}

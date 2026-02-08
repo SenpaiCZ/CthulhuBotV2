@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Gamer Roles{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2 class="mb-4">Gamer Roles Configuration</h2>
+        <div id="loading" class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div id="guilds-container"></div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', loadData);
+
+async function loadData() {
+    try {
+        const response = await fetch('/api/gameroles/data');
+        const data = await response.json();
+        renderGuilds(data.guilds);
+        document.getElementById('loading').style.display = 'none';
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('guilds-container').innerHTML = '<div class="alert alert-danger">Failed to load data.</div>';
+    }
+}
+
+function renderGuilds(guilds) {
+    const container = document.getElementById('guilds-container');
+    container.innerHTML = '';
+
+    if (guilds.length === 0) {
+        container.innerHTML = '<div class="alert alert-info">No servers found.</div>';
+        return;
+    }
+
+    guilds.forEach(guild => {
+        const card = document.createElement('div');
+        card.className = 'card mb-4 bg-dark text-light border-secondary';
+
+        let ignoredListHtml = '';
+        const ignored = guild.settings.ignored_activities || [];
+        ignored.forEach(activity => {
+            ignoredListHtml += `
+                <li class="list-group-item d-flex justify-content-between align-items-center bg-dark text-light border-secondary">
+                    ${activity}
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeIgnored('${guild.id}', '${activity}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </li>
+            `;
+        });
+
+        card.innerHTML = `
+            <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">${guild.name}</h5>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="enabled-${guild.id}"
+                           ${guild.settings.enabled ? 'checked' : ''}
+                           onchange="toggleEnabled('${guild.id}', this.checked)">
+                    <label class="form-check-label" for="enabled-${guild.id}">Enabled</label>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Role Color</label>
+                    <div class="input-group">
+                        <input type="color" class="form-control form-control-color" id="color-${guild.id}"
+                               value="${guild.settings.color || '#0000FF'}" title="Choose your color">
+                        <button class="btn btn-outline-primary" onclick="saveColor('${guild.id}')">Save Color</button>
+                    </div>
+                    <div class="form-text text-light">This color will be applied to newly created gamer roles.</div>
+                </div>
+
+                <hr class="border-secondary">
+
+                <div class="mb-3">
+                    <label class="form-label">Ignored Activities</label>
+                    <ul class="list-group mb-2" id="ignored-list-${guild.id}">
+                        ${ignoredListHtml}
+                    </ul>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-dark text-light border-secondary"
+                               id="new-ignore-${guild.id}" placeholder="Activity Name (e.g. Custom Status)">
+                        <button class="btn btn-outline-success" onclick="addIgnored('${guild.id}')">Add</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// Global functions for inline handlers
+window.toggleEnabled = async (guildId, enabled) => {
+    try {
+        const response = await fetch('/api/gameroles/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ guild_id: guildId, enabled: enabled })
+        });
+        const res = await response.json();
+        if (res.status !== 'success') alert('Failed to save status: ' + res.message);
+    } catch (e) { alert('Error: ' + e); }
+};
+
+window.saveColor = async (guildId) => {
+    const color = document.getElementById(`color-${guildId}`).value;
+    try {
+        const response = await fetch('/api/gameroles/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ guild_id: guildId, color: color })
+        });
+        const res = await response.json();
+        if (res.status === 'success') alert('Color saved!');
+        else alert('Failed to save color: ' + res.message);
+    } catch (e) { alert('Error: ' + e); }
+};
+
+window.addIgnored = async (guildId) => {
+    const input = document.getElementById(`new-ignore-${guildId}`);
+    const activity = input.value.trim();
+    if (!activity) return;
+
+    try {
+        const response = await fetch('/api/gameroles/ignore/add', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ guild_id: guildId, activity: activity })
+        });
+        const res = await response.json();
+        if (res.status === 'success') {
+            input.value = '';
+            loadData(); // Reload UI
+        } else {
+            alert('Failed to add: ' + res.message);
+        }
+    } catch (e) { alert('Error: ' + e); }
+};
+
+window.removeIgnored = async (guildId, activity) => {
+    if (!confirm(`Stop ignoring "${activity}"?`)) return;
+    try {
+        const response = await fetch('/api/gameroles/ignore/remove', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ guild_id: guildId, activity: activity })
+        });
+        const res = await response.json();
+        if (res.status === 'success') {
+            loadData(); // Reload UI
+        } else {
+            alert('Failed to remove: ' + res.message);
+        }
+    } catch (e) { alert('Error: ' + e); }
+};
+
+</script>
+{% endblock %}
