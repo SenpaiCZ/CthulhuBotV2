@@ -84,6 +84,21 @@ class PokemonGo(commands.Cog):
 
                 time_str = text_div.find('p').text.strip() if text_div and text_div.find('p') else ""
 
+                # Fix "Calculating..." time string by using Discord timestamp
+                if "Calculating..." in time_str:
+                    try:
+                        # Re-parse to get aware datetime for timestamp
+                        # If start_date_str had 'Z', clean_date_str is naive (implicit UTC)
+                        # If start_date_str had offset, clean_date_str has offset
+                        ts_dt = datetime.datetime.fromisoformat(clean_date_str)
+                        if ts_dt.tzinfo is None:
+                            ts_dt = ts_dt.replace(tzinfo=datetime.timezone.utc)
+
+                        timestamp = int(ts_dt.timestamp())
+                        time_str = f"<t:{timestamp}:f>"
+                    except Exception as e:
+                        print(f"Error calculating timestamp for {title}: {e}")
+
                 heading_span = text_div.find(class_='event-tag-badge')
                 heading = heading_span.text.strip() if heading_span else "Event"
 
@@ -159,7 +174,8 @@ class PokemonGo(commands.Cog):
         if not channel: return False, "Channel not found"
 
         now = datetime.datetime.now()
-        next_week_end = now + datetime.timedelta(days=7)
+        # Extend to the end of the next Sunday to include late evening events
+        next_week_end = (now + datetime.timedelta(days=7)).replace(hour=23, minute=59, second=59)
 
         upcoming_week_events = []
         for ev in self.events:
@@ -353,7 +369,8 @@ class PokemonGo(commands.Cog):
     async def weekly_summary_task(self):
         """Weekly summary on Sunday 20:00."""
         now = datetime.datetime.now()
-        next_week_end = now + datetime.timedelta(days=7)
+        # Extend to the end of the next Sunday to include late evening events
+        next_week_end = (now + datetime.timedelta(days=7)).replace(hour=23, minute=59, second=59)
 
         upcoming_week_events = []
         for ev in self.events:
