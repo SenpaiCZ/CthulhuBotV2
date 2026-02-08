@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
-{% block title %}Archetypes - CoC Bot{% endblock %}
+{% block title %}{{ title }} - CoC Bot{% endblock %}
 
 {% block content %}
 <div class="container-fluid dashboard-container">
     <div class="sidebar-panel">
         <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
-            <h5 class="m-0 text-success">Archetypes</h5>
+            <h5 class="m-0 text-success">{{ title }}</h5>
         </div>
         <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
             <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search...">
@@ -19,24 +19,25 @@
                     </button>
                 {% endfor %}
             {% else %}
-                <div class="p-3 text-center text-muted">No archetypes found.</div>
+                <div class="p-3 text-center text-muted">No items found.</div>
             {% endif %}
         </div>
     </div>
 
     <div class="detail-panel" id="detailPanel">
         <div id="item-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
-            <h2 class="text-muted" style="opacity: 0.3;">Select an archetype</h2>
-            <p class="text-secondary">View detailed information.</p>
+            <h2 class="text-muted" style="opacity: 0.3;">Select an item</h2>
+            <p class="text-secondary">View details.</p>
         </div>
 
         <div id="item-content" class="hidden p-4">
-            <!-- Content -->
+            <!-- Template content populated by JS -->
         </div>
     </div>
 </div>
 
 <script>
+    // Search Functionality
     document.getElementById('searchInput').addEventListener('input', function() {
         const filter = this.value.toLowerCase();
         const items = document.querySelectorAll('.item-list-item');
@@ -50,6 +51,7 @@
         });
     });
 
+    // Pass Python data to JS safely
     const data = {{ data | tojson }};
 
     function showItem(key) {
@@ -61,34 +63,40 @@
         const container = document.getElementById('item-content');
         const placeholder = document.getElementById('item-placeholder');
 
-        if (!item) return;
+        if (!item) {
+            console.error("Item not found:", decodedKey);
+            return;
+        }
 
+        // Highlight active item
         document.querySelectorAll('.item-list-item').forEach(el => {
             if(el.textContent.trim() === decodedKey) el.classList.add('active');
             else el.classList.remove('active');
         });
+
+        // Parse poison fields
+        // item structure: { "Onset Time": "...", "Symptoms": "...", "Damage": "...", "Note": "..." }
 
         let html = `
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <h1 class="display-5 mb-0 text-success">${decodedKey}</h1>
             </div>
 
-            <div class="row">
-                <div class="col-12">
-                    <div class="card bg-dark border-secondary mb-4">
-                        <div class="card-body">
-                            <p class="card-text border-start border-success border-3 ps-3">${item.description}</p>
-                        </div>
-                    </div>
+            <div class="card bg-dark border-secondary">
+                <div class="card-body">
+                    <dl class="row text-light">
+                        <dt class="col-sm-3 text-success">Onset Time</dt>
+                        <dd class="col-sm-9">${item['Onset Time'] || 'N/A'}</dd>
 
-                    <h5 class="text-success border-bottom border-secondary pb-2 mb-3">Adjustments</h5>
-                    <ul class="list-group list-group-flush bg-transparent">
-                        ${(item.adjustments || []).map(adj => `
-                            <li class="list-group-item bg-transparent border-secondary ps-0 py-2 text-light">
-                                ${adj}
-                            </li>
-                        `).join('')}
-                    </ul>
+                        <dt class="col-sm-3 text-success">Symptoms</dt>
+                        <dd class="col-sm-9">${item['Symptoms'] || 'N/A'}</dd>
+
+                        <dt class="col-sm-3 text-success">Damage</dt>
+                        <dd class="col-sm-9">${item['Damage'] || 'N/A'}</dd>
+
+                        <dt class="col-sm-3 text-success">Note</dt>
+                        <dd class="col-sm-9">${item['Note'] || 'N/A'}</dd>
+                    </dl>
                 </div>
             </div>
         `;

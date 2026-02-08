@@ -534,7 +534,7 @@ async def render_poison_view():
     if not target_key:
         return f"Poison '{name}' not found", 404
 
-    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Poison", emojis=emojis, emoji_lib=emoji)
+    return await render_template('render_poison.html', title=target_key, poison=data[target_key], type="Poison", emojis=emojis, emoji_lib=emoji)
 
 @app.route('/render/skill')
 async def render_skill_view():
@@ -661,12 +661,16 @@ async def admin_phobias():
 @app.route('/poisons')
 async def admin_poisons():
     data = await load_poisons_data()
-    return await render_template('generic_list.html', data=data, title="Poisons")
+    return await render_template('poisons.html', data=data, title="Poisons")
 
 @app.route('/skills')
 async def admin_skills():
     data = await load_skills_data()
-    return await render_template('generic_list.html', data=data, title="Skills")
+    # Process emojis in descriptions
+    processed_data = {}
+    for key, description in data.items():
+        processed_data[key] = emoji.emojize(description, language='alias')
+    return await render_template('generic_list.html', data=processed_data, title="Skills")
 
 @app.route('/inventions')
 async def admin_inventions():
