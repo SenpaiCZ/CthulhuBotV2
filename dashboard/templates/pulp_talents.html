@@ -3,41 +3,45 @@
 {% block title %}Pulp Talents - CoC Bot{% endblock %}
 
 {% block content %}
-<div class="container-fluid dashboard-container">
-    <div class="sidebar-panel">
-        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
-            <h5 class="m-0 text-success">Pulp Talents</h5>
-        </div>
-        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
-            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search...">
-        </div>
-        <div class="list-group list-group-flush sidebar-list" id="itemList">
-            {% for category, talents in data.items() %}
-                <div class="list-group-item bg-dark text-muted small text-uppercase fw-bold border-bottom border-secondary ps-3 py-1">
-                    {{ category }}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-5 text-success mb-3">Pulp Talents</h1>
+            <div class="d-flex justify-content-center">
+                <div class="col-md-6 col-sm-10">
+                    <input type="text" id="searchInput" class="form-control bg-dark text-light border-secondary" placeholder="Search Talents...">
                 </div>
-                {% for talent_str in talents %}
-                    <!-- We use index + category as ID since names are inside strings -->
-                    <button type="button" class="list-group-item list-group-item-action item-list-item"
-                            data-category="{{ category }}"
-                            data-index="{{ loop.index0 }}"
-                            onclick="showItem('{{ category }}', {{ loop.index0 }})">
-                        <!-- Simple parse for display label -->
-                        {{ talent_str.split('**')[1] if '**' in talent_str else talent_str[:20] }}
-                    </button>
-                {% endfor %}
-            {% endfor %}
+            </div>
         </div>
     </div>
 
-    <div class="detail-panel" id="detailPanel">
-        <div id="item-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
-            <h2 class="text-muted" style="opacity: 0.3;">Select a talent</h2>
-            <p class="text-secondary">View detailed information.</p>
-        </div>
+    <div id="talentsContainer">
+        {% for category, talents in data.items() %}
+        <div class="category-section mb-5">
+            <h3 class="text-success border-bottom border-secondary pb-2 mb-4 category-header">{{ category }}</h3>
 
-        <div id="item-content" class="hidden p-4">
-            <!-- Content -->
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 card-grid">
+                {% for talent_str in talents %}
+                    {% set talent = talent_str | parse_pulp_talent %}
+                    <div class="col card-col">
+                        <div class="card h-100 bg-dark border-secondary">
+                            <div class="card-header border-secondary text-success fw-bold">
+                                {{ talent.name }}
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text text-light">{{ talent.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="noResults" class="row mt-5 hidden">
+        <div class="col-12 text-center text-muted">
+            <h4>No results found</h4>
         </div>
     </div>
 </div>
@@ -45,56 +49,54 @@
 <script>
     document.getElementById('searchInput').addEventListener('input', function() {
         const filter = this.value.toLowerCase();
-        const items = document.querySelectorAll('.item-list-item');
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if(text.includes(filter)) {
-                item.classList.remove('hidden');
+        const categories = document.querySelectorAll('.category-section');
+        let globalVisible = false;
+
+        categories.forEach(section => {
+            const cols = section.querySelectorAll('.card-col');
+            let sectionVisible = false;
+
+            cols.forEach(col => {
+                const card = col.querySelector('.card');
+                const title = card.querySelector('.card-header').textContent.toLowerCase();
+                const text = card.querySelector('.card-text').textContent.toLowerCase();
+
+                if (title.includes(filter) || text.includes(filter)) {
+                    col.classList.remove('hidden');
+                    sectionVisible = true;
+                    globalVisible = true;
+                } else {
+                    col.classList.add('hidden');
+                }
+            });
+
+            if (sectionVisible) {
+                section.classList.remove('hidden');
             } else {
-                item.classList.add('hidden');
+                section.classList.add('hidden');
             }
         });
+
+        const noResults = document.getElementById('noResults');
+        if (globalVisible) {
+            noResults.classList.add('hidden');
+        } else {
+            noResults.classList.remove('hidden');
+        }
     });
-
-    const data = {{ data | tojson }};
-
-    function showItem(category, index) {
-        const talentStr = data[category][index];
-        if (!talentStr) return;
-
-        // Parse "**Name**: Description"
-        const match = talentStr.match(/\*\*(.*?)\*\*:\s*(.*)/);
-        const name = match ? match[1] : "Unknown Talent";
-        const description = match ? match[2] : talentStr;
-
-        const container = document.getElementById('item-content');
-        const placeholder = document.getElementById('item-placeholder');
-
-        // Highlight
-        document.querySelectorAll('.item-list-item').forEach(el => {
-            if(el.dataset.category === category && parseInt(el.dataset.index) === index) el.classList.add('active');
-            else el.classList.remove('active');
-        });
-
-        let html = `
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <div>
-                    <h1 class="display-5 mb-0 text-success">${name}</h1>
-                    <span class="badge bg-secondary text-uppercase mt-2">${category}</span>
-                </div>
-            </div>
-
-            <div class="card bg-dark border-secondary">
-                <div class="card-body">
-                    <p class="card-text text-light">${description}</p>
-                </div>
-            </div>
-        `;
-
-        container.innerHTML = html;
-        container.classList.remove('hidden');
-        placeholder.style.setProperty('display', 'none', 'important');
-        placeholder.classList.remove('d-flex');
-    }
 </script>
+
+<style>
+    .hidden {
+        display: none !important;
+    }
+    .card {
+        transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+        border-color: var(--cthulhu-green-main) !important;
+        box-shadow: 0 4px 8px rgba(46, 139, 87, 0.2);
+    }
+</style>
 {% endblock %}
