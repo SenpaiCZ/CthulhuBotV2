@@ -22,7 +22,6 @@ from loadnsave import (
     load_deleter_data, save_deleter_data,
     autoroom_load, autoroom_save,
     load_pogo_settings, save_pogo_settings, load_pogo_events, save_pogo_events,
-    load_monsters_data, load_deities_data, load_spells_data,
     load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
@@ -378,7 +377,7 @@ async def render_weapon_view():
     if not name:
         return "Missing name parameter", 400
 
-    data = await load_weapons_data()
+    data = await _load_json_file(INFODATA_FOLDER, 'weapons.json')
 
     # Find weapon (case-insensitive lookup in dict keys)
     target_key = None
@@ -423,7 +422,9 @@ async def admin_spells():
 
 @app.route('/weapons')
 async def admin_weapons():
-    weapons_data = await load_weapons_data()
+    weapons_data = await _load_json_file(INFODATA_FOLDER, 'weapons.json')
+    if not weapons_data:
+        print(f"Warning: Weapons data is empty or file not found. Path: {os.path.join(INFODATA_FOLDER, 'weapons.json')} CWD: {os.getcwd()}")
     return await render_template('weapons.html', data=weapons_data)
 
 @app.route('/admin/browse/<folder_name>')
