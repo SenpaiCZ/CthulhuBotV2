@@ -889,6 +889,51 @@ async def soundboard_folder_color():
 
     return jsonify({"status": "success"})
 
+@app.route('/api/soundboard/file/settings', methods=['POST'])
+async def soundboard_file_settings():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    file_path = data.get('file_path')
+    volume = data.get('volume')
+    loop = data.get('loop')
+
+    if not file_path or volume is None or loop is None:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    # Security check
+    if '..' in file_path:
+        return jsonify({"status": "error", "message": "Invalid file path"}), 400
+
+    try:
+        vol_int = int(volume)
+        if vol_int < 0 or vol_int > 100: raise ValueError
+        loop_bool = bool(loop)
+    except ValueError:
+         return jsonify({"status": "error", "message": "Invalid volume or loop value"}), 400
+
+    settings = await load_soundboard_settings()
+    if 'files' not in settings:
+        settings['files'] = {}
+
+    # If defaults (100% vol, loop off), remove entry to save space
+    if vol_int == 100 and not loop_bool:
+        if file_path in settings['files']:
+            del settings['files'][file_path]
+    else:
+        settings['files'][file_path] = {
+            "volume": vol_int,
+            "loop": loop_bool
+        }
+
+    # Clean up if files dict is empty (optional, but cleaner)
+    if not settings['files']:
+        del settings['files']
+
+    await save_soundboard_settings(settings)
+
+    return jsonify({"status": "success"})
+
 @app.route('/api/soundboard/play', methods=['POST'])
 async def soundboard_play():
     if not is_admin(): return "Unauthorized", 401
@@ -938,9 +983,28 @@ async def soundboard_play():
 
     # Add track
     loop_setting = data.get('loop', True)
+    volume_modifier = data.get('volume_modifier', 1.0) # Individual file volume modifier
+
+    try:
+        volume_modifier = float(volume_modifier)
+        volume_modifier = max(0.0, min(1.0, volume_modifier))
+    except ValueError:
+        volume_modifier = 1.0
+
     vol_data = server_volumes.get(str(guild_id), {'music': 1.0, 'soundboard': 0.5})
     sb_vol = vol_data.get('soundboard', 0.5)
-    mixer.add_track(full_path, volume=sb_vol, loop=loop_setting, metadata={'type': 'soundboard'})
+
+    final_vol = sb_vol * volume_modifier
+
+    mixer.add_track(
+        full_path,
+        volume=final_vol,
+        loop=loop_setting,
+        metadata={
+            'type': 'soundboard',
+            'volume_modifier': volume_modifier
+        }
+    )
 
     return jsonify({"status": "success"})
 
@@ -1028,7 +1092,8 @@ async def soundboard_volume():
             with mixer.lock:
                 for track in mixer.tracks:
                     if track.metadata.get('type') == 'soundboard':
-                        track.volume = vol_float
+                        mod = track.metadata.get('volume_modifier', 1.0)
+                        track.volume = vol_float * mod
 
         # Note: We do NOT update the PCMVolumeTransformer volume anymore, as it stays at 1.0.
 
