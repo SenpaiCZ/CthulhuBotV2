@@ -1,6 +1,7 @@
 import json
 import aiofiles
 import os
+import shutil
 
 DATA_FOLDER = "data"
 INFODATA_FOLDER = "infodata"
@@ -14,6 +15,15 @@ async def _load_json_file(folder, filename):
             data = await file.read()
             return json.loads(data)
     except FileNotFoundError:
+        return {}
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON from {file_path}: {e}")
+        # Backup corrupted file
+        try:
+            shutil.copy2(file_path, file_path + ".bak")
+            print(f"Backed up corrupted file to {file_path}.bak")
+        except Exception as backup_error:
+            print(f"Failed to backup corrupted file: {backup_error}")
         return {}
 
 async def _save_json_file(folder, filename, data, ensure_ascii=True):

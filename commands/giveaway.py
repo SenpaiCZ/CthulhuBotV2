@@ -69,8 +69,9 @@ class Giveaway(commands.Cog):
             targets = []
             for guild_id, giveaways in data.items():
                 for message_id, gw in giveaways.items():
-                    if gw["status"] == "active" and gw.get("end_time"):
-                        if now >= gw["end_time"]:
+                    end_time = gw.get("end_time")
+                    if gw["status"] == "active" and isinstance(end_time, (int, float)):
+                        if now >= end_time:
                             targets.append((guild_id, message_id))
 
             for guild_id, message_id in targets:
