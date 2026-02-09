@@ -7,6 +7,8 @@ DATA_FOLDER = "data"
 INFODATA_FOLDER = "infodata"
 GAMEDATA_FOLDER = "gamedata"
 
+_INFODATA_CACHE = {}
+
 async def _load_json_file(folder, filename):
     """Helper function to asynchronously load JSON data from a file."""
     file_path = os.path.join(folder, filename)
@@ -26,6 +28,12 @@ async def _load_json_file(folder, filename):
             print(f"Failed to backup corrupted file: {backup_error}")
         return {}
 
+async def _load_infodata_cached(filename):
+    """Helper function to load infodata from cache or disk."""
+    if filename not in _INFODATA_CACHE:
+        _INFODATA_CACHE[filename] = await _load_json_file(INFODATA_FOLDER, filename)
+    return _INFODATA_CACHE[filename]
+
 async def _save_json_file(folder, filename, data, ensure_ascii=True):
     """Helper function to asynchronously save JSON data to a file."""
     if not os.path.exists(folder):
@@ -33,6 +41,10 @@ async def _save_json_file(folder, filename, data, ensure_ascii=True):
     file_path = os.path.join(folder, filename)
     async with aiofiles.open(file_path, 'w', encoding='utf-8') as file:
         await file.write(json.dumps(data, indent=4, ensure_ascii=ensure_ascii))
+
+    # Update cache if applicable
+    if folder == INFODATA_FOLDER:
+        _INFODATA_CACHE[filename] = data
 
 # --- Player Stats ---
 async def load_player_stats():
@@ -109,64 +121,64 @@ async def save_session_data(session_data):
 
 # --- Info Data (Read-only mostly) ---
 async def load_monsters_data():
-    return await _load_json_file(INFODATA_FOLDER, 'monsters.json')
+    return await _load_infodata_cached('monsters.json')
 
 async def load_spells_data():
-    return await _load_json_file(INFODATA_FOLDER, 'spells.json')
+    return await _load_infodata_cached('spells.json')
 
 async def load_deities_data():
-    return await _load_json_file(INFODATA_FOLDER, 'deities.json')
+    return await _load_infodata_cached('deities.json')
 
 async def load_madness_group_data():
-    return await _load_json_file(INFODATA_FOLDER, 'madness_with_group.json')
+    return await _load_infodata_cached('madness_with_group.json')
 
 async def load_madness_solo_data():
-    return await _load_json_file(INFODATA_FOLDER, 'madness_alone.json')
+    return await _load_infodata_cached('madness_alone.json')
 
 async def load_madness_insane_talent_data():
-    return await _load_json_file(INFODATA_FOLDER, 'insane_talents.json')
+    return await _load_infodata_cached('insane_talents.json')
 
 async def load_pulp_talents_data():
-    return await _load_json_file(INFODATA_FOLDER, 'pulp_talents.json')
+    return await _load_infodata_cached('pulp_talents.json')
 
 async def load_phobias_data():
-    return await _load_json_file(INFODATA_FOLDER, 'phobias.json')
+    return await _load_infodata_cached('phobias.json')
 
 async def load_manias_data():
-    return await _load_json_file(INFODATA_FOLDER, 'manias.json')
+    return await _load_infodata_cached('manias.json')
 
 async def load_names_male_data():
-    return await _load_json_file(INFODATA_FOLDER, 'names_male.json')
+    return await _load_infodata_cached('names_male.json')
 
 async def load_names_female_data():
-    return await _load_json_file(INFODATA_FOLDER, 'names_female.json')
+    return await _load_infodata_cached('names_female.json')
 
 async def load_names_last_data():
-    return await _load_json_file(INFODATA_FOLDER, 'names_last.json')
+    return await _load_infodata_cached('names_last.json')
 
 async def load_archetype_data():
-    return await _load_json_file(INFODATA_FOLDER, 'archetype_info.json')
+    return await _load_infodata_cached('archetype_info.json')
 
 async def load_weapons_data():
-    return await _load_json_file(INFODATA_FOLDER, 'weapons.json')
+    return await _load_infodata_cached('weapons.json')
 
 async def load_inventions_data():
-    return await _load_json_file(INFODATA_FOLDER, 'inventions_info.json')
+    return await _load_infodata_cached('inventions_info.json')
 
 async def load_occupations_data():
-    return await _load_json_file(INFODATA_FOLDER, 'occupations_info.json')
+    return await _load_infodata_cached('occupations_info.json')
 
 async def load_skills_data():
-    return await _load_json_file(INFODATA_FOLDER, 'skills_info.json')
+    return await _load_infodata_cached('skills_info.json')
 
 async def load_years_data():
-    return await _load_json_file(INFODATA_FOLDER, 'years_info.json')
+    return await _load_infodata_cached('years_info.json')
 
 async def load_poisons_data():
-    return await _load_json_file(INFODATA_FOLDER, 'poisions_info.json')
+    return await _load_infodata_cached('poisions_info.json')
 
 async def load_macguffin_data():
-    return await _load_json_file(INFODATA_FOLDER, 'macguffin_info.json')
+    return await _load_infodata_cached('macguffin_info.json')
 
 # --- Luck Stats ---
 async def load_luck_stats():
