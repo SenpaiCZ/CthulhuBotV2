@@ -274,3 +274,44 @@ body {
 code {
     color: var(--cthulhu-green-bright);
 }
+
+/* --- Nested Dropdowns Customization --- */
+
+/* Desktop: Show submenus on hover and position correctly */
+@media (min-width: 992px) {
+    /*
+       For right-aligned menus (Keeper Tools, Server Admin),
+       we use .dropstart logic to open submenus to the LEFT.
+    */
+    .dropdown-menu .dropstart {
+        position: relative;
+    }
+
+    .dropdown-menu .dropstart:hover > .dropdown-menu {
+        display: block;
+        top: 0;
+        right: 100%;
+        left: auto;
+        margin-top: -6px;
+        margin-right: 0.1rem;
+    }
+}
+
+/* Mobile: Stack submenus vertically, static positioning */
+@media (max-width: 991.98px) {
+    .dropdown-menu .dropstart .dropdown-menu {
+        position: static;
+        float: none;
+        width: auto;
+        margin-top: 0;
+        background-color: transparent;
+        border: 0;
+        box-shadow: none;
+        padding-left: 1.5rem; /* Indentation */
+    }
+
+    /* Ensure text wraps nicely */
+    .dropdown-menu .dropstart .dropdown-menu .dropdown-item {
+        white-space: normal;
+    }
+}
