@@ -55,6 +55,10 @@
                             <textarea class="form-control" id="giveawayDesc" rows="3" placeholder="Description of the prize..."></textarea>
                         </div>
                         <div class="mb-3">
+                            <label for="giveawayDuration" class="form-label">Duration</label>
+                            <input type="text" class="form-control" id="giveawayDuration" placeholder="e.g. 1h, 30m, 2d (leave empty for manual end)">
+                        </div>
+                        <div class="mb-3">
                             <label for="prizeSecret" class="form-label">Prize Secret (Hidden)</label>
                             <input type="text" class="form-control" id="prizeSecret" placeholder="e.g. AAAAA-BBBBB-CCCCC" required>
                             <div class="form-text">This will be sent via DM to the winner automatically.</div>
@@ -234,6 +238,7 @@
         const channelId = document.getElementById('channelSelect').value;
         const title = document.getElementById('giveawayTitle').value;
         const desc = document.getElementById('giveawayDesc').value;
+        const duration = document.getElementById('giveawayDuration').value;
         const prize = document.getElementById('prizeSecret').value;
 
         if (!channelId || !title || !prize) {
@@ -254,7 +259,8 @@
                     channel_id: channelId,
                     title: title,
                     description: desc,
-                    prize_secret: prize
+                    prize_secret: prize,
+                    duration: duration
                 })
             });
 

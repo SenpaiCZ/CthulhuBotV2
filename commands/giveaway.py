@@ -1,8 +1,10 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ui import View, Button
 import random
 import asyncio
+import re
+from datetime import datetime, timedelta
 from loadnsave import load_giveaway_data, save_giveaway_data, load_karma_stats
 
 class GiveawayView(View):
@@ -52,6 +54,54 @@ class Giveaway(commands.Cog):
     # Register persistent view
     async def cog_load(self):
         self.bot.add_view(GiveawayView())
+        self.check_giveaways.start()
+
+    async def cog_unload(self):
+        self.check_giveaways.cancel()
+
+    @tasks.loop(seconds=60)
+    async def check_giveaways(self):
+        try:
+            data = await load_giveaway_data()
+            now = datetime.utcnow().timestamp()
+
+            # Create a list of targets to avoid modification during iteration issues, though we call a separate function
+            targets = []
+            for guild_id, giveaways in data.items():
+                for message_id, gw in giveaways.items():
+                    if gw["status"] == "active" and gw.get("end_time"):
+                        if now >= gw["end_time"]:
+                            targets.append((guild_id, message_id))
+
+            for guild_id, message_id in targets:
+                await self.api_end_giveaway(guild_id, message_id, requester=None)
+
+        except Exception as e:
+            print(f"Error in check_giveaways loop: {e}")
+
+    @check_giveaways.before_loop
+    async def before_check_giveaways(self):
+        await self.bot.wait_until_ready()
+
+    def parse_duration(self, duration_str):
+        if not duration_str or duration_str.lower() in ["forever", "none", "no"]:
+            return None
+
+        total_seconds = 0
+        matches = re.findall(r'(\d+)\s*([dhms])', duration_str.lower())
+
+        for amount, unit in matches:
+            amount = int(amount)
+            if unit == 'd':
+                total_seconds += amount * 86400
+            elif unit == 'h':
+                total_seconds += amount * 3600
+            elif unit == 'm':
+                total_seconds += amount * 60
+            elif unit == 's':
+                total_seconds += amount
+
+        return total_seconds if total_seconds > 0 else None
 
     @commands.group(invoke_without_command=True)
     async def giveaway(self, ctx):
@@ -105,6 +155,20 @@ class Giveaway(commands.Cog):
             await dm_channel.send("Timeout. Giveaway creation cancelled.")
             return
 
+        # 2.5 Duration
+        duration_seconds = None
+        end_time = None
+        await dm_channel.send("How long should the giveaway last? (e.g., 10m, 1h, 2d, or 'forever' for no limit)")
+        try:
+            msg = await self.bot.wait_for('message', check=check, timeout=120)
+            duration_str = msg.content
+            duration_seconds = self.parse_duration(duration_str)
+            if duration_seconds:
+                end_time = datetime.utcnow().timestamp() + duration_seconds
+        except asyncio.TimeoutError:
+            await dm_channel.send("Timeout. Giveaway creation cancelled.")
+            return
+
         # 3. Prize Secret
         prize_secret = ""
         await dm_channel.send("Enter the **Prize Secret** (e.g., Steam Key, Code). This will be sent to the winner in DM.")
@@ -117,6 +181,8 @@ class Giveaway(commands.Cog):
 
         # Confirmation
         embed = discord.Embed(title=title, description=description, color=discord.Color.gold())
+        if end_time:
+            embed.add_field(name="Ends", value=f"<t:{int(end_time)}:R>", inline=False)
         embed.set_footer(text=f"Hosted by {ctx.author.display_name}")
 
         await dm_channel.send("Here is a preview. Type **yes** to post it to the channel where you started this command.", embed=embed)
@@ -137,6 +203,9 @@ class Giveaway(commands.Cog):
             if description:
                 embed.description = description
 
+            if end_time:
+                embed.add_field(name="Ends", value=f"<t:{int(end_time)}:R>", inline=False)
+
             embed.add_field(name="How to win?", value="React with 🎉 to enter!\nKarma increases your chance to win!", inline=False)
             embed.set_footer(text=f"Hosted by {ctx.author.display_name}")
 
@@ -156,7 +225,8 @@ class Giveaway(commands.Cog):
                 "description": description,
                 "prize_secret": prize_secret,
                 "status": "active",
-                "participants": []
+                "participants": [],
+                "end_time": end_time
             }
 
             await save_giveaway_data(data)

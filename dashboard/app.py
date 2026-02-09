@@ -2904,6 +2904,7 @@ async def giveaway_create():
     title = data.get('title')
     description = data.get('description')
     prize_secret = data.get('prize_secret')
+    duration_str = data.get('duration')
 
     if not all([guild_id, channel_id, title, prize_secret]):
         return jsonify({"status": "error", "message": "Missing arguments"}), 400
@@ -2920,8 +2921,27 @@ async def giveaway_create():
         if not channel:
             return jsonify({"status": "error", "message": "Channel not found"}), 404
 
+        # Calculate End Time
+        end_time = None
+        if duration_str and str(duration_str).lower() not in ["forever", "none", "no"]:
+             total_seconds = 0
+             matches = re.findall(r'(\d+)\s*([dhms])', str(duration_str).lower())
+             for amount, unit in matches:
+                amount = int(amount)
+                if unit == 'd': total_seconds += amount * 86400
+                elif unit == 'h': total_seconds += amount * 3600
+                elif unit == 'm': total_seconds += amount * 60
+                elif unit == 's': total_seconds += amount
+
+             if total_seconds > 0:
+                 from datetime import datetime
+                 end_time = datetime.utcnow().timestamp() + total_seconds
+
         # Create Embed
         embed = discord.Embed(title=f"🎉 GIVEAWAY: {title}", description=description, color=discord.Color.gold())
+        if end_time:
+             embed.add_field(name="Ends", value=f"<t:{int(end_time)}:R>", inline=False)
+
         embed.add_field(name="How to win?", value="React with 🎉 to enter!\nKarma increases your chance to win!", inline=False)
         embed.set_footer(text=f"Hosted by Admins")
 
@@ -2945,7 +2965,8 @@ async def giveaway_create():
             "description": description,
             "prize_secret": prize_secret,
             "status": "active",
-            "participants": []
+            "participants": [],
+            "end_time": end_time
         }
 
         await save_giveaway_data(gw_data)
