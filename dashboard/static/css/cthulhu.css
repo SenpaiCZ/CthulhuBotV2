@@ -315,3 +315,19 @@ code {
         white-space: normal;
     }
 }
+
+/* --- Accessibility --- */
+.skip-link:focus {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 10000;
+    background-color: var(--cthulhu-green-main);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+    text-decoration: none;
+    outline: 2px solid white;
+    font-weight: bold;
+}
