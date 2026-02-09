@@ -84,7 +84,10 @@ class Giveaway(commands.Cog):
                             targets.append((guild_id, message_id))
 
             for guild_id, message_id in targets:
-                await self.api_end_giveaway(guild_id, message_id, requester=None)
+                try:
+                    await self.api_end_giveaway(guild_id, message_id, requester=None)
+                except Exception as inner_e:
+                    print(f"Error ending giveaway {message_id} in guild {guild_id}: {inner_e}")
 
         except Exception as e:
             print(f"Error in check_giveaways loop: {e}")

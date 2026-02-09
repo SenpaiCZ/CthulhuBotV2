@@ -85,6 +85,7 @@
                                     <th>Title</th>
                                     <th>Channel</th>
                                     <th>Entries</th>
+                                    <th>Time Left</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -139,7 +140,45 @@
             e.preventDefault();
             createGiveaway();
         });
+
+        // Start timer update loop
+        setInterval(updateTimers, 1000);
     });
+
+    function updateTimers() {
+        const timers = document.querySelectorAll('.giveaway-timer');
+        const now = Date.now() / 1000; // current time in seconds
+
+        timers.forEach(timer => {
+            const end = parseFloat(timer.getAttribute('data-end'));
+            if (!end) return;
+
+            const diff = end - now;
+
+            if (diff <= 0) {
+                timer.textContent = "Ending...";
+                timer.classList.add('text-danger');
+            } else {
+                // Format duration
+                const d = Math.floor(diff / 86400);
+                const h = Math.floor((diff % 86400) / 3600);
+                const m = Math.floor((diff % 3600) / 60);
+                const s = Math.floor(diff % 60);
+
+                let text = "";
+                if (d > 0) text += `${d}d `;
+                if (h > 0) text += `${h}h `;
+                if (m > 0) text += `${m}m `;
+                text += `${s}s`;
+
+                timer.textContent = text;
+                timer.classList.remove('text-danger', 'text-warning'); // Reset classes
+                if (diff < 300) { // Less than 5 mins
+                    timer.classList.add('text-warning');
+                }
+            }
+        });
+    }
 
     async function fetchData() {
         const loadingDiv = document.getElementById('loading');
@@ -205,10 +244,18 @@
             if (gw.status === 'active') {
                 hasActive = true;
                 const tr = document.createElement('tr');
+
+                // Calculate initial time left or placeholder
+                let timeDisplay = "No Limit";
+                if (gw.end_time) {
+                    timeDisplay = `<span class="giveaway-timer" data-end="${gw.end_time}">Calculating...</span>`;
+                }
+
                 tr.innerHTML = `
                     <td><strong>${escapeHtml(gw.title)}</strong></td>
                     <td><span class="badge bg-light text-dark">${escapeHtml(gw.channel_name)}</span></td>
                     <td>${gw.participant_count}</td>
+                    <td>${timeDisplay}</td>
                     <td>
                         <button class="btn btn-sm btn-danger" onclick="endGiveaway('${guild.id}', '${gw.message_id}')">End</button>
                     </td>
