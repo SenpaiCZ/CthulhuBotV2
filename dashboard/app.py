@@ -2934,8 +2934,8 @@ async def giveaway_create():
                 elif unit == 's': total_seconds += amount
 
              if total_seconds > 0:
-                 from datetime import datetime
-                 end_time = datetime.utcnow().timestamp() + total_seconds
+                 from datetime import datetime, timezone
+                 end_time = datetime.now(timezone.utc).timestamp() + total_seconds
 
         # Create Embed
         embed = discord.Embed(title=f"🎉 GIVEAWAY: {title}", description=description, color=discord.Color.gold())
