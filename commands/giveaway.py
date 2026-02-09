@@ -7,6 +7,18 @@ import re
 from datetime import datetime, timedelta
 from loadnsave import load_giveaway_data, save_giveaway_data, load_karma_stats
 
+def calculate_tickets(karma):
+    """
+    Calculates tickets based on karma.
+    Formula: 1 + (Karma / 100) (Integer division)
+    This creates diminishing returns compared to raw karma, similar to armor in LoL.
+    """
+    try:
+        k_val = int(karma)
+    except (ValueError, TypeError):
+        k_val = 0
+    return 1 + int(max(0, k_val) / 100)
+
 class GiveawayView(View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -40,10 +52,7 @@ class GiveawayView(View):
         # Calculate potential tickets
         karma_stats = await load_karma_stats()
         user_karma = karma_stats.get(guild_id, {}).get(user_id, 0)
-        try:
-            tickets = max(1, int(user_karma))
-        except ValueError:
-            tickets = 1
+        tickets = calculate_tickets(user_karma)
 
         await interaction.response.send_message(f"You have joined the giveaway! (Tickets: {tickets})", ephemeral=True)
 
@@ -315,11 +324,7 @@ class Giveaway(commands.Cog):
 
         for user_id in participants:
             k = guild_karma.get(str(user_id), 0)
-            try:
-                k_val = int(k)
-            except:
-                k_val = 0
-            tickets = max(1, k_val) # Minimum 1 ticket
+            tickets = calculate_tickets(k)
 
             population.append(user_id)
             weights.append(tickets)
