@@ -2846,25 +2846,44 @@ async def giveaway_data():
         guild_giveaways = []
         if guild_id_str in data:
             for msg_id, gw in data[guild_id_str].items():
-                gw_copy = gw.copy()
-                gw_copy['message_id'] = msg_id
+                try:
+                    gw_copy = gw.copy()
+                    gw_copy['message_id'] = msg_id
 
-                # Fetch participant count
-                gw_copy['participant_count'] = len(gw.get('participants', []))
+                    # Fetch participant count
+                    participants = gw.get('participants')
+                    if not isinstance(participants, list):
+                        participants = []
+                    gw_copy['participant_count'] = len(participants)
 
-                # Resolve channel name
-                chan = guild.get_channel(int(gw['channel_id']))
-                gw_copy['channel_name'] = chan.name if chan else "Unknown Channel"
+                    # Resolve channel name
+                    channel_id = gw.get('channel_id')
+                    gw_copy['channel_name'] = "Unknown Channel"
+                    if channel_id:
+                        try:
+                            chan = guild.get_channel(int(channel_id))
+                            if chan:
+                                gw_copy['channel_name'] = chan.name
+                        except (ValueError, TypeError):
+                            pass
 
-                # Resolve winner name
-                if 'winner_id' in gw:
-                    mem = guild.get_member(int(gw['winner_id']))
-                    gw_copy['winner_name'] = mem.display_name if mem else f"User {gw['winner_id']}"
+                    # Resolve winner name
+                    if 'winner_id' in gw:
+                        winner_id = gw.get('winner_id')
+                        if winner_id:
+                            try:
+                                mem = guild.get_member(int(winner_id))
+                                gw_copy['winner_name'] = mem.display_name if mem else f"User {winner_id}"
+                            except (ValueError, TypeError):
+                                gw_copy['winner_name'] = f"User {winner_id}"
 
-                guild_giveaways.append(gw_copy)
+                    guild_giveaways.append(gw_copy)
+                except Exception as e:
+                    print(f"Error processing giveaway {msg_id} in guild {guild_id_str}: {e}")
+                    continue
 
         # Sort by status (active first) then title
-        guild_giveaways.sort(key=lambda x: (x['status'] == 'ended', x['title']))
+        guild_giveaways.sort(key=lambda x: (x.get('status', 'ended') == 'ended', x.get('title', 'Unknown')))
 
         guilds_data.append({
             "id": guild_id_str,
