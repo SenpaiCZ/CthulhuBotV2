@@ -4,7 +4,7 @@ from discord.ui import View, Button
 import random
 import asyncio
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from loadnsave import load_giveaway_data, save_giveaway_data, load_karma_stats
 
 def calculate_tickets(karma):
@@ -72,7 +72,7 @@ class Giveaway(commands.Cog):
     async def check_giveaways(self):
         try:
             data = await load_giveaway_data()
-            now = datetime.utcnow().timestamp()
+            now = datetime.now(timezone.utc).timestamp()
 
             # Create a list of targets to avoid modification during iteration issues, though we call a separate function
             targets = []
@@ -174,7 +174,7 @@ class Giveaway(commands.Cog):
             duration_str = msg.content
             duration_seconds = self.parse_duration(duration_str)
             if duration_seconds:
-                end_time = datetime.utcnow().timestamp() + duration_seconds
+                end_time = datetime.now(timezone.utc).timestamp() + duration_seconds
         except asyncio.TimeoutError:
             await dm_channel.send("Timeout. Giveaway creation cancelled.")
             return
