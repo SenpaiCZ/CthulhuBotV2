@@ -4,20 +4,29 @@ from discord.ui import View, Button
 import random
 import asyncio
 import re
+import math
 from datetime import datetime, timedelta, timezone
 from loadnsave import load_giveaway_data, save_giveaway_data, load_karma_stats
+
+KARMA_VERIFICATION_HALF_THRESHOLD = 100
+PERCENTAGE_TO_TICKETS_MULTIPLIER = 1000
 
 def calculate_tickets(karma):
     """
     Calculates tickets based on karma.
-    Formula: 1 + (Karma / 100) (Integer division)
-    This creates diminishing returns compared to raw karma, similar to armor in LoL.
+    Formula: round(1000 * (karma / (100 + karma)))
     """
     try:
         k_val = int(karma)
     except (ValueError, TypeError):
         k_val = 0
-    return 1 + int(max(0, k_val) / 100)
+
+    if k_val <= 0:
+        return 0
+
+    verification_percentage = k_val / (KARMA_VERIFICATION_HALF_THRESHOLD + k_val)
+    tickets = math.ceil(PERCENTAGE_TO_TICKETS_MULTIPLIER * verification_percentage)
+    return tickets
 
 class GiveawayView(View):
     def __init__(self):
@@ -54,7 +63,10 @@ class GiveawayView(View):
         user_karma = karma_stats.get(guild_id, {}).get(user_id, 0)
         tickets = calculate_tickets(user_karma)
 
-        await interaction.response.send_message(f"You have joined the giveaway! (Tickets: {tickets})", ephemeral=True)
+        if tickets == 0:
+            await interaction.response.send_message(f"You have joined the giveaway! (Tickets: {tickets}). You need karma to have a chance to win!", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"You have joined the giveaway! (Tickets: {tickets})", ephemeral=True)
 
 class Giveaway(commands.Cog):
     def __init__(self, bot):
@@ -333,6 +345,9 @@ class Giveaway(commands.Cog):
             weights.append(tickets)
 
         if not population:
+            return None
+
+        if sum(weights) == 0:
             return None
 
         return random.choices(population, weights=weights, k=1)[0]
