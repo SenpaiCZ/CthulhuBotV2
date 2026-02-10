@@ -14,7 +14,7 @@ import datetime
 REPO_URL = "https://github.com/SenpaiCZ/CthulhuBotV2/archive/refs/heads/master.zip"
 ZIP_FILENAME = "update_pkg.zip"
 EXTRACT_DIR = "update_extract_temp"
-BACKUP_DIR = "backups"
+BACKUP_DIR = "backups"  # Must match BACKUP_FOLDER in dashboard/app.py
 
 # Folders/Files to completely ignore during sync/copy/backup
 # These are things we don't want to backup (too big/irrelevant) AND don't want to delete/overwrite
@@ -108,9 +108,16 @@ def sync_files(source_root, target_root):
         if any(p in PROTECTED_DIRS for p in path_parts):
             continue
 
+        # Explicitly protect BACKUP_DIR and EXTRACT_DIR regardless of PROTECTED_DIRS set
+        # This prevents accidental deletion if they are missing from PROTECTED_DIRS
+        if rel_path == BACKUP_DIR or rel_path.startswith(BACKUP_DIR + os.sep):
+            continue
+        if rel_path == EXTRACT_DIR or rel_path.startswith(EXTRACT_DIR + os.sep):
+            continue
+
         # Filter dirs traversal
         if rel_path == ".":
-            dirs[:] = [d for d in dirs if d not in PROTECTED_DIRS]
+            dirs[:] = [d for d in dirs if d not in PROTECTED_DIRS and d != BACKUP_DIR and d != EXTRACT_DIR]
 
         # Check files
         for file in files:
