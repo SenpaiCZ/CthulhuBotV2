@@ -40,12 +40,38 @@ def wait_for_pid(pid):
     try:
         import psutil
         while psutil.pid_exists(pid):
+            # If zombie, treat as exited
+            try:
+                proc = psutil.Process(pid)
+                if proc.status() == psutil.STATUS_ZOMBIE:
+                    log(f"Process {pid} is a zombie. Proceeding.")
+                    break
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                # Process might be gone or we can't check it, assume gone
+                break
+            except Exception:
+                pass
             time.sleep(1)
     except ImportError:
         if platform.system() == "Windows":
             time.sleep(5)
         else:
             while os.path.exists(f"/proc/{pid}"):
+                # Check for zombie state manually
+                try:
+                    with open(f"/proc/{pid}/stat", 'r') as f:
+                        stat = f.read().split()
+                        # State is the 3rd field
+                        if len(stat) > 2 and stat[2] in ('Z', 'X', 'x', 'z'):
+                            log(f"Process {pid} is a zombie/dead. Proceeding.")
+                            break
+                except FileNotFoundError:
+                    # Process disappeared
+                    break
+                except Exception as e:
+                    # Could not read stat, maybe permission denied or transient
+                    log(f"Error checking process state: {e}")
+
                 time.sleep(1)
     log("Process exited.")
 
@@ -239,7 +265,19 @@ def restart_bot(detached=True):
         # If we return, the calling script (e.g. update.bat) can continue.
         pass
 
+def setup_logging():
+    """Redirects stdout and stderr to a log file."""
+    try:
+        log_file = open("updater.log", "a")
+        # Redirect stdout and stderr to the log file
+        os.dup2(log_file.fileno(), 1)
+        os.dup2(log_file.fileno(), 2)
+        log("Logging initialized.")
+    except Exception as e:
+        print(f"Failed to setup logging: {e}")
+
 if __name__ == "__main__":
+    setup_logging()
     parser = argparse.ArgumentParser(description="CthulhuBotV2 Auto-Updater")
     parser.add_argument("pid", nargs='?', type=int, help="PID of the process to wait for")
     parser.add_argument("--no-restart", action="store_true", help="Do not restart the bot automatically")
