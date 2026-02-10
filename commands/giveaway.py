@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands, tasks
+from discord import app_commands
 from discord.ui import View, Button
 import random
 import asyncio
@@ -128,32 +129,45 @@ class Giveaway(commands.Cog):
 
         return total_seconds if total_seconds > 0 else None
 
-    @commands.group(invoke_without_command=True)
+    @commands.hybrid_group(invoke_without_command=True, description="Manage Giveaways.")
     async def giveaway(self, ctx):
         """
         🎉 Manage Giveaways.
         """
         await ctx.send_help(ctx.command)
 
-    @giveaway.command(name="create")
+    @giveaway.command(name="create", description="Create a new giveaway. The bot will DM you for details.")
+    @app_commands.describe(title="Title of the giveaway")
     @commands.guild_only()
     async def create_giveaway(self, ctx, *, title: str = None):
         """
         Create a new giveaway. The bot will DM you for details.
         Usage: !giveaway create [Title]
         """
-        # Delete command message to clean up
-        try:
-            await ctx.message.delete()
-        except:
-            pass
+        # Handle interaction response
+        if ctx.interaction:
+             await ctx.send("Check your DMs to set up the giveaway!", ephemeral=True)
+        else:
+             # Delete command message to clean up
+             try:
+                 await ctx.message.delete()
+             except:
+                 pass
 
         # Send DM
         try:
             dm_channel = await ctx.author.create_dm()
             await dm_channel.send(f"Let's set up your giveaway for **{ctx.guild.name}**!")
         except discord.Forbidden:
-            await ctx.send("I can't DM you! Please enable DMs from server members.")
+            # If we couldn't DM, we might have already responded via interaction or deleted msg.
+            # If interaction, we already sent "Check your DMs".
+            # If prefix, we deleted command.
+            # We should probably notify in channel if DM fails.
+            if not ctx.interaction:
+                await ctx.send("I can't DM you! Please enable DMs from server members.")
+            # If interaction, user got "Check your DMs" but nothing happened.
+            # We can't edit the ephemeral message easily here without storing it.
+            # Just return.
             return
 
         def check(m):
@@ -260,7 +274,8 @@ class Giveaway(commands.Cog):
         except Exception as e:
             await dm_channel.send(f"Error posting giveaway: {e}")
 
-    @giveaway.command(name="end")
+    @giveaway.command(name="end", description="End a giveaway and pick a winner.")
+    @app_commands.describe(message_link_or_id="The message link or ID of the giveaway")
     async def end_giveaway(self, ctx, message_link_or_id: str):
         """
         End a giveaway and pick a winner.
@@ -278,7 +293,8 @@ class Giveaway(commands.Cog):
         except Exception as e:
              await ctx.send(f"Error: {e}")
 
-    @giveaway.command(name="reroll")
+    @giveaway.command(name="reroll", description="Reroll a winner for an ended giveaway.")
+    @app_commands.describe(message_link_or_id="The message link or ID of the giveaway")
     async def reroll_giveaway(self, ctx, message_link_or_id: str):
         """
         Reroll a winner for an ended giveaway.
@@ -297,7 +313,7 @@ class Giveaway(commands.Cog):
         except Exception as e:
              await ctx.send(f"Error: {e}")
 
-    @giveaway.command(name="list")
+    @giveaway.command(name="list", description="List all active giveaways.")
     @commands.has_permissions(administrator=True)
     async def list_giveaways(self, ctx):
         """

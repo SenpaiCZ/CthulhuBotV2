@@ -12,8 +12,12 @@ class PokemonGo(commands.Cog):
         self.events = [] # List of dicts
         self.settings = {} # guild_id -> {channel_id, role_id, ...}
 
+        # Tasks are started in cog_load
+
+    async def cog_load(self):
         # Load data immediately
-        self.bot.loop.create_task(self.load_data())
+        # Use loop from bot or get_running_loop
+        asyncio.create_task(self.load_data())
 
         self.check_events_task.start()
         self.notify_events_task.start()

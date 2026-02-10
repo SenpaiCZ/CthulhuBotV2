@@ -1,5 +1,6 @@
 import discord, asyncio
 from discord.ext import commands
+from discord import app_commands
 from loadnsave import load_player_stats, save_player_stats, load_gamemode_stats
 from emojis import get_stat_emoji
 from descriptions import get_description
@@ -10,7 +11,8 @@ class mychar(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
     
-  @commands.command(aliases=["mcs", "char", "inv"])
+  @commands.hybrid_command(aliases=["mcs", "char", "inv"], description="Show your investigator's stats, skills, backstory and inventory.")
+  @app_commands.describe(member="The member whose character you want to see")
   async def mychar(self, ctx, *, member: discord.Member = None):
     """
     📜 Show your investigator's stats, skills, backstory and inventory.
@@ -237,7 +239,15 @@ class mychar(commands.Cog):
             embed.add_field(name=category, value=formatted_entries, inline=False)
       return embed  # Return the embed
       
+    # If invoked via slash command, ctx.send might not return a message object that supports adding reactions easily immediately if ephemeral?
+    # Hybrid command handles this well, but we need to fetch the message object if using reactions.
+    # ctx.send returns a PartialMessage or Message.
     message = await ctx.send(embed=await generate_stats_page(page))
+
+    # Check if message is valid for reactions (it should be)
+    # If ephemeral (it's not by default unless specifically set), reactions work on recent Discord versions but might be tricky.
+    # Default hybrid is public.
+
     await message.add_reaction("⬅️")
     await message.add_reaction("➡️")
     

@@ -1,6 +1,7 @@
 import discord
 import asyncio
 from discord.ext import commands
+from discord import app_commands
 from loadnsave import load_player_stats, save_player_stats
 
 
@@ -9,7 +10,8 @@ class deleteinvestigator(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.command(aliases=["delInv", "delinv"])
+  @commands.hybrid_command(aliases=["delInv", "delinv"], description="Delete your investigator and all data.")
+  @app_commands.describe(member="The member whose investigator you want to delete (Admin only)")
   async def deleteinvestigator(self, ctx, member: discord.Member = None):
     """
     `[p]deleteInvestigator` - Delete your investigator, all data, backstory and inventory. You will be promptet to write your investigators name to confirm deletion. Server owners can delete other players investigators with @.

@@ -1,5 +1,6 @@
 import discord, random
 from discord.ext import commands
+from discord import app_commands
 from loadnsave import load_macguffin_data
 
 
@@ -8,8 +9,9 @@ class macguffin(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.command()
-  async def macguffin(self, ctx, *, option=None):
+  @commands.hybrid_command(description="Outputs a random MacGuffin or lists options.")
+  @app_commands.describe(option="Use 'list' to see all options, or leave empty for a random MacGuffin.")
+  async def macguffin(self, ctx, *, option: str = None):
     """
     `[p]macguffin` - outputs random macguffin.
     `[p]macguffin list` - will list all macguffin options

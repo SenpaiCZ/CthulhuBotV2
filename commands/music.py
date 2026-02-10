@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands, tasks
+from discord import app_commands
 import asyncio
 import os
 import yt_dlp
@@ -135,7 +136,8 @@ class Music(commands.Cog):
         )
         self.current_track[str(guild_id)] = track
 
-    @commands.command(aliases=['p'])
+    @commands.hybrid_command(aliases=['p'], description="Plays a song from YouTube.")
+    @app_commands.describe(query="The song name or URL to play")
     async def play(self, ctx, *, query: str):
         """🎵 Plays a song from YouTube."""
         if not ctx.voice_client:
@@ -145,56 +147,57 @@ class Music(commands.Cog):
                 await ctx.send("You are not connected to a voice channel.")
                 return
 
-        async with ctx.typing():
-            # Check for cookies file
-            opts = YTDL_OPTIONS.copy()
-            if os.path.isfile('cookies/cookies.txt'):
-                opts['cookiefile'] = 'cookies/cookies.txt'
+        await ctx.defer()
 
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                try:
-                    # Run blocking call in executor
-                    info = await self.bot.loop.run_in_executor(
-                        None,
-                        partial(ydl.extract_info, query, download=False)
-                    )
+        # Check for cookies file
+        opts = YTDL_OPTIONS.copy()
+        if os.path.isfile('cookies/cookies.txt'):
+            opts['cookiefile'] = 'cookies/cookies.txt'
 
-                    if 'entries' in info:
-                        info = info['entries'][0]
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            try:
+                # Run blocking call in executor
+                info = await self.bot.loop.run_in_executor(
+                    None,
+                    partial(ydl.extract_info, query, download=False)
+                )
 
-                    url = info['url']
-                    title = info['title']
-                    thumbnail = info.get('thumbnail', '')
-                    original_url = info.get('webpage_url', url)
+                if 'entries' in info:
+                    info = info['entries'][0]
 
-                    if original_url in self.blacklist:
-                        await ctx.send(f"❌ This song is blacklisted: {title}")
-                        return
+                url = info['url']
+                title = info['title']
+                thumbnail = info.get('thumbnail', '')
+                original_url = info.get('webpage_url', url)
 
-                    song_info = {
-                        'title': title,
-                        'url': url,
-                        'original_url': original_url,
-                        'thumbnail': thumbnail,
-                        'requested_by': ctx.author.display_name
-                    }
+                if original_url in self.blacklist:
+                    await ctx.send(f"❌ This song is blacklisted: {title}")
+                    return
 
-                    guild_id = str(ctx.guild.id)
-                    if guild_id not in self.queue:
-                        self.queue[guild_id] = []
+                song_info = {
+                    'title': title,
+                    'url': url,
+                    'original_url': original_url,
+                    'thumbnail': thumbnail,
+                    'requested_by': ctx.author.display_name
+                }
 
-                    self.queue[guild_id].append(song_info)
+                guild_id = str(ctx.guild.id)
+                if guild_id not in self.queue:
+                    self.queue[guild_id] = []
 
-                    if not self.current_track.get(guild_id):
-                        await ctx.send(f"🎵 Added to queue and playing: **{title}**")
-                        await self._process_queue() # Trigger immediately
-                    else:
-                        await ctx.send(f"🎵 Added to queue: **{title}**")
+                self.queue[guild_id].append(song_info)
 
-                except Exception as e:
-                    await ctx.send(f"An error occurred: {e}")
+                if not self.current_track.get(guild_id):
+                    await ctx.send(f"🎵 Added to queue and playing: **{title}**")
+                    await self._process_queue() # Trigger immediately
+                else:
+                    await ctx.send(f"🎵 Added to queue: **{title}**")
 
-    @commands.command(aliases=['s'])
+            except Exception as e:
+                await ctx.send(f"An error occurred: {e}")
+
+    @commands.hybrid_command(aliases=['s'], description="Skips the current song.")
     async def skip(self, ctx):
         """⏭️ Skips the current song."""
         guild_id = str(ctx.guild.id)
@@ -206,7 +209,7 @@ class Music(commands.Cog):
         else:
             await ctx.send("Nothing is playing.")
 
-    @commands.command(aliases=['leave', 'disconnect', 'dc'])
+    @commands.hybrid_command(aliases=['leave', 'disconnect', 'dc'], description="Stops music, clears queue, and disconnects.")
     async def stop(self, ctx):
         """🛑 Stops music, clears queue, and disconnects."""
         guild_id = str(ctx.guild.id)
@@ -228,7 +231,8 @@ class Music(commands.Cog):
 
         await ctx.send("🛑 Stopped playing, cleared queue, and disconnected.")
 
-    @commands.command(aliases=['vol'])
+    @commands.hybrid_command(aliases=['vol'], description="Sets the music volume (0-100). Persists per server.")
+    @app_commands.describe(vol="Volume level (0-100)")
     async def volume(self, ctx, vol: int):
         """🔊 Sets the music volume (0-100). Persists per server."""
         guild_id = str(ctx.guild.id)
@@ -248,7 +252,7 @@ class Music(commands.Cog):
         else:
             await ctx.send(f"🔊 Music volume set to {vol}% (will apply to next song)")
 
-    @commands.command()
+    @commands.hybrid_command(description="Toggles loop for the current song.")
     async def loop(self, ctx):
         """🔁 Toggles loop for the current song."""
         guild_id = str(ctx.guild.id)
@@ -260,7 +264,7 @@ class Music(commands.Cog):
         else:
             await ctx.send("Nothing is playing.")
 
-    @commands.command(aliases=['q'])
+    @commands.hybrid_command(aliases=['q'], description="Shows the current queue.")
     async def queue(self, ctx):
         """🎼 Shows the current queue."""
         guild_id = str(ctx.guild.id)
@@ -285,7 +289,7 @@ class Music(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(aliases=['np'])
+    @commands.hybrid_command(aliases=['np'], description="Shows the currently playing song.")
     async def nowplaying(self, ctx):
         """💿 Shows the currently playing song."""
         guild_id = str(ctx.guild.id)

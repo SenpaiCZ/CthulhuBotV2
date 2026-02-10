@@ -17,8 +17,18 @@ class Codex(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def _render_and_send(self, ctx, url, name, type_name):
-        msg = await ctx.send(f"Consulting the archives for **{name}**... 📜")
+    async def _render_and_send(self, ctx, url, name, type_name, interaction=None):
+        msg = None
+        if interaction:
+             # If invoked from a component (SelectionView), we use followup
+             # The view has likely already been disabled/edited by the caller
+             pass
+        elif ctx.interaction:
+             # Slash Command
+             await ctx.defer()
+        else:
+             # Prefix Command
+             msg = await ctx.send(f"Consulting the archives for **{name}**... 📜")
 
         try:
             settings = load_settings()
@@ -34,13 +44,19 @@ class Codex(commands.Cog):
                     try:
                         response = await page.goto(full_url, timeout=10000)
                     except Exception as e:
-                        await msg.edit(content=f"Error: Failed to load internal dashboard URL. Is the dashboard running?")
+                        error_text = f"Error: Failed to load internal dashboard URL. Is the dashboard running?"
+                        if interaction: await interaction.followup.send(error_text, ephemeral=True)
+                        elif ctx.interaction: await ctx.send(error_text, ephemeral=True)
+                        elif msg: await msg.edit(content=error_text)
                         print(f"Codex Navigation Error: {e}")
                         return
 
                     if not response or not response.ok:
                         status = response.status if response else "Unknown"
-                        await msg.edit(content=f"Error: Failed to find {type_name} '{name}' (Status: {status}).")
+                        error_text = f"Error: Failed to find {type_name} '{name}' (Status: {status})."
+                        if interaction: await interaction.followup.send(error_text, ephemeral=True)
+                        elif ctx.interaction: await ctx.send(error_text, ephemeral=True)
+                        elif msg: await msg.edit(content=error_text)
                         return
 
                     try:
@@ -54,16 +70,22 @@ class Codex(commands.Cog):
                         screenshot_bytes = await element.screenshot()
 
                     file = discord.File(io.BytesIO(screenshot_bytes), filename=f"{name.replace(' ', '_')}_{type_name}.png")
-                    await msg.delete()
-                    await ctx.send(content=f"Here is the entry for **{name}**:", file=file)
+
+                    if interaction:
+                        await interaction.followup.send(content=f"Here is the entry for **{name}**:", file=file)
+                    elif ctx.interaction:
+                        await ctx.send(content=f"Here is the entry for **{name}**:", file=file)
+                    elif msg:
+                        await msg.delete()
+                        await ctx.send(content=f"Here is the entry for **{name}**:", file=file)
 
                 finally:
                     await browser.close()
         except Exception as e:
-            try:
-                await msg.edit(content=f"An error occurred while generating the image: {e}")
-            except:
-                await ctx.send(f"An error occurred while generating the image: {e}")
+            error_msg = f"An error occurred while generating the image: {e}"
+            if interaction: await interaction.followup.send(error_msg, ephemeral=True)
+            elif ctx.interaction: await ctx.send(error_msg, ephemeral=True)
+            elif msg: await msg.edit(content=error_msg)
             print(f"Codex Error: {e}")
 
     def _find_matches(self, query, choices):
@@ -93,11 +115,6 @@ class Codex(commands.Cog):
     async def _handle_lookup(self, ctx, name, loader_func, type_slug, data_key=None, keys_only=False, flatten_pulp=False):
         """
         Generic lookup handler.
-        loader_func: async function to load data
-        type_slug: url slug part (e.g. 'monster', 'spell')
-        data_key: if the loaded json has a wrapper key (e.g. 'monsters'), provide it.
-        keys_only: if the data is a flat dict, use keys as choices.
-        flatten_pulp: special handling for pulp talents (Dict[Category, List[String]])
         """
         data = await loader_func()
 
@@ -131,8 +148,12 @@ class Codex(commands.Cog):
 
         matches = self._find_matches(name, choices)
 
+        kwargs = {}
+        if ctx.interaction:
+            kwargs['ephemeral'] = True
+
         if not matches:
-            await ctx.send(f"No {type_slug.replace('_', ' ')} found matching '{name}'.")
+            await ctx.send(f"No {type_slug.replace('_', ' ')} found matching '{name}'.", **kwargs)
             return
 
         if len(matches) == 1:
@@ -148,59 +169,59 @@ class Codex(commands.Cog):
             match_list = ", ".join(matches)
             if len(match_list) > 1900:
                 match_list = match_list[:1900] + "..."
-            await ctx.send(response + match_list)
+            await ctx.send(response + match_list, **kwargs)
 
-    @commands.command()
+    @commands.hybrid_command(description="Displays a monster sheet.")
     async def monster(self, ctx, *, name: str):
         """Displays a monster sheet."""
         await self._handle_lookup(ctx, name, load_monsters_data, "monster", data_key="monsters")
 
-    @commands.command()
+    @commands.hybrid_command(description="Displays a spell.")
     async def spell(self, ctx, *, name: str):
         """Displays a spell."""
         await self._handle_lookup(ctx, name, load_spells_data, "spell", data_key="spells")
 
-    @commands.command()
+    @commands.hybrid_command(description="Displays a deity sheet.")
     async def deity(self, ctx, *, name: str):
         """Displays a deity sheet."""
         await self._handle_lookup(ctx, name, load_deities_data, "deity", data_key="deities")
 
-    @commands.command(aliases=['cArchetype', 'ainfo', 'archetypeinfo'])
+    @commands.hybrid_command(aliases=['cArchetype', 'ainfo', 'archetypeinfo'], description="Displays a Pulp Cthulhu Archetype.")
     async def archetype(self, ctx, *, name: str):
         """Displays a Pulp Cthulhu Archetype."""
         await self._handle_lookup(ctx, name, load_archetype_data, "archetype", keys_only=True)
 
-    @commands.command(aliases=['cTalents', 'tinfo', 'talents'])
+    @commands.hybrid_command(aliases=['cTalents', 'tinfo', 'talents'], description="Displays a Pulp Talent.")
     async def talent(self, ctx, *, name: str):
         """Displays a Pulp Talent."""
         await self._handle_lookup(ctx, name, load_pulp_talents_data, "pulp_talent", flatten_pulp=True)
 
-    @commands.command(aliases=['italent', 'insanetalent'])
+    @commands.hybrid_command(aliases=['italent', 'insanetalent'], description="Displays an Insane Talent.")
     async def insane(self, ctx, *, name: str):
         """Displays an Insane Talent."""
         await self._handle_lookup(ctx, name, load_madness_insane_talent_data, "insane_talent", keys_only=True)
 
-    @commands.command()
+    @commands.hybrid_command(description="Displays a Mania.")
     async def mania(self, ctx, *, name: str):
         """Displays a Mania."""
         await self._handle_lookup(ctx, name, load_manias_data, "mania", keys_only=True)
 
-    @commands.command()
+    @commands.hybrid_command(description="Displays a Phobia.")
     async def phobia(self, ctx, *, name: str):
         """Displays a Phobia."""
         await self._handle_lookup(ctx, name, load_phobias_data, "phobia", keys_only=True)
 
-    @commands.command(aliases=['poisons'])
+    @commands.hybrid_command(aliases=['poisons'], description="Displays a Poison.")
     async def poison(self, ctx, *, name: str):
         """Displays a Poison."""
         await self._handle_lookup(ctx, name, load_poisons_data, "poison", keys_only=True)
 
-    @commands.command(aliases=['skillinfo'])
+    @commands.hybrid_command(aliases=['skillinfo'], description="Displays a Skill description.")
     async def skill(self, ctx, *, name: str):
         """Displays a Skill description."""
         await self._handle_lookup(ctx, name, load_skills_data, "skill", keys_only=True)
 
-    @commands.command(aliases=['inventions'])
+    @commands.hybrid_command(aliases=['inventions'], description="Displays Inventions for a specific decade (e.g., 1920s).")
     async def invention(self, ctx, *, decade: str):
         """Displays Inventions for a specific decade (e.g., 1920s)."""
         # "1920" -> try "1920s"
@@ -208,7 +229,7 @@ class Codex(commands.Cog):
              decade += 's'
         await self._handle_lookup(ctx, decade, load_inventions_data, "invention", keys_only=True)
 
-    @commands.command(aliases=['years'])
+    @commands.hybrid_command(aliases=['years'], description="Displays events for a specific year (e.g., 1920).")
     async def year(self, ctx, *, year: str):
         """Displays events for a specific year (e.g., 1920)."""
         await self._handle_lookup(ctx, year, load_years_data, "year", keys_only=True)
@@ -233,21 +254,24 @@ class SelectionView(discord.ui.View):
         self.add_item(select)
 
     async def select_callback(self, interaction: discord.Interaction):
+        # Allow only the author to select
         if interaction.user != self.ctx.author:
             await interaction.response.send_message("This selection is not for you.", ephemeral=True)
             return
 
         selected_name = interaction.data['values'][0]
 
-        # Disable view
+        # Disable view and acknowledge interaction
         for child in self.children:
             child.disabled = True
         await interaction.response.edit_message(view=self)
 
-        # Trigger render
+        # Trigger render, passing interaction so we can followup
         quoted_name = urllib.parse.quote(selected_name)
         url = f"/render/{self.type_name}?name={quoted_name}"
-        await self.cog._render_and_send(self.ctx, url, selected_name, self.type_name)
+
+        # We pass interaction to handle the followup response
+        await self.cog._render_and_send(self.ctx, url, selected_name, self.type_name, interaction=interaction)
 
     async def on_timeout(self):
         # Disable select on timeout
@@ -255,8 +279,10 @@ class SelectionView(discord.ui.View):
             child.disabled = True
         try:
             # Need to fetch original message to edit it?
-            # View is attached to the message.
-            # discord.ui.View doesn't store the message by default unless we do.
+            # self.ctx is available but we don't have the message object unless we stored it or infer it.
+            # Usually we can't easily edit without the message object.
+            # But the view is attached to a message.
+            # We can't do much here easily without the message reference.
             pass
         except:
             pass
