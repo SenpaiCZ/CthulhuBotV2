@@ -23,8 +23,8 @@
     *   **Game Settings**: Configure gameplay rules like Luck Threshold.
     *   **Monsters**: Browse and view detailed statistics and lore for Cthulhu Mythos monsters.
     *   **Deities**: Explore the pantheon of Great Old Ones and Outer Gods with detailed descriptions and cult information.
-    *   **Reaction Roles**: easily configure self-assignable roles.
-    *   **Auto Deleter**: Manage auto-deletion rules and bulk delete messages.
+    *   **Reaction Roles**: Easily configure self-assignable roles.
+    *   **Auto-Deleter**: Manage auto-deletion rules and bulk delete messages.
 *   📈 **Karma System**: Track user reputation with custom upvote/downvote emojis.
 *   🎭 **Reaction Roles**: Allow users to assign roles to themselves by reacting to messages.
 *   🔊 **Soundboard**: Admin-controlled soundboard to play audio clips in voice channels.
@@ -123,7 +123,7 @@ The bot uses a dynamic prefix (default is `!`). Here is a list of available comm
 *   **Python 3.11** or higher: [Download Python](https://www.python.org/downloads/)
 *   **Git**: [Download Git](https://git-scm.com/downloads)
 *   **FFmpeg**: Required for audio playback.
-    *   **Windows**: [Download FFmpeg](https://ffmpeg.org/download.html). Extract the archive and add the `bin` folder to your System PATH environment variable.
+    *   **Windows**: [Download FFmpeg](https://ffmpeg.org/download.html). Extract the archive and add the `bin` folder to your system PATH environment variable.
     *   **Linux**: Install via your package manager (e.g., `sudo apt install ffmpeg`).
 
 #### Discord Developer Portal Setup

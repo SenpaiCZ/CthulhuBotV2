@@ -377,7 +377,7 @@ class newroll(commands.Cog):
                     if str(reaction.emoji) == "✅":
                         session_data[user_id] = []
                         await save_session_data(session_data)
-                        await ctx.send("Session started! The first successful rolls have been recorded!")
+                        await ctx.send("Session started! The first successful roll has been recorded!")
                         await session_success(user_id, stat_name)
                     else:
                         await ctx.send("Session creation canceled.")

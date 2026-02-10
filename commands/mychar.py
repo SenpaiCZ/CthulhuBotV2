@@ -14,7 +14,7 @@ class mychar(commands.Cog):
   async def mychar(self, ctx, *, member: discord.Member = None):
     """
     📜 Show your investigator's stats, skills, backstory and inventory.
-    Usage: `[p]mychar` or `[p]mychar @User` to see others.
+    Usage: `[p]mychar` or `[p]mychar @User` to see another's.
     """
     if not isinstance(ctx.channel, discord.TextChannel):
       await ctx.send("This command is not allowed in DMs.")
@@ -150,7 +150,7 @@ class mychar(commands.Cog):
                     BUILD = 6
                     BONUSDMG = "5D6"
                 else:
-                    BUILD = "You are CHONKER! (7+)"
+                    BUILD = "You are a CHONKER! (7+)"
                     BONUSDMG = "You are too strong! (6D6+)"
                 if i == "Build":
                   stat_value = f"{BUILD}"

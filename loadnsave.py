@@ -175,7 +175,7 @@ async def load_years_data():
     return await _load_infodata_cached('years_info.json')
 
 async def load_poisons_data():
-    return await _load_infodata_cached('poisions_info.json')
+    return await _load_infodata_cached('poisons_info.json')
 
 async def load_macguffin_data():
     return await _load_infodata_cached('macguffin_info.json')
