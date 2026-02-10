@@ -163,7 +163,8 @@ class Codex(commands.Cog):
             await self._render_and_send(ctx, url, target_name, type_slug)
         elif len(matches) < 25:
              view = SelectionView(ctx, matches, type_slug, self)
-             await ctx.send(f"Multiple {type_slug.replace('_', ' ')}s found for '{name}'. Please select one:", view=view)
+             msg = await ctx.send(f"Multiple {type_slug.replace('_', ' ')}s found for '{name}'. Please select one:", view=view)
+             view.message = msg
         else:
             response = f"Found {len(matches)} matches for '{name}'. Please be more specific:\n"
             match_list = ", ".join(matches)
@@ -171,20 +172,70 @@ class Codex(commands.Cog):
                 match_list = match_list[:1900] + "..."
             await ctx.send(response + match_list, **kwargs)
 
+    async def _handle_list_confirmation(self, ctx, loader_func, type_slug, data_key=None):
+        """Handles the confirmation to show the full list."""
+
+        async def fetch_items():
+            data = await loader_func()
+            choices = []
+            if data_key:
+                 items = data.get(data_key, [])
+                 entry_key = type_slug + "_entry"
+                 for item in items:
+                    entry = item.get(entry_key)
+                    if entry and entry.get('name'):
+                        choices.append(entry['name'])
+            else:
+                 # Should not happen for monsters/deities/spells per current usage
+                 choices = list(data.keys())
+            return sorted(choices)
+
+        items = await fetch_items()
+        title = f"{type_slug.capitalize()} List"
+        view = ConfirmationView(ctx, items, title)
+
+        # Ephemeral if slash command
+        ephemeral = False
+        if ctx.interaction:
+            ephemeral = True
+
+        msg = await ctx.send(f"Do you want to see the full list of {type_slug}s?", view=view, ephemeral=ephemeral)
+        view.message = msg
+
+
     @commands.hybrid_command(description="Displays a monster sheet.")
-    async def monster(self, ctx, *, name: str):
+    async def monster(self, ctx, *, name: str = None):
         """Displays a monster sheet."""
-        await self._handle_lookup(ctx, name, load_monsters_data, "monster", data_key="monsters")
+        if name:
+            await self._handle_lookup(ctx, name, load_monsters_data, "monster", data_key="monsters")
+        else:
+            await self._handle_list_confirmation(ctx, load_monsters_data, "monster", data_key="monsters")
 
     @commands.hybrid_command(description="Displays a spell.")
-    async def spell(self, ctx, *, name: str):
+    async def spell(self, ctx, *, name: str = None):
         """Displays a spell."""
-        await self._handle_lookup(ctx, name, load_spells_data, "spell", data_key="spells")
+        if name:
+            await self._handle_lookup(ctx, name, load_spells_data, "spell", data_key="spells")
+        else:
+            await self._handle_list_confirmation(ctx, load_spells_data, "spell", data_key="spells")
 
     @commands.hybrid_command(description="Displays a deity sheet.")
-    async def deity(self, ctx, *, name: str):
+    async def deity(self, ctx, *, name: str = None):
         """Displays a deity sheet."""
-        await self._handle_lookup(ctx, name, load_deities_data, "deity", data_key="deities")
+        if name:
+            await self._handle_lookup(ctx, name, load_deities_data, "deity", data_key="deities")
+        else:
+            await self._handle_list_confirmation(ctx, load_deities_data, "deity", data_key="deities")
+
+    @commands.hybrid_command(description="Opens the Grimoire to view lists of Monsters, Deities, or Spells.")
+    async def grimoire(self, ctx):
+        """Opens the Grimoire to view lists of Monsters, Deities, or Spells."""
+        view = GrimoireView(ctx, self)
+        ephemeral = False
+        if ctx.interaction:
+            ephemeral = True
+        msg = await ctx.send("What list would you like to see?", view=view, ephemeral=ephemeral)
+        view.message = msg
 
     @commands.hybrid_command(aliases=['cArchetype', 'ainfo', 'archetypeinfo'], description="Displays a Pulp Cthulhu Archetype.")
     async def archetype(self, ctx, *, name: str):
@@ -234,6 +285,168 @@ class Codex(commands.Cog):
         """Displays events for a specific year (e.g., 1920)."""
         await self._handle_lookup(ctx, year, load_years_data, "year", keys_only=True)
 
+class PaginatedListView(discord.ui.View):
+    def __init__(self, ctx, items, title, per_page=20):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.items = items
+        self.title = title
+        self.per_page = per_page
+        self.current_page = 0
+        self.total_pages = max(1, (len(items) + per_page - 1) // per_page)
+        self.message = None
+
+    def update_buttons(self):
+        self.prev_button.disabled = self.current_page == 0
+        self.next_button.disabled = self.current_page == self.total_pages - 1
+        self.page_counter.label = f"Page {self.current_page + 1}/{self.total_pages}"
+
+    def get_embed(self):
+        start = self.current_page * self.per_page
+        end = start + self.per_page
+        page_items = self.items[start:end]
+        description = "\n".join(page_items)
+        if not description:
+            description = "No items found."
+        embed = discord.Embed(title=self.title, description=description, color=discord.Color.blue())
+        embed.set_footer(text=f"Total: {len(self.items)}")
+        return embed
+
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.primary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("This isn't for you!", ephemeral=True)
+        self.current_page -= 1
+        self.update_buttons()
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+
+    @discord.ui.button(label="Page 1/1", style=discord.ButtonStyle.secondary, disabled=True)
+    async def page_counter(self, interaction: discord.Interaction, button: discord.ui.Button):
+        pass
+
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.primary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("This isn't for you!", ephemeral=True)
+        self.current_page += 1
+        self.update_buttons()
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+
+    @discord.ui.button(label="Close", style=discord.ButtonStyle.danger)
+    async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("This isn't for you!", ephemeral=True)
+        try:
+            await interaction.message.delete()
+        except:
+            pass
+        self.stop()
+
+    async def on_timeout(self):
+        if self.message:
+            try:
+                await self.message.delete()
+            except:
+                pass
+        self.stop()
+
+class ConfirmationView(discord.ui.View):
+    def __init__(self, ctx, items, title):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.items = items
+        self.title = title
+        self.message = None
+
+    @discord.ui.button(label="Yes", style=discord.ButtonStyle.success)
+    async def yes_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("This isn't for you!", ephemeral=True)
+
+        view = PaginatedListView(self.ctx, self.items, self.title)
+        view.update_buttons()
+        embed = view.get_embed()
+        await interaction.response.edit_message(content=None, embed=embed, view=view)
+        # Store message for timeout handling
+        view.message = interaction.message
+
+    @discord.ui.button(label="No", style=discord.ButtonStyle.danger)
+    async def no_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("This isn't for you!", ephemeral=True)
+        try:
+            await interaction.message.delete()
+        except:
+            pass
+        self.stop()
+
+    async def on_timeout(self):
+        if self.message:
+            try:
+                await self.message.delete()
+            except:
+                pass
+        self.stop()
+
+class GrimoireView(discord.ui.View):
+    def __init__(self, ctx, cog):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.cog = cog
+        self.message = None
+
+    async def _launch_list(self, interaction, loader, title, data_key=None):
+        data = await loader()
+        choices = []
+        if data_key:
+             items = data.get(data_key, [])
+             # Assuming standard structure
+             if data_key == "monsters":
+                 entry_key = "monster_entry"
+             elif data_key == "spells":
+                 entry_key = "spell_entry"
+             elif data_key == "deities":
+                 entry_key = "deity_entry"
+             else:
+                 entry_key = data_key[:-1] + "_entry"
+
+             for item in items:
+                entry = item.get(entry_key)
+                if entry and entry.get('name'):
+                    choices.append(entry['name'])
+        else:
+             choices = list(data.keys())
+
+        choices.sort()
+        view = PaginatedListView(self.ctx, choices, title)
+        view.update_buttons()
+        embed = view.get_embed()
+        await interaction.response.edit_message(content=None, embed=embed, view=view)
+        view.message = interaction.message
+
+    @discord.ui.button(label="Monsters", style=discord.ButtonStyle.primary)
+    async def monsters_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author: return
+        await self._launch_list(interaction, load_monsters_data, "Monsters List", data_key="monsters")
+
+    @discord.ui.button(label="Deities", style=discord.ButtonStyle.primary)
+    async def deities_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author: return
+        await self._launch_list(interaction, load_deities_data, "Deities List", data_key="deities")
+
+    @discord.ui.button(label="Spells", style=discord.ButtonStyle.primary)
+    async def spells_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author: return
+        await self._launch_list(interaction, load_spells_data, "Spells List", data_key="spells")
+
+    async def on_timeout(self):
+        if self.message:
+            try:
+                await self.message.delete()
+            except:
+                pass
+        self.stop()
+
 
 class SelectionView(discord.ui.View):
     def __init__(self, ctx, options, type_name, cog):
@@ -241,6 +454,7 @@ class SelectionView(discord.ui.View):
         self.ctx = ctx
         self.cog = cog
         self.type_name = type_name
+        self.message = None
 
         # Create select menu
         select = discord.ui.Select(placeholder=f"Select a {type_name.replace('_', ' ')}...", min_values=1, max_values=1)
@@ -274,18 +488,12 @@ class SelectionView(discord.ui.View):
         await self.cog._render_and_send(self.ctx, url, selected_name, self.type_name, interaction=interaction)
 
     async def on_timeout(self):
-        # Disable select on timeout
-        for child in self.children:
-            child.disabled = True
-        try:
-            # Need to fetch original message to edit it?
-            # self.ctx is available but we don't have the message object unless we stored it or infer it.
-            # Usually we can't easily edit without the message object.
-            # But the view is attached to a message.
-            # We can't do much here easily without the message reference.
-            pass
-        except:
-            pass
+        if self.message:
+            try:
+                await self.message.delete()
+            except:
+                pass
+        self.stop()
 
 async def setup(bot):
     await bot.add_cog(Codex(bot))
