@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 from loadnsave import load_player_stats, save_player_stats, load_server_stats
 
 
@@ -8,7 +9,8 @@ class rename(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.command()
+  @commands.hybrid_command()
+  @app_commands.describe(new_name="The new name for your character")
   async def rename(self, ctx, *, new_name: str):
       """
       `[p]rename New Character Name` - Change the name of your character.

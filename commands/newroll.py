@@ -72,7 +72,7 @@ class newroll(commands.Cog):
         # If not Success and not Fumble, it is Fail
         return "Fail :x:", 1
 
-    @commands.hybrid_command(name="roll", aliases=["newroll", "diceroll", "d", "nd"], guild_only=True, description="Perform a dice roll or skill check.")
+    @commands.hybrid_command(name="newroll", aliases=["roll", "diceroll", "d", "nd"], guild_only=True, description="Perform a dice roll or skill check.")
     @app_commands.describe(dice_expression="The dice expression (e.g. 3d6) or skill name (e.g. Spot Hidden)")
     async def newroll(self, ctx, *, dice_expression: str):
         """

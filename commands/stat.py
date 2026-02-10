@@ -2,7 +2,9 @@ import discord
 import re
 import math
 import asyncio
+import shlex
 from discord.ext import commands
+from discord import app_commands
 from loadnsave import load_player_stats, save_player_stats, load_server_stats, load_gamemode_stats
 from emojis import get_stat_emoji
 
@@ -12,8 +14,9 @@ class stat(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=["cstat"])
-    async def stat(self, ctx, *args):
+    @commands.hybrid_command(aliases=["cstat"])
+    @app_commands.describe(query="The stat to update and its new value (e.g. 'HP +5', 'STR 50')")
+    async def stat(self, ctx, *, query: str = None):
         """
         `[p]stat stat_name value_expression` - Change the value of a skill for your character.
         """
@@ -27,6 +30,10 @@ class stat(commands.Cog):
         if not isinstance(ctx.channel, discord.TextChannel):
             await ctx.send("This command is not allowed in DMs.")
             return
+
+        # Prepare arguments from query
+        # Use shlex to handle quoted arguments correctly
+        args = shlex.split(query) if query else []
 
         # Check if arguments are provided
         if not args:

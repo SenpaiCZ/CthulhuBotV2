@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 from loadnsave import load_player_stats, save_player_stats
 from commands._backstory_common import BackstoryView
 
@@ -7,13 +8,16 @@ class removebackstory(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=["rb", "RB"])
+    @commands.hybrid_command(aliases=["rb", "RB"])
     async def removebackstory(self, ctx):
+        """
+        Interactive wizard to remove items from your character's backstory.
+        """
         user_id = str(ctx.author.id)
         server_id = str(ctx.guild.id)
 
         player_stats = await load_player_stats()
-        if user_id not in player_stats[server_id]:
+        if user_id not in player_stats.get(server_id, {}):
             await ctx.send("You don't have an investigator.")
             return
 
