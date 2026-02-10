@@ -1,6 +1,7 @@
 import discord
 import asyncio
 from discord.ext import commands
+from discord import app_commands
 from loadnsave import load_player_stats, save_player_stats
 from commands._backstory_common import BackstoryView
 
@@ -8,7 +9,7 @@ class addbackstory(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=["cb", "CB", "ab"])
+    @commands.hybrid_command(aliases=["cb", "CB", "ab"], description="Add a record to your backstory or inventory interactively.")
     async def addbackstory(self, ctx):
         """
         `[p]cb` - Add a record to your backstory or inventory interactively.

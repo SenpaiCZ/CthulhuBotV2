@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 from loadnsave import load_player_stats, save_player_stats, load_retired_characters_data, save_retired_characters_data
 import asyncio
 
@@ -7,7 +8,7 @@ class CharacterManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.hybrid_command(description="Retire your current character.")
     async def retire(self, ctx):
         server_id = str(ctx.guild.id)
         player_id = str(ctx.author.id)
@@ -40,7 +41,7 @@ class CharacterManagement(commands.Cog):
 
         await ctx.send("Your character has been retired successfully. You can now create a new character.")
       
-    @commands.command()
+    @commands.hybrid_command(description="Unretire a character.")
     async def unretire(self, ctx):
         server_id = str(ctx.guild.id)
         player_id = str(ctx.author.id)

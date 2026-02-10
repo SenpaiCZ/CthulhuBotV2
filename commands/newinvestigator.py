@@ -5,6 +5,7 @@ import math
 import emojis
 import occupation_emoji
 from discord.ext import commands
+from discord import app_commands
 from discord.ui import View, Button, Select
 from loadnsave import (
     load_player_stats, save_player_stats,
@@ -298,7 +299,7 @@ class newinvestigator(commands.Cog):
             await ctx.send("Character creation timed out.")
             return None
 
-    @commands.command(aliases=["newInv", "newinv"])
+    @commands.hybrid_command(aliases=["newInv", "newinv"], description="Starts the character creation wizard.")
     async def newinvestigator(self, ctx):
         """
         🕵️‍♂️ Starts the character creation wizard.

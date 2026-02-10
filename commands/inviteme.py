@@ -1,13 +1,13 @@
 import discord
 from discord.ext import commands
-
+from discord import app_commands
 
 class inviteme(commands.Cog):
 
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.command()
+  @commands.hybrid_command(description="Generate a link to invite the bot to your server.")
   async def invite(self, ctx):
       """
       `[p]invite` - Generate a link to invite the bot to your server.

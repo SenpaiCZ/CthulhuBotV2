@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 
 
 class reportbug(commands.Cog):
@@ -7,7 +8,8 @@ class reportbug(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.command()
+  @commands.hybrid_command(description="Send a bug report to the bot creator.")
+  @app_commands.describe(message="The bug details")
   async def reportbug(self, ctx, *, message: str):
       """
       `[p]reportbug message` - This sends a bug report message to the bot creator.

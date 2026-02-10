@@ -1,5 +1,6 @@
 import discord, random
 from discord.ext import commands
+from discord import app_commands
 
 
 class generatebackstory(commands.Cog):
@@ -7,7 +8,7 @@ class generatebackstory(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.command(aliases=["gbackstory"])
+  @commands.hybrid_command(aliases=["gbackstory"], description="Generate random backstory for your investigator.")
   async def generatebackstory(self, ctx):
       """
       `[p]gbackstory` - Generate random backstory for your investigator. This will not be saved.
