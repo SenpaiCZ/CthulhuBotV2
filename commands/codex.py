@@ -351,10 +351,15 @@ class PaginatedListView(discord.ui.View):
     async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
-        try:
-            await interaction.message.delete()
-        except:
-            pass
+
+        if self.ctx.interaction:
+            # Ephemeral messages cannot be deleted by bots, so we edit them to "close" the view.
+            await interaction.response.edit_message(content="List closed.", embed=None, view=None)
+        else:
+            try:
+                await interaction.message.delete()
+            except:
+                pass
         self.stop()
 
     async def on_timeout(self):
@@ -389,10 +394,15 @@ class ConfirmationView(discord.ui.View):
     async def no_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
-        try:
-            await interaction.message.delete()
-        except:
-            pass
+
+        if self.ctx.interaction:
+            # Ephemeral messages cannot be deleted by bots, so we edit them to "close" the view.
+            await interaction.response.edit_message(content="Dismissed.", embed=None, view=None)
+        else:
+            try:
+                await interaction.message.delete()
+            except:
+                pass
         self.stop()
 
     async def on_timeout(self):
