@@ -30,6 +30,7 @@ from loadnsave import (
     load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
     load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
     load_inventions_data, load_years_data, load_occupations_data,
+    load_bot_status, save_bot_status,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -797,15 +798,16 @@ async def save_file(folder_name, filename):
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# --- Prefix Routes ---
+# --- Bot Config Routes ---
 
-@app.route('/admin/prefixes')
-async def admin_prefixes():
+@app.route('/admin/bot_config')
+async def admin_bot_config():
     if not is_admin(): return redirect(url_for('login'))
 
     if not app.bot:
         return "Bot not initialized", 500
 
+    # Load Prefixes
     server_stats = await load_server_stats()
     guilds_data = []
 
@@ -818,7 +820,42 @@ async def admin_prefixes():
             "prefix": current_prefix
         })
 
-    return await render_template('prefixes.html', guilds=guilds_data)
+    # Load Bot Status
+    bot_status = await load_bot_status()
+
+    return await render_template('bot_config.html', guilds=guilds_data, status=bot_status)
+
+@app.route('/api/save_status', methods=['POST'])
+async def save_status():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    status_type = data.get('type')
+    status_text = data.get('text')
+
+    if not status_type or not status_text:
+        return jsonify({"status": "error", "message": "Missing type or text"}), 400
+
+    # Save to file
+    new_status = {"type": status_type, "text": status_text}
+    await save_bot_status(new_status)
+
+    # Update Bot Presence immediately
+    if app.bot and app.bot.is_ready():
+        activity = None
+        if status_type == 'playing':
+            activity = discord.Game(name=status_text)
+        elif status_type == 'watching':
+            activity = discord.Activity(type=discord.ActivityType.watching, name=status_text)
+        elif status_type == 'listening':
+            activity = discord.Activity(type=discord.ActivityType.listening, name=status_text)
+        elif status_type == 'competing':
+            activity = discord.Activity(type=discord.ActivityType.competing, name=status_text)
+
+        if activity:
+            await app.bot.change_presence(activity=activity)
+
+    return jsonify({"status": "success"})
 
 @app.route('/api/save_prefix', methods=['POST'])
 async def save_prefix():

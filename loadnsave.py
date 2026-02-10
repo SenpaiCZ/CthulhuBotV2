@@ -77,6 +77,16 @@ async def save_settings(settings_data):
     """Asynchronously save settings to config.json"""
     await _save_json_file('.', 'config.json', settings_data)
 
+# --- Bot Status ---
+async def load_bot_status():
+    data = await _load_json_file(DATA_FOLDER, 'bot_status.json')
+    if not data:
+        return {"type": "playing", "text": "Call of Cthulhu"}
+    return data
+
+async def save_bot_status(data):
+    await _save_json_file(DATA_FOLDER, 'bot_status.json', data)
+
 # --- Server Stats ---
 _SERVER_STATS_CACHE = None
 
