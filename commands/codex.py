@@ -4,6 +4,7 @@ import asyncio
 from playwright.async_api import async_playwright
 import io
 import urllib.parse
+import traceback
 import re
 from loadnsave import (
     load_monsters_data, load_deities_data, load_spells_data, load_settings,
@@ -206,26 +207,40 @@ class Codex(commands.Cog):
     @commands.hybrid_command(description="Displays a monster sheet.")
     async def monster(self, ctx, *, name: str = None):
         """Displays a monster sheet."""
-        if name:
-            await self._handle_lookup(ctx, name, load_monsters_data, "monster", data_key="monsters")
-        else:
-            await self._handle_list_confirmation(ctx, load_monsters_data, "monster", data_key="monsters")
+        try:
+            if name:
+                await self._handle_lookup(ctx, name, load_monsters_data, "monster", data_key="monsters")
+            else:
+                await self._handle_list_confirmation(ctx, load_monsters_data, "monster", data_key="monsters")
+        except Exception as e:
+             traceback.print_exc()
+             await ctx.send(f"An error occurred: {e}", ephemeral=True if ctx.interaction else False)
 
     @commands.hybrid_command(description="Displays a spell.")
     async def spell(self, ctx, *, name: str = None):
         """Displays a spell."""
-        if name:
-            await self._handle_lookup(ctx, name, load_spells_data, "spell", data_key="spells")
-        else:
-            await self._handle_list_confirmation(ctx, load_spells_data, "spell", data_key="spells")
+        try:
+            if name:
+                await self._handle_lookup(ctx, name, load_spells_data, "spell", data_key="spells")
+            else:
+                await self._handle_list_confirmation(ctx, load_spells_data, "spell", data_key="spells")
+        except Exception as e:
+             import traceback
+             traceback.print_exc()
+             await ctx.send(f"An error occurred: {e}", ephemeral=True if ctx.interaction else False)
 
     @commands.hybrid_command(description="Displays a deity sheet.")
     async def deity(self, ctx, *, name: str = None):
         """Displays a deity sheet."""
-        if name:
-            await self._handle_lookup(ctx, name, load_deities_data, "deity", data_key="deities")
-        else:
-            await self._handle_list_confirmation(ctx, load_deities_data, "deity", data_key="deities")
+        try:
+            if name:
+                await self._handle_lookup(ctx, name, load_deities_data, "deity", data_key="deities")
+            else:
+                await self._handle_list_confirmation(ctx, load_deities_data, "deity", data_key="deities")
+        except Exception as e:
+             import traceback
+             traceback.print_exc()
+             await ctx.send(f"An error occurred: {e}", ephemeral=True if ctx.interaction else False)
 
     @commands.hybrid_command(description="Opens the Grimoire to view lists of Monsters, Deities, or Spells.")
     async def grimoire(self, ctx):
