@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 from collections import OrderedDict
 from loadnsave import load_player_stats, save_player_stats, load_server_stats
 
@@ -9,8 +10,9 @@ class renameskill(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.command(aliases=["rskill"])
-  async def renameskill(self, ctx, *, old_and_new_name):
+  @commands.hybrid_command(aliases=["rskill"])
+  @app_commands.describe(query="Old skill name and new skill name (e.g. 'Language other German')")
+  async def renameskill(self, ctx, *, query: str = None):
       """
       `[p]rskill skill1 skill2` - Rename skill to your liking. (e.g. `[p]rskill Language other German`)
       """
@@ -25,7 +27,12 @@ class renameskill(commands.Cog):
       
       player_stats = await load_player_stats()
   
-      old_and_new_name = old_and_new_name.rsplit(maxsplit=1)
+      if not query:
+          await ctx.send(
+              "Invalid input. Please provide old skill name and new skill name.")
+          return
+
+      old_and_new_name = query.rsplit(maxsplit=1)
   
       if len(old_and_new_name) != 2:
           await ctx.send(

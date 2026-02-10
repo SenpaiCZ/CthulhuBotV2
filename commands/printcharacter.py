@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import asyncio
 from playwright.async_api import async_playwright
 import io
@@ -9,7 +10,8 @@ class PrintCharacter(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=['pchar', 'printchar'])
+    @commands.hybrid_command(aliases=['pchar', 'printchar'])
+    @app_commands.describe(user="The user whose character you want to print (defaults to you)")
     async def printcharacter(self, ctx, user: discord.Member = None):
         """
         Prints the character sheet of the user as an image.

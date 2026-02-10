@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 from discord.ui import View, Select
 import asyncio
 import io
@@ -372,7 +373,8 @@ class Karma(commands.Cog):
         await ctx.send("Let's set up the Karma system! First, select the channel where reactions should count.",
                        view=KarmaSetupChannelView(self.bot, ctx))
 
-    @commands.command(aliases=['k'])
+    @commands.hybrid_command(aliases=['k'])
+    @app_commands.describe(user="The user to check karma for (defaults to you)")
     async def karma(self, ctx, user: discord.User = None):
         """
         🌟 Check karma for yourself or another user.
@@ -389,7 +391,8 @@ class Karma(commands.Cog):
 
         await ctx.send(f"{user.display_name} has {karma_score} karma.")
 
-    @commands.command(aliases=['level'])
+    @commands.hybrid_command(aliases=['level'])
+    @app_commands.describe(user="The user whose rank card you want to see (defaults to you)")
     async def memelevel(self, ctx, user: discord.Member = None):
         """
         🔮 Show your current rank card.
@@ -421,7 +424,8 @@ class Karma(commands.Cog):
         else:
             await ctx.send("Failed to generate rank card.")
 
-    @commands.command(aliases=['karmatop', 'top'])
+    @commands.hybrid_command(aliases=['karmatop', 'top'])
+    @app_commands.describe(page="The page number of the leaderboard to view")
     async def leaderboard(self, ctx, page: int = 1):
         """
         🏆 Show the Karma leaderboard.

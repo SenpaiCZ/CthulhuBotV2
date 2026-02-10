@@ -1,6 +1,7 @@
 import discord
 import asyncio
 from discord.ext import commands
+from discord import app_commands
 from loadnsave import load_player_stats, save_player_stats
 from commands._backstory_common import BackstoryView
 
@@ -8,13 +9,16 @@ class updatebackstory(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=["ub", "UB"])
+    @commands.hybrid_command(aliases=["ub", "UB"])
     async def updatebackstory(self, ctx):
+        """
+        Interactive wizard to update your character's backstory elements.
+        """
         user_id = str(ctx.author.id)
         server_id = str(ctx.guild.id)
 
         player_stats = await load_player_stats()
-        if user_id not in player_stats[server_id]:
+        if user_id not in player_stats.get(server_id, {}):
             await ctx.send("You don't have an investigator.")
             return
 
