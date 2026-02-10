@@ -11,7 +11,8 @@ import asyncio
 import emoji
 import emojis
 import feedparser
-from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort
+import datetime
+from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort, send_from_directory
 from markupsafe import escape
 from loadnsave import (
     load_player_stats, load_retired_characters_data, load_settings, save_settings,
@@ -37,6 +38,7 @@ from .audio_mixer import MixingAudioSource
 from rss_utils import get_youtube_rss_url
 
 SOUNDBOARD_FOLDER = "soundboard"
+BACKUP_FOLDER = "backups"
 ALLOWED_EXTENSIONS = {'.mp3', '.wav', '.ogg', '.m4a', '.flac'}
 server_volumes = {} # guild_id (str) -> {'music': 1.0, 'soundboard': 0.5}
 guild_mixers = {} # guild_id (str) -> MixingAudioSource
@@ -2670,6 +2672,76 @@ async def backup_run():
         return jsonify({"status": "success", "filename": result})
     else:
         return jsonify({"status": "error", "message": result}), 500
+
+# --- System Backups (Physical Files) ---
+
+def get_system_backups():
+    if not os.path.exists(BACKUP_FOLDER):
+        return []
+
+    files = []
+    try:
+        for f in os.listdir(BACKUP_FOLDER):
+            if f.endswith('.zip'):
+                full_path = os.path.join(BACKUP_FOLDER, f)
+                stat = os.stat(full_path)
+                files.append({
+                    "name": f,
+                    "size": stat.st_size,
+                    "created": datetime.datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+                })
+        # Sort by creation date desc
+        files.sort(key=lambda x: x['created'], reverse=True)
+    except Exception as e:
+        print(f"Error scanning backups: {e}")
+
+    return files
+
+@app.route('/api/backup/files')
+async def backup_files_list():
+    if not is_admin(): return "Unauthorized", 401
+    return jsonify(get_system_backups())
+
+@app.route('/api/backup/delete', methods=['POST'])
+async def backup_delete_file():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    filename = data.get('filename')
+
+    if not filename:
+        return jsonify({"status": "error", "message": "Missing filename"}), 400
+
+    # Security checks
+    if not filename.endswith('.zip'):
+         return jsonify({"status": "error", "message": "Invalid file type"}), 400
+
+    if '..' in filename or '/' in filename or '\\' in filename:
+         return jsonify({"status": "error", "message": "Invalid filename"}), 400
+
+    target_path = os.path.join(BACKUP_FOLDER, filename)
+
+    if not os.path.exists(target_path):
+        return jsonify({"status": "error", "message": "File not found"}), 404
+
+    try:
+        os.remove(target_path)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/backup/download/<filename>')
+async def backup_download_file(filename):
+    if not is_admin(): return redirect(url_for('login'))
+
+    # Security checks
+    if '..' in filename or '/' in filename or '\\' in filename:
+        return "Invalid filename", 400
+
+    if not os.path.exists(os.path.join(BACKUP_FOLDER, filename)):
+        return "File not found", 404
+
+    return await send_from_directory(BACKUP_FOLDER, filename, as_attachment=True)
 
 # --- Pokemon GO Routes ---
 

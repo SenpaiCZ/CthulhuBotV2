@@ -39,8 +39,98 @@
     </div>
 </div>
 
+<div class="card mb-4">
+    <div class="card-header">
+        System Backups (from Updates)
+    </div>
+    <div class="card-body">
+        <p class="card-text">These backups are created automatically before updates by the updater script.</p>
+        <div class="table-responsive">
+            <table class="table table-striped" id="backupTable">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Size</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="backupList">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <script>
-document.addEventListener('DOMContentLoaded', loadBackupSettings);
+document.addEventListener('DOMContentLoaded', () => {
+    loadBackupSettings();
+    loadSystemBackups();
+});
+
+async function loadSystemBackups() {
+    const list = document.getElementById('backupList');
+    list.innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
+
+    try {
+        const response = await fetch('/api/backup/files');
+        const files = await response.json();
+
+        list.innerHTML = '';
+        if (files.length === 0) {
+            list.innerHTML = '<tr><td colspan="4" class="text-center">No backup files found.</td></tr>';
+            return;
+        }
+
+        files.forEach(file => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${file.name}</td>
+                <td>${formatBytes(file.size)}</td>
+                <td>${file.created}</td>
+                <td>
+                    <a href="/admin/backup/download/${file.name}" class="btn btn-sm btn-info text-white me-2">Download</a>
+                    <button class="btn btn-sm btn-danger" onclick="deleteBackup('${file.name}')">Delete</button>
+                </td>
+            `;
+            list.appendChild(tr);
+        });
+
+    } catch (e) {
+        list.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error loading backups: ${e}</td></tr>`;
+    }
+}
+
+async function deleteBackup(filename) {
+    if (!confirm(`Are you sure you want to delete ${filename}? This cannot be undone.`)) return;
+
+    try {
+        const response = await fetch('/api/backup/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: filename })
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            loadSystemBackups(); // Refresh list
+        } else {
+            alert("Failed to delete: " + data.message);
+        }
+    } catch (e) {
+        alert("Error: " + e);
+    }
+}
+
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
 
 async function loadBackupSettings() {
     // The value is injected by the server into the template,
