@@ -15,7 +15,7 @@ import datetime
 from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort, send_from_directory
 from markupsafe import escape
 from loadnsave import (
-    load_player_stats, load_retired_characters_data, load_settings, save_settings,
+    load_player_stats, save_player_stats, load_retired_characters_data, save_retired_characters_data, load_settings, save_settings,
     load_soundboard_settings, save_soundboard_settings, load_music_blacklist, save_music_blacklist,
     load_server_stats, save_server_stats, load_server_volumes, save_server_volumes,
     load_karma_settings, save_karma_settings,
@@ -277,6 +277,75 @@ async def retired():
         emojis=emojis,
         emoji_lib=emoji
     )
+
+@app.route('/api/character/delete', methods=['POST'])
+async def delete_character():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    char_type = data.get('type')
+    name_confirmation = data.get('name')
+
+    if not char_type or not name_confirmation:
+         return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if char_type == 'active':
+        server_id = data.get('server_id')
+        user_id = data.get('user_id')
+        if not server_id or not user_id:
+             return jsonify({"status": "error", "message": "Missing server_id or user_id"}), 400
+
+        stats = await load_player_stats()
+        if server_id in stats and user_id in stats[server_id]:
+            char_data = stats[server_id][user_id]
+            # Normalize names for comparison (strip whitespace)
+            if char_data.get('NAME', '').strip() != name_confirmation.strip():
+                return jsonify({"status": "error", "message": "Name confirmation failed. Names do not match."}), 400
+
+            del stats[server_id][user_id]
+
+            # Clean up empty guild entry
+            if not stats[server_id]:
+                del stats[server_id]
+
+            await save_player_stats(stats)
+            return jsonify({"status": "success"})
+        else:
+            return jsonify({"status": "error", "message": "Character not found"}), 404
+
+    elif char_type == 'retired':
+        user_id = data.get('user_id')
+        index = data.get('index')
+
+        if not user_id or index is None:
+             return jsonify({"status": "error", "message": "Missing user_id or index"}), 400
+
+        stats = await load_retired_characters_data()
+        if user_id in stats:
+            try:
+                idx = int(index)
+                if idx < 0 or idx >= len(stats[user_id]):
+                    raise ValueError
+
+                char_data = stats[user_id][idx]
+                if char_data.get('NAME', '').strip() != name_confirmation.strip():
+                    return jsonify({"status": "error", "message": "Name confirmation failed. Names do not match."}), 400
+
+                stats[user_id].pop(idx)
+
+                # Clean up if empty list
+                if not stats[user_id]:
+                    del stats[user_id]
+
+                await save_retired_characters_data(stats)
+                return jsonify({"status": "success"})
+            except ValueError:
+                 return jsonify({"status": "error", "message": "Invalid index"}), 400
+        else:
+             return jsonify({"status": "error", "message": "User not found in retired data"}), 404
+
+    else:
+        return jsonify({"status": "error", "message": "Invalid type"}), 400
 
 @app.route('/render/character/<guild_id>/<user_id>')
 async def render_character_view(guild_id, user_id):
