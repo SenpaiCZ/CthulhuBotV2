@@ -28,6 +28,7 @@ from loadnsave import (
     load_giveaway_data,
     load_polls_data, load_reminder_data,
     load_gamerole_settings, save_gamerole_settings,
+    load_enroll_settings, save_enroll_settings,
     load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
     load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
     load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
@@ -3408,6 +3409,73 @@ async def reminders_delete():
         return jsonify({"status": "success"})
     else:
         return jsonify({"status": "error", "message": result}), 500
+
+# --- Enrollment Wizard Routes ---
+
+@app.route('/admin/enroll')
+async def admin_enroll():
+    if not is_admin(): return redirect(url_for('login'))
+    return await render_template('enroll_dashboard.html')
+
+@app.route('/api/enroll/data')
+async def enroll_data():
+    if not is_admin(): return "Unauthorized", 401
+
+    if not app.bot:
+        return jsonify({"guilds": []})
+
+    settings = await load_enroll_settings()
+    guilds_data = []
+
+    for guild in app.bot.guilds:
+        guild_id_str = str(guild.id)
+
+        # Roles for dropdown
+        roles = []
+        for role in guild.roles:
+            if not role.is_default() and not role.managed:
+                roles.append({"id": str(role.id), "name": role.name, "color": str(role.color)})
+        roles.sort(key=lambda x: x['name'])
+
+        guild_settings = settings.get(guild_id_str, {})
+
+        # Ensure defaults structure
+        config = {
+            "enabled": guild_settings.get("enabled", False),
+            "final_message": guild_settings.get("final_message", "You have successfully enrolled!"),
+            "pages": guild_settings.get("pages", [])
+        }
+
+        guilds_data.append({
+            "id": guild_id_str,
+            "name": guild.name,
+            "roles": roles,
+            "config": config
+        })
+
+    return jsonify({"guilds": guilds_data})
+
+@app.route('/api/enroll/save', methods=['POST'])
+async def enroll_save():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+
+    if not guild_id:
+        return jsonify({"status": "error", "message": "Missing guild_id"}), 400
+
+    settings = await load_enroll_settings()
+
+    # Update settings for this guild
+    settings[str(guild_id)] = {
+        "enabled": bool(data.get('enabled', False)),
+        "final_message": data.get('final_message', ""),
+        "pages": data.get('pages', [])
+    }
+
+    await save_enroll_settings(settings)
+    return jsonify({"status": "success"})
 
 @app.route('/api/admin/update', methods=['POST'])
 async def admin_update_bot():

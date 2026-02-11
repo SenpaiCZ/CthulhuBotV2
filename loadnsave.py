@@ -319,3 +319,10 @@ async def load_gamerole_settings():
 
 async def save_gamerole_settings(data):
     await _save_json_file(DATA_FOLDER, 'gamerole_settings.json', data)
+
+# --- Enroll Wizard Settings ---
+async def load_enroll_settings():
+    return await _load_json_file(DATA_FOLDER, 'enroll_settings.json')
+
+async def save_enroll_settings(data):
+    await _save_json_file(DATA_FOLDER, 'enroll_settings.json', data)
