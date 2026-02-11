@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ name }} - Occupation Render</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .coc-sheet {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            border: 2px solid var(--cthulhu-green-dark, #2E8B57);
+            padding: 20px;
+            border-radius: 5px;
+            width: 800px;
+        }
+
+        .text-success { color: #00FF7F !important; }
+        .text-warning { color: #FFD700 !important; }
+        .text-info { color: #00FFFF !important; }
+        .border-success { border-color: #2E8B57 !important; }
+
+        .section-header {
+            background-color: #2E8B57;
+            color: #fff;
+            padding: 5px 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            border-radius: 3px;
+        }
+
+        .occupation-image {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #333;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="coc-sheet">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h1 class="display-5 mb-0 text-success">{{ name }}</h1>
+                <div class="text-secondary fst-italic fs-5">{{ occupation.era or 'Any Era' }}</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-body">
+                        {% if occupation.description %}
+                            <p class="card-text border-start border-success border-3 ps-3">{{ occupation.description }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="section-header">Details</div>
+                <ul class="list-group list-group-flush bg-transparent">
+                    <li class="list-group-item bg-transparent border-secondary ps-0 py-2">
+                        <strong class="text-warning">Skill Points:</strong> <span class="text-light">{{ occupation.skill_points }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent border-secondary ps-0 py-2">
+                        <strong class="text-warning">Credit Rating:</strong> <span class="text-light">{{ occupation.credit_rating }}</span>
+                    </li>
+                    <li class="list-group-item bg-transparent border-secondary ps-0 py-2">
+                        <strong class="text-warning">Suggested Contacts:</strong> <span class="text-light">{{ occupation.suggested_contacts }}</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-md-4">
+                {% if occupation.link %}
+                    <img src="{{ occupation.link }}" alt="{{ name }}" class="occupation-image">
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="section-header">Skills</div>
+        <div class="card bg-dark border-secondary">
+            <div class="card-body">
+                <p class="card-text">{{ occupation.skills }}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
