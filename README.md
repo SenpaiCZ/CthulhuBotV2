@@ -6,121 +6,105 @@
 
 ## Features
 
-*   🕵️‍♂️ **Character Management**: Create, update, and manage investigator sheets, including stats, skills, and backstories.
+*   🛠️ **Slash Commands**: Fully integrated with Discord's Slash Commands (`/`) for a modern and intuitive user experience.
+*   🕵️‍♂️ **Character Management**: Create, update, and manage investigator sheets, including stats, skills, backstories, and inventory.
 *   🎲 **Advanced Dice Rolling**: Interactive rolls with support for Bonus/Penalty dice, Luck spending, and Pushing rolls.
-*   🐙 **Keeper Tools**: Extensive library of game information including firearms, inventions, monsters, deities, madness tables, phobias/manias, and NPC generation.
-*   👊 **Pulp Cthulhu Support**: Includes Pulp Archetypes, Talents, and modified character creation rules.
+*   🐙 **The Grimoire (Codex)**: Extensive library of game information including firearms, inventions, monsters, deities, spells, madness tables, phobias/manias, and historical events.
+*   👊 **Pulp Cthulhu Support**: Includes Pulp Archetypes, Talents, Insane Talents, and modified character creation rules.
 *   📜 **Session Management**: Tools to start, track, and log game sessions.
 *   🎵 **Music Bot**: High-quality music playback from YouTube with queue management, looping, and volume control.
-*   💻 **Web Dashboard**: A powerful web interface to manage the bot:
+*   📱 **Pokemon GO**: Track and notify your community about upcoming Pokemon GO events (powered by LeekDuck).
+*   💻 **Web Dashboard**: A powerful web interface to manage the bot and server:
+    *   **Codex Browser**: View Monsters, Spells, Deities, Weapons, and more in a browser-friendly format.
     *   **Karma System**: Configure roles, emojis, and notifications.
     *   **Auto Rooms**: Easy setup for voice channel generation.
-    *   **RSS Feeds**: Manage subscriptions and settings.
-    *   **Server Prefixes**: Manage bot prefixes.
-    *   **File Editor**: Edit configuration and data files directly.
+    *   **RSS Feeds**: Manage subscriptions (RSS & YouTube).
     *   **Soundboard**: Upload and play audio clips in voice channels.
     *   **Music Control**: Manage the music queue and blacklist songs.
-    *   **Game Settings**: Configure gameplay rules like Luck Threshold.
-    *   **Monsters**: Browse and view detailed statistics and lore for Cthulhu Mythos monsters.
-    *   **Deities**: Explore the pantheon of Great Old Ones and Outer Gods with detailed descriptions and cult information.
-    *   **Reaction Roles**: easily configure self-assignable roles.
-    *   **Auto Deleter**: Manage auto-deletion rules and bulk delete messages.
+    *   **Reaction Roles**: Easily configure self-assignable roles.
+    *   **Auto Deleter**: Manage auto-deletion rules for channels.
     *   **Polls**: Create and manage interactive polls.
     *   **Reminders**: View and delete pending reminders.
+    *   **Enrollment Wizard**: Configure a multi-step role assignment wizard for new members.
+    *   **Backups**: Manage automated and manual system backups.
 *   📈 **Karma System**: Track user reputation with custom upvote/downvote emojis.
-*   🎭 **Reaction Roles**: Allow users to assign roles to themselves by reacting to messages.
-*   🔊 **Soundboard**: Admin-controlled soundboard to play audio clips in voice channels.
-*   📊 **Polls**: Create interactive polls for your server.
-*   ⏰ **Reminders**: Set personal or channel reminders.
-*   🛠️ **Utility & Admin**: Auto-rooms, auto-moderation, RSS and YouTube feed integration.
+*   📊 **Polls & Reminders**: Native support for creating polls and setting reminders.
 
 ## Commands
 
-The bot uses a dynamic prefix (default is `!`). Here is a list of available commands categorized by function:
+The bot primarily uses **Slash Commands** (`/`). Legacy prefix commands (default `!`) are still supported for most features but may be deprecated in the future.
 
-### 🐙 Cthulhu & Investigator Tools
-*   `newinvestigator` (alias: `newinv`): 🕵️‍♂️ Start the character creation wizard.
-*   `mychar`: 📜 View your character sheet.
-*   `stat`: 📊 View or edit specific stats.
-*   `rename`: 🏷️ Rename your character.
-*   `renameskill`: ✏️ Rename a skill on your sheet.
-*   `deleteinvestigator`: 🗑️ Delete a character.
-*   `addbackstory`: 📖 Add backstory elements.
-*   `updatebackstory`: 🔄 Update backstory elements.
-*   `removebackstory`: ❌ Remove backstory elements.
-*   `generatebackstory`: 🎲 Generate a random backstory.
-*   `retire`: 👴 Retire an active character.
-*   `unretire`: 👶 Bring a retired character back.
-*   `printcharacter` (aliases: `pchar`, `printchar`): 🖼️ Generate an image of your character sheet.
+### 🐙 Investigator Tools
+*   `/newinvestigator`: 🕵️‍♂️ Start the character creation wizard.
+*   `/mychar`: 📜 View your character sheet.
+*   `/stat`: 📊 View or edit specific stats on your sheet.
+*   `/rename`: 🏷️ Rename your character.
+*   `/renameskill`: ✏️ Rename a skill on your sheet.
+*   `/deleteinvestigator`: 🗑️ Delete a character.
+*   `/addbackstory`, `/updatebackstory`, `/removebackstory`: 📖 Manage backstory elements.
+*   `/generatebackstory`: 🎲 Generate a random backstory.
+*   `/retire`: 👴 Retire an active character.
+*   `/unretire`: 👶 Bring a retired character back to active duty.
+*   `/printcharacter`: 🖼️ Generate an image of your character sheet.
 
 ### 🎲 Dice Rolling & Session
-*   `newroll` (aliases: `roll`, `d`, `nd`): 🎲 Perform a dice roll or skill check. Interactive interface allows for Bonus/Penalty dice and Luck spending.
-*   `showluck`: 🍀 Show the luck threshold for the server.
-*   `startsession`: 🎬 Start a new game session.
-*   `showsession`: 📝 Show current session details.
-*   `wipesession`: 🧹 Clear session data.
+*   `/roll` (alias: `!newroll`, `!d`): 🎲 Perform a dice roll or skill check. Interactive interface allows for Bonus/Penalty dice and Luck spending.
+*   `!showluck`: 🍀 Show the luck threshold for the server.
+*   `!startsession`: 🎬 Start a new game session.
+*   `!showsession`: 📝 Show current session details.
+*   `!wipesession`: 🧹 Clear session data.
+
+### 📚 The Grimoire (Codex)
+*   `/grimoire`: 📖 Open the main Grimoire menu to browse all categories.
+*   `/monster` `[name]`: 👹 Lookup a Cthulhu Mythos monster.
+*   `/deity` `[name]`: 👁️ Lookup a Great Old One or Outer God.
+*   `/spell` `[name]`: ✨ Lookup a spell.
+*   `/weapon` `[name]`: 🔫 Lookup weapon statistics.
+*   `/occupation` `[name]`: 💼 Lookup occupation details.
+*   `/skill` `[name]`: 📚 Lookup skill descriptions.
+*   `/archetype` `[name]`: 🦸‍♂️ Lookup Pulp Cthulhu Archetypes.
+*   `/talent` `[name]`: 🌟 Lookup Pulp Talents.
+*   `/insane` `[name]`: 🩸 Lookup Insane Talents.
+*   `/mania` `[name]`, `/phobia` `[name]`: 🤪 Random or specific madness.
+*   `/poison` `[name]`: 🧪 Lookup poison info.
+*   `/invention` `[decade]`: 💡 Lookup inventions by decade (e.g., "1920s").
+*   `/year` `[year]`: 📅 Historical events for a specific year.
+*   `!createnpc`: 👤 Generate a random NPC.
+*   `!randomname`: 🏷️ Generate a random name (1920s era).
+*   `!macguffin`: 🏺 Generate a plot device.
+*   `!loot`: 💰 Generate random loot.
 
 ### 🎵 Music & Sound
-*   `play` (alias: `p`): 🎵 Play a song from YouTube.
-*   `skip` (alias: `s`): ⏭️ Skip the current song.
-*   `stop` (aliases: `leave`, `disconnect`): 🛑 Stop music, clear queue, and disconnect.
-*   `volume` (alias: `vol`): 🔊 Set playback volume (0-100).
-*   `loop`: 🔁 Toggle song looping.
-*   `queue` (alias: `q`): 🎼 View the current music queue.
-*   `nowplaying` (alias: `np`): 💿 Show the currently playing song.
+*   `/play` `[query]`: 🎵 Play a song from YouTube.
+*   `/skip`: ⏭️ Skip the current song.
+*   `/stop`: 🛑 Stop music, clear queue, and disconnect.
+*   `/volume` `[0-100]`: 🔊 Set playback volume.
+*   `/loop`: 🔁 Toggle song looping.
+*   `/queue`: 🎼 View the current music queue.
+*   `/nowplaying`: 💿 Show the currently playing song.
 
-### 📈 Karma System
-*   `setupkarma`: ⚙️ Interactive setup wizard for the karma system.
-*   `setupkarmaroles`: 🧙 Interactive wizard to manage rank roles.
-*   `karma` (alias: `k`): 🌟 Check karma for yourself or another user.
-*   `leaderboard` (aliases: `top`): 🏆 Show the Karma leaderboard.
+### 🛠️ Utilities & Community
+*   `/enroll`: 🧙 Start the enrollment wizard to get roles (if configured).
+*   `/poll`: 📊 Create an interactive poll.
+*   `/remind`: ⏰ Set a reminder for yourself or a channel.
+*   `/reportbug`: 🐛 Report a bug to the developer.
+*   `/ping`: 🏓 Check bot latency.
+*   `/uptime`: ⏱️ Check bot uptime.
+*   `!leaderboard` (alias: `!top`): 🏆 Show the Karma leaderboard.
+*   `!karma`: 🌟 Check karma for a user.
 
-### 🎭 Reaction Roles
-*   `reactionrole` (alias: `rr`): 🎭 Setup a reaction role on a message (Admin).
-
-### 🧠 Keeper Resources
-*   `monster`: 👹 Consult the grimoire for a monster's stats and lore.
-*   `deity`: 👁️ Consult the pantheon for a deity's description and cult info.
-*   `changeluck`: 🍀 Modify the server's maximum luck spend threshold (Default: 10).
-*   `occupationinfo`: 💼 Lookup occupation details.
-*   `skillinfo`: 📚 Lookup skill details.
-*   `createnpc`: 👤 Generate an NPC.
-*   `randomname`: 🏷️ Generate a random name (1920s).
-*   `macguffin`: 🏺 Generate a MacGuffin.
-*   `loot`: 💰 Generate random loot.
-*   `archetypeinfo`: 🦸‍♂️ Lookup archetype info (Pulp).
-*   `firearms`: 🔫 Lookup firearm statistics.
-*   `inventions`: 💡 Lookup invention details.
-*   `talents`: 🌟 Lookup talent info.
-*   `years`: 📅 Historical info for different years.
-*   `madness`: 🤪 Consult madness rules.
-*   `madnessAlone`: 🌑 Madness tables for solo investigators.
-*   `insaneTalents`: 🩸 Lookup insane talents.
-*   `phobia`: 😨 Random phobia.
-*   `mania`: 🤩 Random mania.
-*   `poisons`: 🧪 Lookup poison info.
-
-### 🛠️ General & Admin
-*   `autoroomkick`: 👢 Kick user from auto-room.
-*   `autoroomlock`: 🔒 Lock auto-room.
-*   `autoroomunlock`: 🔓 Unlock auto-room.
-*   `reportbug`: 🐛 Report a bug to the developer.
-*   `repeatafterme`: 🦜 Make the bot repeat a message.
-*   `uptime`: ⏱️ Check bot uptime.
-*   `autoroomsetup`: ⚙️ Interactive setup wizard for Auto Rooms.
-*   `autoroomset`: ⚙️ Configure auto-rooms (Legacy).
-*   `changeprefix`: ❗ Change the bot's command prefix for the server.
-*   `ping`: 🏓 Basic check to see if the bot is responsive.
-*   `addreaction`: ➕ Add a smart reaction.
-*   `removereaction`: ➖ Remove a smart reaction.
-*   `listreactions`: 📋 List all smart reactions.
-*   `deleter`: 🗑️ Delete the last X messages in the current channel.
-*   `autodeleter`: 🤖 Interactive wizard to setup auto-deletion rules.
-*   `stopdeleter`: 🛑 Stop auto-deletion for a channel.
-*   `rss`: 📰 Add a specific RSS feed or YouTube channel manually.
-*   `rsssetup`: 📰 Interactive setup wizard for RSS/YouTube feeds.
-*   `poll`: 📊 Create an interactive poll.
-*   `remind`: ⏰ Set a reminder.
+### ⚙️ Admin & Configuration (Prefix Only)
+*   `!sync`: 🔄 **Essential!** Sync slash commands to Discord. Use `!sync` (global) or `!sync guild` (current server).
+*   `!setupkarma`: ⚙️ Interactive setup wizard for the karma system.
+*   `!setupkarmaroles`: 🧙 Interactive wizard to manage karma rank roles.
+*   `!reactionrole`: 🎭 Setup a reaction role on a message.
+*   `!autoroomsetup`: ⚙️ Interactive setup wizard for Auto Rooms.
+*   `!rsssetup`: 📰 Interactive setup wizard for RSS/YouTube feeds.
+*   `!autodeleter`: 🤖 Interactive wizard to setup auto-deletion rules.
+*   `!changeprefix`: ❗ Change the bot's command prefix for the server.
+*   `!pogo setchannel`, `!pogo setrole`: 📱 Configure Pokemon GO notifications.
+*   `!backup`: 💾 Trigger a manual backup.
+*   `!update`: 🔄 Update the bot (if installed via git).
 
 ## Installation
 
@@ -162,6 +146,14 @@ After running the setup script, edit the `config.json` file in the root director
 
 ---
 
+### Syncing Slash Commands
+**Important:** After starting the bot for the first time, you must sync the slash commands to your server or globally.
+1.  Ensure you are in a server where the bot is present.
+2.  Run the command `!sync guild` to instantly sync commands to that specific server.
+3.  Run `!sync` to sync commands globally (this can take up to an hour to propagate to all servers).
+
+---
+
 ### Manual Installation
 
 If you prefer to install manually, follow these steps.
@@ -188,7 +180,7 @@ If you prefer to install manually, follow these steps.
     ```bash
     pip install -r requirements.txt
     ```
-6.  Install Playwright browsers:
+6.  Install Playwright browsers (for Dashboard rendering):
     ```bash
     playwright install chromium
     ```
@@ -357,7 +349,7 @@ To support age-restricted content or avoid rate limits, you can provide a cookie
 
 ## Web Dashboard & Soundboard
 
-The bot includes a web dashboard to help manage character data, edit configuration files, and control the soundboard.
+The bot includes a comprehensive web dashboard to help manage character data, edit configuration files, and control server settings.
 
 ### Setup
 1.  Open your `config.json` file.
@@ -377,6 +369,17 @@ The bot includes a web dashboard to help manage character data, edit configurati
 2.  Open your web browser and navigate to: `http://localhost:5000`
     *   If running on a remote server, replace `localhost` with the server's IP address. You may need to open port 5000 in your firewall.
 3.  Log in using the `admin_password` you set.
+
+### Dashboard Features
+*   **Investigator/Keeper Tools**: View and manage active and retired character sheets.
+*   **Codex Browser**: Browse the entire library of Monsters, Spells, Deities, Weapons, and more.
+*   **Soundboard**: Upload audio files, organize them into folders, and play them directly into your voice channel.
+*   **Music Control**: Manage the music queue, skip tracks, and blacklist specific URLs.
+*   **Pokemon GO**: Configure event notifications, role pings, and view upcoming events.
+*   **Enrollment Wizard**: Configure a step-by-step role assignment process for new members.
+*   **Polls & Reminders**: Manage active polls and view scheduled reminders.
+*   **Backup Manager**: Download or delete system backups, and trigger manual backups.
+*   **File Editor**: (Advanced) Edit internal JSON data files directly from the browser.
 
 ## Contributing
 
