@@ -284,9 +284,19 @@ class Codex(commands.Cog):
     async def invention(self, ctx, *, decade: str = None):
         """Displays Inventions for a specific decade (e.g., 1920s)."""
         if decade:
-            # "1920" -> try "1920s"
-            if not decade.endswith('s') and decade.isdigit():
-                 decade += 's'
+            # Handle "1925" -> "1920s" logic
+            # Strip non-digits to handle "1920s" or "c. 1920" if users get creative, though simple is better
+            # Just take digits
+            year_match = re.search(r'\d{3,4}', decade)
+            if year_match:
+                try:
+                    year_val = int(year_match.group(0))
+                    # Round down to nearest decade
+                    decade_val = (year_val // 10) * 10
+                    decade = f"{decade_val}s"
+                except ValueError:
+                    pass
+
             await self._handle_lookup(ctx, decade, load_inventions_data, "invention", keys_only=True)
         else:
             await self._handle_no_arg_lookup(ctx, load_inventions_data, "invention")
@@ -421,7 +431,13 @@ class OptionsView(discord.ui.View):
                 if entry and entry.get('name'):
                     choices.append(entry['name'])
         else:
-             choices = list(data.keys())
+             # For inventions, include the count
+             if self.type_slug == "invention":
+                 choices = []
+                 for k, v in data.items():
+                     choices.append(f"{k} ({len(v)} entries)")
+             else:
+                 choices = list(data.keys())
 
         choices.sort()
         view = PaginatedListView(self.ctx, choices, self.title)
@@ -541,7 +557,7 @@ class GrimoireView(discord.ui.View):
         self.cog = cog
         self.message = None
 
-    async def _launch_list(self, interaction, loader, title, data_key=None, flatten_pulp=False):
+    async def _launch_list(self, interaction, loader, title, data_key=None, flatten_pulp=False, type_slug=None):
         data = await loader()
         choices = []
         if flatten_pulp:
@@ -570,7 +586,12 @@ class GrimoireView(discord.ui.View):
                 if entry and entry.get('name'):
                     choices.append(entry['name'])
         else:
-             choices = list(data.keys())
+             # For inventions, include the count
+             if type_slug == "invention":
+                 for k, v in data.items():
+                     choices.append(f"{k} ({len(v)} entries)")
+             else:
+                 choices = list(data.keys())
 
         choices.sort()
         view = PaginatedListView(self.ctx, choices, title)
@@ -635,7 +656,7 @@ class GrimoireView(discord.ui.View):
     @discord.ui.button(label="Inventions", style=discord.ButtonStyle.secondary, row=2)
     async def inventions_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_inventions_data, "Inventions List")
+        await self._launch_list(interaction, load_inventions_data, "Inventions List", type_slug="invention")
 
     # Row 3
     @discord.ui.button(label="Manias", style=discord.ButtonStyle.danger, row=3)
