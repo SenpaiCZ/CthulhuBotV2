@@ -1,5 +1,5 @@
 {
-  "physical": [
+  "Physical": [
     "**Keen Vision**: gain a bonus die to Spot Hidden rolls",
     "**Quick Healer**: natural healing is increased to +3 hit points per day.",
     "**Night Vision**: in darkness, reduce the difficulty level of Spot Hidden rolls and ignore penalty die for shooting in the dark.",
@@ -11,7 +11,7 @@
     "**Keen Hearing**: gain a bonus die to Listen rolls",
     "**Smooth Talker**: gain a bonus die to Charm rolls."
   ],
-  "mental": [
+  "Mental": [
     "**Hardened**: ignores Sanity point loss from attacking other humans, viewing horrific injuries, or deceased.",
     "**Resilient**: may spend Luck points to shrug-off points of Sanity loss, on a one-for-one basis.",
     "**Strong Willed**: gains a bonus die when making POW rolls",
@@ -23,7 +23,7 @@
     "**Psychic Power**: may choose one psychic power (Clairvoyance, Divination, Medium, Psychometry, or Telekinesis). Note that occupational and/or personal interest skill points should be invested in this skill.",
     "**Sharp Witted**: able to collate facts quickly; gain a bonus die when making Intelligence (but not Idea) rolls."
   ],
-  "combat": [
+  "Combat": [
     "**Alert**: never surprised in combat.",
     "**Heavy Hitter**: may spend 10 Luck points to add an additional damage die when dealing out melee combat (die type depends on the weapon being used, e.g. 1D3 for unarmed combat, 1D6 for a sword, etc.)",
     "**Fast Load**: choose a Firearm specialism; ignore penalty die for loading and frring in the same round.",
@@ -35,7 +35,7 @@
     "**Quick Draw**: does not need to have their firearm \"readied\" to gain +50 DEX when determining position in the DEX order for combat.",
     "**Rapid Fire**: ignores penalty die for multiple handgun shots."
   ],
-  "miscellaneous": [
+  "Miscellaneous": [
     "**Scary**: reduces difficulty by one level or gains bonus die (at the Keeper's discretion) to Intimidate rolls.",
     "**Gadget**: starts game with one weird science gadget.",
     "**Lucky**: regains an additional +1 D10 Luck points when Luck Recovery rolls are made.",
