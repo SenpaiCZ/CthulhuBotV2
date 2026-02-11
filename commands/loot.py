@@ -7,10 +7,10 @@ class loot(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.command(aliases=["randomLoot", "randomloot"])
-  async def rloot(self, ctx):
+  @commands.hybrid_command(name="loot", aliases=["randomLoot", "randomloot", "rloot"], description="Generate random loot from 1920s.")
+  async def loot(self, ctx):
     """
-    `[p]randomLoot` - Generate random loot from 1920s. 25% chance of finding $0.1-$5. This will not be saved.
+    `[p]loot` - Generate random loot from 1920s. 25% chance of finding $0.1-$5. This will not be saved.
     """
     items = [
         "A Mysterious Journal", "A Cultist Robes", "A Whispering Locket",
@@ -125,7 +125,11 @@ class loot(commands.Cog):
                       value=f"${money:.2f}",
                       inline=False)
 
-    await ctx.send(embed=embed)
+    ephemeral = False
+    if ctx.interaction:
+        ephemeral = True
+
+    await ctx.send(embed=embed, ephemeral=ephemeral)
 
 
 async def setup(bot):
