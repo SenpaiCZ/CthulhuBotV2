@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Enrollment Wizard - CoC Bot{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-4"><i class="bi bi-magic"></i> Enrollment Wizard</h1>
+        <p class="lead text-muted">Configure the new user enrollment process.</p>
+    </div>
+</div>
+
+<div id="loader" class="text-center">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+
+<div id="main-content" style="display: none;">
+    <!-- Guild Selector -->
+    <div class="card mb-4 bg-dark text-white border-secondary">
+        <div class="card-header border-secondary">
+            <h5 class="card-title mb-0">Select Server</h5>
+        </div>
+        <div class="card-body">
+            <select id="guildSelect" class="form-select bg-dark text-white border-secondary">
+                <!-- Populated by JS -->
+            </select>
+        </div>
+    </div>
+
+    <!-- Wizard Config -->
+    <div class="card mb-4 bg-dark text-white border-secondary">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Configuration</h5>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="enableSwitch">
+                <label class="form-check-label" for="enableSwitch">Enable Wizard</label>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="finalMessage" class="form-label">Final Message</label>
+                <textarea class="form-control bg-dark text-white border-secondary" id="finalMessage" rows="2" placeholder="Message sent after completion..."></textarea>
+                <div class="form-text text-muted">Use this to welcome users or give further instructions.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pages Manager -->
+    <div class="card mb-4 bg-dark text-white border-secondary">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Wizard Pages</h5>
+            <button class="btn btn-primary btn-sm" onclick="addPage()"><i class="bi bi-plus-lg"></i> Add Page</button>
+        </div>
+        <div class="card-body">
+            <div id="pagesContainer" class="accordion accordion-flush bg-dark">
+                <!-- Pages populated here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="d-grid gap-2">
+        <button class="btn btn-success btn-lg" onclick="saveConfig()">Save Configuration</button>
+    </div>
+</div>
+
+<!-- Hidden Templates -->
+<template id="pageTemplate">
+    <div class="accordion-item bg-dark text-white border-secondary mb-3 rounded page-item" data-id="">
+        <h2 class="accordion-header" id="heading-ID">
+            <button class="accordion-button collapsed bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-ID">
+                <span class="page-title-preview">New Page</span>
+            </button>
+        </h2>
+        <div id="collapse-ID" class="accordion-collapse collapse" data-bs-parent="#pagesContainer">
+            <div class="accordion-body border border-top-0 border-secondary rounded-bottom">
+                <div class="mb-3">
+                    <label class="form-label">Page Title</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary page-title" oninput="updatePreview(this)">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control bg-dark text-white border-secondary page-desc" rows="2"></textarea>
+                </div>
+
+                <h6 class="mt-4">Options (Roles)</h6>
+                <div class="options-container mb-3">
+                    <!-- Options go here -->
+                </div>
+                <button class="btn btn-outline-info btn-sm mb-3" onclick="addOption(this)"><i class="bi bi-plus"></i> Add Option</button>
+
+                <div class="d-flex justify-content-end gap-2 border-top border-secondary pt-3">
+                    <button class="btn btn-outline-light btn-sm" onclick="movePageUp(this)"><i class="bi bi-arrow-up"></i> Move Up</button>
+                    <button class="btn btn-outline-light btn-sm" onclick="movePageDown(this)"><i class="bi bi-arrow-down"></i> Move Down</button>
+                    <button class="btn btn-danger btn-sm" onclick="deletePage(this)"><i class="bi bi-trash"></i> Delete Page</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="optionTemplate">
+    <div class="input-group mb-2 option-row">
+        <span class="input-group-text bg-dark border-secondary text-white"><i class="bi bi-emoji-smile"></i></span>
+        <input type="text" class="form-control bg-dark text-white border-secondary option-emoji" placeholder="Emoji" style="max-width: 60px;">
+
+        <span class="input-group-text bg-dark border-secondary text-white">Label</span>
+        <input type="text" class="form-control bg-dark text-white border-secondary option-label" placeholder="Display Text">
+
+        <span class="input-group-text bg-dark border-secondary text-white">Role</span>
+        <select class="form-select bg-dark text-white border-secondary option-role">
+            <option value="">No Role</option>
+            <!-- Roles populated here -->
+        </select>
+
+        <button class="btn btn-outline-danger" type="button" onclick="this.closest('.option-row').remove()"><i class="bi bi-x"></i></button>
+    </div>
+</template>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let guildData = [];
+let currentGuildId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadData();
+
+    document.getElementById('guildSelect').addEventListener('change', (e) => {
+        currentGuildId = e.target.value;
+        renderConfig();
+    });
+});
+
+async function loadData() {
+    try {
+        const response = await fetch('/api/enroll/data');
+        const data = await response.json();
+        guildData = data.guilds;
+
+        const select = document.getElementById('guildSelect');
+        select.innerHTML = '';
+
+        if (guildData.length === 0) {
+            select.innerHTML = '<option>No guilds found</option>';
+            return;
+        }
+
+        guildData.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g.id;
+            opt.textContent = g.name;
+            select.appendChild(opt);
+        });
+
+        if (guildData.length > 0) {
+            currentGuildId = guildData[0].id;
+            renderConfig();
+        }
+
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+
+    } catch (e) {
+        console.error(e);
+        alert("Failed to load data");
+    }
+}
+
+function renderConfig() {
+    const guild = guildData.find(g => g.id === currentGuildId);
+    if (!guild) return;
+
+    document.getElementById('enableSwitch').checked = guild.config.enabled;
+    document.getElementById('finalMessage').value = guild.config.final_message;
+
+    const pagesContainer = document.getElementById('pagesContainer');
+    pagesContainer.innerHTML = '';
+
+    guild.config.pages.forEach((page, index) => {
+        addPageUI(page, guild.roles);
+    });
+}
+
+function addPage() {
+    const guild = guildData.find(g => g.id === currentGuildId);
+    if (!guild) return;
+
+    addPageUI({ title: "New Page", description: "", options: [] }, guild.roles);
+}
+
+function addPageUI(pageData, roles) {
+    const container = document.getElementById('pagesContainer');
+    const id = 'page-' + Date.now() + Math.random().toString(36).substr(2, 5);
+
+    const template = document.getElementById('pageTemplate');
+    const clone = template.content.cloneNode(true);
+
+    const item = clone.querySelector('.accordion-item');
+    item.dataset.id = id;
+
+    clone.querySelector('.accordion-header').id = 'heading-' + id;
+    clone.querySelector('.accordion-button').dataset.bsTarget = '#collapse-' + id;
+    const btn = clone.querySelector('.accordion-button');
+    btn.textContent = pageData.title || "New Page";
+    btn.classList.remove('collapsed');
+    btn.setAttribute('aria-expanded', 'true');
+
+    const collapse = clone.querySelector('.accordion-collapse');
+    collapse.id = 'collapse-' + id;
+    collapse.dataset.bsParent = '#pagesContainer'; // Keep accordion behavior
+    collapse.classList.add('show'); // Auto-expand new page
+
+    clone.querySelector('.page-title').value = pageData.title || "";
+    clone.querySelector('.page-desc').value = pageData.description || "";
+
+    const optsContainer = clone.querySelector('.options-container');
+
+    if (pageData.options) {
+        pageData.options.forEach(opt => {
+            addOptionUI(optsContainer, opt, roles);
+        });
+    }
+
+    container.appendChild(clone);
+}
+
+function updatePreview(input) {
+    const header = input.closest('.accordion-item').querySelector('.accordion-button');
+    header.textContent = input.value || "New Page";
+}
+
+function addOption(btn) {
+    const container = btn.previousElementSibling;
+    const guild = guildData.find(g => g.id === currentGuildId);
+    addOptionUI(container, {}, guild.roles);
+}
+
+function addOptionUI(container, data, roles) {
+    const template = document.getElementById('optionTemplate');
+    const clone = template.content.cloneNode(true);
+
+    clone.querySelector('.option-emoji').value = data.emoji || "";
+    clone.querySelector('.option-label').value = data.label || "";
+
+    const select = clone.querySelector('.option-role');
+    roles.forEach(role => {
+        const opt = document.createElement('option');
+        opt.value = role.id;
+        opt.textContent = role.name;
+        opt.style.color = role.color !== '#000000' ? role.color : 'inherit';
+        if (data.role_id === role.id) opt.selected = true;
+        select.appendChild(opt);
+    });
+
+    container.appendChild(clone);
+}
+
+function deletePage(btn) {
+    if (confirm("Remove this page?")) {
+        btn.closest('.page-item').remove();
+    }
+}
+
+function movePageUp(btn) {
+    const item = btn.closest('.page-item');
+    const prev = item.previousElementSibling;
+    if (prev) item.parentNode.insertBefore(item, prev);
+}
+
+function movePageDown(btn) {
+    const item = btn.closest('.page-item');
+    const next = item.nextElementSibling;
+    if (next) item.parentNode.insertBefore(next, item); // Insert before next's sibling is buggy if last
+    if (next) next.after(item);
+}
+
+async function saveConfig() {
+    const guild = guildData.find(g => g.id === currentGuildId);
+    if (!guild) return;
+
+    const enabled = document.getElementById('enableSwitch').checked;
+    const finalMsg = document.getElementById('finalMessage').value;
+
+    const pages = [];
+    document.querySelectorAll('.page-item').forEach(item => {
+        const title = item.querySelector('.page-title').value;
+        const desc = item.querySelector('.page-desc').value;
+
+        const options = [];
+        item.querySelectorAll('.option-row').forEach(row => {
+            options.push({
+                emoji: row.querySelector('.option-emoji').value,
+                label: row.querySelector('.option-label').value,
+                role_id: row.querySelector('.option-role').value
+            });
+        });
+
+        if (options.length > 0) {
+            pages.push({
+                title: title,
+                description: desc,
+                options: options
+            });
+        }
+    });
+
+    // Optimistic UI update
+    guild.config.enabled = enabled;
+    guild.config.final_message = finalMsg;
+    guild.config.pages = pages;
+
+    try {
+        const response = await fetch('/api/enroll/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                guild_id: currentGuildId,
+                enabled: enabled,
+                final_message: finalMsg,
+                pages: pages
+            })
+        });
+
+        const res = await response.json();
+        if (res.status === 'success') {
+            alert("Configuration saved successfully!");
+        } else {
+            alert("Error saving: " + res.message);
+        }
+    } catch (e) {
+        alert("Network error: " + e);
+    }
+}
+</script>
+{% endblock %}
