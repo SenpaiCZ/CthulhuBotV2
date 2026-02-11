@@ -634,6 +634,27 @@ async def render_year_view():
 
     return await render_template('render_timeline.html', title=target_key, events=data[target_key], type="Timeline", emojis=emojis, emoji_lib=emoji)
 
+@app.route('/render/occupation')
+async def render_occupation_view():
+    name = request.args.get('name')
+    if not name:
+        return "Missing name parameter", 400
+
+    data = await load_occupations_data()
+
+    target_key = None
+    name_lower = name.lower()
+
+    for key in data.keys():
+        if key.lower() == name_lower:
+            target_key = key
+            break
+
+    if not target_key:
+        return f"Occupation '{name}' not found", 404
+
+    return await render_template('render_occupation.html', occupation=data[target_key], name=target_key)
+
 
 # --- Admin Routes ---
 
