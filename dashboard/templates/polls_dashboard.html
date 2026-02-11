@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+
+{% block title %}Polls Manager{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Polls Manager</h2>
+<p class="text-muted">Create and manage polls across your servers.</p>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <strong>Create New Poll</strong>
+            </div>
+            <div class="card-body">
+                <form id="create-poll-form" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="guild-select" class="form-label">Server</label>
+                        <select class="form-select" id="guild-select" required>
+                            <option value="" selected disabled>Select Server...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="channel-select" class="form-label">Channel</label>
+                        <select class="form-select" id="channel-select" required disabled>
+                            <option value="" selected disabled>Select Channel...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="question-input" class="form-label">Question</label>
+                        <input type="text" class="form-control" id="question-input" placeholder="What should we play tonight?" required>
+                    </div>
+                    <div class="col-md-12">
+                        <label for="options-input" class="form-label">Options (comma separated)</label>
+                        <input type="text" class="form-control" id="options-input" placeholder="CoC, D&D, Cyberpunk, Delta Green" required>
+                        <div class="form-text">Enter at least 2 options.</div>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">Create Poll</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <strong>Active Polls</strong>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle" id="polls-table">
+                <thead>
+                    <tr>
+                        <th>Server</th>
+                        <th>Channel</th>
+                        <th>Question</th>
+                        <th>Options</th>
+                        <th>Votes</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="polls-body">
+                    <!-- Populated via JS -->
+                </tbody>
+            </table>
+        </div>
+        <div id="loading-spinner" class="text-center py-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div id="no-data-message" class="text-center py-3 d-none">
+            <p class="text-muted">No active polls found.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+let globalData = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchData();
+
+    document.getElementById('guild-select').addEventListener('change', (e) => {
+        updateChannelSelect(e.target.value);
+    });
+
+    document.getElementById('create-poll-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await createPoll();
+    });
+});
+
+async function fetchData() {
+    try {
+        const response = await fetch('/api/polls/data');
+        const data = await response.json();
+        globalData = data;
+
+        populateGuildSelect(data.guilds);
+        renderTable(data.guilds);
+
+        document.getElementById('loading-spinner').classList.add('d-none');
+    } catch (error) {
+        console.error("Error loading data:", error);
+        alert("Failed to load polls data.");
+    }
+}
+
+function populateGuildSelect(guilds) {
+    const select = document.getElementById('guild-select');
+    const currentVal = select.value;
+
+    select.innerHTML = '<option value="" selected disabled>Select Server...</option>';
+
+    guilds.forEach(guild => {
+        const option = document.createElement('option');
+        option.value = guild.id;
+        option.textContent = guild.name;
+        select.appendChild(option);
+    });
+
+    if (currentVal) {
+        select.value = currentVal;
+    }
+}
+
+function updateChannelSelect(guildId) {
+    const channelSelect = document.getElementById('channel-select');
+    channelSelect.innerHTML = '<option value="" selected disabled>Select Channel...</option>';
+    channelSelect.disabled = true;
+
+    if (!guildId || !globalData) return;
+
+    const guild = globalData.guilds.find(g => g.id === guildId);
+    if (guild && guild.channels) {
+        guild.channels.forEach(channel => {
+            const option = document.createElement('option');
+            option.value = channel.id;
+            option.textContent = channel.name;
+            channelSelect.appendChild(option);
+        });
+        channelSelect.disabled = false;
+    }
+}
+
+function renderTable(guilds) {
+    const tbody = document.getElementById('polls-body');
+    tbody.innerHTML = '';
+    let hasPolls = false;
+
+    guilds.forEach(guild => {
+        if (guild.polls && guild.polls.length > 0) {
+            hasPolls = true;
+            guild.polls.forEach(poll => {
+                const tr = document.createElement('tr');
+
+                const optionsList = poll.options.join(', ');
+                const optionsDisplay = optionsList.length > 50 ? optionsList.substring(0, 50) + '...' : optionsList;
+
+                // Server Name
+                const tdServer = document.createElement('td');
+                tdServer.textContent = guild.name;
+                tr.appendChild(tdServer);
+
+                // Channel Name
+                const tdChannel = document.createElement('td');
+                tdChannel.textContent = poll.channel_name;
+                tr.appendChild(tdChannel);
+
+                // Question (Bold)
+                const tdQuestion = document.createElement('td');
+                const strongQ = document.createElement('strong');
+                strongQ.textContent = poll.question;
+                tdQuestion.appendChild(strongQ);
+                tr.appendChild(tdQuestion);
+
+                // Options (Small)
+                const tdOptions = document.createElement('td');
+                const smallOpt = document.createElement('small');
+                smallOpt.textContent = optionsDisplay;
+                tdOptions.appendChild(smallOpt);
+                tr.appendChild(tdOptions);
+
+                // Votes
+                const tdVotes = document.createElement('td');
+                const badge = document.createElement('span');
+                badge.className = "badge bg-secondary";
+                badge.textContent = poll.vote_count;
+                tdVotes.appendChild(badge);
+                tr.appendChild(tdVotes);
+
+                // Action
+                const tdAction = document.createElement('td');
+                const btn = document.createElement('button');
+                btn.className = "btn btn-danger btn-sm";
+                btn.textContent = "End Poll";
+                btn.onclick = function() { endPoll(poll.message_id); };
+                tdAction.appendChild(btn);
+                tr.appendChild(tdAction);
+
+                tbody.appendChild(tr);
+            });
+        }
+    });
+
+    if (!hasPolls) {
+        document.getElementById('no-data-message').classList.remove('d-none');
+    } else {
+        document.getElementById('no-data-message').classList.add('d-none');
+    }
+}
+
+async function createPoll() {
+    const guildId = document.getElementById('guild-select').value;
+    const channelId = document.getElementById('channel-select').value;
+    const question = document.getElementById('question-input').value.trim();
+    const options = document.getElementById('options-input').value.trim();
+
+    if (!guildId || !channelId || !question || !options) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    const btn = document.querySelector('#create-poll-form button[type="submit"]');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Creating...";
+
+    try {
+        const response = await fetch('/api/polls/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                guild_id: guildId,
+                channel_id: channelId,
+                question: question,
+                options: options
+            })
+        });
+
+        const res = await response.json();
+        if (res.status === 'success') {
+            await fetchData();
+            document.getElementById('question-input').value = '';
+            document.getElementById('options-input').value = '';
+            alert("Poll created successfully!");
+        } else {
+            alert("Error: " + res.message);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Failed to create poll.");
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+}
+
+async function endPoll(pollId) {
+    if (!confirm("Are you sure you want to end this poll? It will be closed and cannot be reopened.")) return;
+
+    try {
+        const response = await fetch('/api/polls/end', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                poll_id: pollId
+            })
+        });
+
+        const res = await response.json();
+        if (res.status === 'success') {
+            await fetchData();
+        } else {
+            alert("Error: " + res.message);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Failed to end poll.");
+    }
+}
+</script>
+{% endblock %}

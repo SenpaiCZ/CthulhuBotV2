@@ -306,6 +306,13 @@ async def load_giveaway_data():
 async def save_giveaway_data(data):
     await _save_json_file(DATA_FOLDER, 'giveaway_data.json', data)
 
+# --- Polls Data ---
+async def load_polls_data():
+    return await _load_json_file(DATA_FOLDER, 'polls_data.json')
+
+async def save_polls_data(data):
+    await _save_json_file(DATA_FOLDER, 'polls_data.json', data)
+
 # --- Gamer Roles Data ---
 async def load_gamerole_settings():
     return await _load_json_file(DATA_FOLDER, 'gamerole_settings.json')
