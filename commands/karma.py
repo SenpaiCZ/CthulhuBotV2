@@ -425,47 +425,31 @@ class Karma(commands.Cog):
             await ctx.send("Failed to generate rank card.")
 
     @commands.hybrid_command(aliases=['karmatop', 'top'])
-    @app_commands.describe(page="The page number of the leaderboard to view")
-    async def leaderboard(self, ctx, page: int = 1):
+    @app_commands.describe(ignore_extra="Ignored argument for compatibility")
+    async def leaderboard(self, ctx, *, ignore_extra: str = None):
         """
         🏆 Show the Karma leaderboard.
-        Usage: !leaderboard [page]
+        Usage: !leaderboard
         """
-        if page < 1:
-            page = 1
-
         stats = await load_karma_stats()
         guild_id = str(ctx.guild.id)
 
         if guild_id not in stats or not stats[guild_id]:
-            await ctx.send("No karma stats found for this server.")
+            await ctx.send("No karma stats found for this server.", ephemeral=True)
             return
 
         # Sort users by karma (descending)
         sorted_users = sorted(stats[guild_id].items(), key=lambda item: item[1], reverse=True)
 
-        items_per_page = 10
-        total_pages = (len(sorted_users) - 1) // items_per_page + 1
+        view = LeaderboardView(ctx, sorted_users)
+        embed = view.get_embed()
 
-        if page > total_pages:
-            await ctx.send(f"Page {page} does not exist. Total pages: {total_pages}")
-            return
+        # Ephemeral if slash command
+        ephemeral = False
+        if ctx.interaction:
+            ephemeral = True
 
-        start_index = (page - 1) * items_per_page
-        end_index = start_index + items_per_page
-
-        current_page_users = sorted_users[start_index:end_index]
-
-        embed = discord.Embed(title=f"Karma Leaderboard - Page {page}/{total_pages}", color=discord.Color.gold())
-
-        description = ""
-        for i, (user_id, score) in enumerate(current_page_users, start=start_index + 1):
-            user = ctx.guild.get_member(int(user_id))
-            user_name = user.display_name if user else f"Unknown User ({user_id})"
-            description += f"**{i}.** {user_name}: **{score}**\n"
-
-        embed.description = description
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, view=view, ephemeral=ephemeral)
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -730,6 +714,53 @@ class KarmaRoleRemoveSelect(Select):
                 return
 
         await interaction.response.send_message("❌ Error finding threshold.", ephemeral=True)
+
+
+class LeaderboardView(View):
+    def __init__(self, ctx, sorted_users, items_per_page=10):
+        super().__init__(timeout=120)
+        self.ctx = ctx
+        self.sorted_users = sorted_users
+        self.items_per_page = items_per_page
+        self.current_page = 1
+        self.total_pages = max(1, (len(sorted_users) - 1) // items_per_page + 1)
+        self.update_buttons()
+
+    def update_buttons(self):
+        self.previous_page.disabled = self.current_page <= 1
+        self.next_page.disabled = self.current_page >= self.total_pages
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.ctx.author.id:
+            await interaction.response.send_message("This isn't your leaderboard!", ephemeral=True)
+            return False
+        return True
+
+    def get_embed(self):
+        start_index = (self.current_page - 1) * self.items_per_page
+        end_index = start_index + self.items_per_page
+        current_page_users = self.sorted_users[start_index:end_index]
+
+        embed = discord.Embed(title=f"Karma Leaderboard - Page {self.current_page}/{self.total_pages}", color=discord.Color.gold())
+        description = ""
+        for i, (user_id, score) in enumerate(current_page_users, start=start_index + 1):
+            user = self.ctx.guild.get_member(int(user_id))
+            user_name = user.display_name if user else "Unknown User"
+            description += f"**{i}.** {user_name}: **{score}**\n"
+        embed.description = description
+        return embed
+
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.primary)
+    async def previous_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.current_page -= 1
+        self.update_buttons()
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.primary)
+    async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.current_page += 1
+        self.update_buttons()
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
 
 # --- UI Classes for setupkarma (Main Setup) ---
 
