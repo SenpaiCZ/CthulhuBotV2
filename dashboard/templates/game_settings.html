@@ -29,8 +29,66 @@
     </div>
 </div>
 
+<div class="card mt-4">
+    <div class="card-header">
+        Loot Settings
+    </div>
+    <div class="card-body">
+        <form id="lootForm">
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="currencySymbol" class="form-label">Currency Symbol</label>
+                    <input type="text" class="form-control" id="currencySymbol" placeholder="$">
+                </div>
+                <div class="col-md-3">
+                    <label for="moneyChance" class="form-label">Money Chance (%)</label>
+                    <input type="number" class="form-control" id="moneyChance" min="0" max="100">
+                </div>
+                <div class="col-md-3">
+                    <label for="moneyMin" class="form-label">Money Min</label>
+                    <input type="number" class="form-control" id="moneyMin" step="0.01">
+                </div>
+                <div class="col-md-3">
+                    <label for="moneyMax" class="form-label">Money Max</label>
+                    <input type="number" class="form-control" id="moneyMax" step="0.01">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="itemsMin" class="form-label">Min Items</label>
+                    <input type="number" class="form-control" id="itemsMin" min="0">
+                </div>
+                <div class="col-md-6">
+                    <label for="itemsMax" class="form-label">Max Items</label>
+                    <input type="number" class="form-control" id="itemsMax" min="0">
+                </div>
+            </div>
+
+            <hr>
+            <h5>Loot Items (<span id="itemCount">0</span>)</h5>
+            <div class="mb-3">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="newItemInput" placeholder="New Item Name" onkeypress="handleEnter(event)">
+                    <button class="btn btn-outline-success" type="button" onclick="addLootItem()">Add</button>
+                </div>
+            </div>
+
+            <div id="lootItemsList" class="list-group mb-3" style="max-height: 400px; overflow-y: auto;">
+                <!-- Items will be injected here -->
+            </div>
+
+            <button type="button" class="btn btn-success" id="saveLootBtn" onclick="saveLootSettings()">Save Loot Settings</button>
+        </form>
+    </div>
+</div>
+
 <script>
-document.addEventListener('DOMContentLoaded', loadSettings);
+document.addEventListener('DOMContentLoaded', () => {
+    loadSettings();
+    loadLootSettings();
+});
+
+let currentLootItems = [];
 
 async function loadSettings() {
     try {
@@ -62,6 +120,140 @@ async function loadSettings() {
     } catch (error) {
         console.error('Error loading settings:', error);
         document.getElementById('settingsBody').innerHTML = '<tr><td colspan="4" class="text-danger">Error loading data.</td></tr>';
+    }
+}
+
+async function loadLootSettings() {
+    try {
+        const response = await fetch('/api/game/loot/data');
+        const data = await response.json();
+
+        document.getElementById('currencySymbol').value = data.currency_symbol;
+        document.getElementById('moneyChance').value = data.money_chance;
+        document.getElementById('moneyMin').value = data.money_min;
+        document.getElementById('moneyMax').value = data.money_max;
+        document.getElementById('itemsMin').value = data.num_items_min;
+        document.getElementById('itemsMax').value = data.num_items_max;
+
+        currentLootItems = data.items || [];
+        renderLootList();
+
+    } catch (error) {
+        console.error("Error loading loot settings:", error);
+    }
+}
+
+function renderLootList() {
+    const list = document.getElementById('lootItemsList');
+    const countSpan = document.getElementById('itemCount');
+    list.innerHTML = '';
+    countSpan.textContent = currentLootItems.length;
+
+    // Sort alphabetically for easier finding
+    // Wait, let's keep original order or user might get confused if it jumps?
+    // Usually sorted lists are easier to manage for large sets.
+    // I will sort it.
+    const sortedItems = [...currentLootItems].sort((a, b) => a.localeCompare(b));
+    // But if I sort, index removal is tricky if I don't map back.
+    // I'll stick to displaying natural order but maybe I should allow search?
+    // Let's just display as is for now, maybe reversed so new ones are top? No, append is standard.
+
+    // Actually, sorting makes sense for "Loot Table".
+    // I will render sorted, but I need to know which item to remove.
+    // I can remove by value since strings are unique? Or should be.
+    // Let's assume unique strings.
+
+    sortedItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'list-group-item d-flex justify-content-between align-items-center';
+        div.innerHTML = `
+            <span>${escapeHtml(item)}</span>
+            <button class="btn btn-danger btn-sm" onclick="removeLootItem('${escapeHtml(item.replace(/'/g, "\\'"))}')"><i class="bi bi-trash"></i> Remove</button>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function escapeHtml(text) {
+    if (!text) return text;
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function addLootItem() {
+    const input = document.getElementById('newItemInput');
+    const val = input.value.trim();
+    if (val) {
+        // Check duplicate
+        if (currentLootItems.includes(val)) {
+            alert("Item already exists!");
+            return;
+        }
+        currentLootItems.push(val);
+        input.value = '';
+        renderLootList();
+    }
+}
+
+function removeLootItem(itemVal) {
+    if (confirm(`Remove "${itemVal}"?`)) {
+        currentLootItems = currentLootItems.filter(i => i !== itemVal);
+        renderLootList();
+    }
+}
+
+function handleEnter(e) {
+    if (e.key === 'Enter') addLootItem();
+}
+
+async function saveLootSettings() {
+    const btn = document.getElementById('saveLootBtn');
+    const originalText = btn.innerText;
+    btn.innerText = "Saving...";
+    btn.disabled = true;
+
+    const payload = {
+        currency_symbol: document.getElementById('currencySymbol').value,
+        money_chance: document.getElementById('moneyChance').value,
+        money_min: document.getElementById('moneyMin').value,
+        money_max: document.getElementById('moneyMax').value,
+        num_items_min: document.getElementById('itemsMin').value,
+        num_items_max: document.getElementById('itemsMax').value,
+        items: currentLootItems
+    };
+
+    try {
+        const response = await fetch('/api/game/loot/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const res = await response.json();
+
+        if (res.status === 'success') {
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary'); // Switch color to indicate fresh state? Or keep success?
+            btn.innerText = "Saved!";
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.add('btn-success');
+                btn.classList.remove('btn-primary');
+                btn.disabled = false;
+            }, 2000);
+        } else {
+            alert("Error: " + res.message);
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error saving loot settings");
+        btn.innerText = originalText;
+        btn.disabled = false;
     }
 }
 

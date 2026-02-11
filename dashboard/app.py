@@ -29,6 +29,7 @@ from loadnsave import (
     load_polls_data, load_reminder_data,
     load_gamerole_settings, save_gamerole_settings,
     load_enroll_settings, save_enroll_settings,
+    load_loot_settings, save_loot_settings,
     load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
     load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
     load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
@@ -950,6 +951,39 @@ async def save_luck_threshold():
     await save_luck_stats(luck_stats)
 
     return jsonify({"status": "success"})
+
+# --- Loot Settings Routes ---
+
+@app.route('/api/game/loot/data')
+async def game_loot_data():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await load_loot_settings()
+    return jsonify(data)
+
+@app.route('/api/game/loot/save', methods=['POST'])
+async def game_loot_save():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+
+    # Validation
+    try:
+        # Construct sanitized object to save
+        save_data = {
+            "items": data.get("items", []),
+            "money_chance": int(data.get("money_chance", 25)),
+            "money_min": float(data.get("money_min", 0.01)),
+            "money_max": float(data.get("money_max", 5.00)),
+            "currency_symbol": str(data.get("currency_symbol", "$")),
+            "num_items_min": int(data.get("num_items_min", 1)),
+            "num_items_max": int(data.get("num_items_max", 5))
+        }
+
+        await save_loot_settings(save_data)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
 
 # --- Karma Routes ---
 
