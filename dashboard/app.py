@@ -26,6 +26,7 @@ from loadnsave import (
     autoroom_load, autoroom_save,
     load_pogo_settings, save_pogo_settings, load_pogo_events, save_pogo_events,
     load_giveaway_data,
+    load_polls_data, load_reminder_data,
     load_gamerole_settings, save_gamerole_settings,
     load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
     load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
@@ -3176,6 +3177,237 @@ async def giveaway_reroll():
              return jsonify({"status": "error", "message": "API method not implemented on Cog"}), 500
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+# --- Polls Routes ---
+
+@app.route('/admin/polls')
+async def admin_polls():
+    if not is_admin(): return redirect(url_for('login'))
+    return await render_template('polls_dashboard.html')
+
+@app.route('/api/polls/data')
+async def polls_data():
+    if not is_admin(): return "Unauthorized", 401
+
+    if not app.bot:
+        return jsonify({"guilds": []})
+
+    data = await load_polls_data()
+    guilds_data = []
+
+    for guild in app.bot.guilds:
+        guild_id_str = str(guild.id)
+
+        # Channels
+        channels = []
+        for channel in guild.text_channels:
+             channels.append({"id": str(channel.id), "name": channel.name})
+
+        # Polls for this guild
+        guild_polls = []
+        if data:
+             for msg_id, poll in data.items():
+                 if str(poll.get('guild_id')) == guild_id_str:
+                     poll_copy = poll.copy()
+                     poll_copy['message_id'] = msg_id
+
+                     # Resolve channel name
+                     cid = poll.get('channel_id')
+                     poll_copy['channel_name'] = "Unknown"
+                     if cid:
+                         chan = guild.get_channel(int(cid))
+                         if chan: poll_copy['channel_name'] = chan.name
+
+                     # Count votes
+                     votes = poll.get('votes', {})
+                     poll_copy['vote_count'] = len(votes)
+
+                     guild_polls.append(poll_copy)
+
+        guilds_data.append({
+            "id": guild_id_str,
+            "name": guild.name,
+            "channels": channels,
+            "polls": guild_polls
+        })
+
+    return jsonify({"guilds": guilds_data})
+
+@app.route('/api/polls/create', methods=['POST'])
+async def polls_create():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    channel_id = data.get('channel_id')
+    question = data.get('question')
+    options_str = data.get('options') # Comma separated or list
+
+    if not all([guild_id, channel_id, question, options_str]):
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    cog = app.bot.get_cog("Polls")
+    if not cog:
+        return jsonify({"status": "error", "message": "Polls Cog not loaded"}), 500
+
+    if isinstance(options_str, str):
+        options = options_str.split(',')
+    else:
+        options = options_str
+
+    success, result = await cog.create_poll_api(guild_id, channel_id, question, options)
+
+    if success:
+        return jsonify({"status": "success", "poll_id": result})
+    else:
+        return jsonify({"status": "error", "message": result}), 500
+
+@app.route('/api/polls/end', methods=['POST'])
+async def polls_end():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    poll_id = data.get('poll_id')
+
+    if not poll_id:
+        return jsonify({"status": "error", "message": "Missing poll_id"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    cog = app.bot.get_cog("Polls")
+    if not cog:
+        return jsonify({"status": "error", "message": "Polls Cog not loaded"}), 500
+
+    success, result = await cog.end_poll_api(poll_id)
+
+    if success:
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"status": "error", "message": result}), 500
+
+# --- Reminders Routes ---
+
+@app.route('/admin/reminders')
+async def admin_reminders():
+    if not is_admin(): return redirect(url_for('login'))
+    return await render_template('reminders_dashboard.html')
+
+@app.route('/api/reminders/data')
+async def reminders_data():
+    if not is_admin(): return "Unauthorized", 401
+
+    if not app.bot:
+        return jsonify({"guilds": []})
+
+    data = await load_reminder_data()
+    guilds_data = []
+
+    for guild in app.bot.guilds:
+        guild_id_str = str(guild.id)
+
+        # Channels
+        channels = []
+        for channel in guild.text_channels:
+             channels.append({"id": str(channel.id), "name": channel.name})
+
+        # Users (for dropdown?) - fetching all users is heavy. Maybe just current members?
+        # For simplicity, we might just let them input user ID or pick from cached members.
+        users = []
+        for member in guild.members:
+            users.append({"id": str(member.id), "name": member.display_name})
+
+        # Reminders for this guild
+        guild_reminders = []
+        if guild_id_str in data:
+            for rem in data[guild_id_str]:
+                rem_copy = rem.copy()
+
+                # Resolve channel name
+                cid = rem.get('channel_id')
+                rem_copy['channel_name'] = "Unknown"
+                if cid:
+                    chan = guild.get_channel(int(cid))
+                    if chan: rem_copy['channel_name'] = chan.name
+
+                # Resolve User name
+                uid = rem.get('user_id')
+                rem_copy['user_name'] = f"User {uid}"
+                if uid:
+                    mem = guild.get_member(int(uid))
+                    if mem: rem_copy['user_name'] = mem.display_name
+
+                guild_reminders.append(rem_copy)
+
+        guilds_data.append({
+            "id": guild_id_str,
+            "name": guild.name,
+            "channels": channels,
+            "users": users,
+            "reminders": guild_reminders
+        })
+
+    return jsonify({"guilds": guilds_data})
+
+@app.route('/api/reminders/create', methods=['POST'])
+async def reminders_create():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    channel_id = data.get('channel_id')
+    user_id = data.get('user_id')
+    message = data.get('message')
+    duration_str = data.get('duration')
+
+    if not all([guild_id, channel_id, user_id, message, duration_str]):
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    cog = app.bot.get_cog("Reminders")
+    if not cog:
+        return jsonify({"status": "error", "message": "Reminders Cog not loaded"}), 500
+
+    seconds = cog.parse_duration(duration_str)
+    if seconds <= 0:
+        return jsonify({"status": "error", "message": "Invalid duration"}), 400
+
+    success, result = await cog.create_reminder_api(guild_id, channel_id, user_id, message, seconds)
+
+    if success:
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"status": "error", "message": result}), 500
+
+@app.route('/api/reminders/delete', methods=['POST'])
+async def reminders_delete():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    reminder_id = data.get('reminder_id')
+
+    if not guild_id or not reminder_id:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    cog = app.bot.get_cog("Reminders")
+    if not cog:
+        return jsonify({"status": "error", "message": "Reminders Cog not loaded"}), 500
+
+    success, result = await cog.delete_reminder_api(guild_id, reminder_id)
+
+    if success:
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"status": "error", "message": result}), 500
 
 @app.route('/api/admin/update', methods=['POST'])
 async def admin_update_bot():
