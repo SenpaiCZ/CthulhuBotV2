@@ -4,6 +4,7 @@ import random
 import re
 from discord.ext import commands
 from discord import app_commands
+from discord.ui import View, Button, Select
 from loadnsave import (
     load_player_stats,
     save_player_stats,
@@ -15,6 +16,227 @@ from loadnsave import (
 from emojis import get_stat_emoji
 from support_functions import session_success
 
+class DisambiguationSelect(Select):
+    def __init__(self, options):
+        super().__init__(placeholder="Select a skill...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        self.view.selected_stat = self.values[0]
+        await interaction.response.defer()
+        self.view.stop()
+
+class DisambiguationView(View):
+    def __init__(self, ctx, matching_stats):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.selected_stat = None
+
+        options = [
+            discord.SelectOption(label=stat, value=stat)
+            for stat in matching_stats[:25]
+        ]
+        self.add_item(DisambiguationSelect(options))
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary, row=1)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
+        self.stop()
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message("Not your session!", ephemeral=True)
+            return False
+        return True
+
+class RollTypeView(View):
+    def __init__(self, ctx):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.roll_type = None
+
+    @discord.ui.button(label="Normal", style=discord.ButtonStyle.primary, emoji="🎲")
+    async def normal(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.roll_type = "normal"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Bonus", style=discord.ButtonStyle.success, emoji="🟢")
+    async def bonus(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.roll_type = "bonus"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Penalty", style=discord.ButtonStyle.danger, emoji="🔴")
+    async def penalty(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.roll_type = "penalty"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
+        self.stop()
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message("Not your session!", ephemeral=True)
+            return False
+        return True
+
+class PostRollView(View):
+    def __init__(self, ctx, cog, player_stats, server_id, user_id, stat_name, current_value,
+                 initial_roll, initial_tier, roll_type, luck_threshold):
+        super().__init__(timeout=300)
+        self.ctx = ctx
+        self.cog = cog
+        self.player_stats = player_stats
+        self.server_id = server_id
+        self.user_id = user_id
+        self.stat_name = stat_name
+        self.current_value = current_value
+        self.roll = initial_roll
+        self.result_tier = initial_tier
+        self.roll_type = roll_type
+        self.luck_threshold = luck_threshold
+
+        self.message = None
+        self.success = False
+
+        if self.result_tier >= 2:
+            self.success = True
+
+        self.update_buttons()
+
+    def update_buttons(self):
+        can_luck = False
+        luck_cost = 0
+        player_luck = self.player_stats[self.server_id][self.user_id]['LUCK']
+
+        if self.roll_type == "normal" and self.stat_name != "LUCK" and self.result_tier != 0:
+            target_val = 0
+            if self.result_tier == 1: # Fail -> Regular
+                target_val = self.current_value
+            elif self.result_tier == 2: # Regular -> Hard
+                target_val = self.current_value // 2
+            elif self.result_tier == 3: # Hard -> Extreme
+                target_val = self.current_value // 5
+
+            if target_val > 0:
+                cost = self.roll - target_val
+                if player_luck >= cost and cost <= self.luck_threshold:
+                    can_luck = True
+                    luck_cost = cost
+
+        self.luck_button.disabled = not can_luck
+        if can_luck:
+            self.luck_button.label = f"Use Luck (-{luck_cost})"
+        else:
+            self.luck_button.label = "Use Luck"
+
+        can_push = False
+        if self.roll_type == "normal" and self.stat_name != "LUCK" and self.result_tier == 1:
+             can_push = True
+
+        self.push_button.disabled = not can_push
+
+    @discord.ui.button(label="Use Luck", style=discord.ButtonStyle.success, emoji="🍀")
+    async def luck_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        target_val = 0
+        if self.result_tier == 1: target_val = self.current_value
+        elif self.result_tier == 2: target_val = self.current_value // 2
+        elif self.result_tier == 3: target_val = self.current_value // 5
+
+        cost = self.roll - target_val
+
+        self.player_stats[self.server_id][self.user_id]['LUCK'] -= cost
+        self.roll = target_val
+
+        self.result_tier += 1
+        self.success = True
+
+        result_text_map = {
+            2: "Regular Success (LUCK Used) :heavy_check_mark:",
+            3: "Hard Success (LUCK Used) :white_check_mark:",
+            4: "Extreme Success (LUCK Used) :star:"
+        }
+        result_text = result_text_map.get(self.result_tier, "Success (LUCK Used)")
+
+        await self.update_embed(interaction, result_text)
+
+        self.update_buttons()
+        self.push_button.disabled = True
+
+        await interaction.message.edit(view=self)
+
+    @discord.ui.button(label="Push Roll", style=discord.ButtonStyle.danger, emoji="🔄")
+    async def push_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        new_roll = random.randint(1, 100)
+        result_text, new_tier = self.cog.calculate_roll_result(new_roll, self.current_value)
+
+        msg = f"\n\n**PUSHED ROLL**: {new_roll}\nResult: {result_text}"
+        if new_tier <= 1:
+             msg += "\n:warning: **DIRE CONSEQUENCES!**"
+             self.success = False
+        else:
+             self.success = True
+
+        self.roll = new_roll
+        self.result_tier = new_tier
+
+        original_embed = interaction.message.embeds[0]
+        original_embed.description += msg
+
+        self.luck_button.disabled = True
+        self.push_button.disabled = True
+        self.stop()
+
+        await interaction.response.edit_message(embed=original_embed, view=None)
+
+    @discord.ui.button(label="Done", style=discord.ButtonStyle.secondary)
+    async def done_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer()
+        self.stop()
+
+    async def update_embed(self, interaction, result_text):
+        embed = interaction.message.embeds[0]
+        formatted_luck = f":four_leaf_clover: LUCK: {self.player_stats[self.server_id][self.user_id]['LUCK']}"
+        formatted_skill = f"**{self.stat_name}**: {self.current_value} - {self.current_value // 2} - {self.current_value // 5}"
+
+        description_roll_info = f"{self.ctx.author.mention} :game_die: Rolled: {self.roll}"
+
+        embed.description = f"{description_roll_info}\n{result_text}\n{formatted_skill}\n{formatted_luck}"
+
+        await interaction.response.edit_message(embed=embed)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message("Not your session!", ephemeral=True)
+            return False
+        return True
+
+class SessionView(View):
+    def __init__(self, ctx):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.create_session = False
+
+    @discord.ui.button(label="Record Session", style=discord.ButtonStyle.success, emoji="✅")
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.create_session = True
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="No", style=discord.ButtonStyle.secondary, emoji="❌")
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.create_session = False
+        await interaction.response.defer()
+        self.stop()
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message("Not your session!", ephemeral=True)
+            return False
+        return True
 
 class newroll(commands.Cog):
 
@@ -140,62 +362,34 @@ class newroll(commands.Cog):
             current_value = player_stats[server_id][user_id][stat_name]
 
             if len(matching_stats) > 1:
-                if len(matching_stats) <= 10:
-                    matching_stats_str = "\n".join([f"{i+1}. {stat}" for i, stat in enumerate(matching_stats)])
-                    embed = discord.Embed(
-                        title="Multiple Matching Stats Found",
-                        description=f"Your input matches multiple stats. Please specify one of the following:\n\n{matching_stats_str}",
-                        color=discord.Color.red(),
-                    )
-                    message = await ctx.send(embed=embed)
-                    emoji_list = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
-                    for emoji in emoji_list[:len(matching_stats)]:
-                        await message.add_reaction(emoji)
+                # Use DisambiguationView
+                view = DisambiguationView(ctx, matching_stats)
+                msg = await ctx.send("Multiple matching stats found. Please select one:", view=view)
+                await view.wait()
 
-                    def check(reaction, user):
-                        return user == ctx.author and str(reaction.emoji) in emoji_list
-
-                    try:
-                        reaction, _ = await self.bot.wait_for("reaction_add", timeout=60, check=check)
-                        selected_stat_index = emoji_list.index(reaction.emoji)
-                        stat_name = matching_stats[selected_stat_index]
-                        current_value = player_stats[server_id][user_id][stat_name]
-                        await message.delete()
-                    except asyncio.TimeoutError:
-                        await ctx.send("You took too long to react. Please run the command again.")
-                        return
-                    except Exception as e:
-                        print(f"An error occurred: {e}")
-                        return
+                if view.selected_stat:
+                    stat_name = view.selected_stat
+                    current_value = player_stats[server_id][user_id][stat_name]
+                    await msg.delete()
                 else:
-                    await ctx.send(f"Found {len(matching_stats)} matching stats. Please specify more to narrow it down.")
+                    await msg.edit(content="Selection timed out or cancelled.", view=None)
                     return
 
-            # Ask for Roll Type: Normal, Bonus, Penalty
-            roll_type_embed = discord.Embed(
+            # Ask for Roll Type
+            view = RollTypeView(ctx)
+            embed = discord.Embed(
                 title=f"Select Roll Type for {stat_name}",
-                description="Choose the type of roll:\n🎲 **Normal Roll**\n🟢 **Bonus Die**\n🔴 **Penalty Die**",
+                description="Choose the type of roll:",
                 color=discord.Color.blue()
             )
-            roll_type_message = await ctx.send(embed=roll_type_embed)
-            await roll_type_message.add_reaction("🎲")
-            await roll_type_message.add_reaction("🟢")
-            await roll_type_message.add_reaction("🔴")
+            msg = await ctx.send(embed=embed, view=view)
+            await view.wait()
 
-            def roll_type_check(reaction, user):
-                return user == ctx.author and reaction.message.id == roll_type_message.id and str(reaction.emoji) in ["🎲", "🟢", "🔴"]
-
-            roll_type = "normal"
-            try:
-                reaction, _ = await self.bot.wait_for("reaction_add", timeout=60, check=roll_type_check)
-                if str(reaction.emoji) == "🟢":
-                    roll_type = "bonus"
-                elif str(reaction.emoji) == "🔴":
-                    roll_type = "penalty"
-                await roll_type_message.delete()
-            except asyncio.TimeoutError:
-                await ctx.send("Selection timed out. Cancelling roll.")
-                await roll_type_message.delete()
+            if view.roll_type:
+                roll_type = view.roll_type
+                await msg.delete()
+            else:
+                await msg.edit(content="Roll cancelled.", view=None, embed=None)
                 return
 
             # Perform the Roll
@@ -222,9 +416,23 @@ class newroll(commands.Cog):
                     roll = higher_tens_roll + ones_roll
 
             result_text, result_tier = self.calculate_roll_result(roll, current_value)
-            if result_tier >= 2:
-                SUCCESSFULLROLL = 1
 
+            # Post Roll Interaction (Luck/Push)
+            post_roll_view = PostRollView(
+                ctx=ctx,
+                cog=self,
+                player_stats=player_stats,
+                server_id=server_id,
+                user_id=user_id,
+                stat_name=stat_name,
+                current_value=current_value,
+                initial_roll=roll,
+                initial_tier=result_tier,
+                roll_type=roll_type,
+                luck_threshold=luck_threshold
+            )
+
+            # Initial Embed construction
             formatted_luck = f":four_leaf_clover: LUCK: {player_stats[server_id][user_id]['LUCK']}"
             formatted_skill = f"**{stat_name}**: {current_value} - {current_value // 2} - {current_value // 5}"
 
@@ -238,158 +446,48 @@ class newroll(commands.Cog):
                 color=discord.Color.green(),
             )
 
-            # Interactions (Luck/Push) - ONLY for Normal Rolls
-            can_push = False
-            can_luck = False
-            luck_target_tier = 0
-            luck_cost = 0
-            player_luck = player_stats[server_id][user_id]['LUCK']
+            post_roll_view.message = await ctx.send(embed=embed, view=post_roll_view)
+            await post_roll_view.wait()
 
-            if roll_type == "normal":
-                def update_luck_availability():
-                    nonlocal can_luck, luck_target_tier, luck_cost
-                    can_luck = False
-                    if stat_name != "LUCK" and result_tier != 0: # Not Luck skill, Not Fumble
-                        if result_tier == 1: # Fail -> Regular
-                            target_val = current_value
-                            luck_cost_temp = roll - target_val
-                            if player_luck >= luck_cost_temp and luck_cost_temp <= luck_threshold:
-                                can_luck = True
-                                luck_target_tier = 2
-                                luck_cost = luck_cost_temp
-                        elif result_tier == 2: # Regular -> Hard
-                            target_val = current_value // 2
-                            luck_cost_temp = roll - target_val
-                            if player_luck >= luck_cost_temp and luck_cost_temp <= luck_threshold:
-                                can_luck = True
-                                luck_target_tier = 3
-                                luck_cost = luck_cost_temp
-                        elif result_tier == 3: # Hard -> Extreme
-                            target_val = current_value // 5
-                            luck_cost_temp = roll - target_val
-                            if player_luck >= luck_cost_temp and luck_cost_temp <= luck_threshold:
-                                can_luck = True
-                                luck_target_tier = 4
-                                luck_cost = luck_cost_temp
-
-                update_luck_availability()
-                if stat_name != "LUCK" and result_tier == 1:
-                     can_push = True
-
-            # Send initial message
-            if can_luck or can_push:
-                instructions = "\n\nReact within 180s:"
-                if can_luck:
-                    instructions += "\n🍀 Use LUCK to improve success level"
-                if can_push:
-                    instructions += "\n🔄 PUSH the roll (Risk of Dire Consequences!)"
-                embed.description += instructions
-
-            message = await ctx.send(embed=embed)
-
-            if can_luck: await message.add_reaction("🍀")
-            if can_push: await message.add_reaction("🔄")
-
-            loop = True
-            while loop and (can_luck or can_push):
-                def interaction_check(reaction, user):
-                    return user == ctx.author and reaction.message.id == message.id and str(reaction.emoji) in ["🍀", "🔄"]
-
-                try:
-                    reaction, _ = await self.bot.wait_for("reaction_add", timeout=180, check=interaction_check)
-
-                    if str(reaction.emoji) == "🍀" and can_luck:
-                        # Apply Luck
-                        player_stats[server_id][user_id]['LUCK'] -= luck_cost
-                        player_luck = player_stats[server_id][user_id]['LUCK']
-
-                        # Upgrade Result
-                        if result_tier == 1:
-                            result_tier = 2
-                            result_text = "Regular Success (LUCK Used) :heavy_check_mark:"
-                            SUCCESSFULLROLL = 1
-                        elif result_tier == 2:
-                            result_tier = 3
-                            result_text = "Hard Success (LUCK Used) :white_check_mark:"
-                        elif result_tier == 3:
-                            result_tier = 4
-                            result_text = "Extreme Success (LUCK Used) :star:"
-
-                        roll -= luck_cost
-                        formatted_luck = f":four_leaf_clover: LUCK: {player_luck}"
-                        embed.description = f"{ctx.author.mention} :game_die: Rolled: {roll}\n{result_text}\n{formatted_skill}\n{formatted_luck}"
-
-                        can_push = False
-                        update_luck_availability()
-
-                        instructions = ""
-                        if can_luck:
-                            instructions += "\n\nReact within 180s:\n🍀 Improve success level further"
-                        embed.description += instructions
-
-                        await message.edit(embed=embed)
-                        await message.remove_reaction(reaction.emoji, ctx.author)
-
-                        if not can_luck:
-                            try: await message.clear_reactions()
-                            except: pass
-                            loop = False
-                        else:
-                            try: await message.clear_reaction("🔄")
-                            except: pass
-
-                    elif str(reaction.emoji) == "🔄" and can_push:
-                        # Push Roll
-                        roll = random.randint(1, 100)
-                        result_text, result_tier = self.calculate_roll_result(roll, current_value)
-                        description_add = f"\n\n**PUSHED ROLL**: {roll}\nResult: {result_text}"
-
-                        if result_tier <= 1:
-                            description_add += "\n:warning: **DIRE CONSEQUENCES!**"
-                            SUCCESSFULLROLL = 0
-                        else:
-                            SUCCESSFULLROLL = 1
-
-                        embed.description = f"{ctx.author.mention} :game_die: Original Roll Pushed.\n{formatted_skill}\n{formatted_luck}" + description_add
-                        await message.edit(embed=embed)
-                        try: await message.clear_reactions()
-                        except: pass
-                        loop = False
-
-                except asyncio.TimeoutError:
-                    try: await message.clear_reactions()
-                    except: pass
-                    loop = False
-
+            # After interaction, save stats (Luck might have changed)
             await save_player_stats(player_stats)
+
+            # Disable buttons on final message
+            if post_roll_view.message:
+                try:
+                    for child in post_roll_view.children:
+                        child.disabled = True
+                    await post_roll_view.message.edit(view=post_roll_view)
+                except:
+                    pass
+
+            if post_roll_view.success:
+                SUCCESSFULLROLL = 1
+            else:
+                SUCCESSFULLROLL = 0
 
             # Session Recording
             if SUCCESSFULLROLL == 1 and ASKFORSESSION == 1:
-                session_message = await ctx.send(
-                    "**Do you want to create a gaming session?**\n\nGaming session will record all your successful rolls for the character development phase."
+                view = SessionView(ctx)
+                msg = await ctx.send(
+                    "**Do you want to create a gaming session?**\n\nGaming session will record all your successful rolls for the character development phase.",
+                    view=view
                 )
-                await session_message.add_reaction("✅")
-                await session_message.add_reaction("❌")
+                await view.wait()
 
-                def session_check(reaction, user):
-                    return (user == ctx.author and str(reaction.emoji) in ["✅", "❌"])
+                if view.create_session:
+                    session_data[user_id] = []
+                    await save_session_data(session_data)
+                    await ctx.send("Session started! The first successful rolls have been recorded!")
+                    await session_success(user_id, stat_name)
+                else:
+                    await ctx.send("Session creation canceled.")
 
-                try:
-                    reaction, _ = await self.bot.wait_for("reaction_add", timeout=30, check=session_check)
-                    if str(reaction.emoji) == "✅":
-                        session_data[user_id] = []
-                        await save_session_data(session_data)
-                        await ctx.send("Session started! The first successful rolls have been recorded!")
-                        await session_success(user_id, stat_name)
-                    else:
-                        await ctx.send("Session creation canceled.")
-                except asyncio.TimeoutError:
-                    await ctx.send("You took too long to react. The session will not be recorded.")
+                try: await msg.edit(view=None)
+                except: pass
 
             elif SUCCESSFULLROLL == 1 and ASKFORSESSION == 0:
                 await session_success(user_id, stat_name)
-            else:
-                pass
 
         except ValueError:
             embed = discord.Embed(
