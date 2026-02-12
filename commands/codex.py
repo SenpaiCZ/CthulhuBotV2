@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import asyncio
 from playwright.async_api import async_playwright
 import io
@@ -13,7 +14,7 @@ from loadnsave import (
     load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
     load_inventions_data, load_years_data, load_weapons_data, load_occupations_data
 )
-import difflib
+from rapidfuzz import process, fuzz
 
 class Codex(commands.Cog):
     def __init__(self, bot):
@@ -55,11 +56,59 @@ class Codex(commands.Cog):
             print(f"Codex: Failed to re-launch browser: {e}")
             raise e
 
+    async def _get_autocomplete_choices(self, current: str, loader_func, data_key=None, flatten_pulp=False, keys_only=False, is_invention=False):
+        """Helper to generate autocomplete choices using RapidFuzz."""
+        data = await loader_func()
+        raw_choices = []
+
+        if flatten_pulp:
+             pulp_map = {}
+             for category, talents in data.items():
+                 for t_str in talents:
+                     match = re.match(r'\*\*(.*?)\*\*:\s*(.*)', t_str)
+                     if match:
+                          pulp_map[match.group(1)] = match.group(1)
+             raw_choices = list(pulp_map.keys())
+        elif data_key:
+             items = data.get(data_key, [])
+             if data_key == "monsters": entry_key = "monster_entry"
+             elif data_key == "spells": entry_key = "spell_entry"
+             elif data_key == "deities": entry_key = "deity_entry"
+             else: entry_key = data_key[:-1] + "_entry"
+
+             for item in items:
+                entry = item.get(entry_key)
+                if entry and entry.get('name'):
+                    raw_choices.append(entry['name'])
+        elif keys_only or is_invention:
+             raw_choices = list(data.keys())
+        else:
+             raw_choices = list(data.keys())
+
+        if not current:
+            # Return first 25 sorted alphabetically
+            sorted_choices = sorted(raw_choices)[:25]
+            if is_invention:
+                return [app_commands.Choice(name=f"{c} ({len(data.get(c, []))} entries)", value=c) for c in sorted_choices]
+            return [app_commands.Choice(name=c[:100], value=c[:100]) for c in sorted_choices]
+
+        # Use rapidfuzz to find best matches
+        matches = process.extract(current, raw_choices, scorer=fuzz.WRatio, limit=25)
+
+        results = []
+        for m in matches:
+            name = m[0]
+            value = m[0]
+            if is_invention:
+                name = f"{value} ({len(data.get(value, []))} entries)"
+            results.append(app_commands.Choice(name=name[:100], value=value[:100]))
+
+        return results
+
     async def _render_and_send(self, ctx, url, name, type_name, interaction=None):
         msg = None
         if interaction:
              # If invoked from a component (SelectionView), we use followup
-             # The view has likely already been disabled/edited by the caller
              pass
         elif ctx.interaction:
              # Slash Command
@@ -75,7 +124,6 @@ class Codex(commands.Cog):
             full_url = f"http://127.0.0.1:{port}{url}"
 
             browser = await self._get_browser()
-            # Viewport matching the CSS width + padding
             page = await browser.new_page(viewport={'width': 850, 'height': 1200})
 
             try:
@@ -130,34 +178,24 @@ class Codex(commands.Cog):
                     pass
 
     def _find_matches(self, query, choices):
+        """Find matches using RapidFuzz."""
         query_lower = query.lower()
         exact_match = None
-        partial_matches = []
 
+        # Check for exact match first (case-insensitive)
         for choice in choices:
-            choice_lower = choice.lower()
-            if choice_lower == query_lower:
+            if choice.lower() == query_lower:
                 exact_match = choice
-                break # Prioritize exact match
-            if query_lower in choice_lower:
-                partial_matches.append(choice)
+                break
 
         if exact_match:
             return [exact_match]
 
-        if not partial_matches:
-            # difflib.get_close_matches(word, possibilities, n, cutoff)
-            fuzzy = difflib.get_close_matches(query, choices, n=5, cutoff=0.6)
-            return fuzzy
-
-        partial_matches.sort()
-        return partial_matches
+        # Use RapidFuzz for fuzzy matching
+        matches = process.extract(query, choices, scorer=fuzz.WRatio, limit=5, score_cutoff=60)
+        return [m[0] for m in matches]
 
     async def _handle_no_arg_lookup(self, ctx, loader_func, type_slug, data_key=None, flatten_pulp=False, title=None):
-        """
-        Handles the case where no argument is provided.
-        Shows OptionsView: [List all] [Random one] [Cancel]
-        """
         if not title:
             title = f"{type_slug.replace('_', ' ').capitalize()} List"
 
@@ -170,37 +208,32 @@ class Codex(commands.Cog):
         view.message = msg
 
     async def _handle_lookup(self, ctx, name, loader_func, type_slug, data_key=None, keys_only=False, flatten_pulp=False):
-        """
-        Generic lookup handler.
-        """
         data = await loader_func()
 
         choices = []
         if flatten_pulp:
-            # Pulp talents: Dict[Category, List[String "Name: Desc"]]
-            pulp_map = {} # Name -> Full String (or Name)
+            pulp_map = {}
             for category, talents in data.items():
                 for t_str in talents:
                     match = re.match(r'\*\*(.*?)\*\*:\s*(.*)', t_str)
                     if match:
                         t_name = match.group(1)
-                        pulp_map[t_name] = t_name # Just store name for matching
+                        pulp_map[t_name] = t_name
             choices = list(pulp_map.keys())
         elif data_key:
-            # List of objects
             items = data.get(data_key, [])
-            # Assuming standard structure {entry: {name: ...}}
-            # Need custom logic if different
             entry_key = type_slug + "_entry"
+            if type_slug == "monster": entry_key = "monster_entry"
+            elif type_slug == "spell": entry_key = "spell_entry"
+            elif type_slug == "deity": entry_key = "deity_entry"
+
             for item in items:
                 entry = item.get(entry_key)
                 if entry and entry.get('name'):
                     choices.append(entry['name'])
         elif keys_only:
-            # Dict[Name, Data]
             choices = list(data.keys())
         else:
-            # Should not happen with current usage, but fallback
             choices = list(data.keys())
 
         matches = self._find_matches(name, choices)
@@ -237,6 +270,10 @@ class Codex(commands.Cog):
         else:
             await self._handle_no_arg_lookup(ctx, load_monsters_data, "monster", data_key="monsters")
 
+    @monster.autocomplete('name')
+    async def monster_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_monsters_data, data_key="monsters")
+
     @commands.hybrid_command(description="Displays a spell.")
     async def spell(self, ctx, *, name: str = None):
         """Displays a spell."""
@@ -245,6 +282,10 @@ class Codex(commands.Cog):
         else:
             await self._handle_no_arg_lookup(ctx, load_spells_data, "spell", data_key="spells")
 
+    @spell.autocomplete('name')
+    async def spell_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_spells_data, data_key="spells")
+
     @commands.hybrid_command(description="Displays a deity sheet.")
     async def deity(self, ctx, *, name: str = None):
         """Displays a deity sheet."""
@@ -252,6 +293,10 @@ class Codex(commands.Cog):
             await self._handle_lookup(ctx, name, load_deities_data, "deity", data_key="deities")
         else:
             await self._handle_no_arg_lookup(ctx, load_deities_data, "deity", data_key="deities")
+
+    @deity.autocomplete('name')
+    async def deity_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_deities_data, data_key="deities")
 
     @commands.hybrid_command(description="Opens the Grimoire to view lists of all Codex entries.")
     async def grimoire(self, ctx):
@@ -271,6 +316,10 @@ class Codex(commands.Cog):
         else:
             await self._handle_no_arg_lookup(ctx, load_archetype_data, "archetype")
 
+    @archetype.autocomplete('name')
+    async def archetype_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_archetype_data, keys_only=True)
+
     @commands.hybrid_command(aliases=['cTalents', 'tinfo', 'talents'], description="Displays a Pulp Talent.")
     async def talent(self, ctx, *, name: str = None):
         """Displays a Pulp Talent."""
@@ -278,6 +327,10 @@ class Codex(commands.Cog):
             await self._handle_lookup(ctx, name, load_pulp_talents_data, "pulp_talent", flatten_pulp=True)
         else:
             await self._handle_no_arg_lookup(ctx, load_pulp_talents_data, "pulp_talent", flatten_pulp=True)
+
+    @talent.autocomplete('name')
+    async def talent_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_pulp_talents_data, flatten_pulp=True)
 
     @commands.hybrid_command(aliases=['italent', 'insanetalent'], description="Displays an Insane Talent.")
     async def insane(self, ctx, *, name: str = None):
@@ -287,6 +340,10 @@ class Codex(commands.Cog):
         else:
             await self._handle_no_arg_lookup(ctx, load_madness_insane_talent_data, "insane_talent")
 
+    @insane.autocomplete('name')
+    async def insane_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_madness_insane_talent_data, keys_only=True)
+
     @commands.hybrid_command(description="Displays a Mania.")
     async def mania(self, ctx, *, name: str = None):
         """Displays a Mania."""
@@ -294,6 +351,10 @@ class Codex(commands.Cog):
             await self._handle_lookup(ctx, name, load_manias_data, "mania", keys_only=True)
         else:
             await self._handle_no_arg_lookup(ctx, load_manias_data, "mania")
+
+    @mania.autocomplete('name')
+    async def mania_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_manias_data, keys_only=True)
 
     @commands.hybrid_command(description="Displays a Phobia.")
     async def phobia(self, ctx, *, name: str = None):
@@ -303,6 +364,10 @@ class Codex(commands.Cog):
         else:
             await self._handle_no_arg_lookup(ctx, load_phobias_data, "phobia")
 
+    @phobia.autocomplete('name')
+    async def phobia_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_phobias_data, keys_only=True)
+
     @commands.hybrid_command(aliases=['poisons'], description="Displays a Poison.")
     async def poison(self, ctx, *, name: str = None):
         """Displays a Poison."""
@@ -310,6 +375,10 @@ class Codex(commands.Cog):
             await self._handle_lookup(ctx, name, load_poisons_data, "poison", keys_only=True)
         else:
             await self._handle_no_arg_lookup(ctx, load_poisons_data, "poison")
+
+    @poison.autocomplete('name')
+    async def poison_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_poisons_data, keys_only=True)
 
     @commands.hybrid_command(aliases=['skillinfo'], description="Displays a Skill description.")
     async def skill(self, ctx, *, name: str = None):
@@ -319,13 +388,15 @@ class Codex(commands.Cog):
         else:
             await self._handle_no_arg_lookup(ctx, load_skills_data, "skill")
 
+    @skill.autocomplete('name')
+    async def skill_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_skills_data, keys_only=True)
+
     @commands.hybrid_command(aliases=['inventions'], description="Displays Inventions for a specific decade (e.g., 1920s).")
     async def invention(self, ctx, *, decade: str = None):
         """Displays Inventions for a specific decade (e.g., 1920s)."""
         if decade:
             # Handle "1925" -> "1920s" logic
-            # Strip non-digits to handle "1920s" or "c. 1920" if users get creative, though simple is better
-            # Just take digits
             year_match = re.search(r'\d{3,4}', decade)
             if year_match:
                 try:
@@ -340,6 +411,10 @@ class Codex(commands.Cog):
         else:
             await self._handle_no_arg_lookup(ctx, load_inventions_data, "invention")
 
+    @invention.autocomplete('decade')
+    async def invention_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_inventions_data, is_invention=True)
+
     @commands.hybrid_command(aliases=['years'], description="Displays events for a specific year (e.g., 1920).")
     async def year(self, ctx, *, year: str = None):
         """Displays events for a specific year (e.g., 1920)."""
@@ -347,6 +422,10 @@ class Codex(commands.Cog):
             await self._handle_lookup(ctx, year, load_years_data, "year", keys_only=True)
         else:
             await self._handle_no_arg_lookup(ctx, load_years_data, "year")
+
+    @year.autocomplete('year')
+    async def year_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_years_data, keys_only=True)
 
     @commands.hybrid_command(aliases=["firearm", "firearms", "weapons"], description="Displays a weapon.")
     async def weapon(self, ctx, *, name: str = None):
@@ -356,6 +435,10 @@ class Codex(commands.Cog):
         else:
              await self._handle_no_arg_lookup(ctx, load_weapons_data, "weapon")
 
+    @weapon.autocomplete('name')
+    async def weapon_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_weapons_data, keys_only=True)
+
     @commands.hybrid_command(aliases=["cocc","oinfo", "occupations"], description="Displays an occupation.")
     async def occupation(self, ctx, *, name: str = None):
         """Displays an occupation."""
@@ -363,6 +446,10 @@ class Codex(commands.Cog):
             await self._handle_lookup(ctx, name, load_occupations_data, "occupation", keys_only=True)
         else:
             await self._handle_no_arg_lookup(ctx, load_occupations_data, "occupation")
+
+    @occupation.autocomplete('name')
+    async def occupation_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self._get_autocomplete_choices(current, load_occupations_data, keys_only=True)
 
 class PaginatedListView(discord.ui.View):
     def __init__(self, ctx, items, title, per_page=20):
