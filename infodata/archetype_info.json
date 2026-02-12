@@ -4,7 +4,7 @@
       "link":"https://cdn.discordapp.com/attachments/804680712954445834/1148196065472946246/adventurer.jpg",
       "adjustments":[
          ":heart_decoration: **Core characteristic:** Choose either DEX or APP",
-         ":zap: **Add 100 bonus points divided among any of the following skills:** Climb, Diving, Drive Auto, First-Aid, Fighting (any), Firearms (any), Jump, Language (other), Mechanical repair, Pilot (any), Ride, Stealth, Survival (any), Swim.",
+         ":zap: **Add 100 bonus points divided among any of the following skills:** Climb, Diving, Drive Auto, First-Aid, Fighting (any), Firearms (Handgun), Firearms (Rifle/Shotgun), Jump, Language (other), Mechanical repair, Pilot (any), Ride, Stealth, Survival (any), Swim.",
          ":construction_worker: **Suggested occupations:** Actor, Archaeologist, Athlete, Aviator, Bank Robber, Big Game Hunter, Cat Burglar, Dilettante, Drifter, Gambler, Gangster, Hobo, Investigative Journalist, Missionary, Nurse, Photographer, Ranger, Sailor, Soldier, Tribe Member",
          ":man_cartwheeling: **Talents:** any two. You can get random two with `!tinfo`. ",
          ":brain: **Suggested traits:** easily bored, tenacious, glory hunter, egocentric"
@@ -37,7 +37,7 @@
       "link":"https://cdn.discordapp.com/attachments/804680712954445834/1148196067419103262/coldblooded.jpg",
       "adjustments":[
          ":heart_decoration: **Core characteristic:** INT.",
-         ":zap: **Add 100 bonus points divided among any of the following skills:** Art/Craft (Acting), Disguise, Fighting (any), Firearms (any), First Aid, History, Intimidate, Law, Listen, Mechanical Repair, Psychology, Stealth, Survival (any), Track.",
+         ":zap: **Add 100 bonus points divided among any of the following skills:** Art/Craft (Acting), Disguise, Fighting (any), Firearms (Handgun), Firearms (Rifle/Shotgun), First Aid, History, Intimidate, Law, Listen, Mechanical Repair, Psychology, Stealth, Survival (any), Track.",
          ":construction_worker: **Suggested occupations:** Bank Robber, Beat Cop, Bounty Hunter, Cult Leader, Drifter, Exorcist, Federal Agent, Gangster, Gun Moll, Hired Muscle, Hit Man, Professor, Reporter, Soldier, Street Punk, Tribe Member, Zealot.",
          ":man_cartwheeling: **Talents:** must take the Hardened talent, plus one other.",
          ":brain: **Suggested traits:** rationalist, sees everything in black and white, ruthless, callous, brutal, pitiless, hardnosed."
@@ -103,7 +103,7 @@
       "link":"https://cdn.discordapp.com/attachments/804680712954445834/1148196065049313360/hardboiled.jpg",
       "adjustments":[
          ":heart_decoration: **Core characteristic:** CON.",
-         ":zap: **Add 100 bonus points divided among any of the following skills:** Art/Craft (any), Fighting (Brawl), Firearms (any), Drive Auto, Fast Talk, Intimidate, Law, Listen, Locksmith, Sleight of Hand, Spot Hidden, Stealth, Throw.",
+         ":zap: **Add 100 bonus points divided among any of the following skills:** Art/Craft (any), Fighting (Brawl), Firearms (Handgun), Firearms (Rifle/Shotgun), Drive Auto, Fast Talk, Intimidate, Law, Listen, Locksmith, Sleight of Hand, Spot Hidden, Stealth, Throw.",
          ":construction_worker: **Suggested occupations:** Agency Detective, Bank Robber, Beat Cop, Bounty Hunter, Boxer, Gangster, Gun Moll, Laborer, Police Detective, Private Investigator, Ranger, Union Activist.",
          ":man_cartwheeling: **Talents:** any two. You can get random two with `!tinfo`. ",
          ":brain: **Suggested traits:** cynical, objective, practical, world-weary, corrupt, violent."
@@ -125,7 +125,7 @@
       "link":"https://cdn.discordapp.com/attachments/804680712954445834/1148196119311036456/hunter.jpg",
       "adjustments":[
          ":heart_decoration: **Core characteristic:** choose either INT or CON.",
-         ":zap: **Add 100 bonus points divided among any of the following skills:** Animal Handling, Fighting (any), Firearms (Rifle and/or Handgun), First Aid, Listen, Natural World, Navigate, Spot Hidden, Stealth, Survival (any), Swim, Track.",
+         ":zap: **Add 100 bonus points divided among any of the following skills:** Animal Handling, Fighting (any), Firearms (Handgun), Firearms (Rifle/Shotgun), First Aid, Listen, Natural World, Navigate, Spot Hidden, Stealth, Survival (any), Swim, Track.",
          ":construction_worker: **Suggested occupations:** Agency Detective, Bank Robber, Beat Cop, Bounty Hunter, Boxer, Gangster, Gun Moll, Laborer, Police Detective, Private Investigator, Ranger, Union Activist.",
          ":man_cartwheeling: **Talents:** any two. You can get random two with `!tinfo`. ",
          ":brain: **Suggested traits:** relentless, cunning, patient, driven, calm, quiet."
@@ -236,7 +236,7 @@
       "link":"https://cdn.discordapp.com/attachments/804680712954445834/1148196131021525012/twofisted.jpg",
       "adjustments":[
          ":heart_decoration: **Core characteristic:** choose either STR or SIZ.",
-         ":zap: **Add 100 bonus points divided among any of the following skills:** Drive Auto, Fighting (Brawl), Firearms (any), Intimidate, Listen, Mechanical Repair, Spot Hidden, Swim, Throw.",
+         ":zap: **Add 100 bonus points divided among any of the following skills:** Drive Auto, Fighting (Brawl), Firearms (Handgun), Firearms (Rifle/Shotgun), Intimidate, Listen, Mechanical Repair, Spot Hidden, Swim, Throw.",
          ":construction_worker: **Suggested occupations:** Agency Detective, Bank Robber, Beat Cop, Boxer, Gangster, Gun Moll, Hired Muscle, Hit Man, Hooker, Laborer, Mechanic, Nurse, Police Detective, Ranger, Reporter, Sailor, Soldier, Street Punk, Tribe Member, Union Activist.",
          ":man_cartwheeling: **Talents:** any two. You can get random two with `!tinfo`. ",
          ":brain: **Suggested traits:** tough, capable, determined, quick to anger, violent, dirty, corrupt, underhand."
