@@ -828,6 +828,27 @@ async def render_occupation_view():
     image_url = get_image_url("occupation", target_key)
     return await render_template('render_occupation.html', occupation=data[target_key], name=target_key, image_url=image_url)
 
+@app.route('/render/newspaper')
+async def render_newspaper_view():
+    headline = request.args.get('headline', 'Extra! Extra!')
+    body = request.args.get('body', 'No content provided.')
+    date = request.args.get('date', 'October 24, 1929')
+    city = request.args.get('city', 'Arkham')
+    name = request.args.get('name', 'The Arkham Advertiser')
+    width = request.args.get('width', '500')
+    clip_path = request.args.get('clip_path', '0% 0%, 100% 0%, 100% 100%, 0% 100%')
+
+    return await render_template(
+        'render_newspaper.html',
+        headline=headline,
+        body=body,
+        date=date,
+        city=city,
+        name=name,
+        width=width,
+        clip_path=clip_path
+    )
+
 
 # --- Admin Routes ---
 
@@ -3616,6 +3637,11 @@ async def reminders_delete():
 async def admin_enroll():
     if not is_admin(): return redirect(url_for('login'))
     return await render_template('enroll_dashboard.html')
+
+@app.route('/admin/newspaper')
+async def admin_newspaper():
+    if not is_admin(): return redirect(url_for('login'))
+    return await render_template('newspaper_dashboard.html')
 
 @app.route('/api/enroll/data')
 async def enroll_data():
