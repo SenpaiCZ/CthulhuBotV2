@@ -11,7 +11,7 @@ SAMPLE_WIDTH = 2 # 16-bit
 CHUNK_SIZE = 3840 # 20ms of audio: 48000 * 0.02 * 2 * 2
 
 class Track:
-    def __init__(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None):
+    def __init__(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None, on_finish=None):
         self.id = str(uuid.uuid4())
         self.file_path = file_path
         self.volume = volume
@@ -22,6 +22,7 @@ class Track:
         self.options = options
         self.paused = False
         self.finished = False
+        self.on_finish = on_finish
         self.source = self._create_source()
 
     def _create_source(self):
@@ -49,6 +50,9 @@ class Track:
             # Source might be cleaned up or closed
             print(f"Error reading from source: {e}")
             self.finished = True
+            if self.on_finish:
+                try: self.on_finish()
+                except: pass
             return b''
 
         if not data:
@@ -60,13 +64,22 @@ class Track:
                     data = self.source.read()
                     if not data: # Still empty? File might be empty/broken
                         self.finished = True
+                        if self.on_finish:
+                            try: self.on_finish()
+                            except: pass
                         return b''
                 except Exception as e:
                     print(f"Error restarting loop: {e}")
                     self.finished = True
+                    if self.on_finish:
+                        try: self.on_finish()
+                        except: pass
                     return b''
             else:
                 self.finished = True
+                if self.on_finish:
+                    try: self.on_finish()
+                    except: pass
                 return b''
 
         # If we got less data than CHUNK_SIZE (end of file), pad with silence
@@ -96,8 +109,8 @@ class MixingAudioSource(discord.AudioSource):
         self._finished = False
         self.lock = threading.Lock()
 
-    def add_track(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None):
-        track = Track(file_path, volume, loop, is_url, metadata, before_options, options)
+    def add_track(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None, on_finish=None):
+        track = Track(file_path, volume, loop, is_url, metadata, before_options, options, on_finish)
         with self.lock:
             self.tracks.append(track)
         return track

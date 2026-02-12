@@ -2193,7 +2193,7 @@ async def music_control():
         track = music_cog.current_track.get(guild_id)
         if track:
             track.finished = True
-            await music_cog._process_queue()
+            await music_cog._process_queue(guild_id)
     elif action == 'loop':
         track = music_cog.current_track.get(guild_id)
         if track:
