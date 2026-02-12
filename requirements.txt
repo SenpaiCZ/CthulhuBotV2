@@ -10,3 +10,4 @@ PyNaCl
 yt-dlp
 emoji
 playwright
+rapidfuzz
