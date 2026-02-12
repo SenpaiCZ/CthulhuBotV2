@@ -3,7 +3,6 @@ from discord.ext import commands
 import asyncio
 import os
 from loadnsave import load_settings, load_server_stats
-from help_command import CustomHelpCommand
 from dashboard.app import app
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
@@ -22,10 +21,8 @@ async def get_prefix(bot, message):
 # Create a bot instance and pass it to the CustomHelpCommand constructor
 bot = commands.Bot(command_prefix=get_prefix,
                    description='Call of Cthulhu MASTER bot',
-                   intents=discord.Intents.all())
-
-help_command = CustomHelpCommand()
-bot.help_command = help_command
+                   intents=discord.Intents.all(),
+                   help_command=None)
 
 # Loading cogs!
 async def load():
