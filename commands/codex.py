@@ -727,33 +727,33 @@ class GrimoireView(discord.ui.View):
         view.message = interaction.message
 
     # Row 0
-    @discord.ui.button(label="Monsters", style=discord.ButtonStyle.primary, row=0)
+    @discord.ui.button(label="Monsters", style=discord.ButtonStyle.danger, row=0)
     async def monsters_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_monsters_data, "Monsters List", data_key="monsters")
 
-    @discord.ui.button(label="Deities", style=discord.ButtonStyle.primary, row=0)
+    @discord.ui.button(label="Deities", style=discord.ButtonStyle.danger, row=0)
     async def deities_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_deities_data, "Deities List", data_key="deities")
 
-    @discord.ui.button(label="Archetypes", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="Archetypes", style=discord.ButtonStyle.danger, row=0)
     async def archetypes_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_archetype_data, "Archetypes List")
 
-    @discord.ui.button(label="Occupations", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="Occupations", style=discord.ButtonStyle.danger, row=0)
     async def occupations_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_occupations_data, "Occupations List")
 
     # Row 1
-    @discord.ui.button(label="Spells", style=discord.ButtonStyle.primary, row=1)
+    @discord.ui.button(label="Spells", style=discord.ButtonStyle.danger, row=1)
     async def spells_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_spells_data, "Spells List", data_key="spells")
 
-    @discord.ui.button(label="Talents", style=discord.ButtonStyle.secondary, row=1)
+    @discord.ui.button(label="Talents", style=discord.ButtonStyle.danger, row=1)
     async def talents_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_pulp_talents_data, "Pulp Talents List", flatten_pulp=True)
@@ -763,23 +763,23 @@ class GrimoireView(discord.ui.View):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_madness_insane_talent_data, "Insane Talents List")
 
-    @discord.ui.button(label="Skills", style=discord.ButtonStyle.secondary, row=1)
+    @discord.ui.button(label="Skills", style=discord.ButtonStyle.danger, row=1)
     async def skills_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_skills_data, "Skills List")
 
     # Row 2
-    @discord.ui.button(label="Weapons", style=discord.ButtonStyle.secondary, row=2)
+    @discord.ui.button(label="Weapons", style=discord.ButtonStyle.danger, row=2)
     async def weapons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_weapons_data, "Weapons List")
 
-    @discord.ui.button(label="Poisons", style=discord.ButtonStyle.secondary, row=2)
+    @discord.ui.button(label="Poisons", style=discord.ButtonStyle.danger, row=2)
     async def poisons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_poisons_data, "Poisons List")
 
-    @discord.ui.button(label="Inventions", style=discord.ButtonStyle.secondary, row=2)
+    @discord.ui.button(label="Inventions", style=discord.ButtonStyle.danger, row=2)
     async def inventions_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_inventions_data, "Inventions List", type_slug="invention")
@@ -795,7 +795,7 @@ class GrimoireView(discord.ui.View):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_phobias_data, "Phobias List")
 
-    @discord.ui.button(label="Years", style=discord.ButtonStyle.secondary, row=3)
+    @discord.ui.button(label="Years", style=discord.ButtonStyle.danger, row=3)
     async def years_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
         await self._launch_list(interaction, load_years_data, "Years List")
