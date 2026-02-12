@@ -56,9 +56,9 @@ class RollTypeView(View):
         self.ctx = ctx
         self.roll_type = None
 
-    @discord.ui.button(label="Normal", style=discord.ButtonStyle.primary, emoji="🎲")
-    async def normal(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.roll_type = "normal"
+    @discord.ui.button(label="2x Bonus", style=discord.ButtonStyle.success, emoji="🌟")
+    async def bonus2(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.roll_type = "bonus2"
         await interaction.response.defer()
         self.stop()
 
@@ -68,13 +68,25 @@ class RollTypeView(View):
         await interaction.response.defer()
         self.stop()
 
+    @discord.ui.button(label="Normal", style=discord.ButtonStyle.primary, emoji="🎲")
+    async def normal(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.roll_type = "normal"
+        await interaction.response.defer()
+        self.stop()
+
     @discord.ui.button(label="Penalty", style=discord.ButtonStyle.danger, emoji="🔴")
     async def penalty(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.roll_type = "penalty"
         await interaction.response.defer()
         self.stop()
 
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="2x Penalty", style=discord.ButtonStyle.danger, emoji="☠️")
+    async def penalty2(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.roll_type = "penalty2"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary, row=1)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer()
         self.stop()
@@ -297,12 +309,25 @@ class Roll(commands.Cog):
         return "Fail :x:", 1
 
     @commands.hybrid_command(name="roll", aliases=["newroll", "diceroll", "d", "nd"], guild_only=True, description="Perform a dice roll or skill check.")
-    @app_commands.describe(dice_expression="The dice expression (e.g. 3d6) or skill name (e.g. Spot Hidden)")
-    async def roll(self, ctx, *, dice_expression: str):
+    @app_commands.describe(dice_expression="The dice expression (e.g. 3d6) or skill name (e.g. Spot Hidden)", secret="Make the result ephemeral (hidden) - Slash command only")
+    async def roll(self, ctx, *, dice_expression: str, secret: bool = False):
         """
         🎲 Perform a dice roll or skill check.
         Interactive interface allows for Bonus/Penalty dice and Luck spending.
         """
+        # Helper to handle ephemeral messages
+        ephemeral = secret and (ctx.interaction is not None)
+
+        async def send_msg(content=None, embed=None, view=None):
+            if ephemeral:
+                if not ctx.interaction.response.is_done():
+                    await ctx.interaction.response.send_message(content=content, embed=embed, view=view, ephemeral=True)
+                    return await ctx.interaction.original_response()
+                else:
+                    return await ctx.interaction.followup.send(content=content, embed=embed, view=view, ephemeral=True, wait=True)
+            else:
+                return await ctx.send(content=content, embed=embed, view=view)
+
         server_prefixes = await load_server_stats()
         server_id = str(ctx.guild.id)
         prefix = server_prefixes.get(server_id, "!") if server_id else "!"
@@ -320,7 +345,7 @@ class Roll(commands.Cog):
             )
             embed.add_field(name="Detail", value=detail, inline=False)
             embed.add_field(name="Total", value=f":game_die: {result}", inline=False)
-            await ctx.send(embed=embed)
+            await send_msg(embed=embed)
             return
         except Exception:
             # Not a valid dice expression, assume it is a Skill Check
@@ -328,15 +353,15 @@ class Roll(commands.Cog):
 
         # 2. Skill Check Logic
         if not isinstance(ctx.channel, discord.TextChannel):
-            await ctx.send("This command is not allowed in DMs.")
+            await send_msg(content="This command is not allowed in DMs.")
             return
         user_id = str(ctx.author.id)
 
         player_stats = await load_player_stats()
 
         if user_id not in player_stats[server_id]:
-            await ctx.send(
-                f"{ctx.author.display_name} doesn't have an investigator. Use `{prefix}newInv` for creating a new investigator."
+            await send_msg(
+                content=f"{ctx.author.display_name} doesn't have an investigator. Use `{prefix}newInv` for creating a new investigator."
             )
             return
 
@@ -379,7 +404,7 @@ class Roll(commands.Cog):
                         matching_stats.append(stat_key)
 
             if not matching_stats:
-                await ctx.send("No matching stat found and invalid dice expression.")
+                await send_msg(content="No matching stat found and invalid dice expression.")
                 return
 
             stat_name = matching_stats[0]
@@ -388,7 +413,7 @@ class Roll(commands.Cog):
             if len(matching_stats) > 1:
                 # Use DisambiguationView
                 view = DisambiguationView(ctx, matching_stats)
-                msg = await ctx.send("Multiple matching stats found. Please select one:", view=view)
+                msg = await send_msg(content="Multiple matching stats found. Please select one:", view=view)
                 await view.wait()
 
                 if view.selected_stat:
@@ -406,7 +431,7 @@ class Roll(commands.Cog):
                 description="Choose the type of roll:",
                 color=discord.Color.blue()
             )
-            msg = await ctx.send(embed=embed, view=view)
+            msg = await send_msg(embed=embed, view=view)
             await view.wait()
 
             if view.roll_type:
@@ -430,14 +455,16 @@ class Roll(commands.Cog):
             if roll_type == "normal":
                 roll = random.randint(1, 100)
             else:
-                tens_rolls = [random.randint(0, 9) * 10 for _ in range(2)]
+                num_tens = 3 if roll_type in ["bonus2", "penalty2"] else 2
+                tens_rolls = [random.randint(0, 9) * 10 for _ in range(num_tens)]
                 ones_roll = random.randint(1, 10)
-                if roll_type == "bonus":
-                    lower_tens_roll = min(tens_rolls)
-                    roll = lower_tens_roll + ones_roll
-                else: # penalty
-                    higher_tens_roll = max(tens_rolls)
-                    roll = higher_tens_roll + ones_roll
+
+                if roll_type in ["bonus", "bonus2"]:
+                    best_tens_roll = min(tens_rolls)
+                    roll = best_tens_roll + ones_roll
+                else: # penalty, penalty2
+                    worst_tens_roll = max(tens_rolls)
+                    roll = worst_tens_roll + ones_roll
 
             result_text, result_tier = self.calculate_roll_result(roll, current_value)
 
@@ -462,7 +489,8 @@ class Roll(commands.Cog):
 
             description_roll_info = f"{ctx.author.mention} :game_die: Rolled: {roll}"
             if roll_type != "normal":
-                description_roll_info = f"{ctx.author.mention} :game_die: Rolled: {tens_rolls[0]}|{tens_rolls[1]} + {ones_roll} = {roll}"
+                tens_str = "|".join(str(t) for t in tens_rolls)
+                description_roll_info = f"{ctx.author.mention} :game_die: Rolled: {tens_str} + {ones_roll} = {roll}"
 
             embed = discord.Embed(
                 title=f"{ctx.author.display_name}'s {roll_type.capitalize()} Check for '{stat_name}{get_stat_emoji(stat_name)}'",
@@ -470,7 +498,7 @@ class Roll(commands.Cog):
                 color=discord.Color.green(),
             )
 
-            post_roll_view.message = await ctx.send(embed=embed, view=post_roll_view)
+            post_roll_view.message = await send_msg(embed=embed, view=post_roll_view)
             await post_roll_view.wait()
 
             # After interaction, save stats (Luck might have changed)
@@ -493,8 +521,8 @@ class Roll(commands.Cog):
             # Session Recording
             if SUCCESSFULLROLL == 1 and ASKFORSESSION == 1:
                 view = SessionView(ctx)
-                msg = await ctx.send(
-                    "**Do you want to create a gaming session?**\n\nGaming session will record all your successful rolls for the character development phase.",
+                msg = await send_msg(
+                    content="**Do you want to create a gaming session?**\n\nGaming session will record all your successful rolls for the character development phase.",
                     view=view
                 )
                 await view.wait()
@@ -502,10 +530,10 @@ class Roll(commands.Cog):
                 if view.create_session:
                     session_data[user_id] = []
                     await save_session_data(session_data)
-                    await ctx.send("Session started! The first successful rolls have been recorded!")
+                    await send_msg(content="Session started! The first successful rolls have been recorded!")
                     await session_success(user_id, stat_name)
                 else:
-                    await ctx.send("Session creation canceled.")
+                    await send_msg(content="Session creation canceled.")
 
                 try: await msg.edit(view=None)
                 except: pass
@@ -519,7 +547,7 @@ class Roll(commands.Cog):
                 description=f"Use format {prefix}d <skill_name> or {prefix}d <expression>",
                 color=discord.Color.red(),
             )
-            await ctx.send(embed=embed)
+            await send_msg(embed=embed)
 
     @roll.autocomplete('dice_expression')
     async def roll_autocomplete(self, interaction: discord.Interaction, current: str):
