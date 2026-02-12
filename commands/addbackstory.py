@@ -1,9 +1,88 @@
 import discord
-import asyncio
 from discord.ext import commands
 from discord import app_commands
 from loadnsave import load_player_stats, save_player_stats
-from commands._backstory_common import BackstoryView
+
+class BackstoryAddModal(discord.ui.Modal):
+    def __init__(self, category, server_id, user_id, player_stats_ref):
+        # Discord Modal title limit is 45 characters
+        title = f"Add to {category}"
+        if len(title) > 45:
+            title = title[:42] + "..."
+
+        super().__init__(title=title)
+        self.category = category
+        self.server_id = server_id
+        self.user_id = user_id
+        self.player_stats = player_stats_ref
+
+        self.entry = discord.ui.TextInput(
+            label=f"New entry for {category}"[:45],
+            style=discord.TextStyle.paragraph,
+            placeholder="Type your backstory details here...",
+            required=True,
+            max_length=4000
+        )
+        self.add_item(self.entry)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # Ensure data structure exists
+        if self.server_id not in self.player_stats:
+             self.player_stats[self.server_id] = {}
+
+        if self.user_id not in self.player_stats[self.server_id]:
+             # Should not happen given command checks, but safety first
+             await interaction.response.send_message("Error: Investigator not found.", ephemeral=True)
+             return
+
+        if "Backstory" not in self.player_stats[self.server_id][self.user_id]:
+            self.player_stats[self.server_id][self.user_id]["Backstory"] = {}
+
+        if self.category not in self.player_stats[self.server_id][self.user_id]["Backstory"]:
+            self.player_stats[self.server_id][self.user_id]["Backstory"][self.category] = []
+
+        entry_text = self.entry.value
+        self.player_stats[self.server_id][self.user_id]["Backstory"][self.category].append(entry_text)
+
+        await save_player_stats(self.player_stats)
+
+        await interaction.response.send_message(
+            f"✅ Added to **{self.category}**:\n>>> {entry_text}",
+            ephemeral=True
+        )
+
+class BackstoryCategorySelect(discord.ui.Select):
+    def __init__(self, categories, server_id, user_id, player_stats_ref):
+        options = [
+            discord.SelectOption(label=cat[:100], value=cat)
+            for cat in categories
+        ]
+        super().__init__(
+            placeholder="Select a category to add to...",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
+        self.server_id = server_id
+        self.user_id = user_id
+        self.player_stats = player_stats_ref
+
+    async def callback(self, interaction: discord.Interaction):
+        selected_category = self.values[0]
+        modal = BackstoryAddModal(selected_category, self.server_id, self.user_id, self.player_stats)
+        await interaction.response.send_modal(modal)
+
+class BackstorySelectView(discord.ui.View):
+    def __init__(self, categories, author, server_id, user_id, player_stats_ref):
+        super().__init__(timeout=60)
+        self.author = author
+        self.add_item(BackstoryCategorySelect(categories, server_id, user_id, player_stats_ref))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.author:
+            await interaction.response.send_message("This isn't your session!", ephemeral=True)
+            return False
+        return True
 
 class addbackstory(commands.Cog):
     def __init__(self, bot):
@@ -17,13 +96,20 @@ class addbackstory(commands.Cog):
         server_id = str(ctx.guild.id)
         user_id = str(ctx.author.id)
 
-        if not isinstance(ctx.channel, discord.TextChannel):
-            await ctx.send("This command is not allowed in DMs.")
-            return
+        # Check for DMs
+        if not ctx.guild:
+             await ctx.send("This command is not allowed in DMs.")
+             return
 
         player_stats = await load_player_stats()
-        if user_id not in player_stats[server_id]:
-            await ctx.send(f"{ctx.author.display_name} doesn't have an investigator. Use `!newInv` to create a new investigator.")
+
+        # Ensure server/user stats structure exists
+        if server_id not in player_stats or user_id not in player_stats[server_id]:
+            msg = f"{ctx.author.display_name} doesn't have an investigator. Use `!newInv` to create a new investigator."
+            if ctx.interaction:
+                await ctx.send(msg, ephemeral=True)
+            else:
+                await ctx.send(msg)
             return
 
         categories = [
@@ -33,43 +119,17 @@ class addbackstory(commands.Cog):
           'Fellow Investigators', 'Gear and Possessions', 'Spending Level', 'Cash', 'Assets'
         ]
 
-        view = BackstoryView(categories, ctx.author)
-        message = await ctx.send("Please select a category for your backstory:", view=view)
+        view = BackstorySelectView(categories, ctx.author, server_id, user_id, player_stats)
 
-        await view.wait()
-
-        if view.selected_option:
-            # Clean up the previous message/view
-            try:
-                await message.delete()
-            except:
-                pass
-
-            def check(m):
-                return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
-
-            await ctx.send(f"Selected category: **{view.selected_option}**\nPlease type what you want to add:")
-            try:
-                msg = await self.bot.wait_for('message', timeout=60.0, check=check)
-            except asyncio.TimeoutError:
-                await ctx.send("You took too long to respond.")
-                return
-
-            entry = msg.content
-            if "Backstory" not in player_stats[server_id][user_id]:
-                player_stats[server_id][user_id]["Backstory"] = {}
-
-            if view.selected_option not in player_stats[server_id][user_id]["Backstory"]:
-                player_stats[server_id][user_id]["Backstory"][view.selected_option] = []
-
-            player_stats[server_id][user_id]["Backstory"][view.selected_option].append(entry)
-            await save_player_stats(player_stats)
-            await ctx.send(f"Entry '{entry}' has been added to the '{view.selected_option}' category in your Backstory.")
+        if ctx.interaction:
+            await ctx.interaction.response.send_message("Select a category to add an entry:", view=view, ephemeral=True)
         else:
+            # Clean up command message if possible
             try:
-                await message.edit(content="Action cancelled or timed out.", view=None)
+                await ctx.message.delete()
             except:
                 pass
+            await ctx.send("Select a category to add an entry:", view=view)
 
 async def setup(bot):
     await bot.add_cog(addbackstory(bot))
