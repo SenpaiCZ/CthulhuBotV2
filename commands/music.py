@@ -55,18 +55,28 @@ class Music(commands.Cog):
         volumes = await load_server_volumes()
         server_volumes.update(volumes)
 
-        self.check_queue_task.start()
-
     def cog_unload(self):
-        self.check_queue_task.cancel()
+        pass
 
-    @tasks.loop(seconds=5)
-    async def check_queue_task(self):
-        await self._process_queue()
+    def _on_track_finish(self, guild_id):
+        # Triggered from Mixer Thread
+        coro = self._process_queue(guild_id)
+        fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
 
-    async def _process_queue(self):
+        def check_error(f):
+            try:
+                f.result()
+            except Exception as e:
+                print(f"Error processing queue for guild {guild_id}: {e}")
+
+        fut.add_done_callback(check_error)
+
+    async def _process_queue(self, guild_id=None):
         # Iterate over all guilds that have a mixer or a queue
-        guild_ids = set(list(self.queue.keys()) + list(self.current_track.keys()))
+        if guild_id:
+            guild_ids = [str(guild_id)]
+        else:
+            guild_ids = set(list(self.queue.keys()) + list(self.current_track.keys()))
 
         for guild_id_str in guild_ids:
             # Check if we have a current track
@@ -83,10 +93,6 @@ class Music(commands.Cog):
                 if not track and guild_id_str in self.queue and self.queue[guild_id_str]:
                     next_song = self.queue[guild_id_str].pop(0)
                     await self._play_song(guild_id_str, next_song)
-
-    @check_queue_task.before_loop
-    async def before_check_queue(self):
-        await self.bot.wait_until_ready()
 
     async def _play_song(self, guild_id, song_info):
         mixer = guild_mixers.get(str(guild_id))
@@ -132,7 +138,8 @@ class Music(commands.Cog):
             metadata=song_info,
             volume=music_vol,
             before_options=FFMPEG_OPTIONS['before_options'],
-            options=FFMPEG_OPTIONS['options']
+            options=FFMPEG_OPTIONS['options'],
+            on_finish=partial(self._on_track_finish, str(guild_id))
         )
         self.current_track[str(guild_id)] = track
 
@@ -190,7 +197,7 @@ class Music(commands.Cog):
 
                 if not self.current_track.get(guild_id):
                     await ctx.send(f"🎵 Added to queue and playing: **{title}**")
-                    await self._process_queue() # Trigger immediately
+                    await self._process_queue(guild_id) # Trigger immediately
                 else:
                     await ctx.send(f"🎵 Added to queue: **{title}**")
 
@@ -205,7 +212,7 @@ class Music(commands.Cog):
         if track:
             track.finished = True # Mark finished
             await ctx.send("⏭️ Skipped.")
-            await self._process_queue() # Trigger immediately
+            await self._process_queue(guild_id) # Trigger immediately
         else:
             await ctx.send("Nothing is playing.")
 
