@@ -47,10 +47,19 @@ async def _save_json_file(folder, filename, data, ensure_ascii=True):
         _INFODATA_CACHE[filename] = data
 
 # --- Player Stats ---
+_PLAYER_STATS_CACHE = None
+
 async def load_player_stats():
-    return await _load_json_file(DATA_FOLDER, 'player_stats.json')
+    global _PLAYER_STATS_CACHE
+    if _PLAYER_STATS_CACHE is not None:
+        return _PLAYER_STATS_CACHE
+
+    _PLAYER_STATS_CACHE = await _load_json_file(DATA_FOLDER, 'player_stats.json')
+    return _PLAYER_STATS_CACHE
 
 async def save_player_stats(player_stats):
+    global _PLAYER_STATS_CACHE
+    _PLAYER_STATS_CACHE = player_stats
     await _save_json_file(DATA_FOLDER, 'player_stats.json', player_stats)
 
 # --- Settings ---
