@@ -2,6 +2,7 @@ import discord
 import feedparser
 import asyncio
 from discord.ext import commands, tasks
+from discord import app_commands
 from discord.ui import View, Select
 from loadnsave import load_rss_data, save_rss_data
 from rss_utils import get_youtube_rss_url
@@ -79,6 +80,15 @@ class rss(commands.Cog):
     self.bot = bot
     self.check_rss_feed.start()
 
+  async def fetch_feed(self, link):
+      """Helper to fetch a single feed safely."""
+      try:
+          feed = await self.bot.loop.run_in_executor(None, feedparser.parse, link)
+          return link, feed
+      except Exception as e:
+          print(f"Error fetching feed {link}: {e}")
+          return link, None
+
   def get_entry_id(self, entry):
       # Try id (guid), then link, then title
       return getattr(entry, 'id', getattr(entry, 'link', getattr(entry, 'title', None)))
@@ -134,12 +144,15 @@ class rss(commands.Cog):
 
       return embed
 
-  @commands.command()
+  @commands.hybrid_command(description="Add an RSS subscription or YouTube channel to the current channel.")
+  @app_commands.describe(link="The URL of the RSS feed or YouTube channel/video")
+  @commands.has_permissions(administrator=True)
   async def rss(self, ctx, link: str):
       """
-      `[p]rss link` - Add an RSS subscription or YouTube channel to the channel where the command was sent from.
+      Add an RSS subscription or YouTube channel to the channel where the command was sent from.
       """
       try:
+          await ctx.defer()
           # Check for YouTube RSS
           rss_link = await get_youtube_rss_url(link)
           if rss_link:
@@ -148,7 +161,7 @@ class rss(commands.Cog):
           # Parse the RSS feed
           feed = await self.bot.loop.run_in_executor(None, feedparser.parse, link)
           if not feed.entries:
-              await ctx.send("No items found in the RSS feed.")
+              await ctx.send("No items found in the RSS feed.", ephemeral=True)
               return
 
           # Get the server ID
@@ -201,11 +214,16 @@ class rss(commands.Cog):
       except Exception as e:
           await ctx.send(f"An error occurred: {e}")
 
-  @commands.command()
+  @commands.hybrid_command(description="Wizard to setup a new RSS feed or YouTube subscription.")
+  @commands.has_permissions(administrator=True)
   async def rsssetup(self, ctx):
       """
       Wizard to setup a new RSS feed or YouTube subscription.
       """
+      # If slash command, we need to defer or send initial message differently because
+      # we are about to enter a wait_for loop which needs the user to type in the channel.
+      if ctx.interaction:
+          await ctx.interaction.response.send_message("Starting RSS Setup Wizard...", ephemeral=True)
 
       def check(m):
           return m.author == ctx.author and m.channel == ctx.channel
@@ -384,22 +402,40 @@ class rss(commands.Cog):
 
       data_changed = False
 
-      # Iterate through each server's RSS subscriptions
-      # Copy items to avoid modification issues if we were to modify the dict structure (though we just modify values)
+      # 1. Collect all unique links
+      unique_links = set()
+      for subs in rss_data.values():
+          for sub in subs:
+              if sub.get("link"):
+                  unique_links.add(sub["link"])
+
+      if not unique_links:
+          return
+
+      # 2. Fetch all feeds concurrently
+      # We use return_exceptions=True implicitly via our wrapper which handles errors
+      tasks = [self.fetch_feed(link) for link in unique_links]
+      results = await asyncio.gather(*tasks)
+
+      # Create a cache: link -> feed object
+      feed_cache = {link: feed for link, feed in results if feed}
+
+      # 3. Iterate through subscriptions and apply updates using cache
       for server_id, subscriptions in rss_data.items():
           for subscription in subscriptions:
               link = subscription["link"]
+              feed = feed_cache.get(link)
+
+              # If feed failed to fetch, skip
+              if not feed or not feed.entries:
+                  continue
+
               channel_id = subscription["channel_id"]
               last_message = subscription.get("last_message")
               last_id = subscription.get("last_id")
               color = subscription.get("color", "#2E8B57")
 
               try:
-                  # Parse the RSS feed
-                  feed = await self.bot.loop.run_in_executor(None, feedparser.parse, link)
-                  if not feed.entries:
-                      continue
-
                   new_items = []
                   found_last = False
 
@@ -435,7 +471,7 @@ class rss(commands.Cog):
                       data_changed = True
 
               except Exception as e:
-                  print(f"An error occurred while checking RSS feed {link}: {e}")
+                  print(f"An error occurred while processing RSS feed {link} for channel {channel_id}: {e}")
   
       if data_changed:
           await save_rss_data(rss_data)
