@@ -164,9 +164,11 @@
                             <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#modal-{{server_id}}-{{user_id}}">
                                 <i class="bi bi-file-earmark-person"></i> View Sheet
                             </button>
+                            {% if is_admin %}
                             <button class="btn btn-sm btn-danger" onclick='deleteCharacter({{ server_id|tojson }}, {{ user_id|tojson }}, "active", {{ char.get("NAME")|tojson }}, null)'>
                                 <i class="bi bi-trash"></i>
                             </button>
+                            {% endif %}
                         </td>
                     </tr>
 
@@ -430,9 +432,11 @@
                         <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#modal-ret-{{user_id}}-{{loop.index}}">
                             <i class="bi bi-file-earmark-person"></i> View Sheet
                         </button>
+                        {% if is_admin %}
                         <button class="btn btn-sm btn-danger" onclick='deleteCharacter(null, {{ user_id|tojson }}, "retired", {{ char.get("NAME")|tojson }}, {{ loop.index0 }})'>
                             <i class="bi bi-trash"></i>
                         </button>
+                        {% endif %}
                     </td>
                 </tr>
 
