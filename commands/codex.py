@@ -4,10 +4,16 @@ from discord import app_commands
 import asyncio
 from playwright.async_api import async_playwright
 import io
+import os
 import urllib.parse
 import traceback
 import re
 import random
+from commands._codex_embeds import (
+    create_monster_embed, create_deity_embed, create_spell_embed,
+    create_weapon_embed, create_occupation_embed, create_archetype_embed,
+    create_generic_embed, create_timeline_embed
+)
 from loadnsave import (
     load_monsters_data, load_deities_data, load_spells_data, load_settings,
     load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
@@ -105,16 +111,126 @@ class Codex(commands.Cog):
 
         return results
 
-    async def _render_and_send(self, ctx, url, name, type_name, interaction=None):
+    def _get_image_file(self, type_slug, name):
+        """Checks if a local image exists and returns a discord.File object."""
+        # Sanitize filename (basic replacement, should match file_utils logic ideally)
+        # Using a simple regex to mimic sanitize_filename from dashboard/file_utils.py
+        safe_name = re.sub(r'[\\/*?:"<>|]', "", name)
+
+        # Dashboard uses 'images' folder at root
+        target_dir = os.path.join("images", type_slug)
+        if not os.path.exists(target_dir):
+            return None
+
+        # Check extensions
+        for ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp']:
+            filename = f"{safe_name}{ext}"
+            path = os.path.join(target_dir, filename)
+            if os.path.exists(path):
+                return discord.File(path, filename=filename)
+
+        return None
+
+    def _get_entry_data(self, data, name, type_slug, data_key=None, flatten_pulp=False, keys_only=False):
+        """Extracts the specific data dictionary for the named entry."""
+        if flatten_pulp:
+             for category, talents in data.items():
+                 for t_str in talents:
+                     match = re.match(r'\*\*(.*?)\*\*:\s*(.*)', t_str)
+                     if match:
+                          t_name = match.group(1)
+                          if t_name == name:
+                              return {"name": t_name, "description": match.group(2), "category": category}
+        elif data_key:
+             items = data.get(data_key, [])
+             entry_key = type_slug + "_entry"
+             if type_slug == "monster": entry_key = "monster_entry"
+             elif type_slug == "spell": entry_key = "spell_entry"
+             elif type_slug == "deity": entry_key = "deity_entry"
+
+             for item in items:
+                entry = item.get(entry_key)
+                if entry and entry.get('name') == name:
+                    return entry
+        elif keys_only:
+             # keys_only implies the data is Dict[Name, Info] or List[Name]
+             # If it's a dict, return the value. If list, return name as string?
+             if isinstance(data, dict):
+                 return data.get(name)
+        elif type_slug == "invention": # Inventions are Dict[decade, list]
+             return data.get(name)
+        else:
+             # Default dict lookup
+             return data.get(name)
+        return None
+
+    async def _display_entry(self, ctx, name, type_slug, data, interaction=None):
+        """Generates an Embed and sends it with a view to show the poster."""
+
+        # 1. Get Image File
+        file = self._get_image_file(type_slug, name)
+
+        # 2. Build Embed
+        embed = None
+        if type_slug == "monster":
+            embed = create_monster_embed(data, name, file)
+        elif type_slug == "deity":
+            embed = create_deity_embed(data, name, file)
+        elif type_slug == "spell":
+            embed = create_spell_embed(data, name, file)
+        elif type_slug == "weapon":
+            embed = create_weapon_embed(data, name, file)
+        elif type_slug == "occupation":
+            embed = create_occupation_embed(data, name, file)
+        elif type_slug == "archetype":
+            embed = create_archetype_embed(data, name, file)
+        elif type_slug in ["invention", "year"]:
+            embed = create_timeline_embed(data, name, type_slug, file)
+        else:
+            embed = create_generic_embed(data, name, type_slug, file)
+
+        # 3. Create View
+        view = RenderView(ctx, self, name, type_slug)
+
+        # 4. Send
+        kwargs = {"embed": embed, "view": view}
+        if file:
+            kwargs["file"] = file
+
+        if interaction:
+             # If this is a followup to a selection, we need to handle it carefully.
+             # Interaction might be deferred or not.
+             if interaction.response.is_done():
+                 msg = await interaction.followup.send(**kwargs)
+                 view.message = msg
+             else:
+                 await interaction.response.send_message(**kwargs)
+                 view.message = await interaction.original_response()
+        elif ctx.interaction:
+             # Slash command initial response
+             if ctx.interaction.response.is_done():
+                  msg = await ctx.interaction.followup.send(**kwargs)
+                  view.message = msg
+             else:
+                  await ctx.send(**kwargs)
+                  # Can't easily get message obj from ctx.send for slash command immediately unless we fetch it
+                  # but View usually handles interaction.message for buttons
+                  pass
+        else:
+             # Prefix command
+             msg = await ctx.send(**kwargs)
+             view.message = msg
+
+    async def _render_poster(self, ctx, url, name, type_name, interaction=None):
         msg = None
         if interaction:
-             # If invoked from a component (SelectionView), we use followup
+             # Usually triggered by button, so we use followup (ephemeral)
              pass
         elif ctx.interaction:
-             # Slash Command
-             await ctx.defer()
+             # Should not happen if called via button, but for direct calls
+             if not ctx.interaction.response.is_done():
+                 await ctx.defer()
         else:
-             # Prefix Command
              msg = await ctx.send(f"Consulting the archives for **{name}**... 📜")
 
         page = None
@@ -157,12 +273,12 @@ class Codex(commands.Cog):
             file = discord.File(io.BytesIO(screenshot_bytes), filename=f"{name.replace(' ', '_')}_{type_name}.png")
 
             if interaction:
-                await interaction.followup.send(content=f"Here is the entry for **{name}**:", file=file)
+                await interaction.followup.send(content=f"Here is the poster for **{name}**:", file=file, ephemeral=True)
             elif ctx.interaction:
-                await ctx.send(content=f"Here is the entry for **{name}**:", file=file)
+                await ctx.send(content=f"Here is the poster for **{name}**:", file=file)
             elif msg:
                 await msg.delete()
-                await ctx.send(content=f"Here is the entry for **{name}**:", file=file)
+                await ctx.send(content=f"Here is the poster for **{name}**:", file=file)
 
         except Exception as e:
             error_msg = f"An error occurred while generating the image: {e}"
@@ -195,11 +311,11 @@ class Codex(commands.Cog):
         matches = process.extract(query, choices, scorer=fuzz.WRatio, limit=5, score_cutoff=60)
         return [m[0] for m in matches]
 
-    async def _handle_no_arg_lookup(self, ctx, loader_func, type_slug, data_key=None, flatten_pulp=False, title=None):
+    async def _handle_no_arg_lookup(self, ctx, loader_func, type_slug, data_key=None, flatten_pulp=False, keys_only=False, title=None):
         if not title:
             title = f"{type_slug.replace('_', ' ').capitalize()} List"
 
-        view = OptionsView(ctx, loader_func, type_slug, data_key, flatten_pulp, self, title)
+        view = OptionsView(ctx, loader_func, type_slug, data_key, flatten_pulp, self, title, keys_only=keys_only)
         ephemeral = False
         if ctx.interaction:
             ephemeral = True
@@ -248,11 +364,18 @@ class Codex(commands.Cog):
 
         if len(matches) == 1:
             target_name = matches[0]
-            quoted_name = urllib.parse.quote(target_name)
-            url = f"/render/{type_slug}?name={quoted_name}"
-            await self._render_and_send(ctx, url, target_name, type_slug)
+            entry_data = self._get_entry_data(data, target_name, type_slug, data_key, flatten_pulp, keys_only)
+
+            if entry_data:
+                await self._display_entry(ctx, target_name, type_slug, entry_data)
+            else:
+                # Fallback if extraction failed (shouldn't happen if match exists)
+                quoted_name = urllib.parse.quote(target_name)
+                url = f"/render/{type_slug}?name={quoted_name}"
+                await self._render_poster(ctx, url, target_name, type_slug)
+
         elif len(matches) < 25:
-             view = SelectionView(ctx, matches, type_slug, self)
+             view = SelectionView(ctx, matches, type_slug, loader_func, self, data_key=data_key, flatten_pulp=flatten_pulp, keys_only=keys_only)
              msg = await ctx.send(f"Multiple {type_slug.replace('_', ' ')}s found for '{name}'. Please select one:", view=view)
              view.message = msg
         else:
@@ -522,13 +645,14 @@ class PaginatedListView(discord.ui.View):
         self.stop()
 
 class OptionsView(discord.ui.View):
-    def __init__(self, ctx, loader_func, type_slug, data_key, flatten_pulp, cog, title):
+    def __init__(self, ctx, loader_func, type_slug, data_key, flatten_pulp, cog, title, keys_only=False):
         super().__init__(timeout=60)
         self.ctx = ctx
         self.loader_func = loader_func
         self.type_slug = type_slug
         self.data_key = data_key
         self.flatten_pulp = flatten_pulp
+        self.keys_only = keys_only
         self.cog = cog
         self.title = title
         self.message = None
@@ -606,10 +730,16 @@ class OptionsView(discord.ui.View):
             child.disabled = True
         await interaction.response.edit_message(view=self)
 
-        # Trigger render
-        quoted_name = urllib.parse.quote(target_name)
-        url = f"/render/{self.type_slug}?name={quoted_name}"
-        await self.cog._render_and_send(self.ctx, url, target_name, self.type_slug, interaction=interaction)
+        # Get entry data
+        entry_data = self.cog._get_entry_data(data, target_name, self.type_slug, self.data_key, self.flatten_pulp, self.keys_only)
+
+        if entry_data:
+            await self.cog._display_entry(self.ctx, target_name, self.type_slug, entry_data, interaction=interaction)
+        else:
+             # Fallback
+             quoted_name = urllib.parse.quote(target_name)
+             url = f"/render/{self.type_slug}?name={quoted_name}"
+             await self.cog._render_poster(self.ctx, url, target_name, self.type_slug, interaction=interaction)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.danger)
     async def cancel_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -672,6 +802,40 @@ class ConfirmationView(discord.ui.View):
         if self.message:
             try:
                 await self.message.delete()
+            except:
+                pass
+        self.stop()
+
+class RenderView(discord.ui.View):
+    def __init__(self, ctx, cog, name, type_slug):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.cog = cog
+        self.name = name
+        self.type_slug = type_slug
+        self.message = None
+
+    @discord.ui.button(label="📜 View Poster", style=discord.ButtonStyle.secondary)
+    async def poster_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Allow anyone to view poster? Or just author? Let's check ctx.author.
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("This isn't for you!", ephemeral=True)
+
+        # Defer ephemeral to prevent timeout while rendering
+        await interaction.response.defer(ephemeral=True)
+
+        quoted_name = urllib.parse.quote(self.name)
+        url = f"/render/{self.type_slug}?name={quoted_name}"
+
+        await self.cog._render_poster(self.ctx, url, self.name, self.type_slug, interaction=interaction)
+
+    async def on_timeout(self):
+        # Disable buttons
+        for child in self.children:
+            child.disabled = True
+        if self.message:
+            try:
+                await self.message.edit(view=self)
             except:
                 pass
         self.stop()
@@ -810,11 +974,15 @@ class GrimoireView(discord.ui.View):
 
 
 class SelectionView(discord.ui.View):
-    def __init__(self, ctx, options, type_name, cog):
+    def __init__(self, ctx, options, type_name, loader_func, cog, data_key=None, flatten_pulp=False, keys_only=False):
         super().__init__(timeout=60)
         self.ctx = ctx
         self.cog = cog
         self.type_name = type_name
+        self.loader_func = loader_func
+        self.data_key = data_key
+        self.flatten_pulp = flatten_pulp
+        self.keys_only = keys_only
         self.message = None
 
         # Create select menu
@@ -841,12 +1009,17 @@ class SelectionView(discord.ui.View):
             child.disabled = True
         await interaction.response.edit_message(view=self)
 
-        # Trigger render, passing interaction so we can followup
-        quoted_name = urllib.parse.quote(selected_name)
-        url = f"/render/{self.type_name}?name={quoted_name}"
+        # Load data for rendering
+        data = await self.loader_func()
+        entry_data = self.cog._get_entry_data(data, selected_name, self.type_name, self.data_key, self.flatten_pulp, self.keys_only)
 
-        # We pass interaction to handle the followup response
-        await self.cog._render_and_send(self.ctx, url, selected_name, self.type_name, interaction=interaction)
+        if entry_data:
+            await self.cog._display_entry(self.ctx, selected_name, self.type_name, entry_data, interaction=interaction)
+        else:
+            # Fallback
+            quoted_name = urllib.parse.quote(selected_name)
+            url = f"/render/{self.type_name}?name={quoted_name}"
+            await self.cog._render_poster(self.ctx, url, selected_name, self.type_name, interaction=interaction)
 
     async def on_timeout(self):
         if self.message:
