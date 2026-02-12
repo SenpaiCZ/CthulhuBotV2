@@ -786,11 +786,16 @@ class newinvestigator(commands.Cog):
 
             val = int(parts[-1])
             skill_input = " ".join(parts[:-1]).lower()
+            skill_input_norm = skill_input.replace("(", "").replace(")", "").strip()
 
             # Find skill
             match = None
             for k in view.char_data.keys():
-                if k.lower() == skill_input: match = k; break # Exact
+                k_lower = k.lower()
+                k_norm = k_lower.replace("(", "").replace(")", "").strip()
+
+                if k_lower == skill_input: match = k; break # Exact
+                if k_norm == skill_input_norm: match = k; break # Normalized
 
             if not match:
                 matches = [k for k in view.char_data.keys() if skill_input in k.lower()]
@@ -940,12 +945,28 @@ class newinvestigator(commands.Cog):
 
     def is_skill_allowed_for_archetype(self, skill_name, allowed_list):
         skill_name_lower = skill_name.lower()
+
+        # Helper to strip parens and extra spaces for normalized matching
+        def normalize(s):
+             return s.replace("(", "").replace(")", "").strip()
+
+        skill_norm = normalize(skill_name_lower)
+
         for allowed in allowed_list:
             allowed_lower = allowed.lower()
+
+            # 1. Exact match
             if skill_name_lower == allowed_lower: return True
+
+            # 2. Normalized match (handles Firearms (Handgun) vs Firearms Handgun)
+            if skill_norm == normalize(allowed_lower): return True
+
+            # 3. (any) logic
             if "(any)" in allowed_lower:
                 prefix = allowed_lower.replace("(any)", "").strip()
                 if skill_name_lower.startswith(prefix): return True
+
+            # 4. Special cases (Language, Survival)
             if "language (other)" in allowed_lower:
                 if skill_name_lower.startswith("language") and "own" not in skill_name_lower: return True
             if "survival (any)" in allowed_lower:
