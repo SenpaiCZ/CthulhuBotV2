@@ -164,6 +164,8 @@
     </div>
 
     <script>
+    const IS_ADMIN = {{ is_admin|tojson }};
+
     // Status Polling
     let wasOffline = false;
     setInterval(async () => {
@@ -228,6 +230,26 @@
     async function initImageControl(containerId, typeSlug, name) {
         const container = document.getElementById(containerId);
         if (!container) return;
+
+        if (!IS_ADMIN) {
+             try {
+                const response = await fetch(`/api/images/check?type_slug=${encodeURIComponent(typeSlug)}&name=${encodeURIComponent(name)}`);
+                const data = await response.json();
+
+                if (data.found) {
+                     container.innerHTML = `
+                        <div class="mb-3 text-center">
+                            <img src="${data.url + '?t=' + new Date().getTime()}" class="img-fluid rounded" style="max-height: 200px;">
+                        </div>
+                     `;
+                } else {
+                     container.innerHTML = '';
+                }
+             } catch(e) {
+                 console.error(e);
+             }
+             return;
+        }
 
         container.innerHTML = `
             <div class="card bg-dark border-secondary">
