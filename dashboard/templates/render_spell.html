@@ -64,6 +64,11 @@
 </head>
 <body>
     <div class="coc-sheet">
+        {% if image_url %}
+        <div class="d-flex align-items-start">
+            <div class="flex-grow-1">
+        {% endif %}
+
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
                 <h1 class="display-5 mb-0 text-success">{{ spell.name }}</h1>
@@ -157,6 +162,14 @@
             <div class="mt-4 pt-2 border-top border-secondary small text-muted text-center">
                 <em>Also known as: {{ spell.alternate_names | join(', ') }}</em>
             </div>
+        {% endif %}
+
+        {% if image_url %}
+            </div>
+            <div class="ms-3" style="width: 300px; flex-shrink: 0;">
+                <img src="{{ image_url }}" class="img-fluid rounded border border-secondary" alt="{{ spell.name }}" style="width: 100%; object-fit: contain;">
+            </div>
+        </div>
         {% endif %}
     </div>
 </body>

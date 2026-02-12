@@ -84,6 +84,8 @@
                     </div>
                 </div>
 
+                <div id="image-control-container" class="mb-4"></div>
+
                 ${d.description_quote ? `<div class="quote-block">"${d.description_quote}"</div>` : ''}
 
                 <div class="card bg-dark border-secondary mb-4">
@@ -205,6 +207,9 @@
             `;
 
             container.innerHTML = html;
+
+            initImageControl('image-control-container', '{{ type_slug }}', d.name);
+
             container.classList.remove('hidden');
             placeholder.style.setProperty('display', 'none', 'important');
             placeholder.classList.remove('d-flex');

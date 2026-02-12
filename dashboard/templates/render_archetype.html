@@ -42,6 +42,11 @@
 </head>
 <body>
     <div class="coc-sheet">
+        {% if image_url %}
+        <div class="d-flex align-items-start">
+            <div class="flex-grow-1">
+        {% endif %}
+
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
                 <h1 class="display-5 mb-0 text-success">{{ name }}</h1>
@@ -49,24 +54,28 @@
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-12">
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-body">
-                        <p class="card-text border-start border-success border-3 ps-3">{{ archetype.description }}</p>
-                    </div>
-                </div>
-
-                <div class="section-header">Adjustments</div>
-                <ul class="list-group list-group-flush bg-transparent">
-                    {% for adj in archetype.adjustments %}
-                    <li class="list-group-item bg-transparent border-secondary ps-0 py-2 text-light">
-                        {{ adj | format_custom_emoji | format_bold | safe }}
-                    </li>
-                    {% endfor %}
-                </ul>
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                <p class="card-text border-start border-success border-3 ps-3">{{ archetype.description }}</p>
             </div>
         </div>
+
+        <div class="section-header">Adjustments</div>
+        <ul class="list-group list-group-flush bg-transparent">
+            {% for adj in archetype.adjustments %}
+            <li class="list-group-item bg-transparent border-secondary ps-0 py-2 text-light">
+                {{ adj | format_custom_emoji | format_bold | safe }}
+            </li>
+            {% endfor %}
+        </ul>
+
+        {% if image_url %}
+            </div>
+            <div class="ms-3" style="width: 300px; flex-shrink: 0;">
+                <img src="{{ image_url }}" class="img-fluid rounded border border-secondary" alt="{{ name }}" style="width: 100%; object-fit: contain;">
+            </div>
+        </div>
+        {% endif %}
     </div>
 </body>
 </html>

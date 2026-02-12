@@ -64,6 +64,11 @@
 </head>
 <body>
     <div class="coc-sheet">
+        {% if image_url %}
+        <div class="d-flex align-items-start">
+            <div class="flex-grow-1">
+        {% endif %}
+
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
                 <h1 class="display-5 mb-0 text-success">{{ weapon_name }}</h1>
@@ -88,6 +93,14 @@
             <div class="col"><div class="stat-box"><div class="stat-label">Shots/Round</div><div class="stat-value">{{ weapon.shots_per_round }}</div></div></div>
             <div class="col"><div class="stat-box"><div class="stat-label">Malfunction</div><div class="stat-value text-warning">{{ weapon.malfunction }}</div></div></div>
         </div>
+
+        {% if image_url %}
+            </div>
+            <div class="ms-3" style="width: 300px; flex-shrink: 0;">
+                <img src="{{ image_url }}" class="img-fluid rounded border border-secondary" alt="{{ weapon_name }}" style="width: 100%; object-fit: contain;">
+            </div>
+        </div>
+        {% endif %}
     </div>
 </body>
 </html>
