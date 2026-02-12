@@ -1,1 +1,0 @@
-## 2024-05-23 - [Hybrid Command Ephemeral Response] -> **Learning:** Standard `ctx.send(ephemeral=True)` fails in Text Command contexts. **Action:** Use `if ctx.interaction: await ctx.interaction.response.send_message(..., ephemeral=True)` to handle ephemeral responses correctly in Hybrid Commands.
