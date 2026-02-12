@@ -140,7 +140,43 @@
         {% block content %}{% endblock %}
     </div>
 
+    <div id="reconnecting-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; color: white; align-items: center; justify-content: center; flex-direction: column;">
+        <div class="spinner-border text-primary mb-3" role="status" style="width: 4rem; height: 4rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h2 class="mt-2">Reconnecting to Cthulhu...</h2>
+        <p class="text-muted">The bot is restarting or offline.</p>
+    </div>
+
     <script>
+    // Status Polling
+    let wasOffline = false;
+    setInterval(async () => {
+        const overlay = document.getElementById('reconnecting-overlay');
+        try {
+            const response = await fetch('/api/status', { cache: "no-store" });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.status === 'online') {
+                    if (wasOffline) {
+                        location.reload(); // Reload page to refresh state
+                    }
+                    overlay.style.display = 'none';
+                    wasOffline = false;
+                } else {
+                    overlay.style.display = 'flex';
+                    wasOffline = true;
+                }
+            } else {
+                overlay.style.display = 'flex';
+                wasOffline = true;
+            }
+        } catch (e) {
+            overlay.style.display = 'flex';
+            wasOffline = true;
+        }
+    }, 3000);
+
     async function confirmUpdate() {
         if (confirm("Are you sure you want to update the bot? This will restart the system.")) {
             try {

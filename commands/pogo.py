@@ -4,7 +4,10 @@ import aiohttp
 from bs4 import BeautifulSoup
 import datetime
 import asyncio
+import logging
 from loadnsave import load_pogo_settings, save_pogo_settings, load_pogo_events, save_pogo_events
+
+logger = logging.getLogger("commands.pogo")
 
 class PokemonGo(commands.Cog):
     def __init__(self, bot):
@@ -39,7 +42,7 @@ class PokemonGo(commands.Cog):
                         ev['timestamp'] = int(dt.timestamp())
                         need_save = True
                     except Exception as e:
-                        print(f"Error migrating event {ev.get('title')}: {e}")
+                        logger.error(f"Error migrating event {ev.get('title')}: {e}")
                         ev['timestamp'] = 0
 
             if need_save:
@@ -54,99 +57,104 @@ class PokemonGo(commands.Cog):
         self.notify_events_task.cancel()
         self.weekly_summary_task.cancel()
 
+    def _parse_leekduck_html(self, html):
+        soup = BeautifulSoup(html, 'html.parser')
+        events = []
+
+        # LeekDuck uses data attributes for sorting and dates
+        # We look for the span wrapper
+        items = soup.find_all(class_="event-header-item-wrapper")
+
+        now = datetime.datetime.now()
+
+        for item in items:
+            start_date_str = item.get('data-event-start-date') # ISO format: YYYY-MM-DDTHH:MM:SS
+            if not start_date_str: continue
+
+            # Parse date (Naive)
+            try:
+                clean_date_str = start_date_str.replace('Z', '')
+                start_date = datetime.datetime.fromisoformat(clean_date_str)
+
+                # Force naive to match system time (requested by user)
+                if start_date.tzinfo is not None:
+                        start_date = start_date.replace(tzinfo=None)
+            except ValueError:
+                continue
+
+            # Filter out past events
+            if start_date < now:
+                continue
+
+            link_tag = item.find('a', class_='event-item-link')
+            link = "https://leekduck.com" + link_tag['href'] if link_tag else ""
+
+            img_tag = item.find('img')
+            image_url = img_tag['src'] if img_tag else ""
+
+            text_div = item.find(class_='event-text')
+            title = text_div.find('h2').text.strip() if text_div and text_div.find('h2') else "Unknown Event"
+
+            time_str = text_div.find('p').text.strip() if text_div and text_div.find('p') else ""
+
+            # Fix "Calculating..." time string by using Discord timestamp
+            if "Calculating..." in time_str:
+                try:
+                    # Re-parse to get aware datetime for timestamp
+                    # If start_date_str had 'Z', clean_date_str is naive (implicit UTC)
+                    # If start_date_str had offset, clean_date_str has offset
+                    ts_dt = datetime.datetime.fromisoformat(clean_date_str)
+                    if ts_dt.tzinfo is None:
+                        ts_dt = ts_dt.replace(tzinfo=datetime.timezone.utc)
+
+                    timestamp = int(ts_dt.timestamp())
+                    time_str = f"<t:{timestamp}:f>"
+                except Exception as e:
+                    logger.error(f"Error calculating timestamp for {title}: {e}")
+
+            heading_span = text_div.find(class_='event-tag-badge')
+            heading = heading_span.text.strip() if heading_span else "Event"
+
+            # Calculate timestamp for Discord
+            # We reuse the logic from "Calculating..." block but apply it generally
+            # start_date is naive (local system time)
+            timestamp = int(start_date.timestamp())
+
+            events.append({
+                'title': title,
+                'link': link,
+                'image': image_url,
+                'start_time': start_date.isoformat(), # Store as naive ISO string
+                'time_text': time_str,
+                'type': heading,
+                'timestamp': timestamp
+            })
+
+        # Sort by date
+        events.sort(key=lambda x: x['start_time'])
+        return events
+
     async def scrape_events(self):
         url = "https://leekduck.com/events/"
-        print("Scraping LeekDuck events...")
+        logger.info("Scraping LeekDuck events...")
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as response:
                     if response.status != 200:
-                        print(f"Failed to fetch LeekDuck: {response.status}")
+                        logger.error(f"Failed to fetch LeekDuck: {response.status}")
                         return []
                     html = await response.text()
 
-            soup = BeautifulSoup(html, 'html.parser')
-            events = []
-
-            # LeekDuck uses data attributes for sorting and dates
-            # We look for the span wrapper
-            items = soup.find_all(class_="event-header-item-wrapper")
-
-            now = datetime.datetime.now()
-
-            for item in items:
-                start_date_str = item.get('data-event-start-date') # ISO format: YYYY-MM-DDTHH:MM:SS
-                if not start_date_str: continue
-
-                # Parse date (Naive)
-                try:
-                    clean_date_str = start_date_str.replace('Z', '')
-                    start_date = datetime.datetime.fromisoformat(clean_date_str)
-
-                    # Force naive to match system time (requested by user)
-                    if start_date.tzinfo is not None:
-                         start_date = start_date.replace(tzinfo=None)
-                except ValueError:
-                    continue
-
-                # Filter out past events
-                if start_date < now:
-                    continue
-
-                link_tag = item.find('a', class_='event-item-link')
-                link = "https://leekduck.com" + link_tag['href'] if link_tag else ""
-
-                img_tag = item.find('img')
-                image_url = img_tag['src'] if img_tag else ""
-
-                text_div = item.find(class_='event-text')
-                title = text_div.find('h2').text.strip() if text_div and text_div.find('h2') else "Unknown Event"
-
-                time_str = text_div.find('p').text.strip() if text_div and text_div.find('p') else ""
-
-                # Fix "Calculating..." time string by using Discord timestamp
-                if "Calculating..." in time_str:
-                    try:
-                        # Re-parse to get aware datetime for timestamp
-                        # If start_date_str had 'Z', clean_date_str is naive (implicit UTC)
-                        # If start_date_str had offset, clean_date_str has offset
-                        ts_dt = datetime.datetime.fromisoformat(clean_date_str)
-                        if ts_dt.tzinfo is None:
-                            ts_dt = ts_dt.replace(tzinfo=datetime.timezone.utc)
-
-                        timestamp = int(ts_dt.timestamp())
-                        time_str = f"<t:{timestamp}:f>"
-                    except Exception as e:
-                        print(f"Error calculating timestamp for {title}: {e}")
-
-                heading_span = text_div.find(class_='event-tag-badge')
-                heading = heading_span.text.strip() if heading_span else "Event"
-
-                # Calculate timestamp for Discord
-                # We reuse the logic from "Calculating..." block but apply it generally
-                # start_date is naive (local system time)
-                timestamp = int(start_date.timestamp())
-
-                events.append({
-                    'title': title,
-                    'link': link,
-                    'image': image_url,
-                    'start_time': start_date.isoformat(), # Store as naive ISO string
-                    'time_text': time_str,
-                    'type': heading,
-                    'timestamp': timestamp
-                })
-
-            # Sort by date
-            events.sort(key=lambda x: x['start_time'])
+            # Run BeautifulSoup in executor
+            events = await self.bot.loop.run_in_executor(None, self._parse_leekduck_html, html)
 
             self.events = events
             await save_pogo_events(events)
-            print(f"Scraped {len(events)} upcoming events.")
+            logger.info(f"Scraped {len(events)} upcoming events.")
             return events
 
         except Exception as e:
-            print(f"Error scraping LeekDuck: {e}")
+            logger.error(f"Error scraping LeekDuck: {e}")
             return []
 
     # --- Commands ---
@@ -300,7 +308,7 @@ class PokemonGo(commands.Cog):
             target += datetime.timedelta(days=1)
 
         seconds = (target - now).total_seconds()
-        print(f"POGO: Sleeping {seconds}s until daily update at 08:00")
+        logger.info(f"POGO: Sleeping {seconds}s until daily update at 08:00")
         await asyncio.sleep(seconds)
 
     async def send_daily_summary(self, events):
@@ -331,7 +339,7 @@ class PokemonGo(commands.Cog):
             try:
                 await channel.send(f"{ping} Here is the summary for tomorrow's Pokemon GO events!", embed=embed)
             except Exception as e:
-                print(f"Failed to send daily summary to guild {guild_id}: {e}")
+                logger.error(f"Failed to send daily summary to guild {guild_id}: {e}")
 
     @tasks.loop(minutes=5)
     async def notify_events_task(self):
@@ -374,7 +382,7 @@ class PokemonGo(commands.Cog):
                     try:
                         await channel.send(f"{ping} Event starting soon!", embed=embed)
                     except Exception as e:
-                        print(f"Failed to send event notification to guild {guild_id}: {e}")
+                        logger.error(f"Failed to send event notification to guild {guild_id}: {e}")
 
     @notify_events_task.before_loop
     async def before_notify_events(self):
@@ -423,7 +431,7 @@ class PokemonGo(commands.Cog):
             try:
                 await channel.send(f"{ping} Here is the summary for the upcoming week!", embed=embed)
             except Exception as e:
-                print(f"Failed to send weekly summary to guild {guild_id}: {e}")
+                logger.error(f"Failed to send weekly summary to guild {guild_id}: {e}")
 
     @weekly_summary_task.before_loop
     async def before_weekly_summary(self):
@@ -439,7 +447,7 @@ class PokemonGo(commands.Cog):
             target += datetime.timedelta(days=7)
 
         seconds = (target - now).total_seconds()
-        print(f"POGO: Sleeping {seconds}s until weekly summary on Sunday 20:00")
+        logger.info(f"POGO: Sleeping {seconds}s until weekly summary on Sunday 20:00")
         await asyncio.sleep(seconds)
 
 async def setup(bot):

@@ -198,6 +198,13 @@ async def get_or_join_voice_channel(guild_id, channel_id):
 def inject_user():
     return dict(is_admin=is_admin())
 
+@app.route('/api/status')
+async def bot_status():
+    is_ready = False
+    if app.bot and app.bot.is_ready():
+        is_ready = True
+    return jsonify({"status": "online", "ready": is_ready})
+
 @app.route('/')
 async def index():
     return await render_template('index.html')
@@ -2146,14 +2153,16 @@ async def music_data():
         current_track_info = None
         if guild_id in music_cog.current_track:
             track = music_cog.current_track[guild_id]
-            current_track_info = {
-                "title": track.metadata.get('title', 'Unknown'),
-                "url": track.metadata.get('original_url', ''),
-                "thumbnail": track.metadata.get('thumbnail', ''),
-                "volume": int(track.volume * 100),
-                "loop": track.loop,
-                "paused": track.paused
-            }
+            # Ensure track is not finished (prevents desync)
+            if not track.finished:
+                current_track_info = {
+                    "title": track.metadata.get('title', 'Unknown'),
+                    "url": track.metadata.get('original_url', ''),
+                    "thumbnail": track.metadata.get('thumbnail', ''),
+                    "volume": int(track.volume * 100),
+                    "loop": track.loop,
+                    "paused": track.paused
+                }
 
         # Queue
         queue = []
