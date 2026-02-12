@@ -18,6 +18,42 @@ import difflib
 class Codex(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.playwright = None
+        self.browser = None
+
+    async def cog_load(self):
+        """Initialize Playwright and Browser on Cog Load."""
+        try:
+            self.playwright = await async_playwright().start()
+            self.browser = await self.playwright.chromium.launch()
+            print("Codex: Playwright browser launched.")
+        except Exception as e:
+            print(f"Codex: Failed to launch Playwright browser: {e}")
+
+    async def cog_unload(self):
+        """Clean up Playwright resources on Cog Unload."""
+        if self.browser:
+            await self.browser.close()
+        if self.playwright:
+            await self.playwright.stop()
+        print("Codex: Playwright browser closed.")
+
+    async def _get_browser(self):
+        """Ensure a valid browser instance is available."""
+        if self.browser and self.browser.is_connected():
+            return self.browser
+
+        # Re-launch if not connected
+        if self.playwright:
+            await self.playwright.stop()
+
+        try:
+            self.playwright = await async_playwright().start()
+            self.browser = await self.playwright.chromium.launch()
+            return self.browser
+        except Exception as e:
+            print(f"Codex: Failed to re-launch browser: {e}")
+            raise e
 
     async def _render_and_send(self, ctx, url, name, type_name, interaction=None):
         msg = None
@@ -32,63 +68,66 @@ class Codex(commands.Cog):
              # Prefix Command
              msg = await ctx.send(f"Consulting the archives for **{name}**... 📜")
 
+        page = None
         try:
             settings = load_settings()
             port = settings.get('dashboard_port', 5000)
             full_url = f"http://127.0.0.1:{port}{url}"
 
-            async with async_playwright() as p:
-                browser = await p.chromium.launch()
-                try:
-                    # Viewport matching the CSS width + padding
-                    page = await browser.new_page(viewport={'width': 850, 'height': 1200})
+            browser = await self._get_browser()
+            # Viewport matching the CSS width + padding
+            page = await browser.new_page(viewport={'width': 850, 'height': 1200})
 
-                    try:
-                        response = await page.goto(full_url, timeout=10000)
-                    except Exception as e:
-                        error_text = f"Error: Failed to load internal dashboard URL. Is the dashboard running?"
-                        if interaction: await interaction.followup.send(error_text, ephemeral=True)
-                        elif ctx.interaction: await ctx.send(error_text, ephemeral=True)
-                        elif msg: await msg.edit(content=error_text)
-                        print(f"Codex Navigation Error: {e}")
-                        return
+            try:
+                response = await page.goto(full_url, timeout=10000)
+            except Exception as e:
+                error_text = f"Error: Failed to load internal dashboard URL. Is the dashboard running?"
+                if interaction: await interaction.followup.send(error_text, ephemeral=True)
+                elif ctx.interaction: await ctx.send(error_text, ephemeral=True)
+                elif msg: await msg.edit(content=error_text)
+                print(f"Codex Navigation Error: {e}")
+                return
 
-                    if not response or not response.ok:
-                        status = response.status if response else "Unknown"
-                        error_text = f"Error: Failed to find {type_name} '{name}' (Status: {status})."
-                        if interaction: await interaction.followup.send(error_text, ephemeral=True)
-                        elif ctx.interaction: await ctx.send(error_text, ephemeral=True)
-                        elif msg: await msg.edit(content=error_text)
-                        return
+            if not response or not response.ok:
+                status = response.status if response else "Unknown"
+                error_text = f"Error: Failed to find {type_name} '{name}' (Status: {status})."
+                if interaction: await interaction.followup.send(error_text, ephemeral=True)
+                elif ctx.interaction: await ctx.send(error_text, ephemeral=True)
+                elif msg: await msg.edit(content=error_text)
+                return
 
-                    try:
-                        element = await page.wait_for_selector('.coc-sheet', timeout=5000)
-                    except:
-                        element = None
+            try:
+                element = await page.wait_for_selector('.coc-sheet', timeout=5000)
+            except:
+                element = None
 
-                    if not element:
-                        screenshot_bytes = await page.screenshot(full_page=True)
-                    else:
-                        screenshot_bytes = await element.screenshot()
+            if not element:
+                screenshot_bytes = await page.screenshot(full_page=True)
+            else:
+                screenshot_bytes = await element.screenshot()
 
-                    file = discord.File(io.BytesIO(screenshot_bytes), filename=f"{name.replace(' ', '_')}_{type_name}.png")
+            file = discord.File(io.BytesIO(screenshot_bytes), filename=f"{name.replace(' ', '_')}_{type_name}.png")
 
-                    if interaction:
-                        await interaction.followup.send(content=f"Here is the entry for **{name}**:", file=file)
-                    elif ctx.interaction:
-                        await ctx.send(content=f"Here is the entry for **{name}**:", file=file)
-                    elif msg:
-                        await msg.delete()
-                        await ctx.send(content=f"Here is the entry for **{name}**:", file=file)
+            if interaction:
+                await interaction.followup.send(content=f"Here is the entry for **{name}**:", file=file)
+            elif ctx.interaction:
+                await ctx.send(content=f"Here is the entry for **{name}**:", file=file)
+            elif msg:
+                await msg.delete()
+                await ctx.send(content=f"Here is the entry for **{name}**:", file=file)
 
-                finally:
-                    await browser.close()
         except Exception as e:
             error_msg = f"An error occurred while generating the image: {e}"
             if interaction: await interaction.followup.send(error_msg, ephemeral=True)
             elif ctx.interaction: await ctx.send(error_msg, ephemeral=True)
             elif msg: await msg.edit(content=error_msg)
             print(f"Codex Error: {e}")
+        finally:
+            if page:
+                try:
+                    await page.close()
+                except:
+                    pass
 
     def _find_matches(self, query, choices):
         query_lower = query.lower()
