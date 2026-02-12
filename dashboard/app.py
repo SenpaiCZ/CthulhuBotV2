@@ -39,12 +39,16 @@ from loadnsave import (
 )
 from .audio_mixer import MixingAudioSource
 from rss_utils import get_youtube_rss_url
+from .file_utils import (
+    sanitize_filename, sync_get_soundboard_files, sync_save_bytes,
+    sync_extract_zip, sync_delete_path, sync_rename_path, sync_create_directory,
+    ALLOWED_AUDIO_EXTENSIONS as ALLOWED_EXTENSIONS,
+    ALLOWED_IMAGE_EXTENSIONS
+)
 
 SOUNDBOARD_FOLDER = "soundboard"
 BACKUP_FOLDER = "backups"
 IMAGES_FOLDER = "images"
-ALLOWED_EXTENSIONS = {'.mp3', '.wav', '.ogg', '.m4a', '.flac'}
-ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp'}
 server_volumes = {} # guild_id (str) -> {'music': 1.0, 'soundboard': 0.5}
 guild_mixers = {} # guild_id (str) -> MixingAudioSource
 
@@ -121,14 +125,6 @@ def parse_pulp_talent(text):
 
 app.add_template_filter(parse_pulp_talent, 'parse_pulp_talent')
 
-def sanitize_filename(filename):
-    """Sanitizes a filename to ensure it is safe for the filesystem."""
-    # Keep only alphanumeric, dot, dash, underscore
-    clean = re.sub(r'[^a-zA-Z0-9_.-]', '_', filename)
-    # Remove leading/trailing dots/spaces
-    clean = clean.strip('. ')
-    return clean or 'unnamed'
-
 def get_image_url(type_slug, name):
     """Checks if an image exists for the given type and name, returning the URL if so."""
     safe_name = sanitize_filename(name)
@@ -143,45 +139,6 @@ def get_image_url(type_slug, name):
             return f"/images/{type_slug}/{filename}"
 
     return None
-
-def get_soundboard_files():
-    structure = {}
-    if not os.path.exists(SOUNDBOARD_FOLDER):
-        return structure
-
-    # Level 1: Root files
-    root_files = []
-    # Level 2: Subdirectories
-    folders = {}
-
-    try:
-        for entry in os.listdir(SOUNDBOARD_FOLDER):
-            entry_path = os.path.join(SOUNDBOARD_FOLDER, entry)
-
-            if os.path.isfile(entry_path):
-                 if os.path.splitext(entry)[1].lower() in ALLOWED_EXTENSIONS:
-                    root_files.append({"name": entry, "path": entry})
-            elif os.path.isdir(entry_path):
-                folder_files = []
-                for f in os.listdir(entry_path):
-                    f_path = os.path.join(entry_path, f)
-                    if os.path.isfile(f_path) and os.path.splitext(f)[1].lower() in ALLOWED_EXTENSIONS:
-                        folder_files.append({"name": f, "path": os.path.join(entry, f).replace('\\', '/')})
-                if folder_files:
-                    folder_files.sort(key=lambda x: x['name'])
-                    folders[entry] = folder_files
-
-        if root_files:
-            root_files.sort(key=lambda x: x['name'])
-            structure["Root"] = root_files
-
-        # Sort folders by name and merge
-        for k in sorted(folders.keys()):
-            structure[k] = folders[k]
-    except Exception as e:
-        print(f"Error scanning soundboard: {e}")
-
-    return structure
 
 async def get_or_join_voice_channel(guild_id, channel_id):
     if not app.bot:
@@ -1470,7 +1427,7 @@ async def soundboard_data():
         }
         status_data[str(guild.id)] = status
 
-    files = get_soundboard_files()
+    files = await asyncio.to_thread(sync_get_soundboard_files, SOUNDBOARD_FOLDER)
     settings = await load_soundboard_settings()
 
     return jsonify({
@@ -1730,11 +1687,11 @@ async def soundboard_create_folder():
     if os.path.exists(target_path):
         return jsonify({"status": "error", "message": "Folder already exists"}), 400
 
-    try:
-        os.makedirs(target_path)
+    success, error = await asyncio.to_thread(sync_create_directory, target_path)
+    if success:
         return jsonify({"status": "success", "folder": safe_name})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    else:
+        return jsonify({"status": "error", "message": error}), 500
 
 @app.route('/api/soundboard/folder/delete', methods=['POST'])
 async def soundboard_delete_folder():
@@ -1756,11 +1713,11 @@ async def soundboard_delete_folder():
     if not os.path.exists(target_path):
         return jsonify({"status": "error", "message": "Folder not found"}), 404
 
-    try:
-        shutil.rmtree(target_path)
+    success, error = await asyncio.to_thread(sync_delete_path, target_path)
+    if success:
         return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    else:
+        return jsonify({"status": "error", "message": error}), 500
 
 @app.route('/api/soundboard/file/delete', methods=['POST'])
 async def soundboard_delete_file():
@@ -1788,8 +1745,8 @@ async def soundboard_delete_file():
     if not os.path.isfile(full_path):
         return jsonify({"status": "error", "message": "Not a file"}), 400
 
-    try:
-        os.remove(full_path)
+    success, error = await asyncio.to_thread(sync_delete_path, full_path)
+    if success:
         # Clean up settings if any
         settings = await load_soundboard_settings()
         if 'files' in settings and file_path in settings['files']:
@@ -1797,8 +1754,8 @@ async def soundboard_delete_file():
             await save_soundboard_settings(settings)
 
         return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    else:
+        return jsonify({"status": "error", "message": error}), 500
 
 @app.route('/api/soundboard/file/rename', methods=['POST'])
 async def soundboard_rename_file():
@@ -1851,9 +1808,8 @@ async def soundboard_rename_file():
     if os.path.exists(full_new_path):
         return jsonify({"status": "error", "message": "A file with that name already exists"}), 400
 
-    try:
-        os.rename(full_old_path, full_new_path)
-
+    success, error = await asyncio.to_thread(sync_rename_path, full_old_path, full_new_path)
+    if success:
         # Migrate settings
         settings = await load_soundboard_settings()
         if 'files' in settings and file_path in settings['files']:
@@ -1862,8 +1818,8 @@ async def soundboard_rename_file():
             await save_soundboard_settings(settings)
 
         return jsonify({"status": "success", "new_path": new_rel_path})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    else:
+        return jsonify({"status": "error", "message": error}), 500
 
 @app.route('/api/soundboard/upload', methods=['POST'])
 async def soundboard_upload():
@@ -1886,44 +1842,33 @@ async def soundboard_upload():
         ext = os.path.splitext(filename)[1].lower()
 
         if ext == '.zip':
-            # Create folder from zip name
             zip_folder_name = os.path.splitext(filename)[0]
             extract_dir = os.path.join(SOUNDBOARD_FOLDER, zip_folder_name)
-
-            if not os.path.exists(extract_dir):
-                os.makedirs(extract_dir)
+            temp_zip_path = os.path.join(SOUNDBOARD_FOLDER, f"temp_{filename}")
 
             try:
-                # We need to save the file stream to disk temporarily
+                # Read content
                 file_bytes = file.read()
-                # Check if async
                 if asyncio.iscoroutine(file_bytes):
                     file_bytes = await file_bytes
 
-                temp_zip_path = os.path.join(SOUNDBOARD_FOLDER, f"temp_{filename}")
+                # Save zip
+                success, error = await asyncio.to_thread(sync_save_bytes, file_bytes, temp_zip_path)
+                if not success:
+                    results.append(f"Error saving zip {filename}: {error}")
+                    continue
 
-                with open(temp_zip_path, 'wb') as f:
-                    f.write(file_bytes)
+                # Extract
+                success, extract_results = await asyncio.to_thread(sync_extract_zip, temp_zip_path, extract_dir)
+                if success:
+                    results.append(f"Unzipped {filename} to {zip_folder_name}/")
+                else:
+                    results.append(f"Error unzipping {filename}: {extract_results[0]}")
 
-                with zipfile.ZipFile(temp_zip_path, 'r') as zip_ref:
-                    for member in zip_ref.namelist():
-                        # Skip directories
-                        if member.endswith('/'): continue
-
-                        # Get basename to flatten structure
-                        base_name = os.path.basename(member)
-                        if not base_name: continue
-
-                        m_ext = os.path.splitext(base_name)[1].lower()
-                        if m_ext in ALLOWED_EXTENSIONS:
-                            target_file = os.path.join(extract_dir, sanitize_filename(base_name))
-                            with open(target_file, 'wb') as out_f:
-                                out_f.write(zip_ref.read(member))
-
-                os.remove(temp_zip_path)
-                results.append(f"Unzipped {filename} to {zip_folder_name}/")
+                # Cleanup
+                await asyncio.to_thread(sync_delete_path, temp_zip_path)
             except Exception as e:
-                results.append(f"Error unzipping {filename}: {str(e)}")
+                results.append(f"Error processing zip {filename}: {str(e)}")
 
         elif ext in ALLOWED_EXTENSIONS:
             # Determine target directory
@@ -1935,14 +1880,20 @@ async def soundboard_upload():
                     save_dir = potential_dir
 
             target_path = os.path.join(save_dir, filename)
-            try:
-                res = file.save(target_path)
-                if asyncio.iscoroutine(res):
-                    await res
 
-                results.append(f"Uploaded {filename}")
+            try:
+                # Read content
+                file_bytes = file.read()
+                if asyncio.iscoroutine(file_bytes):
+                    file_bytes = await file_bytes
+
+                success, error = await asyncio.to_thread(sync_save_bytes, file_bytes, target_path)
+                if success:
+                    results.append(f"Uploaded {filename}")
+                else:
+                    results.append(f"Error saving {filename}: {error}")
             except Exception as e:
-                results.append(f"Error saving {filename}: {str(e)}")
+                results.append(f"Error uploading {filename}: {str(e)}")
         else:
             results.append(f"Skipped {filename} (invalid type)")
 
