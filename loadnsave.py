@@ -2,6 +2,9 @@ import json
 import aiofiles
 import os
 import shutil
+import logging
+
+logger = logging.getLogger("loadnsave")
 
 DATA_FOLDER = "data"
 INFODATA_FOLDER = "infodata"
@@ -19,13 +22,13 @@ async def _load_json_file(folder, filename):
     except FileNotFoundError:
         return {}
     except json.JSONDecodeError as e:
-        print(f"Error decoding JSON from {file_path}: {e}")
+        logger.error(f"Error decoding JSON from {file_path}: {e}")
         # Backup corrupted file
         try:
             shutil.copy2(file_path, file_path + ".bak")
-            print(f"Backed up corrupted file to {file_path}.bak")
+            logger.warning(f"Backed up corrupted file to {file_path}.bak")
         except Exception as backup_error:
-            print(f"Failed to backup corrupted file: {backup_error}")
+            logger.error(f"Failed to backup corrupted file: {backup_error}")
         return {}
 
 async def _load_infodata_cached(filename):
@@ -63,8 +66,14 @@ async def save_player_stats(player_stats):
     await _save_json_file(DATA_FOLDER, 'player_stats.json', player_stats)
 
 # --- Settings ---
+_SETTINGS_CACHE = None
+
 def load_settings():
     """Synchronous load for settings with priority: ENV > config.json"""
+    global _SETTINGS_CACHE
+    if _SETTINGS_CACHE is not None:
+        return _SETTINGS_CACHE.copy()
+
     settings = {}
 
     # 1. Load config.json (Defaults)
@@ -80,20 +89,32 @@ def load_settings():
     if os.getenv("DISCORD_TOKEN"):
         settings["token"] = os.getenv("DISCORD_TOKEN")
 
-    return settings
+    _SETTINGS_CACHE = settings
+    return settings.copy()
 
 async def save_settings(settings_data):
     """Asynchronously save settings to config.json"""
+    global _SETTINGS_CACHE
+    _SETTINGS_CACHE = settings_data.copy()
     await _save_json_file('.', 'config.json', settings_data)
 
 # --- Bot Status ---
+_BOT_STATUS_CACHE = None
+
 async def load_bot_status():
+    global _BOT_STATUS_CACHE
+    if _BOT_STATUS_CACHE is not None:
+        return _BOT_STATUS_CACHE.copy()
+
     data = await _load_json_file(DATA_FOLDER, 'bot_status.json')
     if not data:
-        return {"type": "playing", "text": "Call of Cthulhu"}
-    return data
+        data = {"type": "playing", "text": "Call of Cthulhu"}
+    _BOT_STATUS_CACHE = data
+    return data.copy()
 
 async def save_bot_status(data):
+    global _BOT_STATUS_CACHE
+    _BOT_STATUS_CACHE = data.copy()
     await _save_json_file(DATA_FOLDER, 'bot_status.json', data)
 
 # --- Server Stats ---
@@ -107,35 +128,64 @@ async def load_server_stats():
 
 async def save_server_stats(server_stats):
     global _SERVER_STATS_CACHE
-    await _save_json_file(DATA_FOLDER, 'server_stats.json', server_stats)
     _SERVER_STATS_CACHE = server_stats.copy()
+    await _save_json_file(DATA_FOLDER, 'server_stats.json', server_stats)
+
 
 # --- Server Volumes ---
+_SERVER_VOLUMES_CACHE = None
+
 async def load_server_volumes():
-    return await _load_json_file(DATA_FOLDER, 'server_volumes.json')
+    global _SERVER_VOLUMES_CACHE
+    if _SERVER_VOLUMES_CACHE is None:
+        _SERVER_VOLUMES_CACHE = await _load_json_file(DATA_FOLDER, 'server_volumes.json')
+    return _SERVER_VOLUMES_CACHE.copy()
 
 async def save_server_volumes(volumes):
+    global _SERVER_VOLUMES_CACHE
+    _SERVER_VOLUMES_CACHE = volumes.copy()
     await _save_json_file(DATA_FOLDER, 'server_volumes.json', volumes)
 
 # --- Smart React ---
+_SMART_REACT_CACHE = None
+
 async def smartreact_load():
-    return await _load_json_file(DATA_FOLDER, 'smart_react.json')
+    global _SMART_REACT_CACHE
+    if _SMART_REACT_CACHE is None:
+        _SMART_REACT_CACHE = await _load_json_file(DATA_FOLDER, 'smart_react.json')
+    return _SMART_REACT_CACHE.copy()
 
 async def smartreact_save(smart_react):
+    global _SMART_REACT_CACHE
+    _SMART_REACT_CACHE = smart_react.copy()
     await _save_json_file(DATA_FOLDER, 'smart_react.json', smart_react, ensure_ascii=False)
 
 # --- Auto Room ---
+_AUTOROOM_CACHE = None
+
 async def autoroom_load():
-    return await _load_json_file(DATA_FOLDER, 'autorooms.json')
+    global _AUTOROOM_CACHE
+    if _AUTOROOM_CACHE is None:
+        _AUTOROOM_CACHE = await _load_json_file(DATA_FOLDER, 'autorooms.json')
+    return _AUTOROOM_CACHE.copy()
 
 async def autoroom_save(autorooms):
+    global _AUTOROOM_CACHE
+    _AUTOROOM_CACHE = autorooms.copy()
     await _save_json_file(DATA_FOLDER, 'autorooms.json', autorooms)
 
 # --- Session Data ---
+_SESSION_DATA_CACHE = None
+
 async def load_session_data():
-    return await _load_json_file(DATA_FOLDER, 'session_data.json')
+    global _SESSION_DATA_CACHE
+    if _SESSION_DATA_CACHE is None:
+        _SESSION_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'session_data.json')
+    return _SESSION_DATA_CACHE
 
 async def save_session_data(session_data):
+    global _SESSION_DATA_CACHE
+    _SESSION_DATA_CACHE = session_data
     await _save_json_file(DATA_FOLDER, 'session_data.json', session_data)
 
 # --- Info Data (Read-only mostly) ---
@@ -200,52 +250,115 @@ async def load_macguffin_data():
     return await _load_infodata_cached('macguffin_info.json')
 
 # --- Luck Stats ---
+_LUCK_STATS_CACHE = None
+
 async def load_luck_stats():
-    return await _load_json_file(DATA_FOLDER, 'luck_stats.json')
+    global _LUCK_STATS_CACHE
+    if _LUCK_STATS_CACHE is None:
+        _LUCK_STATS_CACHE = await _load_json_file(DATA_FOLDER, 'luck_stats.json')
+    return _LUCK_STATS_CACHE.copy()
 
 async def save_luck_stats(server_stats):
+    global _LUCK_STATS_CACHE
+    _LUCK_STATS_CACHE = server_stats.copy()
     await _save_json_file(DATA_FOLDER, 'luck_stats.json', server_stats)
 
 # --- Chase Data ---
+_CHASE_DATA_CACHE = None
+
 async def load_chase_data():
-    return await _load_json_file(DATA_FOLDER, 'chase_data.json')
+    global _CHASE_DATA_CACHE
+    if _CHASE_DATA_CACHE is None:
+        _CHASE_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'chase_data.json')
+    return _CHASE_DATA_CACHE.copy()
 
 async def save_chase_data(session_data):
+    global _CHASE_DATA_CACHE
+    _CHASE_DATA_CACHE = session_data.copy()
     await _save_json_file(DATA_FOLDER, 'chase_data.json', session_data)
 
 # --- Deleter Data ---
+_DELETER_DATA_CACHE = None
+
 async def load_deleter_data():
-    return await _load_json_file(DATA_FOLDER, 'deleter_data.json')
+    global _DELETER_DATA_CACHE
+    if _DELETER_DATA_CACHE is None:
+        _DELETER_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'deleter_data.json')
+    return _DELETER_DATA_CACHE.copy()
 
 async def save_deleter_data(session_data):
+    global _DELETER_DATA_CACHE
+    _DELETER_DATA_CACHE = session_data.copy()
     await _save_json_file(DATA_FOLDER, 'deleter_data.json', session_data)
 
 # --- RSS Data ---
+_RSS_DATA_CACHE = None
+
 async def load_rss_data():
-    return await _load_json_file(DATA_FOLDER, 'rss_data.json')
+    global _RSS_DATA_CACHE
+    if _RSS_DATA_CACHE is None:
+        _RSS_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'rss_data.json')
+    return _RSS_DATA_CACHE.copy() # List
 
 async def save_rss_data(session_data):
+    global _RSS_DATA_CACHE
+    # RSS Data is a dict or list? Usually dict {guild_id: [subs]}. But load_rss_data says "return json.loads(data)".
+    # If it's a dict, .copy() is shallow. But better than nothing.
+    # If it's a list, .copy() is shallow.
+    # To be safe for nested structures, deepcopy is needed but expensive.
+    # We'll stick to shallow copy as a first line of defense.
+    if isinstance(session_data, (dict, list)):
+        _RSS_DATA_CACHE = session_data.copy()
+    else:
+        _RSS_DATA_CACHE = session_data
     await _save_json_file(DATA_FOLDER, 'rss_data.json', session_data)
 
 # --- Soundboard Settings ---
+_SOUNDBOARD_SETTINGS_CACHE = None
+
 async def load_soundboard_settings():
-    return await _load_json_file(DATA_FOLDER, 'soundboard_settings.json')
+    global _SOUNDBOARD_SETTINGS_CACHE
+    if _SOUNDBOARD_SETTINGS_CACHE is None:
+        _SOUNDBOARD_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'soundboard_settings.json')
+    return _SOUNDBOARD_SETTINGS_CACHE.copy()
 
 async def save_soundboard_settings(settings_data):
+    global _SOUNDBOARD_SETTINGS_CACHE
+    _SOUNDBOARD_SETTINGS_CACHE = settings_data.copy()
     await _save_json_file(DATA_FOLDER, 'soundboard_settings.json', settings_data)
 
 # --- Music Blacklist ---
+_MUSIC_BLACKLIST_CACHE = None
+
 async def load_music_blacklist():
-    return await _load_json_file(DATA_FOLDER, 'music_blacklist.json')
+    global _MUSIC_BLACKLIST_CACHE
+    if _MUSIC_BLACKLIST_CACHE is None:
+        _MUSIC_BLACKLIST_CACHE = await _load_json_file(DATA_FOLDER, 'music_blacklist.json')
+    # List
+    if isinstance(_MUSIC_BLACKLIST_CACHE, list):
+        return _MUSIC_BLACKLIST_CACHE.copy()
+    return _MUSIC_BLACKLIST_CACHE
 
 async def save_music_blacklist(blacklist):
+    global _MUSIC_BLACKLIST_CACHE
+    if isinstance(blacklist, list):
+        _MUSIC_BLACKLIST_CACHE = blacklist.copy()
+    else:
+        _MUSIC_BLACKLIST_CACHE = blacklist
     await _save_json_file(DATA_FOLDER, 'music_blacklist.json', blacklist)
 
 # --- Reminder Data ---
+_REMINDER_DATA_CACHE = None
+
 async def load_reminder_data():
-    return await _load_json_file(DATA_FOLDER, 'reminder_data.json')
+    global _REMINDER_DATA_CACHE
+    if _REMINDER_DATA_CACHE is None:
+        _REMINDER_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'reminder_data.json')
+    return _REMINDER_DATA_CACHE.copy()
 
 async def save_reminder_data(session_data):
+    global _REMINDER_DATA_CACHE
+    _REMINDER_DATA_CACHE = session_data.copy()
     await _save_json_file(DATA_FOLDER, 'reminder_data.json', session_data)
 
 # --- Game Data ---
@@ -262,17 +375,31 @@ async def game_save_questions_data(session_data):
     await _save_json_file(GAMEDATA_FOLDER, 'questions_data.json', session_data)
 
 # --- Retired Characters ---
+_RETIRED_CHARACTERS_CACHE = None
+
 async def load_retired_characters_data():
-    return await _load_json_file(DATA_FOLDER, 'retired_characters_data.json')
+    global _RETIRED_CHARACTERS_CACHE
+    if _RETIRED_CHARACTERS_CACHE is None:
+        _RETIRED_CHARACTERS_CACHE = await _load_json_file(DATA_FOLDER, 'retired_characters_data.json')
+    return _RETIRED_CHARACTERS_CACHE
 
 async def save_retired_characters_data(session_data):
+    global _RETIRED_CHARACTERS_CACHE
+    _RETIRED_CHARACTERS_CACHE = session_data
     await _save_json_file(DATA_FOLDER, 'retired_characters_data.json', session_data)
 
 # --- Gamemode Stats ---
+_GAMEMODE_STATS_CACHE = None
+
 async def load_gamemode_stats():
-    return await _load_json_file(DATA_FOLDER, 'gamemode.json')
+    global _GAMEMODE_STATS_CACHE
+    if _GAMEMODE_STATS_CACHE is None:
+        _GAMEMODE_STATS_CACHE = await _load_json_file(DATA_FOLDER, 'gamemode.json')
+    return _GAMEMODE_STATS_CACHE
 
 async def save_gamemode_stats(server_stats):
+    global _GAMEMODE_STATS_CACHE
+    _GAMEMODE_STATS_CACHE = server_stats
     await _save_json_file(DATA_FOLDER, 'gamemode.json', server_stats)
 
 # --- Karma System ---
@@ -289,54 +416,104 @@ async def save_karma_stats(stats):
     await _save_json_file(DATA_FOLDER, 'karma_stats.json', stats)
 
 # --- Reaction Roles ---
+_REACTION_ROLES_CACHE = None
+
 async def load_reaction_roles():
-    return await _load_json_file(DATA_FOLDER, 'reaction_roles.json')
+    global _REACTION_ROLES_CACHE
+    if _REACTION_ROLES_CACHE is None:
+        _REACTION_ROLES_CACHE = await _load_json_file(DATA_FOLDER, 'reaction_roles.json')
+    return _REACTION_ROLES_CACHE
 
 async def save_reaction_roles(roles_data):
+    global _REACTION_ROLES_CACHE
+    _REACTION_ROLES_CACHE = roles_data
     await _save_json_file(DATA_FOLDER, 'reaction_roles.json', roles_data)
 
 # --- Pokemon GO Data ---
+_POGO_SETTINGS_CACHE = None
+_POGO_EVENTS_CACHE = None
+
 async def load_pogo_settings():
-    return await _load_json_file(DATA_FOLDER, 'pogo_settings.json')
+    global _POGO_SETTINGS_CACHE
+    if _POGO_SETTINGS_CACHE is None:
+        _POGO_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'pogo_settings.json')
+    return _POGO_SETTINGS_CACHE
 
 async def save_pogo_settings(settings):
+    global _POGO_SETTINGS_CACHE
+    _POGO_SETTINGS_CACHE = settings
     await _save_json_file(DATA_FOLDER, 'pogo_settings.json', settings)
 
 async def load_pogo_events():
-    return await _load_json_file(DATA_FOLDER, 'pogo_events.json')
+    global _POGO_EVENTS_CACHE
+    if _POGO_EVENTS_CACHE is None:
+        _POGO_EVENTS_CACHE = await _load_json_file(DATA_FOLDER, 'pogo_events.json')
+    return _POGO_EVENTS_CACHE
 
 async def save_pogo_events(events):
+    global _POGO_EVENTS_CACHE
+    _POGO_EVENTS_CACHE = events
     await _save_json_file(DATA_FOLDER, 'pogo_events.json', events)
 
 # --- Giveaway Data ---
+_GIVEAWAY_DATA_CACHE = None
+
 async def load_giveaway_data():
-    return await _load_json_file(DATA_FOLDER, 'giveaway_data.json')
+    global _GIVEAWAY_DATA_CACHE
+    if _GIVEAWAY_DATA_CACHE is None:
+        _GIVEAWAY_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'giveaway_data.json')
+    return _GIVEAWAY_DATA_CACHE
 
 async def save_giveaway_data(data):
+    global _GIVEAWAY_DATA_CACHE
+    _GIVEAWAY_DATA_CACHE = data
     await _save_json_file(DATA_FOLDER, 'giveaway_data.json', data)
 
 # --- Polls Data ---
+_POLLS_DATA_CACHE = None
+
 async def load_polls_data():
-    return await _load_json_file(DATA_FOLDER, 'polls_data.json')
+    global _POLLS_DATA_CACHE
+    if _POLLS_DATA_CACHE is None:
+        _POLLS_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'polls_data.json')
+    return _POLLS_DATA_CACHE
 
 async def save_polls_data(data):
+    global _POLLS_DATA_CACHE
+    _POLLS_DATA_CACHE = data
     await _save_json_file(DATA_FOLDER, 'polls_data.json', data)
 
 # --- Gamer Roles Data ---
+_GAMEROLE_SETTINGS_CACHE = None
+
 async def load_gamerole_settings():
-    return await _load_json_file(DATA_FOLDER, 'gamerole_settings.json')
+    global _GAMEROLE_SETTINGS_CACHE
+    if _GAMEROLE_SETTINGS_CACHE is None:
+        _GAMEROLE_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'gamerole_settings.json')
+    return _GAMEROLE_SETTINGS_CACHE
 
 async def save_gamerole_settings(data):
+    global _GAMEROLE_SETTINGS_CACHE
+    _GAMEROLE_SETTINGS_CACHE = data
     await _save_json_file(DATA_FOLDER, 'gamerole_settings.json', data)
 
 # --- Enroll Wizard Settings ---
+_ENROLL_SETTINGS_CACHE = None
+
 async def load_enroll_settings():
-    return await _load_json_file(DATA_FOLDER, 'enroll_settings.json')
+    global _ENROLL_SETTINGS_CACHE
+    if _ENROLL_SETTINGS_CACHE is None:
+        _ENROLL_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'enroll_settings.json')
+    return _ENROLL_SETTINGS_CACHE
 
 async def save_enroll_settings(data):
+    global _ENROLL_SETTINGS_CACHE
+    _ENROLL_SETTINGS_CACHE = data
     await _save_json_file(DATA_FOLDER, 'enroll_settings.json', data)
 
 # --- Loot Settings ---
+_LOOT_SETTINGS_CACHE = None
+
 DEFAULT_LOOT_ITEMS = [
     "A Mysterious Journal", "A Cultist Robes", "A Whispering Locket",
     "A Mysterious Puzzle Box", "A Map of the area", "An Ornate dagger",
@@ -428,10 +605,14 @@ DEFAULT_LOOT_ITEMS = [
 ]
 
 async def load_loot_settings():
+    global _LOOT_SETTINGS_CACHE
+    if _LOOT_SETTINGS_CACHE is not None:
+        return _LOOT_SETTINGS_CACHE
+
     data = await _load_json_file(DATA_FOLDER, 'loot_settings.json')
     if not data:
         # Return defaults
-        return {
+        data = {
             "items": DEFAULT_LOOT_ITEMS,
             "money_chance": 25,
             "money_min": 0.01,
@@ -440,7 +621,10 @@ async def load_loot_settings():
             "num_items_min": 1,
             "num_items_max": 5
         }
+    _LOOT_SETTINGS_CACHE = data
     return data
 
 async def save_loot_settings(data):
+    global _LOOT_SETTINGS_CACHE
+    _LOOT_SETTINGS_CACHE = data
     await _save_json_file(DATA_FOLDER, 'loot_settings.json', data)
