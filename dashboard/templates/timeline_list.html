@@ -73,6 +73,8 @@
                 <h1 class="display-5 mb-0 text-success">${decodedKey}</h1>
             </div>
 
+            <div id="image-control-container" class="mb-4"></div>
+
             <div class="card bg-dark border-secondary">
                 <div class="card-body">
                     <ul class="list-group list-group-flush bg-transparent">
@@ -83,6 +85,9 @@
         `;
 
         container.innerHTML = html;
+
+        initImageControl('image-control-container', '{{ type_slug }}', decodedKey);
+
         container.classList.remove('hidden');
         placeholder.style.setProperty('display', 'none', 'important');
         placeholder.classList.remove('d-flex');

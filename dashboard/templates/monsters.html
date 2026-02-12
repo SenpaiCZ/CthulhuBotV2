@@ -79,6 +79,8 @@
                     </div>
                 </div>
 
+                <div id="image-control-container" class="mb-4"></div>
+
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-body">
                         ${m.description ? `<p class="card-text border-start border-success border-3 ps-3">${m.description}</p>` : ''}
@@ -200,6 +202,9 @@
             `;
 
             container.innerHTML = html;
+
+            initImageControl('image-control-container', '{{ type_slug }}', m.name);
+
             container.classList.remove('hidden');
             placeholder.style.setProperty('display', 'none', 'important');
             placeholder.classList.remove('d-flex');

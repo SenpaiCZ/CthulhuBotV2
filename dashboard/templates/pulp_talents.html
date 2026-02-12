@@ -31,6 +31,9 @@
                             <div class="card-body">
                                 <p class="card-text text-light">{{ talent.description }}</p>
                             </div>
+                            <div class="card-footer border-secondary">
+                                <button class="btn btn-sm btn-outline-secondary w-100" onclick="openImageModal('{{ type_slug }}', '{{ talent.name | replace("'", "\\'") }}')">Manage Image</button>
+                            </div>
                         </div>
                     </div>
                 {% endfor %}

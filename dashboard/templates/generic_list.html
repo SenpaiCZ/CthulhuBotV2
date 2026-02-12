@@ -26,6 +26,9 @@
                     <div class="card-body">
                         <p class="card-text text-light" style="white-space: pre-wrap;">{{ description }}</p>
                     </div>
+                    <div class="card-footer border-secondary">
+                        <button class="btn btn-sm btn-outline-secondary w-100" onclick="openImageModal('{{ type_slug }}', '{{ key | replace("'", "\\'") }}')">Manage Image</button>
+                    </div>
                 </div>
             </div>
             {% endfor %}

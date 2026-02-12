@@ -53,6 +53,12 @@
 </head>
 <body>
     <div class="coc-sheet">
+        {% set final_image = image_url or occupation.link %}
+        {% if final_image %}
+        <div class="d-flex align-items-start">
+            <div class="flex-grow-1">
+        {% endif %}
+
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
                 <h1 class="display-5 mb-0 text-success">{{ name }}</h1>
@@ -60,36 +66,34 @@
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-body">
-                        {% if occupation.description %}
-                            <p class="card-text border-start border-success border-3 ps-3">{{ occupation.description }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="section-header">Details</div>
-                <ul class="list-group list-group-flush bg-transparent">
-                    <li class="list-group-item bg-transparent border-secondary ps-0 py-2">
-                        <strong class="text-warning">Skill Points:</strong> <span class="text-light">{{ occupation.skill_points }}</span>
-                    </li>
-                    <li class="list-group-item bg-transparent border-secondary ps-0 py-2">
-                        <strong class="text-warning">Credit Rating:</strong> <span class="text-light">{{ occupation.credit_rating }}</span>
-                    </li>
-                    <li class="list-group-item bg-transparent border-secondary ps-0 py-2">
-                        <strong class="text-warning">Suggested Contacts:</strong> <span class="text-light">{{ occupation.suggested_contacts }}</span>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="col-md-4">
-                {% if occupation.link %}
-                    <img src="{{ occupation.link }}" alt="{{ name }}" class="occupation-image">
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-body">
+                {% if occupation.description %}
+                    <p class="card-text border-start border-success border-3 ps-3">{{ occupation.description }}</p>
                 {% endif %}
             </div>
         </div>
+
+        <div class="section-header">Details</div>
+        <ul class="list-group list-group-flush bg-transparent">
+            <li class="list-group-item bg-transparent border-secondary ps-0 py-2">
+                <strong class="text-warning">Skill Points:</strong> <span class="text-light">{{ occupation.skill_points }}</span>
+            </li>
+            <li class="list-group-item bg-transparent border-secondary ps-0 py-2">
+                <strong class="text-warning">Credit Rating:</strong> <span class="text-light">{{ occupation.credit_rating }}</span>
+            </li>
+            <li class="list-group-item bg-transparent border-secondary ps-0 py-2">
+                <strong class="text-warning">Suggested Contacts:</strong> <span class="text-light">{{ occupation.suggested_contacts }}</span>
+            </li>
+        </ul>
+
+        {% if final_image %}
+            </div>
+            <div class="ms-3" style="width: 300px; flex-shrink: 0;">
+                <img src="{{ final_image }}" class="img-fluid rounded border border-secondary" alt="{{ name }}" style="width: 100%; object-fit: contain;">
+            </div>
+        </div>
+        {% endif %}
 
         <div class="section-header">Skills</div>
         <div class="card bg-dark border-secondary">

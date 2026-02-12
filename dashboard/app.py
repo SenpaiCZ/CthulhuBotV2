@@ -42,7 +42,9 @@ from rss_utils import get_youtube_rss_url
 
 SOUNDBOARD_FOLDER = "soundboard"
 BACKUP_FOLDER = "backups"
+IMAGES_FOLDER = "images"
 ALLOWED_EXTENSIONS = {'.mp3', '.wav', '.ogg', '.m4a', '.flac'}
+ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp'}
 server_volumes = {} # guild_id (str) -> {'music': 1.0, 'soundboard': 0.5}
 guild_mixers = {} # guild_id (str) -> MixingAudioSource
 
@@ -55,6 +57,10 @@ async def app_startup():
     global server_volumes
     loaded = await load_server_volumes()
     server_volumes.update(loaded)
+
+    # Ensure images folder exists
+    if not os.path.exists(IMAGES_FOLDER):
+        os.makedirs(IMAGES_FOLDER)
 
 # Helper to check login
 def is_admin():
@@ -122,6 +128,21 @@ def sanitize_filename(filename):
     # Remove leading/trailing dots/spaces
     clean = clean.strip('. ')
     return clean or 'unnamed'
+
+def get_image_url(type_slug, name):
+    """Checks if an image exists for the given type and name, returning the URL if so."""
+    safe_name = sanitize_filename(name)
+    target_dir = os.path.join(IMAGES_FOLDER, type_slug)
+
+    if not os.path.exists(target_dir):
+        return None
+
+    for ext in ALLOWED_IMAGE_EXTENSIONS:
+        filename = f"{safe_name}{ext}"
+        if os.path.exists(os.path.join(target_dir, filename)):
+            return f"/images/{type_slug}/{filename}"
+
+    return None
 
 def get_soundboard_files():
     structure = {}
@@ -204,6 +225,109 @@ async def bot_status():
     if app.bot and app.bot.is_ready():
         is_ready = True
     return jsonify({"status": "online", "ready": is_ready})
+
+@app.route('/images/<path:filename>')
+async def serve_image(filename):
+    return await send_from_directory(IMAGES_FOLDER, filename)
+
+@app.route('/api/images/upload', methods=['POST'])
+async def upload_image():
+    if not is_admin(): return "Unauthorized", 401
+
+    form = await request.form
+    files = await request.files
+
+    type_slug = form.get('type_slug')
+    name = form.get('name')
+    file = files.get('file')
+
+    if not type_slug or not name or not file:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if not file.filename:
+        return jsonify({"status": "error", "message": "No file selected"}), 400
+
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        return jsonify({"status": "error", "message": "Invalid file type"}), 400
+
+    # Ensure type directory exists
+    safe_type = sanitize_filename(type_slug)
+    target_dir = os.path.join(IMAGES_FOLDER, safe_type)
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+
+    # Sanitize name
+    safe_name = sanitize_filename(name)
+    filename = f"{safe_name}{ext}"
+    target_path = os.path.join(target_dir, filename)
+
+    # Remove any existing images with different extensions for this entry
+    for other_ext in ALLOWED_IMAGE_EXTENSIONS:
+        other_filename = f"{safe_name}{other_ext}"
+        other_path = os.path.join(target_dir, other_filename)
+        if os.path.exists(other_path):
+            os.remove(other_path)
+
+    try:
+        # Save file
+        file_bytes = file.read()
+        if asyncio.iscoroutine(file_bytes):
+            file_bytes = await file_bytes
+
+        with open(target_path, 'wb') as f:
+            f.write(file_bytes)
+
+        return jsonify({"status": "success", "url": f"/images/{safe_type}/{filename}"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/images/delete', methods=['POST'])
+async def delete_image():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    type_slug = data.get('type_slug')
+    name = data.get('name')
+
+    if not type_slug or not name:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    safe_type = sanitize_filename(type_slug)
+    safe_name = sanitize_filename(name)
+    target_dir = os.path.join(IMAGES_FOLDER, safe_type)
+
+    deleted = False
+
+    if os.path.exists(target_dir):
+        for ext in ALLOWED_IMAGE_EXTENSIONS:
+            filename = f"{safe_name}{ext}"
+            target_path = os.path.join(target_dir, filename)
+            if os.path.exists(target_path):
+                try:
+                    os.remove(target_path)
+                    deleted = True
+                except Exception as e:
+                    return jsonify({"status": "error", "message": str(e)}), 500
+
+    if deleted:
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"status": "error", "message": "Image not found"}), 404
+
+@app.route('/api/images/check', methods=['GET'])
+async def check_image():
+    type_slug = request.args.get('type_slug')
+    name = request.args.get('name')
+
+    if not type_slug or not name:
+        return jsonify({"found": False}), 400
+
+    url = get_image_url(type_slug, name)
+    if url:
+        return jsonify({"found": True, "url": url})
+    else:
+        return jsonify({"found": False})
 
 @app.route('/')
 async def index():
@@ -432,7 +556,8 @@ async def render_monster_view():
     if not target:
         return f"Monster '{name}' not found", 404
 
-    return await render_template('render_monster.html', monster=target, emojis=emojis, emoji_lib=emoji)
+    image_url = get_image_url("monster", target['name'])
+    return await render_template('render_monster.html', monster=target, emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/deity')
 async def render_deity_view():
@@ -456,7 +581,8 @@ async def render_deity_view():
     if not target:
         return f"Deity '{name}' not found", 404
 
-    return await render_template('render_deity.html', deity=target, emojis=emojis, emoji_lib=emoji)
+    image_url = get_image_url("deity", target['name'])
+    return await render_template('render_deity.html', deity=target, emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/spell')
 async def render_spell_view():
@@ -480,7 +606,8 @@ async def render_spell_view():
     if not target:
         return f"Spell '{name}' not found", 404
 
-    return await render_template('render_spell.html', spell=target, emojis=emojis, emoji_lib=emoji)
+    image_url = get_image_url("spell", target['name'])
+    return await render_template('render_spell.html', spell=target, emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/weapon')
 async def render_weapon_view():
@@ -503,8 +630,8 @@ async def render_weapon_view():
         return f"Weapon '{name}' not found", 404
 
     weapon = data[target_key]
-
-    return await render_template('render_weapon.html', weapon=weapon, weapon_name=target_key)
+    image_url = get_image_url("weapon", target_key)
+    return await render_template('render_weapon.html', weapon=weapon, weapon_name=target_key, image_url=image_url)
 
 # --- New Render Routes ---
 
@@ -535,7 +662,8 @@ async def render_archetype_view():
     if 'adjustments' in archetype:
         archetype['adjustments'] = [emoji.emojize(adj, language='alias') for adj in archetype['adjustments']]
 
-    return await render_template('render_archetype.html', archetype=archetype, name=target_key, emojis=emojis, emoji_lib=emoji)
+    image_url = get_image_url("archetype", target_key)
+    return await render_template('render_archetype.html', archetype=archetype, name=target_key, emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/pulp_talent')
 async def render_pulp_talent_view():
@@ -569,7 +697,8 @@ async def render_pulp_talent_view():
     if not target_talent:
         return f"Talent '{name}' not found", 404
 
-    return await render_template('render_pulp_talent.html', talent=target_talent, emojis=emojis, emoji_lib=emoji)
+    image_url = get_image_url("pulp_talent", target_talent['name'])
+    return await render_template('render_pulp_talent.html', talent=target_talent, emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/insane_talent')
 async def render_insane_talent_view():
@@ -589,7 +718,8 @@ async def render_insane_talent_view():
     if not target_key:
         return f"Insane Talent '{name}' not found", 404
 
-    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Insane Talent", emojis=emojis, emoji_lib=emoji)
+    image_url = get_image_url("insane_talent", target_key)
+    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Insane Talent", emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/mania')
 async def render_mania_view():
@@ -609,7 +739,8 @@ async def render_mania_view():
     if not target_key:
         return f"Mania '{name}' not found", 404
 
-    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Mania", emojis=emojis, emoji_lib=emoji)
+    image_url = get_image_url("mania", target_key)
+    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Mania", emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/phobia')
 async def render_phobia_view():
@@ -629,7 +760,8 @@ async def render_phobia_view():
     if not target_key:
         return f"Phobia '{name}' not found", 404
 
-    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Phobia", emojis=emojis, emoji_lib=emoji)
+    image_url = get_image_url("phobia", target_key)
+    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Phobia", emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/poison')
 async def render_poison_view():
@@ -649,7 +781,8 @@ async def render_poison_view():
     if not target_key:
         return f"Poison '{name}' not found", 404
 
-    return await render_template('render_poison.html', title=target_key, poison=data[target_key], type="Poison", emojis=emojis, emoji_lib=emoji)
+    image_url = get_image_url("poison", target_key)
+    return await render_template('render_poison.html', title=target_key, poison=data[target_key], type="Poison", emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/skill')
 async def render_skill_view():
@@ -669,7 +802,8 @@ async def render_skill_view():
     if not target_key:
         return f"Skill '{name}' not found", 404
 
-    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Skill", emojis=emojis, emoji_lib=emoji)
+    image_url = get_image_url("skill", target_key)
+    return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Skill", emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/invention')
 async def render_invention_view():
@@ -690,7 +824,8 @@ async def render_invention_view():
     if not target_key:
         return f"Invention decade '{name}' not found", 404
 
-    return await render_template('render_timeline.html', title=target_key, events=data[target_key], type="Inventions", emojis=emojis, emoji_lib=emoji)
+    image_url = get_image_url("invention", target_key)
+    return await render_template('render_timeline.html', title=target_key, events=data[target_key], type="Inventions", emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/year')
 async def render_year_view():
@@ -711,7 +846,8 @@ async def render_year_view():
     if not target_key:
         return f"Year '{name}' not found", 404
 
-    return await render_template('render_timeline.html', title=target_key, events=data[target_key], type="Timeline", emojis=emojis, emoji_lib=emoji)
+    image_url = get_image_url("year", target_key)
+    return await render_template('render_timeline.html', title=target_key, events=data[target_key], type="Timeline", emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/occupation')
 async def render_occupation_view():
@@ -732,7 +868,8 @@ async def render_occupation_view():
     if not target_key:
         return f"Occupation '{name}' not found", 404
 
-    return await render_template('render_occupation.html', occupation=data[target_key], name=target_key)
+    image_url = get_image_url("occupation", target_key)
+    return await render_template('render_occupation.html', occupation=data[target_key], name=target_key, image_url=image_url)
 
 
 # --- Admin Routes ---
@@ -746,26 +883,26 @@ async def admin_dashboard():
 async def admin_monsters():
     monsters_data = await _load_json_file(INFODATA_FOLDER, 'monsters.json')
     stat_emojis = {k: emoji.emojize(v, language='alias') for k, v in emojis.stat_emojis.items()}
-    return await render_template('monsters.html', data=monsters_data, stat_emojis=stat_emojis)
+    return await render_template('monsters.html', data=monsters_data, stat_emojis=stat_emojis, type_slug="monster")
 
 @app.route('/deities')
 async def admin_deities():
     deities_data = await _load_json_file(INFODATA_FOLDER, 'deities.json')
     stat_emojis = {k: emoji.emojize(v, language='alias') for k, v in emojis.stat_emojis.items()}
-    return await render_template('deities.html', data=deities_data, stat_emojis=stat_emojis)
+    return await render_template('deities.html', data=deities_data, stat_emojis=stat_emojis, type_slug="deity")
 
 @app.route('/spells')
 async def admin_spells():
     spells_data = await _load_json_file(INFODATA_FOLDER, 'spells.json')
     stat_emojis = {k: emoji.emojize(v, language='alias') for k, v in emojis.stat_emojis.items()}
-    return await render_template('spells.html', data=spells_data, stat_emojis=stat_emojis)
+    return await render_template('spells.html', data=spells_data, stat_emojis=stat_emojis, type_slug="spell")
 
 @app.route('/weapons')
 async def admin_weapons():
     weapons_data = await _load_json_file(INFODATA_FOLDER, 'weapons.json')
     if not weapons_data:
         print(f"Warning: Weapons data is empty or file not found. Path: {os.path.join(INFODATA_FOLDER, 'weapons.json')} CWD: {os.getcwd()}")
-    return await render_template('weapons.html', data=weapons_data)
+    return await render_template('weapons.html', data=weapons_data, type_slug="weapon")
 
 # --- New Admin Views ---
 
@@ -778,32 +915,32 @@ async def admin_archetypes():
             archetype['description'] = emoji.emojize(archetype['description'], language='alias')
         if 'adjustments' in archetype:
             archetype['adjustments'] = [emoji.emojize(adj, language='alias') for adj in archetype['adjustments']]
-    return await render_template('archetypes.html', data=data)
+    return await render_template('archetypes.html', data=data, type_slug="archetype")
 
 @app.route('/pulp_talents')
 async def admin_pulp_talents():
     data = await load_pulp_talents_data()
-    return await render_template('pulp_talents.html', data=data)
+    return await render_template('pulp_talents.html', data=data, type_slug="pulp_talent")
 
 @app.route('/insane_talents')
 async def admin_insane_talents():
     data = await load_madness_insane_talent_data()
-    return await render_template('generic_list.html', data=data, title="Insane Talents")
+    return await render_template('generic_list.html', data=data, title="Insane Talents", type_slug="insane_talent")
 
 @app.route('/manias')
 async def admin_manias():
     data = await load_manias_data()
-    return await render_template('generic_list.html', data=data, title="Manias")
+    return await render_template('generic_list.html', data=data, title="Manias", type_slug="mania")
 
 @app.route('/phobias')
 async def admin_phobias():
     data = await load_phobias_data()
-    return await render_template('generic_list.html', data=data, title="Phobias")
+    return await render_template('generic_list.html', data=data, title="Phobias", type_slug="phobia")
 
 @app.route('/poisons')
 async def admin_poisons():
     data = await load_poisons_data()
-    return await render_template('poisons.html', data=data, title="Poisons")
+    return await render_template('poisons.html', data=data, title="Poisons", type_slug="poison")
 
 @app.route('/skills')
 async def admin_skills():
@@ -812,22 +949,22 @@ async def admin_skills():
     processed_data = {}
     for key, description in data.items():
         processed_data[key] = emoji.emojize(description, language='alias')
-    return await render_template('generic_list.html', data=processed_data, title="Skills")
+    return await render_template('generic_list.html', data=processed_data, title="Skills", type_slug="skill")
 
 @app.route('/inventions')
 async def admin_inventions():
     data = await load_inventions_data()
-    return await render_template('timeline_list.html', data=data, title="Inventions")
+    return await render_template('timeline_list.html', data=data, title="Inventions", type_slug="invention")
 
 @app.route('/years')
 async def admin_years():
     data = await load_years_data()
-    return await render_template('timeline_list.html', data=data, title="Years Timeline")
+    return await render_template('timeline_list.html', data=data, title="Years Timeline", type_slug="year")
 
 @app.route('/occupations')
 async def admin_occupations():
     data = await load_occupations_data()
-    return await render_template('occupations.html', data=data)
+    return await render_template('occupations.html', data=data, type_slug="occupation")
 
 @app.route('/admin/browse/<folder_name>')
 async def browse_files(folder_name):
