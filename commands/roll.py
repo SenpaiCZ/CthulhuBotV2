@@ -12,9 +12,11 @@ from loadnsave import (
     load_session_data,
     save_session_data,
     load_luck_stats,
+    load_skills_data
 )
 from emojis import get_stat_emoji
 from support_functions import session_success
+from rapidfuzz import process, fuzz
 
 class DisambiguationSelect(Select):
     def __init__(self, options):
@@ -238,7 +240,7 @@ class SessionView(View):
             return False
         return True
 
-class newroll(commands.Cog):
+class Roll(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -294,9 +296,9 @@ class newroll(commands.Cog):
         # If not Success and not Fumble, it is Fail
         return "Fail :x:", 1
 
-    @commands.hybrid_command(name="newroll", aliases=["roll", "diceroll", "d", "nd"], guild_only=True, description="Perform a dice roll or skill check.")
+    @commands.hybrid_command(name="roll", aliases=["newroll", "diceroll", "d", "nd"], guild_only=True, description="Perform a dice roll or skill check.")
     @app_commands.describe(dice_expression="The dice expression (e.g. 3d6) or skill name (e.g. Spot Hidden)")
-    async def newroll(self, ctx, *, dice_expression: str):
+    async def roll(self, ctx, *, dice_expression: str):
         """
         🎲 Perform a dice roll or skill check.
         Interactive interface allows for Bonus/Penalty dice and Luck spending.
@@ -344,9 +346,31 @@ class newroll(commands.Cog):
 
             # Exact match
             for stat_key, stat_value in player_stats[server_id][user_id].items():
-                if any(word.lower() == stat_key.lower() for word in normalized_dice_expression.split()):
+                # We need to handle potential autocomplete formatting which might include value like "Skill (50)"
+                # But here we are matching against keys in the json.
+                # If the user selected from autocomplete "Spot Hidden (50)", the dice_expression string is "Spot Hidden (50)"
+                # We should strip the value part for matching if it exists.
+
+                # Try to clean up input if it came from autocomplete
+                clean_expression = dice_expression
+                match = re.match(r"^(.*?)\s*\(\d+\)$", dice_expression)
+                if match:
+                    clean_expression = match.group(1)
+
+                normalized_input = clean_expression.lower()
+
+                if stat_key.lower() == normalized_input:
                     matching_stats.append(stat_key)
                     break
+
+            # If exact match failed, try the old logic of searching words
+            if not matching_stats:
+                # Revert to original logic for manual typing compatibility
+                normalized_dice_expression = dice_expression.lower()
+                for stat_key, stat_value in player_stats[server_id][user_id].items():
+                    if any(word.lower() == stat_key.lower() for word in normalized_dice_expression.split()):
+                        matching_stats.append(stat_key)
+                        break
 
             # Partial match if no exact match
             if not matching_stats:
@@ -497,5 +521,44 @@ class newroll(commands.Cog):
             )
             await ctx.send(embed=embed)
 
+    @roll.autocomplete('dice_expression')
+    async def roll_autocomplete(self, interaction: discord.Interaction, current: str):
+        server_id = str(interaction.guild_id)
+        user_id = str(interaction.user.id)
+
+        player_stats = await load_player_stats()
+
+        choices = []
+        user_has_char = False
+
+        if server_id in player_stats and user_id in player_stats[server_id]:
+            user_has_char = True
+            # Use user's skills
+            stats = player_stats[server_id][user_id]
+            # Create list of suggestions like "Skill (Value)"
+            # Filter out hidden/internal stats if necessary, but CoC stats are mostly public to the player
+            for stat, value in stats.items():
+                choices.append(f"{stat} ({value})")
+        else:
+            # Fallback to generic skills
+            skills_data = await load_skills_data()
+            choices = list(skills_data.keys())
+
+        if not current:
+            # Return first 25 sorted alphabetically
+            sorted_choices = sorted(choices)[:25]
+            return [app_commands.Choice(name=c[:100], value=c[:100]) for c in sorted_choices]
+
+        # Use rapidfuzz to find best matches
+        matches = process.extract(current, choices, scorer=fuzz.WRatio, limit=25)
+
+        results = []
+        for m in matches:
+            name = m[0]
+            value = m[0]
+            results.append(app_commands.Choice(name=name[:100], value=value[:100]))
+
+        return results
+
 async def setup(bot):
-    await bot.add_cog(newroll(bot))
+    await bot.add_cog(Roll(bot))
