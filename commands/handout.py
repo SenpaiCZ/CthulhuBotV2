@@ -6,7 +6,7 @@ import random
 import os
 
 def get_available_fonts():
-    fonts_dir = os.path.join("dashboard", "static", "fonts")
+    fonts_dir = os.path.join("data", "fonts")
     if not os.path.exists(fonts_dir):
         return []
     fonts = [f for f in os.listdir(fonts_dir) if f.lower().endswith(('.ttf', '.otf', '.woff', '.woff2'))]

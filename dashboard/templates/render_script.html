@@ -8,7 +8,7 @@
         {% if font_filename %}
         @font-face {
             font-family: 'CustomScript';
-            src: url("{{ url_for('static', filename='fonts/' + font_filename) }}");
+            src: url("{{ url_for('serve_fonts', filename=font_filename) }}");
         }
         {% endif %}
 
