@@ -288,7 +288,16 @@ if __name__ == "__main__":
     parser.add_argument("pid", nargs='?', type=int, help="PID of the process to wait for")
     parser.add_argument("--no-restart", action="store_true", help="Do not restart the bot automatically")
     parser.add_argument("--no-backup", action="store_true", help="Skip backup")
+    parser.add_argument("--update-infodata", action="store_true", help="Update infodata folder (overwrite changes)")
     args = parser.parse_args()
+
+    # Update global sets based on arguments
+    if args.update_infodata:
+        if "infodata" in BACKUP_EXCLUDE_DIRS:
+            BACKUP_EXCLUDE_DIRS.remove("infodata")
+        if "infodata" in PROTECTED_DIRS:
+            PROTECTED_DIRS.remove("infodata")
+        log("Infodata update enabled. 'infodata' removed from exclusion/protection.")
 
     # 0. Cleanup old updater if exists
     cleanup_old_updater()

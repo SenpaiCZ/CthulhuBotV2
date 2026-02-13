@@ -197,12 +197,16 @@
 
     async function confirmUpdate() {
         if (confirm("Are you sure you want to update the bot? This will restart the system.")) {
+            const checkbox = document.getElementById('updateInfodataCheck');
+            const updateInfodata = checkbox ? checkbox.checked : false;
+
             try {
                 const response = await fetch('/api/admin/update', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({ update_infodata: updateInfodata })
                 });
                 const data = await response.json();
                 if (data.status === 'success') {
