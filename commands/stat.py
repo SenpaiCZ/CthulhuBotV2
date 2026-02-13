@@ -2,11 +2,11 @@ import discord
 import re
 import math
 import asyncio
-import shlex
 from discord.ext import commands
 from discord import app_commands
 from loadnsave import load_player_stats, save_player_stats, load_server_stats, load_gamemode_stats
 from emojis import get_stat_emoji
+from rapidfuzz import process, fuzz
 
 
 class stat(commands.Cog):
@@ -14,11 +14,13 @@ class stat(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command(aliases=["cstat"])
-    @app_commands.describe(query="The stat to update and its new value (e.g. 'HP +5', 'STR 50')")
-    async def stat(self, ctx, *, query: str = None):
+    @commands.hybrid_command(aliases=["cstat"], description="Change the value of a skill or stat for your character.")
+    @app_commands.describe(stat_name="The name of the stat/skill (e.g. HP, STR, Spot Hidden)", value="The new value (e.g. 50) or change (e.g. +5, -5)")
+    async def stat(self, ctx, stat_name: str, value: str):
         """
-        `[p]stat stat_name value_expression` - Change the value of a skill for your character.
+        Update your investigator's stats.
+        Usage: /stat stat_name: <stat> value: <value>
+        Example: /stat stat_name: HP value: +5
         """
         server_id = str(ctx.guild.id)
         user_id = str(ctx.author.id)
@@ -31,17 +33,6 @@ class stat(commands.Cog):
             await ctx.send("This command is not allowed in DMs.")
             return
 
-        # Prepare arguments from query
-        # Use shlex to handle quoted arguments correctly
-        args = shlex.split(query) if query else []
-
-        # Check if arguments are provided
-        if not args:
-            await ctx.send(
-                f"`{prefix}cstat stat-name` - Edit your investigators stats. (e.g. `{prefix}cstat STR 50` or `{prefix}cstat HP +1` or `{prefix}cstat SAN -5`)"
-            )
-            return
-
         # Check if the player has an investigator
         if user_id not in player_stats[server_id]:
             await ctx.send(
@@ -49,576 +40,268 @@ class stat(commands.Cog):
             )
             return
 
-        # Get the value from the input expression (e.g., +5, -2, 50)
-        match = re.match(r'([+\-]?\d+)$', args[-1])
-
+        # Clean up stat_name from autocomplete (e.g. "Spot Hidden (50)" -> "Spot Hidden")
+        clean_stat_name = stat_name
+        match = re.match(r"^(.*?)\s*\(\d+\)$", stat_name)
         if match:
-            # Get current stat value
-            current_value = 0
-            matching_stats = []
+            clean_stat_name = match.group(1)
 
-            # Words from the command arguments (excluding the last one which is the value)
-            stat_name_words = args[:-1]
+        # Find the stat
+        matching_stats = []
+        user_stats = player_stats[server_id][user_id]
 
-            # Look for exact match
-            for stat_key, stat_value in player_stats[server_id][user_id].items():
-                if all(word.lower() == stat_key.lower() for word in stat_name_words):
-                    matching_stats.append(stat_key)
-                    current_value = stat_value
-                    break  # Stop loop after first exact match
+        # 1. Exact match (case insensitive)
+        for key in user_stats.keys():
+            if key.lower() == clean_stat_name.lower():
+                matching_stats.append(key)
+                break
 
-            # If no exact match, look for partial match
-            if not matching_stats:
-                for stat_key, stat_value in player_stats[server_id][user_id].items():
-                    if any(word.lower() in stat_key.lower() for word in stat_name_words):
-                        matching_stats.append(stat_key)
-                        current_value = stat_value
+        # 2. Fuzzy match if no exact match
+        if not matching_stats:
+             # Use rapidfuzz to find best matches
+            choices = list(user_stats.keys())
+            extract = process.extractOne(clean_stat_name, choices, scorer=fuzz.WRatio)
+            if extract:
+                match_key, score, _ = extract
+                if score > 80: # Threshold for confidence
+                    matching_stats.append(match_key)
 
-            if len(matching_stats) > 1:
-                if len(matching_stats) <= 10:
-                    matching_stats_str = "\n".join([
-                        f"{i+1}. {stat}"
-                        for i, stat in enumerate(matching_stats)
-                    ])
-                    embed = discord.Embed(
-                        title="Multiple Matching Stats Found",
-                        description=
-                        f"Your input matches multiple stats. Please specify one of the following:\n\n{matching_stats_str}",
-                        color=discord.Color.red(),
-                    )
+        if not matching_stats:
+            await ctx.send(f"Stat '{clean_stat_name}' not found.")
+            return
 
-                    message = await ctx.send(embed=embed)
+        stat_key = matching_stats[0]
+        current_value = user_stats[stat_key]
 
-                    emoji_list = [
-                        "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣",
-                        "9️⃣", "🔟"
-                    ]
-                    for emoji in emoji_list[:len(matching_stats)]:
-                        await message.add_reaction(emoji)
+        # Parse the value
+        # Check for relative change (+5, -5) or absolute set (50)
+        value_match = re.match(r'^([+\-]?)(\d+)$', value.strip())
+        if not value_match:
+            await ctx.send("Invalid value format. Use numbers (e.g. 50) or relative changes (e.g. +5, -5).")
+            return
 
-                    # Wait for reaction from original author
-                    def check(reaction, user):
-                        return (user == ctx.author
-                                and str(reaction.emoji) in emoji_list)
+        sign = value_match.group(1)
+        number = int(value_match.group(2))
+        change_value = 0
+        new_value = 0
 
-                    try:
-                        reaction, _ = await self.bot.wait_for("reaction_add",
-                                                              timeout=60,
-                                                              check=check)
-
-                        # Process reaction
-                        selected_stat_index = emoji_list.index(reaction.emoji)
-                        selected_stat = matching_stats[selected_stat_index]
-                        matching_stats = [selected_stat]
-                        #await message.delete()
-
-                    except asyncio.TimeoutError:
-                        await ctx.send(
-                            "You took too long to react. Please run the command again."
-                        )
-                    except Exception as e:
-                        print(f"An error occurred: {e}")
-
-                else:
-                    await ctx.send(
-                        f"Found {len(matching_stats)} matching stats. Please specify more to narrow it down."
-                    )
-                    return
-
-            if len(matching_stats) == 1:
-                # Prevent changing name to a number
-                if matching_stats[0] == "NAME":
-                    await ctx.send(
-                        f"You can not change your name with this command. Please, use `{prefix}rename` instead."
-                    )
-                    return
-
-                # Get the value to add or subtract or set
-                change_value = int(match.group(1))
-
-                stat_name = matching_stats[0]
-
-                # Get fresh value in case it wasn't set correctly during partial match loop if multiple matches occurred initially but were filtered
-                current_value = player_stats[server_id][user_id][stat_name]
-
-                # Calculate new value
-                if args[-1].startswith('+') or args[-1].startswith('-'):
-                    new_value = current_value + change_value
-                else:
-                    new_value = change_value
-                    change_value = change_value - current_value
-
-                # Loading game mode
-                server_stats = await load_gamemode_stats()
-
-                if server_id not in server_stats:
-                    server_stats[server_id] = {}
-
-                if 'game_mode' not in server_stats[server_id]:
-                    server_stats[server_id]['game_mode'] = 'Call of Cthulhu'  # Default to Call of Cthulhu
-
-                current_mode = server_stats[server_id]['game_mode']
-
-                # Surpassing MAX_HP in Call of Cthulhu
-                if current_mode == 'Call of Cthulhu' and stat_name == "HP" and new_value > (
-                        math.floor(
-                            (player_stats[server_id][user_id]["CON"] +
-                             player_stats[server_id][user_id]["SIZ"]) / 10)):
-                    maxhp_message = await ctx.send(
-                        f"Are you sure you want to surpass your **HP**:heartpulse: limit? \n ✅ - Go over the limit \n ❌ - Stop writing new value \n 📈 - Set value on your max"
-                    )
-                    await maxhp_message.add_reaction("✅")
-                    await maxhp_message.add_reaction("❌")
-                    await maxhp_message.add_reaction("📈")
-
-                    def check(reaction, user):
-                        return user == ctx.author and reaction.message.id == maxhp_message.id and str(
-                            reaction.emoji) in ["✅", "❌", "📈"]
-
-                    try:
-                        reaction, _ = await self.bot.wait_for("reaction_add",
-                                                              timeout=60,
-                                                              check=check)
-                        if str(reaction.emoji) == "✅":
-                            pass
-                        elif str(reaction.emoji) == "📈":
-                            new_value = math.floor(
-                                (player_stats[server_id][user_id]["CON"] +
-                                 player_stats[server_id][user_id]["SIZ"]) / 10)
-                            change_value = new_value - current_value
-                            pass
-
-                        elif str(reaction.emoji) == "❌":
-                            await ctx.send(
-                                f"**HP**:heartpulse: will not be saved.")
-                            return
-                    except asyncio.TimeoutError:
-                        await ctx.send(
-                            f"{ctx.author.display_name} took too long to react. **HP**:heartpulse: will not be saved."
-                        )
-
-                # Surpassing MAX_HP in Pulp of Cthulhu
-                if current_mode == 'Pulp of Cthulhu' and stat_name == "HP" and new_value > (
-                        math.floor(
-                            (player_stats[server_id][user_id]["CON"] +
-                             player_stats[server_id][user_id]["SIZ"]) / 5)):
-                    maxhp_message = await ctx.send(
-                        f"Are you sure you want to surpass your **HP**:heartpulse: limit? \n ✅ - Go over the limit \n ❌ - Stop writing new value \n 📈 - Set value on your max"
-                    )
-                    await maxhp_message.add_reaction("✅")
-                    await maxhp_message.add_reaction("❌")
-                    await maxhp_message.add_reaction("📈")
-
-                    def check(reaction, user):
-                        return user == ctx.author and reaction.message.id == maxhp_message.id and str(
-                            reaction.emoji) in ["✅", "❌", "📈"]
-
-                    try:
-                        reaction, _ = await self.bot.wait_for("reaction_add",
-                                                              timeout=60,
-                                                              check=check)
-                        if str(reaction.emoji) == "✅":
-                            pass
-                        elif str(reaction.emoji) == "📈":
-                            new_value = math.floor(
-                                (player_stats[server_id][user_id]["CON"] +
-                                 player_stats[server_id][user_id]["SIZ"]) / 5)
-                            change_value = new_value - current_value
-                            pass
-
-                        elif str(reaction.emoji) == "❌":
-                            await ctx.send(
-                                f"**HP**:heartpulse: will not be saved.")
-                            return
-                    except asyncio.TimeoutError:
-                        await ctx.send(
-                            f"{ctx.author.display_name} took too long to react. **HP**:heartpulse: will not be saved."
-                        )
-
-                # Surpassing MAX_MP
-                if stat_name == "MP" and new_value > (math.floor(
-                        player_stats[server_id][user_id]["POW"] / 5)):
-                    maxmp_message = await ctx.send(
-                        f"Are you sure you want to surpass your **MP**:sparkles: limit? \n ✅ - Confirm and exceed the limit \n ❌ - Cancel and keep the current value\n 📈 - Set the value to the maximum allowed"
-                    )
-                    await maxmp_message.add_reaction("✅")
-                    await maxmp_message.add_reaction("❌")
-                    await maxmp_message.add_reaction("📈")
-
-                    def check(reaction, user):
-                        return user == ctx.author and reaction.message.id == maxmp_message.id and str(
-                            reaction.emoji) in ["✅", "❌", "📈"]
-
-                    try:
-                        reaction, _ = await self.bot.wait_for("reaction_add",
-                                                              timeout=60,
-                                                              check=check)
-                        if str(reaction.emoji) == "✅":
-                            pass
-                        elif str(reaction.emoji) == "📈":
-                            new_value = math.floor(
-                                player_stats[server_id][user_id]["POW"] / 5)
-                            change_value = new_value - current_value
-                            pass
-
-                        elif str(reaction.emoji) == "❌":
-                            await ctx.send(
-                                f"**MP**:sparkles: will not be saved.")
-                            return
-                    except asyncio.TimeoutError:
-                        await ctx.send(
-                            f"{ctx.author.display_name} took too long to react. **MP**:sparkles: will not be saved."
-                        )
-
-                # Surpassing MAX_SAN
-                if stat_name == "SAN" and new_value > (
-                        99 -
-                        player_stats[server_id][user_id]["Cthulhu Mythos"]):
-                    maxsan_message = await ctx.send(
-                        f"Are you sure you want to surpass your **SAN**:scales: limit? \n ✅ - Confirm and exceed the limit \n ❌ - Cancel and keep the current value\n 📈 - Set the value to the maximum allowed"
-                    )
-                    await maxsan_message.add_reaction("✅")
-                    await maxsan_message.add_reaction("❌")
-                    await maxsan_message.add_reaction("📈")
-
-                    def check(reaction, user):
-                        return user == ctx.author and reaction.message.id == maxsan_message.id and str(
-                            reaction.emoji) in ["✅", "❌", "📈"]
-
-                    try:
-                        reaction, _ = await self.bot.wait_for("reaction_add",
-                                                              timeout=60,
-                                                              check=check)
-                        if str(reaction.emoji) == "✅":
-                            pass
-                        elif str(reaction.emoji) == "📈":
-                            new_value = player_stats[server_id][user_id][
-                                "POW"] - player_stats[server_id][user_id][
-                                    "Cthulhu Mythos"]
-                            change_value = new_value - current_value
-                            pass
-
-                        elif str(reaction.emoji) == "❌":
-                            await ctx.send(
-                                f"**SAN**:scales: will not be saved.")
-                            return
-                    except asyncio.TimeoutError:
-                        await ctx.send(
-                            f"{ctx.author.display_name} took too long to react. **SAN**:scales: will not be saved."
-                        )
-
-                # Update value in player_stats
-                player_stats[server_id][user_id][matching_stats[0]] = new_value
-
-                # Save changes
-                await save_player_stats(player_stats)
-
-                # Prepare color for Embed
-                color = discord.Color.green(
-                ) if change_value >= 0 else discord.Color.red()
-
-                # Prepare stat name with emoji
-                stat_name_with_emoji = f"{get_stat_emoji(matching_stats[0])} {matching_stats[0]}"
-
-                # Prepare Embed
-                embed = discord.Embed(
-                    title=f"Stat Change - {stat_name_with_emoji}",
-                    description=
-                    f"**{ctx.author.display_name}**, you've updated your '{matching_stats[0]}' stat.",
-                    color=color)
-                embed.add_field(name="Previous Value",
-                                value=current_value,
-                                inline=False)
-                embed.add_field(name="Change",
-                                value=f"{change_value}",
-                                inline=False)
-                embed.add_field(name="New Value",
-                                value=new_value,
-                                inline=False)
-
-                # Send Embed
-                await ctx.send(embed=embed)
-
-                # Automatic calculation of HP
-                if stat_name == "CON" or stat_name == "SIZ":
-                    if player_stats[server_id][user_id][
-                            "CON"] != 0 and player_stats[server_id][user_id][
-                                "SIZ"] != 0 and player_stats[server_id][
-                                    user_id]["HP"] == 0:
-                        hp_message = await ctx.send(
-                            f"{ctx.author.display_name} filled all stats required to calculate **HP**:heartpulse:. Do you want me to calculate HP:heartpulse:?"
-                        )
-                        await hp_message.add_reaction("✅")
-                        await hp_message.add_reaction("❌")
-
-                        def check(reaction, user):
-                            return user == ctx.author and reaction.message.id == hp_message.id and str(
-                                reaction.emoji) in ["✅", "❌"]
-
-                        try:
-                            reaction, _ = await self.bot.wait_for(
-                                "reaction_add", timeout=60, check=check)
-                            if str(reaction.emoji) == "✅":
-                                HP = math.floor(
-                                    (player_stats[server_id][user_id]["CON"] +
-                                     player_stats[server_id][user_id]["SIZ"]) /
-                                    10)
-                                player_stats[server_id][user_id]["HP"] = HP
-                                await save_player_stats(
-                                    player_stats
-                                )  # Save the data to the JSON file
-                                await ctx.send(
-                                    f"{ctx.author.display_name}'s **HP**:heartpulse: has been calculated as **{HP}** and successfully saved."
-                                )
-                            elif str(reaction.emoji) == "❌":
-                                await ctx.send(
-                                    f"The calculation of **HP**:heartpulse: will not proceed."
-                                )
-                        except asyncio.TimeoutError:
-                            await ctx.send(
-                                f"{ctx.author.display_name} took too long to react. The calculation of **HP**:heartpulse: will not proceed."
-                            )
-
-                # Automatic calculation of MP
-                if stat_name == "POW":
-                    if player_stats[server_id][user_id][
-                            "POW"] != 0 and player_stats[server_id][user_id][
-                                "MP"] == 0:
-                        mp_message = await ctx.send(
-                            f"{ctx.author.display_name} filled all stats required to calculate **MP**:sparkles:. Do you want me to calculate MP:sparkles:?"
-                        )
-                        await mp_message.add_reaction("✅")
-                        await mp_message.add_reaction("❌")
-
-                        def check(reaction, user):
-                            return user == ctx.author and reaction.message.id == mp_message.id and str(
-                                reaction.emoji) in ["✅", "❌"]
-
-                        try:
-                            reaction, _ = await self.bot.wait_for(
-                                "reaction_add", timeout=60, check=check)
-                            if str(reaction.emoji) == "✅":
-                                MP = math.floor(
-                                    player_stats[server_id][user_id]["POW"] /
-                                    5)
-                                player_stats[server_id][user_id]["MP"] = MP
-                                await save_player_stats(
-                                    player_stats
-                                )  # Save the data to the JSON file
-                                await ctx.send(
-                                    f"{ctx.author.display_name}'s **MP**:sparkles: has been calculated as **{MP}** and successfully saved."
-                                )
-                            elif str(reaction.emoji) == "❌":
-                                await ctx.send(
-                                    f"The calculation of **MP**:sparkles: will not proceed."
-                                )
-                        except asyncio.TimeoutError:
-                            await ctx.send(
-                                f"{ctx.author.display_name} took too long to react. The calculation of **MP**:sparkles: will not proceed."
-                            )
-
-                # Automatic calculation of SAN
-                if stat_name == "POW":
-                    if player_stats[server_id][user_id][
-                            "POW"] != 0 and player_stats[server_id][user_id][
-                                "SAN"] == 0:
-                        san_message = await ctx.send(
-                            f"{ctx.author.display_name} filled all stats required to calculate **SAN**:scales:. Do you want me to calculate SAN:scales:?"
-                        )
-                        await san_message.add_reaction("✅")
-                        await san_message.add_reaction("❌")
-
-                        def check(reaction, user):
-                            return user == ctx.author and reaction.message.id == san_message.id and str(
-                                reaction.emoji) in ["✅", "❌"]
-
-                        try:
-                            reaction, _ = await self.bot.wait_for(
-                                "reaction_add", timeout=60, check=check)
-                            if str(reaction.emoji) == "✅":
-                                SAN = player_stats[server_id][user_id]["POW"]
-                                player_stats[server_id][user_id]["SAN"] = SAN
-                                await save_player_stats(
-                                    player_stats
-                                )  # Save the data to the JSON file
-                                await ctx.send(
-                                    f"{ctx.author.display_name}'s **SAN**:scales: has been calculated as **{SAN}** and successfully saved."
-                                )
-                            elif str(reaction.emoji) == "❌":
-                                await ctx.send(
-                                    f"The calculation of **SAN**:scales: will not proceed."
-                                )
-                        except asyncio.TimeoutError:
-                            await ctx.send(
-                                f"{ctx.author.display_name} took too long to react. The calculation of **SAN**:scales: will not proceed."
-                            )
-                # Automatic calculation of Dodge
-                if stat_name == "DEX":
-                    if player_stats[server_id][user_id][
-                            "DEX"] != 0 and player_stats[server_id][user_id][
-                                "Dodge"] == 0:
-                        dod_message = await ctx.send(
-                            f"{ctx.author.display_name} filled all stats required to calculate **Dodge**:warning:. Do you want me to calculate Dodge:warning:?"
-                        )
-                        await dod_message.add_reaction("✅")
-                        await dod_message.add_reaction("❌")
-
-                        def check(reaction, user):
-                            return user == ctx.author and reaction.message.id == dod_message.id and str(
-                                reaction.emoji) in ["✅", "❌"]
-
-                        try:
-                            reaction, _ = await self.bot.wait_for(
-                                "reaction_add", timeout=60, check=check)
-                            if str(reaction.emoji) == "✅":
-                                DODGE = math.floor(
-                                    player_stats[server_id][user_id]["DEX"] /
-                                    2)
-                                player_stats[server_id][user_id][
-                                    "Dodge"] = DODGE
-                                await save_player_stats(
-                                    player_stats
-                                )  # Save the data to the JSON file
-                                await ctx.send(
-                                    f"{ctx.author.display_name}'s **Dodge**:warning: has been calculated as **{DODGE}** and successfully saved."
-                                )
-                            elif str(reaction.emoji) == "❌":
-                                await ctx.send(
-                                    f"The calculation of **Dodge**:warning: will not proceed."
-                                )
-                        except asyncio.TimeoutError:
-                            await ctx.send(
-                                f"{ctx.author.display_name} took too long to react. The calculation of **Dodge**:warning: will not proceed."
-                            )
-
-                # Automatic calculation of Language (own)
-                if stat_name == "EDU":
-                    if player_stats[server_id][user_id][
-                            "EDU"] != 0 and player_stats[server_id][user_id][
-                                "Language own"] == 0:
-                        dod_message = await ctx.send(
-                            f"{ctx.author.display_name} filled all stats required to calculate **Language own**:speech_balloon:. Do you want me to calculate Language own:speech_balloon:?"
-                        )
-                        await dod_message.add_reaction("✅")
-                        await dod_message.add_reaction("❌")
-
-                        def check(reaction, user):
-                            return user == ctx.author and reaction.message.id == dod_message.id and str(
-                                reaction.emoji) in ["✅", "❌"]
-
-                        try:
-                            reaction, _ = await self.bot.wait_for(
-                                "reaction_add", timeout=60, check=check)
-                            if str(reaction.emoji) == "✅":
-                                LANGUAGEOWN = player_stats[server_id][user_id][
-                                    "EDU"]
-                                player_stats[server_id][user_id][
-                                    "Language own"] = LANGUAGEOWN
-                                await save_player_stats(
-                                    player_stats
-                                )  # Save the data to the JSON file
-                                await ctx.send(
-                                    f"{ctx.author.display_name}'s **Language own**:speech_balloon: has been calculated as **{LANGUAGEOWN}** and successfully saved."
-                                )
-                            elif str(reaction.emoji) == "❌":
-                                await ctx.send(
-                                    f"The calculation of **Language own**:speech_balloon: will not proceed."
-                                )
-                        except asyncio.TimeoutError:
-                            await ctx.send(
-                                f"{ctx.author.display_name} took too long to react. The calculation of **Language own**:speech_balloon: will not proceed."
-                            )
-                # Prompt about Age
-                if stat_name in ["STR", "DEX", "CON", "EDU", "APP", "SIZ", "LUCK"]:
-                    if player_stats[server_id][user_id]["STR"] != 0 and player_stats[
-                            server_id][user_id]["DEX"] != 0 and player_stats[
-                                server_id][user_id]["CON"] != 0 and player_stats[
-                                    server_id][user_id][
-                                        "EDU"] != 0 and player_stats[server_id][
-                                            user_id]["APP"] != 0 and player_stats[
-                                                server_id][user_id][
-                                                    "SIZ"] != 0 and player_stats[
-                                                        server_id][user_id][
-                                                            "LUCK"] and player_stats[
-                                                                server_id][
-                                                                    user_id][
-                                                                        "Age"] == 0:
-                        await ctx.send(
-                            f"{ctx.author.display_name} filled all stats that are affected by Age. Fill your age with `{prefix}cstat Age`"
-                        )
-
-                # Age mod help
-                if stat_name == "Age":
-                    if player_stats[server_id][user_id]["Age"] < 15:
-                        await ctx.send(
-                            f"Age Modifiers: There are no official rules about investigators under 15 years old. Ignore this if you play Pulp of Cthulhu."
-                        )
-                    elif player_stats[server_id][user_id]["Age"] < 20:
-                        await ctx.send(
-                            f"Age Modifiers: Deduct 5 points among STR:muscle: and SIZ:bust_in_silhouette:. Deduct 5 points from EDU:mortar_board:. Roll twice to generate a Luck score and use the higher value. Ignore this if you play Pulp of Cthulhu."
-                        )
-                    elif player_stats[server_id][user_id]["Age"] < 40:
-                        await ctx.send(
-                            f"Age Modifiers: Make an improvement check for EDU:mortar_board:. Ignore this if you play Pulp of Cthulhu."
-                        )
-                        await ctx.send(
-                            f"To make improvement check for EDU:mortar_board: run `{prefix}d EDU`. I you FAIL:x: add `{prefix}d 1D10` to your EDU:mortar_board:. "
-                        )
-                    elif player_stats[server_id][user_id]["Age"] < 50:
-                        await ctx.send(
-                            f"Age Modifiers: Make 2 improvement checks for EDU:mortar_board: and deduct 5 points among STR:muscle:, CON:heart: or DEX:runner:, and reduce APP:heart_eyes: by 5. Ignore this if you play Pulp of Cthulhu."
-                        )
-                        await ctx.send(
-                            f"To make improvement check for EDU:mortar_board: run `{prefix}d EDU`. I you FAIL:x: add `{prefix}d 1D10` to your EDU:mortar_board:."
-                        )
-                    elif player_stats[server_id][user_id]["Age"] < 60:
-                        await ctx.send(
-                            f"Age Modifiers: Make 3 improvement checks for EDU:mortar_board: and deduct 10 points among STR:muscle:, CON:heart: or DEX:runner:, and reduce APP:heart_eyes: by 10. Ignore this if you play Pulp of Cthulhu."
-                        )
-                        await ctx.send(
-                            f"To make improvement check for EDU:mortar_board: run `{prefix}d EDU`. I you FAIL:x: add `{prefix}d 1D10` to your EDU:mortar_board:."
-                        )
-                    elif player_stats[server_id][user_id]["Age"] < 70:
-                        await ctx.send(
-                            f"Age Modifiers: Make 4 improvement checks for EDU:mortar_board: and deduct 20 points among STR:muscle:, CON:heart: or DEX:runner:, and reduce APP:heart_eyes: by 15. Ignore this if you play Pulp of Cthulhu."
-                        )
-                        await ctx.send(
-                            f"To make improvement check for EDU:mortar_board: run `{prefix}d EDU`. I you FAIL:x: add `{prefix}d 1D10` to your EDU:mortar_board:."
-                        )
-                    elif player_stats[server_id][user_id]["Age"] < 80:
-                        await ctx.send(
-                            f"Age Modifiers:  Make 4 improvement checks for EDU:mortar_board: and deduct 40 points among STR:muscle:, CON:heart: or DEX:runner:, and reduce APP:heart_eyes: by 20. Ignore this if you play Pulp of Cthulhu."
-                        )
-                        await ctx.send(
-                            f"To make improvement check for EDU:mortar_board: run `{prefix}d EDU`. I you FAIL:x: add `{prefix}d 1D10` to your EDU:mortar_board:."
-                        )
-                    elif player_stats[server_id][user_id]["Age"] < 90:
-                        await ctx.send(
-                            f"Age Modifiers: Make 4 improvement checks for EDU:mortar_board: and deduct 80 points among STR:muscle:, CON:heart: or DEX:runner:, and reduce APP:heart_eyes: by 25. Ignore this if you play Pulp of Cthulhu."
-                        )
-                        await ctx.send(
-                            f"To make improvement check for EDU:mortar_board: run `{prefix}d EDU`. I you FAIL:x: add `{prefix}d 1D10` to your EDU:mortar_board:."
-                        )
-                    else:
-                        await ctx.send(
-                            f"Age Modifiers: There are no official rules about investigators above the age of 90. Ignore this if you play Pulp of Cthulhu."
-                        )
-
-            elif len(matching_stats) > 1:
-                # Multiple matching stats found, requires a more precise command
-                stats_list = ', '.join(matching_stats)
-                await ctx.send(
-                    f"The entered stat name matches multiple stats: {stats_list}. Please enter a more precise name."
-                )
-            else:
-                await ctx.send(
-                    f"Stat named '{' '.join(stat_name_words)}' was not found."
-                )
+        if sign == '+':
+            change_value = number
+            new_value = current_value + number
+        elif sign == '-':
+            change_value = -number
+            new_value = current_value - number
         else:
-            # Input expression matches expected format
-            await ctx.send(
-                "Incorrect format for changing value. Use for example `!stat HP +5`, `!stat HP -5` or `!stat HP 5`."
-            )
+            new_value = number
+            change_value = new_value - current_value
+
+        # Logic checks (Max HP, MP, SAN, etc.)
+        # Loading game mode
+        server_stats = await load_gamemode_stats()
+        if server_id not in server_stats:
+            server_stats[server_id] = {}
+        if 'game_mode' not in server_stats[server_id]:
+            server_stats[server_id]['game_mode'] = 'Call of Cthulhu'
+        current_mode = server_stats[server_id]['game_mode']
+
+        # Surpassing MAX_HP in Call of Cthulhu
+        if current_mode == 'Call of Cthulhu' and stat_key == "HP" and new_value > (math.floor((user_stats["CON"] + user_stats["SIZ"]) / 10)):
+            limit = math.floor((user_stats["CON"] + user_stats["SIZ"]) / 10)
+            msg = await ctx.send(f"Are you sure you want to surpass your **HP**:heartpulse: limit ({limit})? \n ✅ - Go over the limit \n ❌ - Stop \n 📈 - Set to max")
+            await msg.add_reaction("✅")
+            await msg.add_reaction("❌")
+            await msg.add_reaction("📈")
+
+            def check(reaction, user):
+                return user == ctx.author and reaction.message.id == msg.id and str(reaction.emoji) in ["✅", "❌", "📈"]
+
+            try:
+                reaction, _ = await self.bot.wait_for("reaction_add", timeout=60, check=check)
+                if str(reaction.emoji) == "✅":
+                    pass
+                elif str(reaction.emoji) == "📈":
+                    new_value = limit
+                    change_value = new_value - current_value
+                elif str(reaction.emoji) == "❌":
+                    await ctx.send("**HP**:heartpulse: will not be saved.")
+                    return
+            except asyncio.TimeoutError:
+                await ctx.send("Timed out. **HP**:heartpulse: will not be saved.")
+                return
+
+        # Surpassing MAX_HP in Pulp of Cthulhu
+        if current_mode == 'Pulp of Cthulhu' and stat_key == "HP" and new_value > (math.floor((user_stats["CON"] + user_stats["SIZ"]) / 5)):
+            limit = math.floor((user_stats["CON"] + user_stats["SIZ"]) / 5)
+            msg = await ctx.send(f"Are you sure you want to surpass your **HP**:heartpulse: limit ({limit})? \n ✅ - Go over the limit \n ❌ - Stop \n 📈 - Set to max")
+            await msg.add_reaction("✅")
+            await msg.add_reaction("❌")
+            await msg.add_reaction("📈")
+
+            def check(reaction, user):
+                return user == ctx.author and reaction.message.id == msg.id and str(reaction.emoji) in ["✅", "❌", "📈"]
+
+            try:
+                reaction, _ = await self.bot.wait_for("reaction_add", timeout=60, check=check)
+                if str(reaction.emoji) == "✅":
+                    pass
+                elif str(reaction.emoji) == "📈":
+                    new_value = limit
+                    change_value = new_value - current_value
+                elif str(reaction.emoji) == "❌":
+                    await ctx.send("**HP**:heartpulse: will not be saved.")
+                    return
+            except asyncio.TimeoutError:
+                await ctx.send("Timed out. **HP**:heartpulse: will not be saved.")
+                return
+
+        # Surpassing MAX_MP
+        if stat_key == "MP" and new_value > (math.floor(user_stats["POW"] / 5)):
+            limit = math.floor(user_stats["POW"] / 5)
+            msg = await ctx.send(f"Are you sure you want to surpass your **MP**:sparkles: limit ({limit})? \n ✅ - Go over the limit \n ❌ - Stop \n 📈 - Set to max")
+            await msg.add_reaction("✅")
+            await msg.add_reaction("❌")
+            await msg.add_reaction("📈")
+
+            def check(reaction, user):
+                return user == ctx.author and reaction.message.id == msg.id and str(reaction.emoji) in ["✅", "❌", "📈"]
+
+            try:
+                reaction, _ = await self.bot.wait_for("reaction_add", timeout=60, check=check)
+                if str(reaction.emoji) == "✅":
+                    pass
+                elif str(reaction.emoji) == "📈":
+                    new_value = limit
+                    change_value = new_value - current_value
+                elif str(reaction.emoji) == "❌":
+                    await ctx.send("**MP**:sparkles: will not be saved.")
+                    return
+            except asyncio.TimeoutError:
+                await ctx.send("Timed out. **MP**:sparkles: will not be saved.")
+                return
+
+        # Surpassing MAX_SAN
+        if stat_key == "SAN" and new_value > (99 - user_stats.get("Cthulhu Mythos", 0)):
+            limit = 99 - user_stats.get("Cthulhu Mythos", 0)
+            msg = await ctx.send(f"Are you sure you want to surpass your **SAN**:scales: limit ({limit})? \n ✅ - Go over the limit \n ❌ - Stop \n 📈 - Set to max")
+            await msg.add_reaction("✅")
+            await msg.add_reaction("❌")
+            await msg.add_reaction("📈")
+
+            def check(reaction, user):
+                return user == ctx.author and reaction.message.id == msg.id and str(reaction.emoji) in ["✅", "❌", "📈"]
+
+            try:
+                reaction, _ = await self.bot.wait_for("reaction_add", timeout=60, check=check)
+                if str(reaction.emoji) == "✅":
+                    pass
+                elif str(reaction.emoji) == "📈":
+                    new_value = limit
+                    change_value = new_value - current_value
+                elif str(reaction.emoji) == "❌":
+                    await ctx.send("**SAN**:scales: will not be saved.")
+                    return
+            except asyncio.TimeoutError:
+                await ctx.send("Timed out. **SAN**:scales: will not be saved.")
+                return
+
+        # Update and Save
+        player_stats[server_id][user_id][stat_key] = new_value
+        await save_player_stats(player_stats)
+
+        # Response
+        color = discord.Color.green() if change_value >= 0 else discord.Color.red()
+        stat_emoji = get_stat_emoji(stat_key)
+
+        embed = discord.Embed(
+            title=f"Stat Change - {stat_emoji} {stat_key}",
+            description=f"**{ctx.author.display_name}**, you've updated your '{stat_key}' stat.",
+            color=color
+        )
+        embed.add_field(name="Previous Value", value=str(current_value), inline=True)
+        embed.add_field(name="Change", value=f"{change_value:+}", inline=True)
+        embed.add_field(name="New Value", value=str(new_value), inline=True)
+
+        await ctx.send(embed=embed)
+
+        # Trigger auto-calcs (copied logic)
+        # HP Calculation Trigger
+        if stat_key in ["CON", "SIZ"]:
+            if user_stats["CON"] != 0 and user_stats["SIZ"] != 0 and user_stats["HP"] == 0:
+                 await self.prompt_calculation(ctx, "HP", math.floor((user_stats["CON"] + user_stats["SIZ"]) / 10), player_stats, server_id, user_id)
+
+        # MP Calculation Trigger
+        if stat_key == "POW":
+            if user_stats["POW"] != 0 and user_stats["MP"] == 0:
+                await self.prompt_calculation(ctx, "MP", math.floor(user_stats["POW"] / 5), player_stats, server_id, user_id)
+            if user_stats["POW"] != 0 and user_stats["SAN"] == 0:
+                await self.prompt_calculation(ctx, "SAN", user_stats["POW"], player_stats, server_id, user_id)
+
+        # Dodge Calculation Trigger
+        if stat_key == "DEX":
+            if user_stats["DEX"] != 0 and user_stats["Dodge"] == 0:
+                await self.prompt_calculation(ctx, "Dodge", math.floor(user_stats["DEX"] / 2), player_stats, server_id, user_id)
+
+        # Language Own Calculation Trigger
+        if stat_key == "EDU":
+             if user_stats["EDU"] != 0 and user_stats.get("Language own", 0) == 0:
+                 await self.prompt_calculation(ctx, "Language own", user_stats["EDU"], player_stats, server_id, user_id)
+
+        # Age Warning
+        if stat_key in ["STR", "DEX", "CON", "EDU", "APP", "SIZ", "LUCK"] and user_stats.get("Age", 0) == 0:
+             # Check if all filled
+             if all(user_stats.get(k, 0) != 0 for k in ["STR", "DEX", "CON", "EDU", "APP", "SIZ", "LUCK"]):
+                 await ctx.send(f"{ctx.author.display_name} filled all stats affected by Age. Fill your age with `{prefix}stat Age <value>`")
+
+        # Age specific advice
+        if stat_key == "Age":
+            age = user_stats["Age"]
+            if age < 15: await ctx.send("Age Modifiers: No official rules for <15.")
+            elif age < 20: await ctx.send("Age Modifiers (<20): Deduct 5 from STR/SIZ. Deduct 5 from EDU. Roll Luck twice (take high).")
+            elif age < 40: await ctx.send("Age Modifiers (<40): Improvement check for EDU.")
+            elif age < 50: await ctx.send("Age Modifiers (<50): 2 EDU checks. Deduct 5 from STR/CON/DEX. APP -5.")
+            elif age < 60: await ctx.send("Age Modifiers (<60): 3 EDU checks. Deduct 10 from STR/CON/DEX. APP -10.")
+            elif age < 70: await ctx.send("Age Modifiers (<70): 4 EDU checks. Deduct 20 from STR/CON/DEX. APP -15.")
+            elif age < 80: await ctx.send("Age Modifiers (<80): 4 EDU checks. Deduct 40 from STR/CON/DEX. APP -20.")
+            elif age < 90: await ctx.send("Age Modifiers (<90): 4 EDU checks. Deduct 80 from STR/CON/DEX. APP -25.")
+            else: await ctx.send("Age Modifiers (90+): No official rules.")
+
+    async def prompt_calculation(self, ctx, stat_name, calculated_value, player_stats, server_id, user_id):
+        emoji = get_stat_emoji(stat_name)
+        msg = await ctx.send(f"{ctx.author.display_name} filled all stats for **{stat_name}**{emoji}. Calculate it to **{calculated_value}**?")
+        await msg.add_reaction("✅")
+        await msg.add_reaction("❌")
+
+        def check(reaction, user):
+            return user == ctx.author and reaction.message.id == msg.id and str(reaction.emoji) in ["✅", "❌"]
+
+        try:
+            reaction, _ = await self.bot.wait_for("reaction_add", timeout=60, check=check)
+            if str(reaction.emoji) == "✅":
+                player_stats[server_id][user_id][stat_name] = calculated_value
+                await save_player_stats(player_stats)
+                await ctx.send(f"**{stat_name}** set to **{calculated_value}**.")
+            else:
+                await ctx.send(f"Calculation for **{stat_name}** skipped.")
+        except asyncio.TimeoutError:
+            await ctx.send(f"Timed out. Calculation for **{stat_name}** skipped.")
+
+    @stat.autocomplete('stat_name')
+    async def stat_autocomplete(self, interaction: discord.Interaction, current: str):
+        server_id = str(interaction.guild_id)
+        user_id = str(interaction.user.id)
+        player_stats = await load_player_stats()
+
+        if server_id not in player_stats or user_id not in player_stats[server_id]:
+            return []
+
+        user_stats = player_stats[server_id][user_id]
+        choices = [f"{k} ({v})" for k, v in user_stats.items()]
+
+        if not current:
+            return [app_commands.Choice(name=c, value=c) for c in sorted(choices)[:25]]
+
+        matches = process.extract(current, choices, scorer=fuzz.WRatio, limit=25)
+        return [app_commands.Choice(name=m[0], value=m[0]) for m in matches]
 
 
 async def setup(bot):
