@@ -49,7 +49,8 @@ from .file_utils import (
 SOUNDBOARD_FOLDER = "soundboard"
 BACKUP_FOLDER = "backups"
 IMAGES_FOLDER = "images"
-FONTS_FOLDER = os.path.join("dashboard", "static", "fonts")
+FONTS_FOLDER = os.path.join("data", "fonts")
+OLD_FONTS_FOLDER = os.path.join("dashboard", "static", "fonts")
 server_volumes = {} # guild_id (str) -> {'music': 1.0, 'soundboard': 0.5}
 guild_mixers = {} # guild_id (str) -> MixingAudioSource
 
@@ -70,6 +71,19 @@ async def app_startup():
     # Ensure fonts folder exists
     if not os.path.exists(FONTS_FOLDER):
         os.makedirs(FONTS_FOLDER)
+
+    # Migrate old fonts if they exist
+    if os.path.exists(OLD_FONTS_FOLDER):
+        try:
+            for filename in os.listdir(OLD_FONTS_FOLDER):
+                old_path = os.path.join(OLD_FONTS_FOLDER, filename)
+                new_path = os.path.join(FONTS_FOLDER, filename)
+                if os.path.isfile(old_path):
+                    shutil.move(old_path, new_path)
+            shutil.rmtree(OLD_FONTS_FOLDER)
+            print(f"Migrated fonts from {OLD_FONTS_FOLDER} to {FONTS_FOLDER}")
+        except Exception as e:
+            print(f"Error migrating fonts: {e}")
 
 # Helper to check login
 def is_admin():
@@ -187,6 +201,10 @@ async def bot_status():
     if app.bot and app.bot.is_ready():
         is_ready = True
     return jsonify({"status": "online", "ready": is_ready})
+
+@app.route('/fonts/<path:filename>')
+async def serve_fonts(filename):
+    return await send_from_directory(FONTS_FOLDER, filename)
 
 @app.route('/images/<path:filename>')
 async def serve_image(filename):
