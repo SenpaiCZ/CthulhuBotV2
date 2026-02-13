@@ -83,7 +83,7 @@ class randomname(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.hybrid_command(name="randomname", aliases=["rname"])
+  @commands.hybrid_command(name="randomname", aliases=["rname"], description="Generate a random name from the 1920s era.")
   @app_commands.describe(region="Choose a region for the name origin")
   @app_commands.choices(region=[
       app_commands.Choice(name="English & American", value="english"),
@@ -96,7 +96,7 @@ class randomname(commands.Cog):
   ])
   async def randomname(self, ctx, region: str = "english"):
     """
-    `[p]randomname [region]` - Generate random name form 1920s era.
+    Generate a random name from the 1920s era.
     """
     view = RandomNameView(ctx, self, region)
     ephemeral = False
