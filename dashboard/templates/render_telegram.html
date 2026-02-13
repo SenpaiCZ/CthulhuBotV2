@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap');
+
+        body {
+            background-color: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Special Elite', 'Courier New', monospace;
+        }
+
+        .telegram-container {
+            background-color: #f4e4bc;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+            color: #333;
+            width: 800px;
+            max-width: 100%;
+            padding: 20px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+            border: 1px solid #d4c49c;
+            position: relative;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .meta-info {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+        }
+
+        .meta-box {
+            border: 1px solid #555;
+            padding: 5px 10px;
+        }
+
+        .meta-label {
+            font-size: 0.7em;
+            display: block;
+            text-transform: uppercase;
+        }
+
+        .recipient-section {
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+
+        .body-text {
+            font-size: 1.4em;
+            line-height: 1.6;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+            min-height: 150px;
+        }
+
+        .sender-section {
+            text-align: right;
+            font-size: 1.2em;
+            border-top: 1px solid #777;
+            padding-top: 10px;
+        }
+
+        /* Tape/Strip effect simulation */
+        .strip-text {
+            background-color: #fdfae0;
+            padding: 2px 5px;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="coc-sheet" style="padding: 10px;">
+        <div class="telegram-container">
+            <div class="header-row">
+                <div class="logo">TELEGRAM</div>
+                <div class="meta-info">
+                    <div class="meta-box">
+                        <span class="meta-label">Origin</span>
+                        {{ origin|upper }}
+                    </div>
+                    <div class="meta-box">
+                        <span class="meta-label">Date</span>
+                        {{ date|upper }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="recipient-section">
+                TO: {{ recipient|upper }}
+            </div>
+
+            <div class="body-text">
+                {{ body|upper }}
+            </div>
+
+            <div class="sender-section">
+                FROM: {{ sender|upper }}
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -49,6 +49,7 @@ from .file_utils import (
 SOUNDBOARD_FOLDER = "soundboard"
 BACKUP_FOLDER = "backups"
 IMAGES_FOLDER = "images"
+FONTS_FOLDER = os.path.join("dashboard", "static", "fonts")
 server_volumes = {} # guild_id (str) -> {'music': 1.0, 'soundboard': 0.5}
 guild_mixers = {} # guild_id (str) -> MixingAudioSource
 
@@ -65,6 +66,10 @@ async def app_startup():
     # Ensure images folder exists
     if not os.path.exists(IMAGES_FOLDER):
         os.makedirs(IMAGES_FOLDER)
+
+    # Ensure fonts folder exists
+    if not os.path.exists(FONTS_FOLDER):
+        os.makedirs(FONTS_FOLDER)
 
 # Helper to check login
 def is_admin():
@@ -849,6 +854,151 @@ async def render_newspaper_view():
         clip_path=clip_path
     )
 
+@app.route('/render/telegram')
+async def render_telegram_view():
+    body = request.args.get('body', 'STOP')
+    date = request.args.get('date', 'OCT 24 1929')
+    origin = request.args.get('origin', 'ARKHAM')
+    recipient = request.args.get('recipient', 'INVESTIGATOR')
+    sender = request.args.get('sender', 'UNKNOWN')
+
+    return await render_template(
+        'render_telegram.html',
+        body=body,
+        date=date,
+        origin=origin,
+        recipient=recipient,
+        sender=sender
+    )
+
+@app.route('/render/letter')
+async def render_letter_view():
+    body = request.args.get('body', 'Dearest Friend...')
+    date = request.args.get('date', 'October 24, 1929')
+    salutation = request.args.get('salutation', 'To whom it may concern,')
+    signature = request.args.get('signature', 'Sincerely, Unknown')
+
+    return await render_template(
+        'render_letter.html',
+        body=body,
+        date=date,
+        salutation=salutation,
+        signature=signature
+    )
+
+@app.route('/render/script')
+async def render_script_view():
+    text = request.args.get('text', 'Ph\'nglui mglw\'nafh Cthulhu R\'lyeh wgah\'nagl fhtagn')
+    font = request.args.get('font', 'default') # Font filename or key
+
+    # Verify font exists in FONTS_FOLDER
+    font_filename = None
+    if font != 'default':
+        safe_font = sanitize_filename(font)
+        # Check extensions
+        for ext in ['.ttf', '.otf', '.woff', '.woff2']:
+             if os.path.exists(os.path.join(FONTS_FOLDER, safe_font + ext)):
+                 font_filename = safe_font + ext
+                 break
+             # Also check if exact filename passed
+             if os.path.exists(os.path.join(FONTS_FOLDER, safe_font)):
+                 font_filename = safe_font
+                 break
+
+    return await render_template(
+        'render_script.html',
+        text=text,
+        font_filename=font_filename,
+        font_name=font if font_filename else 'Default'
+    )
+
+
+# --- Font Management Routes ---
+
+@app.route('/admin/fonts')
+async def admin_fonts():
+    if not is_admin(): return redirect(url_for('login'))
+    return await render_template('fonts_dashboard.html')
+
+@app.route('/api/fonts/list')
+async def fonts_list():
+    if not is_admin(): return "Unauthorized", 401
+
+    files = []
+    if os.path.exists(FONTS_FOLDER):
+        for f in os.listdir(FONTS_FOLDER):
+            if f.lower().endswith(('.ttf', '.otf', '.woff', '.woff2')):
+                files.append(f)
+    files.sort()
+    return jsonify({"fonts": files})
+
+@app.route('/api/fonts/upload', methods=['POST'])
+async def fonts_upload():
+    if not is_admin(): return "Unauthorized", 401
+
+    files = await request.files
+    uploaded_files = files.getlist('files')
+
+    if not uploaded_files:
+        return jsonify({"status": "error", "message": "No files uploaded"}), 400
+
+    results = []
+    for file in uploaded_files:
+        if not file.filename: continue
+
+        filename = sanitize_filename(file.filename)
+        # Preserve extension properly (sanitize might strip dots if not careful, but usually file_utils preserves it or we assume it doesn't)
+        # Let's check sanitize_filename in file_utils... assumed safe.
+        # But wait, sanitize_filename often replaces '.'
+        # I should probably split ext first.
+
+        base, ext = os.path.splitext(file.filename)
+        safe_base = sanitize_filename(base)
+        ext = ext.lower()
+
+        if ext not in ['.ttf', '.otf', '.woff', '.woff2']:
+            results.append(f"Skipped {file.filename} (invalid type)")
+            continue
+
+        safe_filename = f"{safe_base}{ext}"
+        target_path = os.path.join(FONTS_FOLDER, safe_filename)
+
+        try:
+            file_bytes = file.read()
+            if asyncio.iscoroutine(file_bytes):
+                file_bytes = await file_bytes
+
+            with open(target_path, 'wb') as f:
+                f.write(file_bytes)
+            results.append(f"Uploaded {safe_filename}")
+        except Exception as e:
+            results.append(f"Error {file.filename}: {e}")
+
+    return jsonify({"status": "success", "results": results})
+
+@app.route('/api/fonts/delete', methods=['POST'])
+async def fonts_delete():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    filename = data.get('filename')
+
+    if not filename:
+        return jsonify({"status": "error", "message": "Missing filename"}), 400
+
+    if '..' in filename or '/' in filename:
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+
+    target_path = os.path.join(FONTS_FOLDER, filename)
+
+    if os.path.exists(target_path):
+        try:
+            os.remove(target_path)
+            return jsonify({"status": "success"})
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+
+    return jsonify({"status": "error", "message": "File not found"}), 404
 
 # --- Admin Routes ---
 

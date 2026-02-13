@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Font Management{% endblock %}
+
+{% block content %}
+<div class="card bg-dark text-light border-secondary">
+    <div class="card-header border-secondary">
+        <h3 class="card-title mb-0">Font Management</h3>
+    </div>
+    <div class="card-body">
+        <div class="mb-4">
+            <h5>Upload New Font</h5>
+            <div class="input-group">
+                <input type="file" class="form-control bg-secondary text-light border-secondary" id="fontFile" accept=".ttf,.otf,.woff,.woff2" multiple>
+                <button class="btn btn-success" type="button" onclick="uploadFonts()">Upload</button>
+            </div>
+            <div id="uploadStatus" class="mt-2"></div>
+        </div>
+
+        <hr class="border-secondary">
+
+        <h5>Installed Fonts</h5>
+        <div class="table-responsive">
+            <table class="table table-dark table-hover">
+                <thead>
+                    <tr>
+                        <th>Font Filename</th>
+                        <th>Preview</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="fontListBody">
+                    <!-- Fonts will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadFonts() {
+    try {
+        const response = await fetch('/api/fonts/list');
+        const data = await response.json();
+        const tbody = document.getElementById('fontListBody');
+        tbody.innerHTML = '';
+
+        if (data.fonts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No custom fonts installed.</td></tr>';
+            return;
+        }
+
+        data.fonts.forEach(font => {
+            const row = document.createElement('tr');
+
+            // Create font-face dynamically for preview
+            // Replace non-alphanumeric in font name for safe CSS identifier
+            const fontName = font.replace(/[^a-zA-Z0-9]/g, '_');
+            const fontUrl = `/static/fonts/${font}`;
+
+            // Check if style already exists (to avoid duplicates on reload)
+            if (!document.getElementById(`style-${fontName}`)) {
+                const style = document.createElement('style');
+                style.id = `style-${fontName}`;
+                style.textContent = `
+                    @font-face {
+                        font-family: 'Preview-${fontName}';
+                        src: url('${fontUrl}');
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            row.innerHTML = `
+                <td>${font}</td>
+                <td style="font-family: 'Preview-${fontName}', serif; font-size: 1.5em;">The quick brown fox jumps over the lazy dog.</td>
+                <td>
+                    <button class="btn btn-sm btn-danger" onclick="deleteFont('${font}')">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (e) {
+        console.error("Error loading fonts:", e);
+    }
+}
+
+async function uploadFonts() {
+    const fileInput = document.getElementById('fontFile');
+    const status = document.getElementById('uploadStatus');
+
+    if (fileInput.files.length === 0) {
+        status.innerHTML = '<span class="text-danger">Please select a file.</span>';
+        return;
+    }
+
+    const formData = new FormData();
+    for (let i = 0; i < fileInput.files.length; i++) {
+        formData.append('files', fileInput.files[i]);
+    }
+
+    status.innerHTML = '<span class="text-info">Uploading...</span>';
+
+    try {
+        const response = await fetch('/api/fonts/upload', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            let msg = '<span class="text-success">Uploaded successfully:</span><ul>';
+            data.results.forEach(res => msg += `<li>${res}</li>`);
+            msg += '</ul>';
+            status.innerHTML = msg;
+            fileInput.value = '';
+            loadFonts();
+        } else {
+            status.innerHTML = `<span class="text-danger">Error: ${data.message}</span>`;
+        }
+    } catch (e) {
+        status.innerHTML = `<span class="text-danger">Error: ${e.message}</span>`;
+    }
+}
+
+async function deleteFont(filename) {
+    if (!confirm(`Are you sure you want to delete ${filename}?`)) return;
+
+    try {
+        const response = await fetch('/api/fonts/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: filename })
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            loadFonts();
+        } else {
+            alert('Error deleting font: ' + data.message);
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadFonts);
+</script>
+{% endblock %}
