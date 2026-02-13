@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letter</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Nanum+Myeongjo&family=Courier+Prime&display=swap');
+
+        body {
+            background-color: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .letter-container {
+            background-color: #fdfbf7;
+            /* Simple paper texture */
+            background-image:
+                linear-gradient(#e8e4dc 1px, transparent 1px);
+            background-size: 100% 2em; /* Lined paper effect - optional, maybe remove for plain paper */
+
+            /* Overriding background for better plain paper feel with texture */
+            background: #fdfbf7 url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+
+            color: #222;
+            width: 700px;
+            max-width: 100%;
+            padding: 50px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+            font-family: 'Nanum Myeongjo', serif; /* A bit like typewriter/serif mix */
+            /* Or 'Dancing Script' for handwritten */
+            font-size: 1.2em;
+            line-height: 1.6;
+        }
+
+        .date {
+            text-align: right;
+            margin-bottom: 30px;
+        }
+
+        .salutation {
+            margin-bottom: 20px;
+        }
+
+        .body-text {
+            text-align: justify;
+            margin-bottom: 40px;
+            white-space: pre-wrap; /* Preserve newlines */
+        }
+
+        .signature {
+            text-align: right;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.5em;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="coc-sheet" style="padding: 10px;">
+        <div class="letter-container">
+            <div class="date">{{ date }}</div>
+            <div class="salutation">{{ salutation }}</div>
+            <div class="body-text">{{ body }}</div>
+            <div class="signature">{{ signature }}</div>
+        </div>
+    </div>
+
+</body>
+</html>

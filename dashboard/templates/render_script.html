@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Occult Script</title>
+    <style>
+        {% if font_filename %}
+        @font-face {
+            font-family: 'CustomScript';
+            src: url("{{ url_for('static', filename='fonts/' + font_filename) }}");
+        }
+        {% endif %}
+
+        body {
+            background-color: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .script-container {
+            /* Optional background or transparent */
+            background-color: transparent;
+            padding: 20px;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .script-text {
+            {% if font_filename %}
+            font-family: 'CustomScript', serif;
+            {% else %}
+            font-family: serif; /* Fallback */
+            {% endif %}
+            font-size: 3em;
+            color: #111;
+            line-height: 1.4;
+            /* Text shadow/glow for effect? */
+            text-shadow: 0px 0px 2px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="coc-sheet" style="padding: 10px;">
+        <div class="script-container">
+            <div class="script-text">
+                {{ text }}
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
