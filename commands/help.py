@@ -56,8 +56,6 @@ COG_GROUPS = {
     "ping": "Utility",
     "uptime": "Utility",
     "reportbug": "Utility",
-    "repeatafterme": "Fun",
-    "count": "Fun",
     "pogo": "Fun",
     "music": "Fun",
 }
