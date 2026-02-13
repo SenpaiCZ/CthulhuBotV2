@@ -3,7 +3,7 @@ import random
 from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, Button
-from loadnsave import load_names_male_data, load_names_female_data, load_names_last_data
+from loadnsave import load_names_data
 
 class GenderSelectView(View):
     def __init__(self, cog, ctx):
@@ -90,20 +90,25 @@ class createnpc(commands.Cog):
         return stat_emojis.get(stat_name, "")
 
     async def create_npc_embed(self, gender):
-        last_names = await load_names_last_data()
+        all_names = await load_names_data()
+        english_names = all_names.get("english", {})
+        last_names = english_names.get("last", [])
 
         if gender == "male":
-            first_names = await load_names_male_data()
+            first_names = english_names.get("male", [])
         else:
-            first_names = await load_names_female_data()
+            first_names = english_names.get("female", [])
 
         # Name Generation
-        name = random.choice(first_names)
-        if random.random() < 0.3:
-            name += " " + random.choice(first_names)
-        name += " " + random.choice(last_names)
-        if random.random() < 0.5:
-            name += "-" + random.choice(last_names)
+        if not first_names or not last_names:
+             name = "Unknown NPC"
+        else:
+            name = random.choice(first_names)
+            if random.random() < 0.3:
+                name += " " + random.choice(first_names)
+            name += " " + random.choice(last_names)
+            if random.random() < 0.5:
+                name += "-" + random.choice(last_names)
 
         # Stat Generation Helpers
         def roll_3d6_x5():
