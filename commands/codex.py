@@ -221,7 +221,7 @@ class Codex(commands.Cog):
              msg = await ctx.send(**kwargs)
              view.message = msg
 
-    async def _render_poster(self, ctx, url, name, type_name, interaction=None):
+    async def _render_poster(self, ctx, url, name, type_name, interaction=None, ephemeral=True):
         msg = None
         if interaction:
              # Usually triggered by button, so we use followup (ephemeral)
@@ -273,7 +273,7 @@ class Codex(commands.Cog):
             file = discord.File(io.BytesIO(screenshot_bytes), filename=f"{name.replace(' ', '_')}_{type_name}.png")
 
             if interaction:
-                await interaction.followup.send(content=f"Here is the poster for **{name}**:", file=file, ephemeral=True)
+                await interaction.followup.send(content=f"Here is the poster for **{name}**:", file=file, ephemeral=ephemeral)
             elif ctx.interaction:
                 await ctx.send(content=f"Here is the poster for **{name}**:", file=file)
             elif msg:

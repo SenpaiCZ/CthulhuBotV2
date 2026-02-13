@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Newspaper Generator - CoC Bot{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-4"><i class="bi bi-newspaper"></i> Newspaper Generator</h1>
+        <p class="lead text-muted">Create 1920s style newspaper clippings.</p>
+    </div>
+</div>
+
+<div class="card bg-dark text-white border-secondary">
+    <div class="card-header border-secondary">
+        <h5 class="card-title mb-0">Newspaper Details</h5>
+    </div>
+    <div class="card-body">
+        <form id="newspaperForm" target="_blank" action="/render/newspaper" method="get">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="name" class="form-label">Newspaper Name</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" id="name" name="name" value="The Arkham Advertiser">
+                </div>
+                <div class="col-md-3">
+                    <label for="city" class="form-label">City</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" id="city" name="city" value="Arkham">
+                </div>
+                <div class="col-md-3">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" id="date" name="date" value="October 24, 1929">
+                </div>
+
+                <div class="col-12">
+                    <label for="headline" class="form-label">Headline</label>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" id="headline" name="headline" value="MYSTERIOUS LIGHTS SEEN OVER MISKATONIC UNIVERSITY">
+                </div>
+
+                <div class="col-12">
+                    <label for="body" class="form-label">Article Body</label>
+                    <textarea class="form-control bg-dark text-white border-secondary" id="body" name="body" rows="10">Residents were awoken late last night by strange, iridescent lights hovering over the Miskatonic University campus. Witnesses describe a low humming sound that seemed to vibrate through the very ground.
+
+Professor Armitage, when reached for comment, dismissed the reports as "swamp gas reflecting off low clouds," though several students reported seeing faculty members rushing towards the library with look of concern.
+
+Local authorities have cordoned off the area near the Science Building, citing a "chemical spill," but rumors persist of something far more unnatural occurring within those hallowed halls.</textarea>
+                    <div class="form-text text-muted">Use newlines for paragraphs.</div>
+                </div>
+
+                 <div class="col-md-6">
+                    <label for="width" class="form-label">Width (px)</label>
+                    <input type="range" class="form-range" id="width" name="width" min="400" max="800" step="10" value="500" oninput="document.getElementById('widthVal').textContent = this.value">
+                    <div class="text-end text-muted" id="widthVal">500</div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Shape Randomization</label>
+                    <div class="d-grid">
+                        <button type="button" class="btn btn-outline-secondary" onclick="randomizeClipPath()">Randomize Edge Shape</button>
+                    </div>
+                    <input type="hidden" id="clip_path" name="clip_path" value="0% 0%, 100% 0%, 100% 100%, 0% 100%">
+                </div>
+            </div>
+
+            <div class="mt-4 d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-printer"></i> Generate Newspaper</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function randomizeClipPath() {
+    // Generate a jagged edge clip-path
+    // Polygon around the rect (0,0) -> (100,0) -> (100,100) -> (0,100)
+    // We add points in between with small random offsets
+
+    let points = [];
+
+    // Top edge
+    for (let i = 0; i <= 100; i += 5) {
+        let y = Math.random() * 2; // 0-2% fluctuation
+        points.push(`${i}% ${y}%`);
+    }
+
+    // Right edge
+    for (let i = 0; i <= 100; i += 5) {
+        let x = 100 - (Math.random() * 2);
+        points.push(`${x}% ${i}%`);
+    }
+
+    // Bottom edge
+    for (let i = 100; i >= 0; i -= 5) {
+        let y = 100 - (Math.random() * 2);
+        points.push(`${i}% ${y}%`);
+    }
+
+    // Left edge
+    for (let i = 100; i >= 0; i -= 5) {
+        let x = Math.random() * 2;
+        points.push(`${x}% ${i}%`);
+    }
+
+    const poly = points.join(', ');
+    document.getElementById('clip_path').value = poly;
+}
+
+// Init random shape on load
+document.addEventListener('DOMContentLoaded', randomizeClipPath);
+</script>
+{% endblock %}
