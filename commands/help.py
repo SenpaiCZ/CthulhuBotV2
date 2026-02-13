@@ -141,9 +141,9 @@ class HelpView(View):
 
         # Reset to home embed
         embed = discord.Embed(
-            title="🤖 Nexus Help",
-            description="Welcome to the Nexus help menu!\nSelect a category from the dropdown below to explore commands.",
-            color=discord.Color.gold()
+            title="🐙 Cthulhu Bot Help",
+            description="Greetings, Investigator.\nThe stars align for you to seek knowledge. Consult the archives below to uncover the secrets of this bot.",
+            color=discord.Color.teal()
         )
         embed.set_footer(text="Only commands available to you are shown.")
         await interaction.response.edit_message(embed=embed, view=self)
@@ -222,7 +222,7 @@ class Help(commands.Cog):
 
         return help_data
 
-    @app_commands.command(name="help", description="Show the Nexus help menu.")
+    @app_commands.command(name="help", description="Show the Cthulhu Bot help menu.")
     async def help_command(self, interaction: discord.Interaction):
         """
         Shows the interactive help menu.
@@ -238,9 +238,9 @@ class Help(commands.Cog):
             return
 
         embed = discord.Embed(
-            title="🤖 Nexus Help",
-            description="Welcome to the Nexus help menu!\nSelect a category from the dropdown below to explore commands.",
-            color=discord.Color.gold()
+            title="🐙 Cthulhu Bot Help",
+            description="Greetings, Investigator.\nThe stars align for you to seek knowledge. Consult the archives below to uncover the secrets of this bot.",
+            color=discord.Color.teal()
         )
         embed.set_footer(text="Only commands available to you are shown.")
 
