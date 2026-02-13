@@ -16,12 +16,18 @@ ZIP_FILENAME = "update_pkg.zip"
 EXTRACT_DIR = "update_extract_temp"
 BACKUP_DIR = "backups"  # Must match BACKUP_FOLDER in dashboard/app.py
 
-# Folders/Files to completely ignore during sync/copy/backup
-# These are things we don't want to backup (too big/irrelevant) AND don't want to delete/overwrite
+# Directories to exclude from backup (too big or irrelevant)
+BACKUP_EXCLUDE_DIRS = {
+    "venv", ".git", "__pycache__", "soundboard", "backups",
+    ".vscode", ".idea", "node_modules", "infodata", "data",
+    EXTRACT_DIR, "images"
+}
+
+# Directories to preserve during update (do not delete/overwrite)
 PROTECTED_DIRS = {
     "venv", ".git", "__pycache__", "soundboard", "backups",
     ".vscode", ".idea", "node_modules", "infodata", "data",
-    EXTRACT_DIR
+    EXTRACT_DIR, "images", "cookies"
 }
 
 # Files in the root directory to never delete or overwrite
@@ -96,7 +102,7 @@ def create_backup():
     try:
         # Copy files to temp dir
         shutil.copytree(".", temp_backup_dir, ignore=shutil.ignore_patterns(
-            *PROTECTED_DIRS, ZIP_FILENAME, "*.log", "*.pyc", "__pycache__", EXTRACT_DIR
+            *BACKUP_EXCLUDE_DIRS, ZIP_FILENAME, "*.log", "*.pyc", "__pycache__", EXTRACT_DIR
         ))
 
         # Zip it
