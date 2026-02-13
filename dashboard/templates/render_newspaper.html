@@ -132,9 +132,10 @@
 </head>
 <body>
 
-    <div class="newspaper-container">
-        <div class="header">
-            <h1 class="paper-name">{{ name }}</h1>
+    <div class="coc-sheet" style="padding: 20px;">
+        <div class="newspaper-container">
+            <div class="header">
+                <h1 class="paper-name">{{ name }}</h1>
             <div class="sub-header">
                 <span>{{ city }}</span>
                 <span>{{ date }}</span>
@@ -150,6 +151,7 @@
                     <p>{{ paragraph }}</p>
                 {% endif %}
             {% endfor %}
+            </div>
         </div>
     </div>
 
