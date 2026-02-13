@@ -28,7 +28,6 @@ COG_GROUPS = {
     "codex": "Keeper",
     "loot": "Keeper",
     "macguffin": "Keeper",
-    "pulp": "Keeper",
     "madness": "Keeper",
     "randomname": "Keeper",
     "chase": "Keeper",
