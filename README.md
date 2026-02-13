@@ -69,7 +69,7 @@ The bot primarily uses **Slash Commands** (`/`). Legacy prefix commands (default
 *   `/poison` `[name]`: 🧪 Lookup poison info.
 *   `/invention` `[decade]`: 💡 Lookup inventions by decade (e.g., "1920s").
 *   `/year` `[year]`: 📅 Historical events for a specific year.
-*   `!createnpc`: 👤 Generate a random NPC.
+*   `/randomnpc`: 👤 Generate a random NPC with region selection.
 *   `!randomname`: 🏷️ Generate a random name (1920s era).
 *   `!macguffin`: 🏺 Generate a plot device.
 *   `!loot`: 💰 Generate random loot.

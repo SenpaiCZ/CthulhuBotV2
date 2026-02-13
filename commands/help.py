@@ -31,7 +31,7 @@ COG_GROUPS = {
     "madness": "Keeper",
     "randomname": "Keeper",
     "chase": "Keeper",
-    "createnpc": "Keeper",
+    "randomnpc": "Keeper",
     "deleteinvestigator": "Keeper", # Arguably admin but fits keeper managing players
 
     # Server Administration
@@ -194,12 +194,14 @@ class Help(commands.Cog):
                     continue
 
             # Also check app_commands (pure slash)
-            # app_commands don't have 'can_run' in the same way, but usually have checks.
-            # Checking checks on app_commands is harder without executing.
-            # For now, we assume if it's strictly an app_command, we show it unless we can detect admin.
-            # Most commands in this bot are Hybrid, so get_commands() covers 99%.
-            # commands/rss.py uses @app_commands.command inside a Cog? No, usually @commands.hybrid_command
-            # Let's rely on get_commands() for now as it covers Hybrid.
+            app_cmds = cog.get_app_commands()
+            for cmd in app_cmds:
+                # Avoid duplicates if hybrid (Hybrid commands appear in get_commands, app_commands appear here)
+                # But Hybrid commands in get_commands have an app_command attribute.
+                # get_app_commands returns the app_command version.
+                # We can check by name.
+                if cmd.name not in [c.name for c in visible_commands]:
+                     visible_commands.append(cmd)
 
             if visible_commands:
                 if category not in help_data:
