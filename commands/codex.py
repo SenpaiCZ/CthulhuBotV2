@@ -266,9 +266,9 @@ class Codex(commands.Cog):
                 element = None
 
             if not element:
-                screenshot_bytes = await page.screenshot(full_page=True)
+                screenshot_bytes = await page.screenshot(full_page=True, omit_background=True)
             else:
-                screenshot_bytes = await element.screenshot()
+                screenshot_bytes = await element.screenshot(omit_background=True)
 
             file = discord.File(io.BytesIO(screenshot_bytes), filename=f"{name.replace(' ', '_')}_{type_name}.png")
 
