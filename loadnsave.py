@@ -216,14 +216,8 @@ async def load_phobias_data():
 async def load_manias_data():
     return await _load_infodata_cached('manias.json')
 
-async def load_names_male_data():
-    return await _load_infodata_cached('names_male.json')
-
-async def load_names_female_data():
-    return await _load_infodata_cached('names_female.json')
-
-async def load_names_last_data():
-    return await _load_infodata_cached('names_last.json')
+async def load_names_data():
+    return await _load_infodata_cached('names.json')
 
 async def load_archetype_data():
     return await _load_infodata_cached('archetype_info.json')
