@@ -1,6 +1,7 @@
 import re
 import discord
 from discord.ext import commands
+from discord import app_commands
 from loadnsave import load_reaction_roles, save_reaction_roles
 
 class ReactionRoles(commands.Cog):
@@ -50,46 +51,56 @@ class ReactionRoles(commands.Cog):
 
         await save_reaction_roles(data)
 
-    @commands.command(aliases=['rr', 'reactionrole'])
-    @commands.has_permissions(administrator=True)
-    async def reaction_role(self, ctx, message_id_or_link: str, role: discord.Role, emoji: str):
+    @app_commands.command(name="reactionrole", description="🎭 Setup a reaction role.")
+    @app_commands.describe(message_link="The message link or ID.", role="The role to assign.", emoji="The emoji to react with.")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def reaction_role(self, interaction: discord.Interaction, message_link: str, role: discord.Role, emoji: str):
         """
         🎭 Setup a reaction role.
-        Usage: !reactionrole <message_id|link> <@role|role_id> <emoji>
         """
+        await interaction.response.defer(ephemeral=True)
+
         # Determine Message
         message = None
-        if message_id_or_link.isdigit():
+        if message_link.isdigit():
             try:
-                message = await ctx.channel.fetch_message(int(message_id_or_link))
+                # If ID provided, try to find in current channel first
+                if interaction.channel:
+                     message = await interaction.channel.fetch_message(int(message_link))
             except discord.NotFound:
-                await ctx.send("Message not found in this channel.")
+                await interaction.followup.send("Message not found in this channel. Try using a Message Link instead.")
                 return
         else:
             try:
                 # Try to convert message link
-                parts = message_id_or_link.split('/')
+                parts = message_link.split('/')
                 msg_id = int(parts[-1])
                 chan_id = int(parts[-2])
-                channel = ctx.guild.get_channel(chan_id)
+                guild_id = int(parts[-3]) # Message link: https://discord.com/channels/guild_id/channel_id/message_id
+
+                if guild_id != interaction.guild_id:
+                     await interaction.followup.send("Message must be in this server.")
+                     return
+
+                channel = interaction.guild.get_channel(chan_id)
                 if channel:
                     message = await channel.fetch_message(msg_id)
             except Exception:
                 pass
 
         if not message:
-            await ctx.send("Could not find the message. Please provide a valid Message ID (in this channel) or a Message Link.")
+            await interaction.followup.send("Could not find the message. Please provide a valid Message ID (in this channel) or a Message Link.")
             return
 
         # Normalize emoji
-        # If the user passed a custom emoji string like <:name:id>, discord.py might have already parsed it?
-        # No, emoji is str here.
-
         resolved_emoji_str = emoji
         emoji_to_react = emoji
 
         # Check for custom ID format :12345: or just 12345 (if interpreted as string)
-        custom_id_match = re.match(r'^:?(\d+):?$', emoji)
+        custom_id_match = re.match(r'^<a?:.+:(\d+)>$', emoji) # Matches <a:name:id> or <:name:id>
+        if not custom_id_match:
+             custom_id_match = re.match(r'^:?(\d+):?$', emoji)
+
         if custom_id_match:
             emoji_id = int(custom_id_match.group(1))
             custom_emoji = self.bot.get_emoji(emoji_id)
@@ -97,20 +108,27 @@ class ReactionRoles(commands.Cog):
                 resolved_emoji_str = str(custom_emoji)
                 emoji_to_react = custom_emoji
             else:
-                # Can't find it, maybe try to use it as is if it's a valid ID for another server?
-                # But we can't react with it if we don't have it.
-                await ctx.send(f"I cannot find the emoji with ID {emoji_id}. Make sure I am in the server where this emoji is from.")
+                # If we can't find it locally, we might not be able to react with it if it's from another server we are not in.
+                # But Discord handles external emojis if the bot has nitro features (it usually does as bot).
+                # However, if get_emoji returns None, it means the bot doesn't see it in its cache (maybe another shard or bot not in that guild).
+                # We'll try to use the partial emoji logic or just the ID if possible, but simplest is to error out if unknown.
+                await interaction.followup.send(f"I cannot find the emoji with ID {emoji_id}. Make sure I am in the server where this emoji is from.")
                 return
+        else:
+            # Standard emoji (unicode)
+            # resolved_emoji_str is already set to emoji
+            pass
 
         # We need to ensure the bot can use the emoji to react.
         try:
             await message.add_reaction(emoji_to_react)
         except discord.HTTPException:
-            await ctx.send(f"I cannot react with {emoji_to_react}. Please make sure I have permission to use external emojis or that the emoji is valid.")
+            await interaction.followup.send(f"I cannot react with {emoji_to_react}. Please make sure I have permission to use external emojis or that the emoji is valid.")
             return
 
-        await self.add_reaction_role(ctx.guild.id, message.id, str(resolved_emoji_str), role.id, message.channel.id)
-        await ctx.send(f"Reaction role setup! Reacting with {emoji_to_react} on that message will give the role **{role.name}**.")
+        await self.add_reaction_role(interaction.guild_id, message.id, str(resolved_emoji_str), role.id, message.channel.id)
+
+        await interaction.followup.send(f"Reaction role setup! Reacting with {emoji_to_react} on that message will give the role **{role.name}**.", ephemeral=True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
