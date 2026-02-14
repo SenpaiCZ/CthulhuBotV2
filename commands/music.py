@@ -143,18 +143,22 @@ class Music(commands.Cog):
         )
         self.current_track[str(guild_id)] = track
 
-    @commands.hybrid_command(aliases=['p'], description="Plays a song from YouTube.")
+    @app_commands.command(name="play", description="Plays a song from YouTube.")
     @app_commands.describe(query="The song name or URL to play")
-    async def play(self, ctx, *, query: str):
+    async def play(self, interaction: discord.Interaction, query: str):
         """🎵 Plays a song from YouTube."""
-        if not ctx.voice_client:
-            if ctx.author.voice:
-                await ctx.author.voice.channel.connect()
+        if not interaction.guild:
+            await interaction.response.send_message("This command can only be used in a server.")
+            return
+
+        if not interaction.guild.voice_client:
+            if interaction.user.voice:
+                await interaction.user.voice.channel.connect()
             else:
-                await ctx.send("You are not connected to a voice channel.")
+                await interaction.response.send_message("You are not connected to a voice channel.")
                 return
 
-        await ctx.defer()
+        await interaction.response.defer()
 
         # Check for cookies file
         opts = YTDL_OPTIONS.copy()
@@ -178,7 +182,7 @@ class Music(commands.Cog):
                 original_url = info.get('webpage_url', url)
 
                 if original_url in self.blacklist:
-                    await ctx.send(f"❌ This song is blacklisted: {title}")
+                    await interaction.followup.send(f"❌ This song is blacklisted: {title}")
                     return
 
                 song_info = {
@@ -186,40 +190,48 @@ class Music(commands.Cog):
                     'url': url,
                     'original_url': original_url,
                     'thumbnail': thumbnail,
-                    'requested_by': ctx.author.display_name
+                    'requested_by': interaction.user.display_name
                 }
 
-                guild_id = str(ctx.guild.id)
+                guild_id = str(interaction.guild.id)
                 if guild_id not in self.queue:
                     self.queue[guild_id] = []
 
                 self.queue[guild_id].append(song_info)
 
                 if not self.current_track.get(guild_id):
-                    await ctx.send(f"🎵 Added to queue and playing: **{title}**")
+                    await interaction.followup.send(f"🎵 Added to queue and playing: **{title}**")
                     await self._process_queue(guild_id) # Trigger immediately
                 else:
-                    await ctx.send(f"🎵 Added to queue: **{title}**")
+                    await interaction.followup.send(f"🎵 Added to queue: **{title}**")
 
             except Exception as e:
-                await ctx.send(f"An error occurred: {e}")
+                await interaction.followup.send(f"An error occurred: {e}")
 
-    @commands.hybrid_command(aliases=['s'], description="Skips the current song.")
-    async def skip(self, ctx):
+    @app_commands.command(name="skip", description="Skips the current song.")
+    async def skip(self, interaction: discord.Interaction):
         """⏭️ Skips the current song."""
-        guild_id = str(ctx.guild.id)
+        if not interaction.guild:
+            await interaction.response.send_message("This command can only be used in a server.")
+            return
+
+        guild_id = str(interaction.guild.id)
         track = self.current_track.get(guild_id)
         if track:
             track.finished = True # Mark finished
-            await ctx.send("⏭️ Skipped.")
+            await interaction.response.send_message("⏭️ Skipped.")
             await self._process_queue(guild_id) # Trigger immediately
         else:
-            await ctx.send("Nothing is playing.")
+            await interaction.response.send_message("Nothing is playing.")
 
-    @commands.hybrid_command(aliases=['leave', 'disconnect', 'dc'], description="Stops music, clears queue, and disconnects.")
-    async def stop(self, ctx):
+    @app_commands.command(name="stop", description="Stops music, clears queue, and disconnects.")
+    async def stop(self, interaction: discord.Interaction):
         """🛑 Stops music, clears queue, and disconnects."""
-        guild_id = str(ctx.guild.id)
+        if not interaction.guild:
+            await interaction.response.send_message("This command can only be used in a server.")
+            return
+
+        guild_id = str(interaction.guild.id)
 
         # Clear queue and current track
         if guild_id in self.queue:
@@ -228,21 +240,25 @@ class Music(commands.Cog):
             del self.current_track[guild_id]
 
         # Disconnect from voice
-        if ctx.voice_client:
-            await ctx.voice_client.disconnect()
+        if interaction.guild.voice_client:
+            await interaction.guild.voice_client.disconnect()
 
         # Cleanup mixer
         if guild_id in guild_mixers:
             mixer = guild_mixers.pop(guild_id)
             mixer.cleanup()
 
-        await ctx.send("🛑 Stopped playing, cleared queue, and disconnected.")
+        await interaction.response.send_message("🛑 Stopped playing, cleared queue, and disconnected.")
 
-    @commands.hybrid_command(aliases=['vol'], description="Sets the music volume (0-100). Persists per server.")
+    @app_commands.command(name="volume", description="Sets the music volume (0-100). Persists per server.")
     @app_commands.describe(vol="Volume level (0-100)")
-    async def volume(self, ctx, vol: int):
+    async def volume(self, interaction: discord.Interaction, vol: int):
         """🔊 Sets the music volume (0-100). Persists per server."""
-        guild_id = str(ctx.guild.id)
+        if not interaction.guild:
+            await interaction.response.send_message("This command can only be used in a server.")
+            return
+
+        guild_id = str(interaction.guild.id)
         new_vol = max(0, min(100, vol)) / 100
 
         # Update persistent storage
@@ -255,29 +271,37 @@ class Music(commands.Cog):
         track = self.current_track.get(guild_id)
         if track:
             track.volume = new_vol
-            await ctx.send(f"🔊 Music volume set to {vol}%")
+            await interaction.response.send_message(f"🔊 Music volume set to {vol}%")
         else:
-            await ctx.send(f"🔊 Music volume set to {vol}% (will apply to next song)")
+            await interaction.response.send_message(f"🔊 Music volume set to {vol}% (will apply to next song)")
 
-    @commands.hybrid_command(description="Toggles loop for the current song.")
-    async def loop(self, ctx):
+    @app_commands.command(name="loop", description="Toggles loop for the current song.")
+    async def loop(self, interaction: discord.Interaction):
         """🔁 Toggles loop for the current song."""
-        guild_id = str(ctx.guild.id)
+        if not interaction.guild:
+            await interaction.response.send_message("This command can only be used in a server.")
+            return
+
+        guild_id = str(interaction.guild.id)
         track = self.current_track.get(guild_id)
         if track:
             track.loop = not track.loop
             state = "enabled" if track.loop else "disabled"
-            await ctx.send(f"🔁 Loop {state}.")
+            await interaction.response.send_message(f"🔁 Loop {state}.")
         else:
-            await ctx.send("Nothing is playing.")
+            await interaction.response.send_message("Nothing is playing.")
 
-    @commands.hybrid_command(aliases=['q'], description="Shows the current queue.")
-    async def queue(self, ctx):
+    @app_commands.command(name="queue", description="Shows the current queue.")
+    async def queue(self, interaction: discord.Interaction):
         """🎼 Shows the current queue."""
-        guild_id = str(ctx.guild.id)
+        if not interaction.guild:
+            await interaction.response.send_message("This command can only be used in a server.")
+            return
+
+        guild_id = str(interaction.guild.id)
         q = self.queue.get(guild_id, [])
         if not q and not self.current_track.get(guild_id):
-            await ctx.send("Queue is empty.")
+            await interaction.response.send_message("Queue is empty.")
             return
 
         embed = discord.Embed(title="Music Queue")
@@ -294,17 +318,21 @@ class Music(commands.Cog):
                 desc += f"...and {len(q)-10} more."
             embed.description = desc
 
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
-    @commands.hybrid_command(aliases=['np'], description="Shows the currently playing song.")
-    async def nowplaying(self, ctx):
+    @app_commands.command(name="nowplaying", description="Shows the currently playing song.")
+    async def nowplaying(self, interaction: discord.Interaction):
         """💿 Shows the currently playing song."""
-        guild_id = str(ctx.guild.id)
+        if not interaction.guild:
+            await interaction.response.send_message("This command can only be used in a server.")
+            return
+
+        guild_id = str(interaction.guild.id)
         curr = self.current_track.get(guild_id)
         if curr:
-            await ctx.send(f"🎶 Now Playing: **{curr.metadata.get('title')}**")
+            await interaction.response.send_message(f"🎶 Now Playing: **{curr.metadata.get('title')}**")
         else:
-            await ctx.send("Nothing is playing.")
+            await interaction.response.send_message("Nothing is playing.")
 
 async def setup(bot):
     await bot.add_cog(Music(bot))
