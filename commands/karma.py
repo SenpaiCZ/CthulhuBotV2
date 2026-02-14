@@ -364,101 +364,93 @@ class Karma(commands.Cog):
                 await self.update_karma_roles(member, karma, settings)
                 await asyncio.sleep(0.1) # Be gentle with rate limits
 
-    @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def setupkarma(self, ctx):
+    @app_commands.command(name="setupkarma", description="⚙️ Setup the Karma system for this server (Wizard).")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def setupkarma(self, interaction: discord.Interaction):
         """
         ⚙️ Setup the Karma system for this server (Wizard).
         """
-        await ctx.send("Let's set up the Karma system! First, select the channel where reactions should count.",
-                       view=KarmaSetupChannelView(self.bot, ctx))
+        await interaction.response.send_message("Let's set up the Karma system! First, select the channel where reactions should count.",
+                       view=KarmaSetupChannelView(self.bot, interaction.user), ephemeral=True)
 
-    @commands.hybrid_command(aliases=['k'])
+    @app_commands.command(name="karma", description="🌟 Check karma for yourself or another user.")
     @app_commands.describe(user="The user to check karma for (defaults to you)")
-    async def karma(self, ctx, user: discord.User = None):
+    async def karma(self, interaction: discord.Interaction, user: discord.User = None):
         """
         🌟 Check karma for yourself or another user.
-        Usage: !karma [@user]
         """
         if user is None:
-            user = ctx.author
+            user = interaction.user
 
         stats = await load_karma_stats()
-        guild_id = str(ctx.guild.id)
+        guild_id = str(interaction.guild_id)
         user_id = str(user.id)
 
         karma_score = stats.get(guild_id, {}).get(user_id, 0)
 
-        await ctx.send(f"{user.display_name} has {karma_score} karma.")
+        await interaction.response.send_message(f"{user.display_name} has {karma_score} karma.")
 
-    @commands.hybrid_command(aliases=['level'])
+    @app_commands.command(name="memelevel", description="🔮 Show your current rank card.")
     @app_commands.describe(user="The user whose rank card you want to see (defaults to you)")
-    async def memelevel(self, ctx, user: discord.Member = None):
+    async def memelevel(self, interaction: discord.Interaction, user: discord.Member = None):
         """
         🔮 Show your current rank card.
-        Usage: !memelevel [@user]
         """
         if user is None:
-            user = ctx.author
+            user = interaction.user
 
         stats = await load_karma_stats()
-        guild_id = str(ctx.guild.id)
+        guild_id = str(interaction.guild_id)
         user_id = str(user.id)
 
         karma = stats.get(guild_id, {}).get(user_id, 0)
         settings = await self.get_guild_settings(guild_id)
 
         if not settings:
-             await ctx.send("Karma system is not set up on this server.")
+             await interaction.response.send_message("Karma system is not set up on this server.", ephemeral=True)
              return
 
-        rank_name = self._get_rank_name(karma, settings, ctx.guild)
+        rank_name = self._get_rank_name(karma, settings, interaction.guild)
+
+        await interaction.response.defer()
 
         # Generate image
-        async with ctx.typing():
-            img_bytes = await self.generate_notification_image(ctx.guild.id, user.id, rank_name, "status")
+        img_bytes = await self.generate_notification_image(interaction.guild_id, user.id, rank_name, "status")
 
         if img_bytes:
             file = discord.File(io.BytesIO(img_bytes), filename="rank_status.png")
-            await ctx.send(file=file)
+            await interaction.followup.send(file=file)
         else:
-            await ctx.send("Failed to generate rank card.")
+            await interaction.followup.send("Failed to generate rank card.")
 
-    @commands.hybrid_command(aliases=['karmatop', 'top'])
-    @app_commands.describe(ignore_extra="Ignored argument for compatibility")
-    async def leaderboard(self, ctx, *, ignore_extra: str = None):
+    @app_commands.command(name="leaderboard", description="🏆 Show the Karma leaderboard.")
+    async def leaderboard(self, interaction: discord.Interaction):
         """
         🏆 Show the Karma leaderboard.
-        Usage: !leaderboard
         """
         stats = await load_karma_stats()
-        guild_id = str(ctx.guild.id)
+        guild_id = str(interaction.guild_id)
 
         if guild_id not in stats or not stats[guild_id]:
-            await ctx.send("No karma stats found for this server.", ephemeral=True)
+            await interaction.response.send_message("No karma stats found for this server.", ephemeral=True)
             return
 
         # Sort users by karma (descending)
         sorted_users = sorted(stats[guild_id].items(), key=lambda item: item[1], reverse=True)
 
-        view = LeaderboardView(ctx, sorted_users)
+        view = LeaderboardView(interaction, sorted_users)
         embed = view.get_embed()
 
-        # Ephemeral if slash command
-        ephemeral = False
-        if ctx.interaction:
-            ephemeral = True
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
-        await ctx.send(embed=embed, view=view, ephemeral=ephemeral)
-
-    @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def setupkarmaroles(self, ctx):
+    @app_commands.command(name="setupkarmaroles", description="🧙 Wizard to manage Karma Threshold Roles.")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def setupkarmaroles(self, interaction: discord.Interaction):
         """
         🧙 Wizard to manage Karma Threshold Roles.
         """
-        view = KarmaRoleSetupMainView(self.bot, ctx)
-        await ctx.send("Select an option to manage Karma Roles:", view=view)
+        view = KarmaRoleSetupMainView(self.bot, interaction.user)
+        await interaction.response.send_message("Select an option to manage Karma Roles:", view=view, ephemeral=True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -566,36 +558,36 @@ class Karma(commands.Cog):
 # --- UI Classes for setupkarmaroles ---
 
 class KarmaRoleSetupMainView(View):
-    def __init__(self, bot, ctx):
+    def __init__(self, bot, user):
         super().__init__(timeout=120)
         self.bot = bot
-        self.ctx = ctx
+        self.user = user
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id == self.ctx.author.id
+        return interaction.user.id == self.user.id
 
     @discord.ui.button(label="Add/Edit Role", style=discord.ButtonStyle.green, emoji="➕")
     async def add_role(self, interaction: discord.Interaction, button: discord.ui.Button):
         # We need to ask for Role first
         # Since we can't do steps easily in one click, we swap to a Role Select View
-        await interaction.response.send_message("Select the role you want to assign:", view=KarmaRoleSelectView(self.bot, self.ctx), ephemeral=True)
+        await interaction.response.send_message("Select the role you want to assign:", view=KarmaRoleSelectView(self.bot, self.user), ephemeral=True)
 
     @discord.ui.button(label="Remove Threshold", style=discord.ButtonStyle.red, emoji="➖")
     async def remove_role(self, interaction: discord.Interaction, button: discord.ui.Button):
         settings = await load_karma_settings()
-        guild_id = str(self.ctx.guild.id)
+        guild_id = str(interaction.guild_id)
 
         if guild_id not in settings or "roles" not in settings[guild_id] or not settings[guild_id]["roles"]:
             await interaction.response.send_message("No roles configured yet.", ephemeral=True)
             return
 
-        view = KarmaRoleRemoveView(self.bot, self.ctx, settings[guild_id]["roles"])
+        view = KarmaRoleRemoveView(self.bot, self.user, settings[guild_id]["roles"], interaction.guild)
         await interaction.response.send_message("Select threshold to remove:", view=view, ephemeral=True)
 
     @discord.ui.button(label="List Config", style=discord.ButtonStyle.blurple, emoji="📜")
     async def list_roles(self, interaction: discord.Interaction, button: discord.ui.Button):
         settings = await load_karma_settings()
-        guild_id = str(self.ctx.guild.id)
+        guild_id = str(interaction.guild_id)
 
         if guild_id not in settings:
             await interaction.response.send_message("Karma not setup.", ephemeral=True)
@@ -616,7 +608,7 @@ class KarmaRoleSetupMainView(View):
         if "roles" in settings[guild_id] and settings[guild_id]["roles"]:
             sorted_roles = sorted(settings[guild_id]["roles"].items(), key=lambda x: int(x[0]))
             for thresh, role_id in sorted_roles:
-                role = self.ctx.guild.get_role(int(role_id))
+                role = interaction.guild.get_role(int(role_id))
                 role_name = role.name if role else f"Deleted Role ({role_id})"
                 roles_text += f"**{thresh}+**: {role_name}\n"
         else:
@@ -628,58 +620,61 @@ class KarmaRoleSetupMainView(View):
 
 
 class KarmaRoleSelectView(View):
-    def __init__(self, bot, ctx):
+    def __init__(self, bot, user):
         super().__init__(timeout=60)
         self.bot = bot
-        self.ctx = ctx
+        self.user = user
 
     @discord.ui.select(cls=discord.ui.RoleSelect, placeholder="Select a role")
     async def select_role(self, interaction: discord.Interaction, select: discord.ui.RoleSelect):
         role = select.values[0]
 
-        # Ask for Karma amount
-        await interaction.response.send_message(f"Selected **{role.name}**. Now, please type the Karma threshold amount in this channel.", ephemeral=True)
+        # Use Modal for amount
+        await interaction.response.send_modal(KarmaThresholdModal(role, self.bot))
 
-        def check(m):
-            return m.author == self.ctx.author and m.channel == self.ctx.channel
 
+class KarmaThresholdModal(discord.ui.Modal, title="Karma Threshold"):
+    amount = discord.ui.TextInput(label="Karma Amount", placeholder="e.g. 10", required=True, min_length=1, max_length=5)
+
+    def __init__(self, role, bot):
+        super().__init__()
+        self.role = role
+        self.bot = bot
+
+    async def on_submit(self, interaction: discord.Interaction):
         try:
-            msg = await self.bot.wait_for('message', check=check, timeout=30.0)
-            try:
-                amount = int(msg.content.strip())
+            amount_val = int(self.amount.value.strip())
 
-                # Save
-                settings = await load_karma_settings()
-                guild_id = str(self.ctx.guild.id)
+            # Save
+            settings = await load_karma_settings()
+            guild_id = str(interaction.guild_id)
 
-                if guild_id not in settings:
-                    settings[guild_id] = {}
+            if guild_id not in settings:
+                settings[guild_id] = {}
 
-                if "roles" not in settings[guild_id]:
-                    settings[guild_id]["roles"] = {}
+            if "roles" not in settings[guild_id]:
+                settings[guild_id]["roles"] = {}
 
-                settings[guild_id]["roles"][str(amount)] = role.id
-                await save_karma_settings(settings)
+            settings[guild_id]["roles"][str(amount_val)] = self.role.id
+            await save_karma_settings(settings)
 
-                await interaction.followup.send(f"✅ Set **{role.name}** for **{amount}** Karma. Updating users...", ephemeral=True)
+            await interaction.response.send_message(f"✅ Set **{self.role.name}** for **{amount_val}** Karma. Updating users...", ephemeral=True)
 
-                # Trigger retroactive update
-                cog = self.bot.get_cog("Karma")
-                if cog:
-                    self.bot.loop.create_task(cog.run_guild_karma_update(guild_id))
+            # Trigger retroactive update
+            cog = self.bot.get_cog("Karma")
+            if cog:
+                self.bot.loop.create_task(cog.run_guild_karma_update(guild_id))
 
-            except ValueError:
-                await interaction.followup.send("❌ Invalid number. Setup cancelled.", ephemeral=True)
-        except asyncio.TimeoutError:
-             await interaction.followup.send("❌ Timed out.", ephemeral=True)
+        except ValueError:
+            await interaction.response.send_message("❌ Invalid number. Please enter a valid integer.", ephemeral=True)
 
 
 class KarmaRoleRemoveView(View):
-    def __init__(self, bot, ctx, current_roles):
+    def __init__(self, bot, user, current_roles, guild):
         super().__init__(timeout=60)
         self.bot = bot
-        self.ctx = ctx
-        self.add_item(KarmaRoleRemoveSelect(current_roles, ctx.guild))
+        self.user = user
+        self.add_item(KarmaRoleRemoveSelect(current_roles, guild))
 
 class KarmaRoleRemoveSelect(Select):
     def __init__(self, current_roles, guild):
@@ -692,7 +687,7 @@ class KarmaRoleRemoveSelect(Select):
             role_name = role.name if role else f"Unknown ({role_id})"
             options.append(discord.SelectOption(label=f"{thresh} Karma", description=f"Role: {role_name}", value=str(thresh)))
 
-        super().__init__(placeholder="Select threshold to remove...", min_values=1, max_values=1)
+        super().__init__(placeholder="Select threshold to remove...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         threshold = self.values[0]
@@ -717,9 +712,9 @@ class KarmaRoleRemoveSelect(Select):
 
 
 class LeaderboardView(View):
-    def __init__(self, ctx, sorted_users, items_per_page=10):
+    def __init__(self, interaction, sorted_users, items_per_page=10):
         super().__init__(timeout=120)
-        self.ctx = ctx
+        self.interaction = interaction
         self.sorted_users = sorted_users
         self.items_per_page = items_per_page
         self.current_page = 1
@@ -731,7 +726,7 @@ class LeaderboardView(View):
         self.next_page.disabled = self.current_page >= self.total_pages
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user.id != self.ctx.author.id:
+        if interaction.user.id != self.interaction.user.id:
             await interaction.response.send_message("This isn't your leaderboard!", ephemeral=True)
             return False
         return True
@@ -744,7 +739,7 @@ class LeaderboardView(View):
         embed = discord.Embed(title=f"Karma Leaderboard - Page {self.current_page}/{self.total_pages}", color=discord.Color.gold())
         description = ""
         for i, (user_id, score) in enumerate(current_page_users, start=start_index + 1):
-            user = self.ctx.guild.get_member(int(user_id))
+            user = self.interaction.guild.get_member(int(user_id))
             user_name = user.display_name if user else "Unknown User"
             description += f"**{i}.** {user_name}: **{score}**\n"
         embed.description = description
@@ -765,28 +760,28 @@ class LeaderboardView(View):
 # --- UI Classes for setupkarma (Main Setup) ---
 
 class KarmaSetupChannelView(View):
-    def __init__(self, bot, ctx):
+    def __init__(self, bot, user):
         super().__init__(timeout=120)
         self.bot = bot
-        self.ctx = ctx
+        self.user = user
         self.channel_id = None
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id == self.ctx.author.id
+        return interaction.user.id == self.user.id
 
     @discord.ui.select(cls=discord.ui.ChannelSelect, channel_types=[discord.ChannelType.text], placeholder="Select Reaction Channel")
     async def select_channel(self, interaction: discord.Interaction, select: discord.ui.ChannelSelect):
         self.channel_id = select.values[0].id
-        await interaction.response.send_modal(KarmaSetupEmojiModal(self.bot, self.ctx, self.channel_id))
+        await interaction.response.send_modal(KarmaSetupEmojiModal(self.bot, self.user, self.channel_id))
 
 class KarmaSetupEmojiModal(discord.ui.Modal, title="Karma Emojis"):
     upvote = discord.ui.TextInput(label="Upvote Emoji", placeholder="e.g. 👌 or :custom:", required=True, max_length=50)
     downvote = discord.ui.TextInput(label="Downvote Emoji", placeholder="e.g. 🤏 or :custom:", required=True, max_length=50)
 
-    def __init__(self, bot, ctx, channel_id):
+    def __init__(self, bot, user, channel_id):
         super().__init__()
         self.bot = bot
-        self.ctx = ctx
+        self.user = user
         self.channel_id = channel_id
 
     async def on_submit(self, interaction: discord.Interaction):
@@ -794,15 +789,15 @@ class KarmaSetupEmojiModal(discord.ui.Modal, title="Karma Emojis"):
         await interaction.response.send_message(
             f"Emojis set: {self.upvote.value} / {self.downvote.value}.\n"
             "Now, select a **Notification Channel** for rank updates (or skip to disable).",
-            view=KarmaSetupNotifyView(self.bot, self.ctx, self.channel_id, self.upvote.value, self.downvote.value),
+            view=KarmaSetupNotifyView(self.bot, self.user, self.channel_id, self.upvote.value, self.downvote.value),
             ephemeral=True
         )
 
 class KarmaSetupNotifyView(View):
-    def __init__(self, bot, ctx, channel_id, up, down):
+    def __init__(self, bot, user, channel_id, up, down):
         super().__init__(timeout=120)
         self.bot = bot
-        self.ctx = ctx
+        self.user = user
         self.data = {
             "channel_id": channel_id,
             "upvote_emoji": up,
@@ -810,7 +805,7 @@ class KarmaSetupNotifyView(View):
         }
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id == self.ctx.author.id
+        return interaction.user.id == self.user.id
 
     @discord.ui.select(cls=discord.ui.ChannelSelect, channel_types=[discord.ChannelType.text], placeholder="Select Notification Channel")
     async def select_channel(self, interaction: discord.Interaction, select: discord.ui.ChannelSelect):
@@ -823,7 +818,7 @@ class KarmaSetupNotifyView(View):
 
     async def finish_setup(self, interaction: discord.Interaction, notify_id):
         settings = await load_karma_settings()
-        guild_id = str(self.ctx.guild.id)
+        guild_id = str(interaction.guild_id)
 
         existing_roles = {}
         if guild_id in settings and "roles" in settings[guild_id]:
