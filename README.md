@@ -36,7 +36,7 @@ The bot primarily uses **Slash Commands** (`/`). Legacy prefix commands (default
 
 ### 🐙 Investigator Tools
 *   `/newinvestigator`: 🕵️‍♂️ Start the character creation wizard.
-*   `/mychar`: 📜 View your character sheet.
+*   `/mycharacter`: 📜 View your character sheet.
 *   `/stat`: 📊 View or edit specific stats on your sheet.
 *   `/rename`: 🏷️ Rename your character.
 *   `/renameskill`: ✏️ Rename a skill on your sheet.

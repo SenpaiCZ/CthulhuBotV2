@@ -1,14 +1,15 @@
 import discord
 import math
+import re
 from discord.ui import View, Select, Button
-from emojis import get_stat_emoji
+from emojis import get_stat_emoji, stat_emojis
 from descriptions import get_description
 import occupation_emoji
 
 class CharacterDashboardView(View):
-    def __init__(self, ctx, char_data, mode_label, current_mode):
+    def __init__(self, user, char_data, mode_label, current_mode):
         super().__init__(timeout=300) # 5 minute timeout
-        self.ctx = ctx
+        self.user = user
         self.char_data = char_data
         self.mode_label = mode_label
         self.current_mode = current_mode
@@ -58,7 +59,7 @@ class CharacterDashboardView(View):
         self.add_item(dismiss_btn)
 
     async def select_callback(self, interaction: discord.Interaction):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
             await interaction.response.send_message("This dashboard is not for you!", ephemeral=True)
             return
 
@@ -68,20 +69,20 @@ class CharacterDashboardView(View):
         await interaction.response.edit_message(embed=self.get_embed(), view=self)
 
     async def prev_page_callback(self, interaction: discord.Interaction):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         if self.page > 0:
             self.page -= 1
             self.update_components()
             await interaction.response.edit_message(embed=self.get_embed(), view=self)
 
     async def next_page_callback(self, interaction: discord.Interaction):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         self.page += 1
         self.update_components()
         await interaction.response.edit_message(embed=self.get_embed(), view=self)
 
     async def dismiss_callback(self, interaction: discord.Interaction):
-        if interaction.user == self.ctx.author:
+        if interaction.user == self.user:
             await interaction.message.delete()
         else:
             await interaction.response.send_message("You cannot dismiss this.", ephemeral=True)
@@ -187,7 +188,8 @@ class CharacterDashboardView(View):
         for skill, val in current_page_skills:
             # Format: Value (Hard/Extreme)
             val_text = f"**{val}** ({val//2}/{val//5})"
-            embed.add_field(name=f"{skill}", value=val_text, inline=True)
+            emoji = self._get_skill_emoji(skill)
+            embed.add_field(name=f"{emoji} {skill}", value=val_text, inline=True)
 
         embed.set_footer(text=f"Page {self.page + 1}/{math.ceil(len(all_skills)/self.items_per_page)}")
         return embed
@@ -248,6 +250,9 @@ class CharacterDashboardView(View):
             "Backstory"
         ]
 
+        # Custom skills to always push to end
+        end_skills = ["customskill", "customskills", "customskillss"]
+
         skills = []
         for key, val in self.char_data.items():
             if key in ignored: continue
@@ -256,7 +261,32 @@ class CharacterDashboardView(View):
 
             skills.append((key, val))
 
-        return sorted(skills, key=lambda x: x[0])
+        def sort_key(item):
+            key = item[0]
+            is_end = key in end_skills
+            return (is_end, key)
+
+        return sorted(skills, key=sort_key)
+
+    def _get_skill_emoji(self, skill_name):
+        if skill_name in stat_emojis:
+            return stat_emojis[skill_name]
+
+        # Normalized Match (strip parens and extra spaces)
+        normalized_skill = skill_name.replace("(", " ").replace(")", " ").replace("/", " ").strip()
+        # Collapse multiple spaces
+        normalized_skill = re.sub(r'\s+', ' ', normalized_skill)
+
+        if normalized_skill in stat_emojis:
+            return stat_emojis[normalized_skill]
+
+        # Partial Match
+        sorted_keys = sorted(stat_emojis.keys(), key=len, reverse=True)
+        for key in sorted_keys:
+            if key.lower() in skill_name.lower():
+                return stat_emojis[key]
+
+        return "❓"
 
     def _calculate_move(self):
         dex = self.char_data.get("DEX", 0)

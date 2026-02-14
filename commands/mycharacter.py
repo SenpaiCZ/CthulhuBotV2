@@ -4,34 +4,31 @@ from discord import app_commands
 from loadnsave import load_player_stats, load_gamemode_stats
 from commands._mychar_view import CharacterDashboardView
 
-class mychar(commands.Cog):
+class mycharacter(commands.Cog):
 
   def __init__(self, bot):
     self.bot = bot
     
-  @commands.hybrid_command(aliases=["mcs", "char", "inv"], description="Show your investigator's stats, skills, backstory and inventory.")
+  @app_commands.command(name="mycharacter", description="Show your investigator's stats, skills, backstory and inventory.")
   @app_commands.describe(member="The member whose character you want to see")
-  async def mychar(self, ctx, *, member: discord.Member = None):
-    """
-    📜 Show your investigator's stats, skills, backstory and inventory.
-    Usage: `[p]mychar` or `[p]mychar @User` to see others.
-    """
-    if ctx.guild is None:
-      await ctx.send("This command is not allowed in DMs.")
+  async def mycharacter(self, interaction: discord.Interaction, member: discord.Member = None):
+
+    if interaction.guild is None:
+      await interaction.response.send_message("This command is not allowed in DMs.", ephemeral=True)
       return    
       
     if member is None:
-      user_id = str(ctx.author.id)
-      member = ctx.author
+      user_id = str(interaction.user.id)
+      member = interaction.user
     else:
       user_id = str(member.id)
     
-    server_id = str(ctx.guild.id)
+    server_id = str(interaction.guild.id)
     player_stats = await load_player_stats()
     
     # Check if server exists in stats, if not handle gracefully or rely on it returning empty dict
     if server_id not in player_stats or user_id not in player_stats[server_id]:
-        await ctx.send(f"{member.display_name} doesn't have an investigator. Use `!newInv` for creating a new investigator.", ephemeral=True)
+        await interaction.response.send_message(f"{member.display_name} doesn't have an investigator. Use `/newinvestigator` for creating a new investigator.", ephemeral=True)
         return
       
     # Loading game mode
@@ -55,10 +52,11 @@ class mychar(commands.Cog):
         mode_label = "Call of Cthulhu character"
 
     # Instantiate View
-    view = CharacterDashboardView(ctx, char_data, mode_label, current_mode)
+    # Pass interaction.user so the dashboard is interactive for the caller
+    view = CharacterDashboardView(interaction.user, char_data, mode_label, current_mode)
     
     # Send message with the initial Embed (Stats)
-    await ctx.send(embed=view.get_embed(), view=view)
+    await interaction.response.send_message(embed=view.get_embed(), view=view, ephemeral=True)
 
 async def setup(bot):
-  await bot.add_cog(mychar(bot))
+  await bot.add_cog(mycharacter(bot))

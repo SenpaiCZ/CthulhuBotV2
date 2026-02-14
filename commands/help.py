@@ -7,7 +7,7 @@ from discord.ui import View, Select
 COG_GROUPS = {
     # Character Creation & Management
     "newinvestigator": "Character",
-    "mychar": "Character",
+    "mycharacter": "Character",
     "stat": "Character",
     "printcharacter": "Character",
     "rename": "Character",
