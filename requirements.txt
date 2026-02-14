@@ -11,3 +11,4 @@ yt-dlp
 emoji
 playwright
 rapidfuzz
+mutagen

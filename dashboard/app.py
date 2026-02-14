@@ -43,7 +43,7 @@ from .file_utils import (
     sanitize_filename, sync_get_soundboard_files, sync_save_bytes,
     sync_extract_zip, sync_delete_path, sync_rename_path, sync_create_directory,
     ALLOWED_AUDIO_EXTENSIONS as ALLOWED_EXTENSIONS,
-    ALLOWED_IMAGE_EXTENSIONS
+    ALLOWED_IMAGE_EXTENSIONS, get_audio_duration
 )
 
 SOUNDBOARD_FOLDER = "soundboard"
@@ -1602,7 +1602,9 @@ async def soundboard_data():
                     "name": os.path.basename(t.file_path),
                     "volume": int(t.volume * 100),
                     "loop": t.loop,
-                    "paused": t.paused
+                    "paused": t.paused,
+                    "position": t.position,
+                    "duration": t.duration
                 })
 
         vol_data = server_volumes.get(str(guild.id), {'music': 1.0, 'soundboard': 0.5})
@@ -1711,6 +1713,10 @@ async def soundboard_play():
     if not os.path.exists(full_path):
         return jsonify({"status": "error", "message": "File not found"}), 404
 
+    # Get Duration
+    from .file_utils import get_audio_duration
+    duration = await asyncio.to_thread(get_audio_duration, full_path)
+
     voice_client, error = await get_or_join_voice_channel(guild_id, channel_id)
     if error:
         return jsonify({"status": "error", "message": error}), 500
@@ -1760,7 +1766,8 @@ async def soundboard_play():
         metadata={
             'type': 'soundboard',
             'volume_modifier': volume_modifier
-        }
+        },
+        duration=duration
     )
 
     return jsonify({"status": "success"})
@@ -1943,6 +1950,49 @@ async def soundboard_delete_file():
             await save_soundboard_settings(settings)
 
         return jsonify({"status": "success"})
+
+@app.route('/api/soundboard/folder/image', methods=['POST'])
+async def soundboard_folder_image():
+    if not is_admin(): return "Unauthorized", 401
+
+    form = await request.form
+    files = await request.files
+    folder_name = form.get('folder_name')
+    file = files.get('file')
+
+    if not folder_name or not file:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    # Ensure directory
+    target_dir = os.path.join(IMAGES_FOLDER, "soundboard")
+    if not os.path.exists(target_dir): os.makedirs(target_dir)
+
+    safe_folder = sanitize_filename(folder_name)
+    ext = os.path.splitext(file.filename)[1].lower()
+
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+         return jsonify({"status": "error", "message": "Invalid file type"}), 400
+
+    filename = f"{safe_folder}{ext}"
+    target_path = os.path.join(target_dir, filename)
+
+    try:
+        # Save file
+        file_bytes = file.read()
+        if asyncio.iscoroutine(file_bytes): file_bytes = await file_bytes
+
+        with open(target_path, 'wb') as f:
+            f.write(file_bytes)
+
+        # Save setting
+        settings = await load_soundboard_settings()
+        if 'folder_images' not in settings: settings['folder_images'] = {}
+        settings['folder_images'][folder_name] = f"/images/soundboard/{filename}"
+        await save_soundboard_settings(settings)
+
+        return jsonify({"status": "success", "url": settings['folder_images'][folder_name]})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
     else:
         return jsonify({"status": "error", "message": error}), 500
 

@@ -3,6 +3,7 @@ import shutil
 import zipfile
 import re
 import logging
+import mutagen
 
 logger = logging.getLogger("dashboard.file_utils")
 
@@ -16,6 +17,16 @@ def sanitize_filename(filename):
     # Remove leading/trailing dots/spaces
     clean = clean.strip('. ')
     return clean or 'unnamed'
+
+def get_audio_duration(file_path):
+    """Gets the duration of an audio file in seconds."""
+    try:
+        audio = mutagen.File(file_path)
+        if audio and hasattr(audio, 'info') and hasattr(audio.info, 'length'):
+            return audio.info.length
+    except Exception as e:
+        logger.warning(f"Failed to get duration for {file_path}: {e}")
+    return 0
 
 def sync_get_soundboard_files(soundboard_folder):
     """Synchronously retrieves the soundboard file structure."""

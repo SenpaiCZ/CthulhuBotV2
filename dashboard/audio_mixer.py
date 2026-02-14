@@ -8,10 +8,12 @@ import threading
 SAMPLE_RATE = 48000
 CHANNELS = 2
 SAMPLE_WIDTH = 2 # 16-bit
+# Bytes per second = 48000 * 2 * 2 = 192000
+BYTES_PER_SECOND = SAMPLE_RATE * CHANNELS * SAMPLE_WIDTH
 CHUNK_SIZE = 3840 # 20ms of audio: 48000 * 0.02 * 2 * 2
 
 class Track:
-    def __init__(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None, on_finish=None):
+    def __init__(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None, on_finish=None, duration=None):
         self.id = str(uuid.uuid4())
         self.file_path = file_path
         self.volume = volume
@@ -23,6 +25,8 @@ class Track:
         self.paused = False
         self.finished = False
         self.on_finish = on_finish
+        self.duration = duration
+        self.bytes_read = 0
         self.source = self._create_source()
 
     def _create_source(self):
@@ -36,6 +40,11 @@ class Track:
             before_options=self.before_options,
             options=self.options
         )
+
+    @property
+    def position(self):
+        # Calculate position in seconds
+        return self.bytes_read / BYTES_PER_SECOND
 
     def read(self):
         if self.paused:
@@ -61,6 +70,9 @@ class Track:
                 try:
                     self.source.cleanup()
                     self.source = self._create_source()
+                    self.bytes_read = 0 # Reset for accurate loop position tracking relative to file start?
+                    # Or keep incrementing for total played time?
+                    # Usually for a progress bar, we want position in the file.
                     data = self.source.read()
                     if not data: # Still empty? File might be empty/broken
                         self.finished = True
@@ -82,15 +94,13 @@ class Track:
                     except: pass
                 return b''
 
+        self.bytes_read += len(data)
+
         # If we got less data than CHUNK_SIZE (end of file), pad with silence
         if len(data) < CHUNK_SIZE:
             data += b'\x00' * (CHUNK_SIZE - len(data))
 
         # Apply volume
-        # audioop.mul throws error if volume is not float? No, it takes factor.
-        # But for 'mul', factor is a float?
-        # audioop.mul(fragment, width, factor)
-        # Check python docs: audioop.mul(fragment, width, factor) -> factor is float.
         if self.volume != 1.0:
             try:
                 data = audioop.mul(data, SAMPLE_WIDTH, self.volume)
@@ -109,8 +119,8 @@ class MixingAudioSource(discord.AudioSource):
         self._finished = False
         self.lock = threading.Lock()
 
-    def add_track(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None, on_finish=None):
-        track = Track(file_path, volume, loop, is_url, metadata, before_options, options, on_finish)
+    def add_track(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None, on_finish=None, duration=None):
+        track = Track(file_path, volume, loop, is_url, metadata, before_options, options, on_finish, duration)
         with self.lock:
             self.tracks.append(track)
         return track
@@ -135,30 +145,14 @@ class MixingAudioSource(discord.AudioSource):
         mixed = bytearray(b'\x00' * CHUNK_SIZE)
 
         with self.lock:
-            # We need to iterate over a copy because tracks might finish and be removed (optional)
-            # For now, we just mark them finished.
-
-            # Actually, let's filter out finished non-looping tracks first?
-            # Or just read and cleanup later.
-
             active_tracks = [t for t in self.tracks if not t.finished]
 
             if not active_tracks:
-                # If no tracks playing, we return silence to keep the connection open?
-                # Or we return b'' to stop?
-                # If we return b'', Discord disconnects or stops playing.
-                # But we want the mixer to stay alive so we can add sounds later.
-                # So return silence.
                 return bytes(mixed)
 
             for track in active_tracks:
                 data = track.read()
                 if data:
-                    # audioop.add returns bytes, we want to sum into our mixed accumulator
-                    # But audioop.add takes two fragments.
-                    # mixed = audioop.add(mixed, data, SAMPLE_WIDTH)
-                    # Note: audioop.add handles wrapping.
-                    # To minimize clipping, users should manage volume.
                     mixed = audioop.add(mixed, data, SAMPLE_WIDTH)
 
             # Clean up finished tracks
