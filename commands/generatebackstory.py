@@ -8,11 +8,16 @@ class generatebackstory(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.hybrid_command(aliases=["gbackstory"], description="Generate random backstory for your investigator.")
-  async def generatebackstory(self, ctx):
+  @app_commands.command(name="generatebackstory", description="Generate random backstory for your investigator.")
+  async def generatebackstory(self, interaction: discord.Interaction):
       """
-      `[p]gbackstory` - Generate random backstory for your investigator. This will not be saved.
+      Generate random backstory for your investigator. This will not be saved.
       """
+      # Check for DMs
+      if not interaction.guild:
+             await interaction.response.send_message("This command is not allowed in DMs.", ephemeral=True)
+             return
+
       personal_descriptions = [
           "Adventurous", "Athletic", "Awkward", "Baby-faced", "Bookish", "Brawny", "Charming",
           "Cheerful", "Dainty", "Dazzling", "Delicate", "Dirty", "Determined", "Dull", "Elegant",
@@ -22,12 +27,12 @@ class generatebackstory(commands.Cog):
           "Sloppy", "Smart", "Sophisticated", "Stoic", "Stocky", "Strapping", "Sturdy", "Sullen",
           "Tanned", "Untidy", "Ungainly", "Weary", "Wrinkled", "Youthful"
       ]
-
-
       
       personal_description_text = ""
       for description in personal_descriptions:
           personal_description_text += f"{description}, "
+      # Remove trailing comma space
+      personal_description_text = personal_description_text.rstrip(", ")
   
       ideology_beliefs = [
           "You devoutly follow a higher power and engage in regular worship and prayer (e.g. Vishnu, Jesus Christ, Haile Selassie I).",
@@ -144,7 +149,7 @@ class generatebackstory(commands.Cog):
       embed.add_field(name=":gem: Treasured Possessions:", value=selected_treasured_possessions, inline=False)
       embed.add_field(name=":beginner: Traits:", value=selected_traits, inline=False)
   
-      await ctx.send(embed=embed)
+      await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 async def setup(bot):
