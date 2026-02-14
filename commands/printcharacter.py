@@ -10,31 +10,32 @@ class PrintCharacter(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command(aliases=['pchar', 'printchar'])
+    @app_commands.command(name="printcharacter", description="Prints the character sheet of the user as an image.")
     @app_commands.describe(user="The user whose character you want to print (defaults to you)")
-    async def printcharacter(self, ctx, user: discord.Member = None):
+    async def printcharacter(self, interaction: discord.Interaction, user: discord.Member = None):
         """
         Prints the character sheet of the user as an image.
-        Usage: !printcharacter [@user]
         """
-        if not ctx.guild:
-            await ctx.send("This command can only be used in a server.")
+        if not interaction.guild:
+            await interaction.response.send_message("This command can only be used in a server.", ephemeral=True)
             return
 
-        if user is None:
-            user = ctx.author
+        await interaction.response.defer()
 
-        guild_id = str(ctx.guild.id)
+        if user is None:
+            user = interaction.user
+
+        guild_id = str(interaction.guild.id)
         user_id = str(user.id)
 
         # Check if character exists
         stats = await load_player_stats()
         if guild_id not in stats or user_id not in stats[guild_id]:
-             await ctx.send(f"No active character found for {user.display_name}.")
+             await interaction.followup.send(f"No active character found for {user.display_name}.")
              return
 
         # Notify user we are working on it
-        msg = await ctx.send(f"Generating character sheet for {user.display_name}... 🖼️")
+        msg = await interaction.followup.send(f"Generating character sheet for {user.display_name}... 🖼️", wait=True)
 
         # Get dashboard port
         settings = load_settings()
@@ -78,7 +79,7 @@ class PrintCharacter(commands.Cog):
 
                     # Send
                     file = discord.File(io.BytesIO(screenshot_bytes), filename=f"{user.display_name}_sheet.png")
-                    await ctx.send(content=f"Here is the character sheet for {user.mention}:", file=file)
+                    await interaction.followup.send(content=f"Here is the character sheet for {user.mention}:", file=file)
                     await msg.delete()
                 finally:
                     await browser.close()
