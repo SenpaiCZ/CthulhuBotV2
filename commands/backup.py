@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands, tasks
+from discord import app_commands
 import asyncio
 import aiofiles
 import io
@@ -72,20 +73,22 @@ class backup(commands.Cog):
   async def before_backup_task(self):
       await self.bot.wait_until_ready()
   
-  @commands.command()
-  async def backup(self, ctx):
-    """
-    `[p]backup` - Zips the data/ folder and sends it to the bot owner.
-    """
-    if await self.bot.is_owner(ctx.author):
-        await ctx.send("Creating and sending backup...")
-        success, result = await self.perform_backup(ctx.author)
-        if success:
-            await ctx.send(f"Backup `{result}` sent successfully.")
-        else:
-            await ctx.send(f"Backup failed: {result}")
+  @app_commands.command(name="backup", description="Zips the data/ folder and sends it to the bot owner.")
+  async def backup(self, interaction: discord.Interaction):
+    # Check for ownership manually since app_commands.checks doesn't have is_owner built-in directly
+    if not await self.bot.is_owner(interaction.user):
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+        return
+
+    await interaction.response.defer(ephemeral=True)
+
+    # We can send to interaction user since we verified they are owner
+    success, result = await self.perform_backup(interaction.user)
+
+    if success:
+        await interaction.followup.send(f"Backup `{result}` sent successfully to your DM.")
     else:
-        await ctx.send("You do not have permission to use this command.")
+        await interaction.followup.send(f"Backup failed: {result}")
 
 async def setup(bot):
   await bot.add_cog(backup(bot))
