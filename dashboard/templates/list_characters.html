@@ -312,20 +312,18 @@
 
                                             {% for key, val in char.items()|sort %}
                                                 {% if key not in excluded and key|length > 0 %}
-                                                    {% if key.lower() not in ['customskill', 'customskills', 'customskillss'] %}
-                                                        {# Filter out likely non-skills based on capitalization? CoC skills are usually Capitalized #}
-                                                        {# Also check if value is a number #}
-                                                        {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
-                                                        <div class="coc-skill-item">
-                                                            <div class="coc-skill-row-1">
-                                                                {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}
-                                                            </div>
-                                                            <div class="coc-skill-row-2">
-                                                                <span class="coc-skill-val-big">{{ val }}</span>
-                                                                <span class="coc-skill-val-small">| {{ val|int // 2 }} | {{ val|int // 5 }}</span>
-                                                            </div>
+                                                    {# Filter out likely non-skills based on capitalization? CoC skills are usually Capitalized #}
+                                                    {# Also check if value is a number #}
+                                                    {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
+                                                    <div class="coc-skill-item">
+                                                        <div class="coc-skill-row-1">
+                                                            {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}
                                                         </div>
-                                                        {% endif %}
+                                                        <div class="coc-skill-row-2">
+                                                            <span class="coc-skill-val-big">{{ val }}</span>
+                                                            <span class="coc-skill-val-small">| {{ val|int // 2 }} | {{ val|int // 5 }}</span>
+                                                        </div>
+                                                    </div>
                                                     {% endif %}
                                                 {% endif %}
                                             {% endfor %}
@@ -380,13 +378,11 @@
 
                                             {% for key, val in char.items()|sort %}
                                                 {% if key not in excluded and key|length > 0 %}
-                                                    {% if key.lower() not in ['customskill', 'customskills', 'customskillss'] %}
-                                                        {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
-                                                        <div class="col-md-6 mb-2">
-                                                            <div class="coc-label">{{ key }}</div>
-                                                            <div class="text-white small" style="white-space: pre-wrap;">{{ val | format_custom_emoji | safe }}</div>
-                                                        </div>
-                                                        {% endif %}
+                                                    {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
+                                                    <div class="col-md-6 mb-2">
+                                                        <div class="coc-label">{{ key }}</div>
+                                                        <div class="text-white small" style="white-space: pre-wrap;">{{ val | format_custom_emoji | safe }}</div>
+                                                    </div>
                                                     {% endif %}
                                                 {% endif %}
                                             {% endfor %}
@@ -580,20 +576,18 @@
 
                                             {% for key, val in char.items()|sort %}
                                                 {% if key not in excluded and key|length > 0 %}
-                                                    {% if key.lower() not in ['customskill', 'customskills', 'customskillss'] %}
-                                                        {# Filter out likely non-skills based on capitalization? CoC skills are usually Capitalized #}
-                                                        {# Also check if value is a number #}
-                                                        {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
-                                                        <div class="coc-skill-item">
-                                                            <div class="coc-skill-row-1">
-                                                                {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}
-                                                            </div>
-                                                            <div class="coc-skill-row-2">
-                                                                <span class="coc-skill-val-big">{{ val }}</span>
-                                                                <span class="coc-skill-val-small">| {{ val|int // 2 }} | {{ val|int // 5 }}</span>
-                                                            </div>
+                                                    {# Filter out likely non-skills based on capitalization? CoC skills are usually Capitalized #}
+                                                    {# Also check if value is a number #}
+                                                    {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
+                                                    <div class="coc-skill-item">
+                                                        <div class="coc-skill-row-1">
+                                                            {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}
                                                         </div>
-                                                        {% endif %}
+                                                        <div class="coc-skill-row-2">
+                                                            <span class="coc-skill-val-big">{{ val }}</span>
+                                                            <span class="coc-skill-val-small">| {{ val|int // 2 }} | {{ val|int // 5 }}</span>
+                                                        </div>
+                                                    </div>
                                                     {% endif %}
                                                 {% endif %}
                                             {% endfor %}
@@ -648,13 +642,11 @@
 
                                             {% for key, val in char.items()|sort %}
                                                 {% if key not in excluded and key|length > 0 %}
-                                                    {% if key.lower() not in ['customskill', 'customskills', 'customskillss'] %}
-                                                        {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
-                                                        <div class="col-md-6 mb-2">
-                                                            <div class="coc-label">{{ key }}</div>
-                                                            <div class="text-white small" style="white-space: pre-wrap;">{{ val | format_custom_emoji | safe }}</div>
-                                                        </div>
-                                                        {% endif %}
+                                                    {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
+                                                    <div class="col-md-6 mb-2">
+                                                        <div class="coc-label">{{ key }}</div>
+                                                        <div class="text-white small" style="white-space: pre-wrap;">{{ val | format_custom_emoji | safe }}</div>
+                                                    </div>
                                                     {% endif %}
                                                 {% endif %}
                                             {% endfor %}

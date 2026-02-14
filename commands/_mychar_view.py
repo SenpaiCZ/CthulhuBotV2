@@ -250,9 +250,6 @@ class CharacterDashboardView(View):
             "Backstory"
         ]
 
-        # Custom skills to always push to end
-        end_skills = ["customskill", "customskills", "customskillss"]
-
         skills = []
         for key, val in self.char_data.items():
             if key in ignored: continue
@@ -261,12 +258,7 @@ class CharacterDashboardView(View):
 
             skills.append((key, val))
 
-        def sort_key(item):
-            key = item[0]
-            is_end = key in end_skills
-            return (is_end, key)
-
-        return sorted(skills, key=sort_key)
+        return sorted(skills, key=lambda item: item[0])
 
     def _get_skill_emoji(self, skill_name):
         if skill_name in stat_emojis:
