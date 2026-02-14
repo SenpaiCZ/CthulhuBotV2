@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import os
 import sys
@@ -6,9 +7,9 @@ import subprocess
 import asyncio
 
 class UpdateBotView(discord.ui.View):
-    def __init__(self, ctx, bot):
+    def __init__(self, user, bot):
         super().__init__(timeout=60)
-        self.ctx = ctx
+        self.user = user
         self.bot = bot
 
     async def _run_updater(self, interaction: discord.Interaction, update_infodata=False):
@@ -42,19 +43,19 @@ class UpdateBotView(discord.ui.View):
 
     @discord.ui.button(label="Update System Only", style=discord.ButtonStyle.success)
     async def update_system(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
             return await interaction.response.send_message("Only the command invoker can use this.", ephemeral=True)
         await self._run_updater(interaction, update_infodata=False)
 
     @discord.ui.button(label="Update System & Infodata", style=discord.ButtonStyle.danger)
     async def update_full(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
             return await interaction.response.send_message("Only the command invoker can use this.", ephemeral=True)
         await self._run_updater(interaction, update_infodata=True)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
             return await interaction.response.send_message("Only the command invoker can use this.", ephemeral=True)
         await interaction.response.edit_message(content="❌ Update cancelled.", view=None)
         self.stop()
@@ -63,25 +64,24 @@ class UpdateBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name='updatebot', hidden=True)
-    @commands.is_owner()
-    async def update_bot(self, ctx):
+    @app_commands.command(name='updatebot', description="Updates the bot from the GitHub repository (Master branch). Owner only.")
+    async def update_bot(self, interaction: discord.Interaction):
         """
         Updates the bot from the GitHub repository (Master branch).
         Only the bot owner can use this command.
         """
-        view = UpdateBotView(ctx, self.bot)
-        await ctx.send("⚠️ **System Update**\n\nSelect update mode:\n"
-                       "• **Update System Only**: Updates bot code but keeps `infodata` (default).\n"
-                       "• **Update System & Infodata**: Updates bot code AND `infodata` (overwrites local changes).\n",
-                       view=view)
+        if not await self.bot.is_owner(interaction.user):
+            await interaction.response.send_message("⛔ You do not have permission to run this command.", ephemeral=True)
+            return
 
-    @update_bot.error
-    async def update_bot_error(self, ctx, error):
-        if isinstance(error, commands.NotOwner):
-            await ctx.send("⛔ You do not have permission to run this command.")
-        else:
-            await ctx.send(f"❌ An error occurred: {str(error)}")
+        view = UpdateBotView(interaction.user, self.bot)
+        await interaction.response.send_message(
+            "⚠️ **System Update**\n\nSelect update mode:\n"
+            "• **Update System Only**: Updates bot code but keeps `infodata` (default).\n"
+            "• **Update System & Infodata**: Updates bot code AND `infodata` (overwrites local changes).\n",
+            view=view,
+            ephemeral=True
+        )
 
 async def setup(bot):
     await bot.add_cog(UpdateBot(bot))

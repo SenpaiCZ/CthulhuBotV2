@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 from loadnsave import load_bot_status, save_bot_status
 
@@ -33,29 +34,33 @@ class BotStatus(commands.Cog):
             return discord.Activity(type=discord.ActivityType.competing, name=text)
         return None
 
-    @commands.command()
-    @commands.is_owner()
-    async def status(self, ctx, activity_type: str, *, text: str):
+    @app_commands.command(name="status", description="Sets the bot's status. Owner only.")
+    @app_commands.describe(activity_type="The type of activity", text="The status text")
+    @app_commands.choices(activity_type=[
+        app_commands.Choice(name="Playing", value="playing"),
+        app_commands.Choice(name="Watching", value="watching"),
+        app_commands.Choice(name="Listening", value="listening"),
+        app_commands.Choice(name="Competing", value="competing")
+    ])
+    async def status(self, interaction: discord.Interaction, activity_type: app_commands.Choice[str], text: str):
         """
         Sets the bot's status.
-        Usage: !status <playing|watching|listening|competing> <text>
-        Example: !status watching The Stars
         """
-        activity = self._get_activity(activity_type, text)
-
-        if not activity:
-            await ctx.send("Invalid activity type. Choose from: playing, watching, listening, competing.")
+        if not await self.bot.is_owner(interaction.user):
+            await interaction.response.send_message("⛔ You do not have permission to run this command.", ephemeral=True)
             return
+
+        activity = self._get_activity(activity_type.value, text)
 
         try:
             await self.bot.change_presence(activity=activity)
 
             # Save to file
-            await save_bot_status({"type": activity_type.lower(), "text": text})
+            await save_bot_status({"type": activity_type.value, "text": text})
 
-            await ctx.send(f"Status updated to: {activity_type.lower()} **{text}**")
+            await interaction.response.send_message(f"Status updated to: {activity_type.value} **{text}**", ephemeral=True)
         except Exception as e:
-            await ctx.send(f"Failed to update status: {e}")
+            await interaction.response.send_message(f"Failed to update status: {e}", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(BotStatus(bot))
