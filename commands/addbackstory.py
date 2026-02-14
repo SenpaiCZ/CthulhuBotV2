@@ -88,28 +88,25 @@ class addbackstory(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command(aliases=["cb", "CB", "ab"], description="Add a record to your backstory or inventory interactively.")
-    async def addbackstory(self, ctx):
+    @app_commands.command(name="addbackstory", description="Add a record to your backstory or inventory interactively.")
+    async def addbackstory(self, interaction: discord.Interaction):
         """
-        `[p]cb` - Add a record to your backstory or inventory interactively.
+        Add a record to your backstory or inventory interactively.
         """
-        server_id = str(ctx.guild.id)
-        user_id = str(ctx.author.id)
+        server_id = str(interaction.guild.id)
+        user_id = str(interaction.user.id)
 
         # Check for DMs
-        if not ctx.guild:
-             await ctx.send("This command is not allowed in DMs.")
+        if not interaction.guild:
+             await interaction.response.send_message("This command is not allowed in DMs.", ephemeral=True)
              return
 
         player_stats = await load_player_stats()
 
         # Ensure server/user stats structure exists
         if server_id not in player_stats or user_id not in player_stats[server_id]:
-            msg = f"{ctx.author.display_name} doesn't have an investigator. Use `!newInv` to create a new investigator."
-            if ctx.interaction:
-                await ctx.send(msg, ephemeral=True)
-            else:
-                await ctx.send(msg)
+            msg = f"{interaction.user.display_name} doesn't have an investigator. Use `/newinvestigator` to create a new investigator."
+            await interaction.response.send_message(msg, ephemeral=True)
             return
 
         categories = [
@@ -119,17 +116,9 @@ class addbackstory(commands.Cog):
           'Fellow Investigators', 'Gear and Possessions', 'Spending Level', 'Cash', 'Assets'
         ]
 
-        view = BackstorySelectView(categories, ctx.author, server_id, user_id, player_stats)
+        view = BackstorySelectView(categories, interaction.user, server_id, user_id, player_stats)
 
-        if ctx.interaction:
-            await ctx.interaction.response.send_message("Select a category to add an entry:", view=view, ephemeral=True)
-        else:
-            # Clean up command message if possible
-            try:
-                await ctx.message.delete()
-            except:
-                pass
-            await ctx.send("Select a category to add an entry:", view=view)
+        await interaction.response.send_message("Select a category to add an entry:", view=view, ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(addbackstory(bot))

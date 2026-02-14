@@ -1,39 +1,142 @@
 import discord
-import asyncio
 from discord.ext import commands
 from discord import app_commands
 from loadnsave import load_player_stats, save_player_stats
 from commands._backstory_common import BackstoryView
 
+class UpdateBackstoryModal(discord.ui.Modal):
+    def __init__(self, category, item_index, item_text, server_id, user_id, player_stats_ref):
+        title = f"Update {category}"
+        if len(title) > 45:
+            title = title[:42] + "..."
+        super().__init__(title=title)
+
+        self.category = category
+        self.item_index = item_index # Index in the list
+        self.original_text = item_text
+        self.server_id = server_id
+        self.user_id = user_id
+        self.player_stats = player_stats_ref
+
+        self.new_text = discord.ui.TextInput(
+            label="Edit content",
+            style=discord.TextStyle.paragraph,
+            default=item_text[:4000],
+            required=True,
+            max_length=4000
+        )
+        self.add_item(self.new_text)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # Refresh stats to be safe? Or rely on ref.
+        # Ideally we should reload but let's assume ref is valid for this short transaction.
+        # But race conditions exist. Let's load fresh to be safe?
+        # No, passing ref is standard here.
+
+        backstory = self.player_stats.get(self.server_id, {}).get(self.user_id, {}).get("Backstory", {})
+        if self.category not in backstory:
+             await interaction.response.send_message("Error: Category not found (concurrent modification?)", ephemeral=True)
+             return
+
+        items = backstory[self.category]
+
+        # Check if item still exists at index and matches text (optimistic lockingish)
+        if self.item_index >= len(items) or items[self.item_index] != self.original_text:
+             await interaction.response.send_message("Error: The item seems to have changed or moved. Please try again.", ephemeral=True)
+             return
+
+        # Update
+        items[self.item_index] = self.new_text.value
+        await save_player_stats(self.player_stats)
+
+        await interaction.response.edit_message(content=f"✅ Updated item in **{self.category}**.", view=None)
+
+class UpdateBackstorySelect(discord.ui.Select):
+    def __init__(self, options, category, server_id, user_id, player_stats_ref):
+        self.original_options = options
+        self.category = category
+        self.server_id = server_id
+        self.user_id = user_id
+        self.player_stats = player_stats_ref
+
+        truncated_options = options
+        if len(options) > 25:
+             truncated_options = options[:25]
+
+        select_options = []
+        for i, opt in enumerate(truncated_options):
+             label = str(opt)[:100]
+             # Use index as value
+             select_options.append(discord.SelectOption(label=label, value=str(i)))
+
+        super().__init__(placeholder=f"Select item to update from {category}...", min_values=1, max_values=1, options=select_options)
+
+    async def callback(self, interaction: discord.Interaction):
+        view = self.view
+        if interaction.user != view.author:
+            await interaction.response.send_message("This isn't your session!", ephemeral=True)
+            return
+
+        index = int(self.values[0])
+        if 0 <= index < len(self.original_options):
+            selected_text = self.original_options[index]
+            modal = UpdateBackstoryModal(self.category, index, selected_text, self.server_id, self.user_id, self.player_stats)
+            await interaction.response.send_modal(modal)
+        else:
+            await interaction.response.send_message("Error selecting item.", ephemeral=True)
+
+class UpdateBackstoryView(discord.ui.View):
+    def __init__(self, options, category, author, server_id, user_id, player_stats_ref, timeout=60):
+        super().__init__(timeout=timeout)
+        self.author = author
+        self.add_item(UpdateBackstorySelect(options, category, server_id, user_id, player_stats_ref))
+
+        cancel_btn = discord.ui.Button(label="Cancel", style=discord.ButtonStyle.danger, row=1)
+        cancel_btn.callback = self.cancel_callback
+        self.add_item(cancel_btn)
+
+    async def cancel_callback(self, interaction: discord.Interaction):
+        if interaction.user != self.author:
+            await interaction.response.send_message("This isn't your session!", ephemeral=True)
+            return
+        await interaction.response.edit_message(content="Update cancelled.", view=None)
+        self.stop()
+
 class updatebackstory(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command(aliases=["ub", "UB"])
-    async def updatebackstory(self, ctx):
+    @app_commands.command(name="updatebackstory", description="Interactive wizard to update your character's backstory elements.")
+    async def updatebackstory(self, interaction: discord.Interaction):
         """
         Interactive wizard to update your character's backstory elements.
         """
-        user_id = str(ctx.author.id)
-        server_id = str(ctx.guild.id)
+        user_id = str(interaction.user.id)
+        server_id = str(interaction.guild.id)
+
+        # Check for DMs
+        if not interaction.guild:
+             await interaction.response.send_message("This command is not allowed in DMs.", ephemeral=True)
+             return
 
         player_stats = await load_player_stats()
         if user_id not in player_stats.get(server_id, {}):
-            await ctx.send("You don't have an investigator.")
+            await interaction.response.send_message("You don't have an investigator.", ephemeral=True)
             return
 
         backstory = player_stats[server_id][user_id].get("Backstory", {})
         if not backstory:
-            await ctx.send("Your backstory is empty.")
+            await interaction.response.send_message("Your backstory is empty.", ephemeral=True)
             return
 
         categories = list(backstory.keys())
         if not categories:
-             await ctx.send("Your backstory is empty.")
+             await interaction.response.send_message("Your backstory is empty.", ephemeral=True)
              return
 
-        category_view = BackstoryView(categories, ctx.author)
-        message = await ctx.send("Select a category from your backstory:", view=category_view)
+        # Step 1: Select Category
+        category_view = BackstoryView(categories, interaction.user, placeholder="Select a category...")
+        await interaction.response.send_message("Select a category from your backstory:", view=category_view, ephemeral=True)
         await category_view.wait()
 
         if category_view.selected_option:
@@ -41,47 +144,16 @@ class updatebackstory(commands.Cog):
             items = backstory[selected_category]
 
             if not items:
-                await ctx.send(f"Category '{selected_category}' is empty.")
+                await interaction.edit_original_response(content=f"Category '{selected_category}' is empty.", view=None)
                 return
 
-            # Update the message for the next step
-            await message.edit(content=f"Selected category: **{selected_category}**", view=None)
+            # Step 2: Select Item (triggers Modal)
+            update_view = UpdateBackstoryView(items, selected_category, interaction.user, server_id, user_id, player_stats)
+            await interaction.edit_original_response(content=f"Select an item from '**{selected_category}**' to update:", view=update_view)
 
-            item_view = BackstoryView(items, ctx.author)
-            item_msg = await ctx.send(f"Select an item from '{selected_category}' to update:", view=item_view)
-            await item_view.wait()
-
-            if item_view.selected_option:
-                selected_item = item_view.selected_option
-
-                # Cleanup UI
-                try:
-                    await item_msg.delete()
-                    await message.delete()
-                except:
-                    pass
-
-                def check(m):
-                    return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id
-
-                await ctx.send(f"Selected item: '{selected_item}'.\nPlease type the new text for this item:")
-                try:
-                    new_message = await self.bot.wait_for('message', timeout=120.0, check=check)
-                except asyncio.TimeoutError:
-                    await ctx.send("You took too long to respond.")
-                    return
-
-                try:
-                    item_index = backstory[selected_category].index(selected_item)
-                    backstory[selected_category][item_index] = new_message.content
-                    await save_player_stats(player_stats)
-                    await ctx.send(f"Item updated in '{selected_category}'.")
-                except ValueError:
-                    await ctx.send("Error: The item seems to have changed or was removed.")
-            else:
-                 await item_msg.edit(content="Item selection cancelled.", view=None)
+            # We don't wait() here because the view handles the modal interaction flow.
         else:
-             await message.edit(content="Category selection cancelled.", view=None)
+            await interaction.edit_original_response(content="Category selection cancelled.", view=None)
 
 async def setup(bot):
     await bot.add_cog(updatebackstory(bot))
