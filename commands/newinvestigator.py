@@ -46,18 +46,15 @@ class BasicInfoModal(Modal, title="Investigator Details"):
         await self.cog.step_gamemode(interaction, self.char_data, self.player_stats)
 
 class RetireCharacterView(View):
-    def __init__(self, cog, ctx_or_interaction, user_id, server_id, player_stats):
+    def __init__(self, cog, user_id, server_id, player_stats):
         super().__init__(timeout=60)
         self.cog = cog
-        self.ctx_or_interaction = ctx_or_interaction
         self.user_id = user_id
         self.server_id = server_id
         self.player_stats = player_stats
         self.value = None
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if isinstance(self.ctx_or_interaction, commands.Context): author = self.ctx_or_interaction.author
-        else: author = self.ctx_or_interaction.user
-        if interaction.user != author:
+        if str(interaction.user.id) != self.user_id:
             await interaction.response.send_message("Not your session!", ephemeral=True)
             return False
         return True
@@ -80,17 +77,6 @@ class RetireCharacterView(View):
         await interaction.response.send_message("Character creation cancelled.", ephemeral=True)
         self.stop()
 
-class StartWizardView(View):
-    def __init__(self, cog, ctx):
-        super().__init__(timeout=60)
-        self.cog = cog
-        self.ctx = ctx
-    @discord.ui.button(label="Start Character Creation", style=discord.ButtonStyle.primary)
-    async def start(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return await interaction.response.send_message("Not your session.", ephemeral=True)
-        player_stats = await load_player_stats()
-        await self.cog.check_existing_and_start(interaction, player_stats)
-        self.stop()
 
 class BasicInfoStartView(View):
     def __init__(self, cog, char_data, player_stats):
@@ -452,15 +438,11 @@ class newinvestigator(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command(aliases=["newInv", "newinv"], description="Starts the character creation wizard.")
-    async def newinvestigator(self, ctx):
-        if ctx.interaction:
-            await ctx.interaction.response.defer(ephemeral=True)
-            player_stats = await load_player_stats()
-            await self.check_existing_and_start(ctx.interaction, player_stats)
-        else:
-            view = StartWizardView(self, ctx)
-            await ctx.send("Click below to start the Investigator Creation Wizard (Private).", view=view)
+    @app_commands.command(name="newinvestigator", description="Starts the character creation wizard.")
+    async def newinvestigator(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        player_stats = await load_player_stats()
+        await self.check_existing_and_start(interaction, player_stats)
 
     async def check_existing_and_start(self, interaction: discord.Interaction, player_stats):
         user_id = str(interaction.user.id)
@@ -470,7 +452,7 @@ class newinvestigator(commands.Cog):
         if user_id in player_stats[server_id]:
             existing_char = player_stats[server_id][user_id]
             char_name = existing_char.get("NAME", "Unknown")
-            view = RetireCharacterView(self, interaction, user_id, server_id, player_stats)
+            view = RetireCharacterView(self, user_id, server_id, player_stats)
             if interaction.response.is_done():
                 await interaction.followup.send(f"You already have an investigator named **{char_name}**. Retire?", view=view, ephemeral=True)
             else:
