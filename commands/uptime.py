@@ -1,18 +1,17 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import datetime
 
-class uptime(commands.Cog):
+class Uptime(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
         self.start_time = datetime.datetime.now()
 
-    @commands.command()
-    async def uptime(self, ctx):
-        """
-        `[p]uptime` - Returns how long the bot has been online.
-        """
+    @app_commands.command(name="uptime", description="Returns how long the bot has been online.")
+    async def uptime(self, interaction: discord.Interaction):
+        """Returns how long the bot has been online."""
         now = datetime.datetime.now()
         uptime_delta = now - self.start_time
         days = uptime_delta.days
@@ -22,7 +21,7 @@ class uptime(commands.Cog):
         
         uptime_str = f"{days} days, {hours} hours, {minutes} minutes, {seconds} seconds"
         
-        await ctx.send(f"Bot has been online for {uptime_str}.\n We need to restart bot for every update we push.")
+        await interaction.response.send_message(f"Bot has been online for {uptime_str}.\nWe need to restart bot for every update we push.")
 
 async def setup(bot):
-  await bot.add_cog(uptime(bot))
+  await bot.add_cog(Uptime(bot))
