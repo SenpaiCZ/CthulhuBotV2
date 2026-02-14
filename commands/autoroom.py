@@ -1,90 +1,115 @@
 import discord
-from discord.ext import commands, tasks
-from discord.ui import View, Select, ChannelSelect
+from discord.ext import commands
+from discord import app_commands
 from loadnsave import autoroom_load, autoroom_save
 
-class AutoroomSetupView(View):
-    def __init__(self):
-        super().__init__(timeout=120)
-        self.selected_channel = None
-        self.selected_category = None
-
-    @discord.ui.select(cls=ChannelSelect, channel_types=[discord.ChannelType.voice], placeholder="Select Source Voice Channel", min_values=1, max_values=1)
-    async def select_channel(self, interaction: discord.Interaction, select: ChannelSelect):
-        self.selected_channel = select.values[0]
-        await interaction.response.defer()
-
-    @discord.ui.select(cls=ChannelSelect, channel_types=[discord.ChannelType.category], placeholder="Select Target Category", min_values=1, max_values=1)
-    async def select_category(self, interaction: discord.Interaction, select: ChannelSelect):
-        self.selected_category = select.values[0]
-        await interaction.response.defer()
-
-    @discord.ui.button(label="Save Configuration", style=discord.ButtonStyle.green, row=2)
-    async def save_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not self.selected_channel or not self.selected_category:
-            await interaction.response.send_message("Please select both a Voice Channel and a Category first.", ephemeral=True)
-            return
-
-        server_id = str(interaction.guild.id)
-        autorooms = await autoroom_load()
-        if server_id not in autorooms:
-            autorooms[server_id] = {}
-
-        autorooms[server_id]["channel_id"] = self.selected_channel.id
-        autorooms[server_id]["category_id"] = self.selected_category.id
-        await autoroom_save(autorooms)
-
-        await interaction.response.send_message(
-            f"**Auto Room Setup Complete!**\n"
-            f"Source Channel: {self.selected_channel.mention}\n"
-            f"Target Category: {self.selected_category.mention}",
-            ephemeral=False
-        )
-        self.stop()
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.red, row=2)
-    async def cancel_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("Setup cancelled.", ephemeral=True)
-        self.stop()
-
-class autoroom(commands.Cog):
+class Autoroom(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.command(aliases=['ars'])
-  @commands.has_permissions(administrator=True)
-  async def autoroomsetup(self, ctx):
-      """
-      `[p]autoroomsetup` - Interactive setup wizard for Auto Rooms.
-      """
-      view = AutoroomSetupView()
-      await ctx.send("Select the Source Voice Channel and the Target Category for Auto Rooms below:", view=view)
+  # Create a slash command group
+  autoroom_group = app_commands.Group(name="autoroom", description="Manage auto-rooms")
 
-  @commands.command()
-  async def autoroomset(self, ctx, channel_id: int, category_id: int):
-    """
-    `[p]autoroomset entry_channel category_channel` - Legacy setup command.
-    Consider using `[p]autoroomsetup` instead.
-    """
-    if ctx.author != ctx.guild.owner:
-        await ctx.send("This command is limited to the server owner only.")
-        return
+  @autoroom_group.command(name="setup", description="Configure Auto Room source channel and target category.")
+  @app_commands.describe(channel="Source Voice Channel", category="Target Category")
+  @app_commands.checks.has_permissions(administrator=True)
+  async def setup(self, interaction: discord.Interaction, channel: discord.VoiceChannel, category: discord.CategoryChannel):
+      """Configures the source voice channel and target category for Auto Rooms."""
+      await interaction.response.defer()
 
-    if not isinstance(ctx.channel, discord.TextChannel):
-      await ctx.send("This command is not allowed in DMs.")
-      return
+      server_id = str(interaction.guild.id)
+      autorooms = await autoroom_load()
+      if server_id not in autorooms:
+          autorooms[server_id] = {}
 
-    server_id = str(ctx.guild.id)
-    autorooms = await autoroom_load()
+      autorooms[server_id]["channel_id"] = channel.id
+      autorooms[server_id]["category_id"] = category.id
+      await autoroom_save(autorooms)
 
-    if server_id not in autorooms:
-        autorooms[server_id] = {}
+      await interaction.followup.send(
+          f"**Auto Room Setup Complete!**\n"
+          f"Source Channel: {channel.mention}\n"
+          f"Target Category: {category.mention}"
+      )
 
-    autorooms[server_id]["channel_id"] = channel_id
-    autorooms[server_id]["category_id"] = category_id
-    await ctx.send(f'Successfully set the voice channel (ID: {channel_id}) in category (ID: {category_id}).')
+  @autoroom_group.command(name="kick", description="Kick a user from your auto-room.")
+  @app_commands.describe(member="The user to kick")
+  async def kick(self, interaction: discord.Interaction, member: discord.Member):
+      """Remove a user from your auto-room."""
+      server_id = str(interaction.guild.id)
+      user_id = str(interaction.user.id)
+      autorooms = await autoroom_load()
 
-    await autoroom_save(autorooms)
+      if server_id not in autorooms:
+          await interaction.response.send_message("The autoroom feature is not set up for this server.", ephemeral=True)
+          return
+
+      if user_id not in autorooms[server_id]:
+          await interaction.response.send_message("You are not the owner of an autoroom in this server.", ephemeral=True)
+          return
+
+      user_channel_id = autorooms[server_id][user_id]
+
+      if not interaction.user.voice or interaction.user.voice.channel.id != user_channel_id:
+           await interaction.response.send_message("You must be in your own autoroom to use this command.", ephemeral=True)
+           return
+
+      if member.voice and member.voice.channel and member.voice.channel.id == user_channel_id:
+          try:
+              await member.move_to(None)  # Disconnect
+              await interaction.response.send_message(f"{member.display_name} has been kicked from your room.")
+          except discord.errors.Forbidden:
+              await interaction.response.send_message("I don't have permission to move that user.", ephemeral=True)
+      else:
+          await interaction.response.send_message("That user is not in your room.", ephemeral=True)
+
+  @autoroom_group.command(name="lock", description="Lock your auto-room so no one can join.")
+  async def lock(self, interaction: discord.Interaction):
+      """Prevents anyone from joining your auto-room."""
+      server_id = str(interaction.guild.id)
+      user_id = str(interaction.user.id)
+      autorooms = await autoroom_load()
+
+      if server_id not in autorooms:
+          await interaction.response.send_message("The autoroom feature is not set up for this server.", ephemeral=True)
+          return
+
+      if user_id not in autorooms[server_id]:
+          await interaction.response.send_message("You are not the owner of an autoroom in this server.", ephemeral=True)
+          return
+
+      user_channel_id = autorooms[server_id][user_id]
+
+      if interaction.user.voice and interaction.user.voice.channel.id == user_channel_id:
+          user_channel = interaction.user.voice.channel
+          await user_channel.set_permissions(interaction.guild.default_role, connect=False)
+          await interaction.response.send_message("Your room has been locked. No one can join now.")
+      else:
+          await interaction.response.send_message("You need to be in your autoroom to lock it.", ephemeral=True)
+
+  @autoroom_group.command(name="unlock", description="Unlock your auto-room so anyone can join.")
+  async def unlock(self, interaction: discord.Interaction):
+      """Opens your room so anyone can join in."""
+      server_id = str(interaction.guild.id)
+      user_id = str(interaction.user.id)
+      autorooms = await autoroom_load()
+
+      if server_id not in autorooms:
+          await interaction.response.send_message("The autoroom feature is not set up for this server.", ephemeral=True)
+          return
+
+      if user_id not in autorooms[server_id]:
+          await interaction.response.send_message("You are not the owner of an autoroom in this server.", ephemeral=True)
+          return
+
+      user_channel_id = autorooms[server_id][user_id]
+
+      if interaction.user.voice and interaction.user.voice.channel.id == user_channel_id:
+          user_channel = interaction.user.voice.channel
+          await user_channel.set_permissions(interaction.guild.default_role, connect=True)
+          await interaction.response.send_message("Your room has been unlocked. Anyone can join now.")
+      else:
+          await interaction.response.send_message("You need to be in your autoroom to unlock it.", ephemeral=True)
 
   @commands.Cog.listener()
   async def on_voice_state_update(self, member, before, after):
@@ -150,9 +175,6 @@ class autoroom(commands.Cog):
           if server_id not in autorooms:
               continue
   
-          channel_id_to_keep = autorooms[server_id].get("channel_id")
-          category_id_to_keep = autorooms[server_id].get("category_id")
-
           # Iterate over a copy of items to allow modification during iteration
           for user_id, channel_id in list(autorooms[server_id].items()):
               # Skip the configuration keys
@@ -176,94 +198,6 @@ class autoroom(commands.Cog):
                       del autorooms[server_id][user_id]
   
           await autoroom_save(autorooms)
-        
-  @commands.command()
-  async def autoroomkick(self, ctx, member: discord.Member):
-      """
-      `[p]autoroomkick @ user` - Remove user from your autoroom
-      """
-      server_id = str(ctx.guild.id)
-      user_id = str(ctx.author.id)
-      autorooms = await autoroom_load()
-
-      if server_id not in autorooms:
-          await ctx.send("The autoroom feature is not set up for this server.")
-          return
-
-      if user_id not in autorooms[server_id]:
-          await ctx.send("You are not the owner of an autoroom in this server.")
-          return
-
-      user_channel_id = autorooms[server_id][user_id]
-
-      if not ctx.author.voice or ctx.author.voice.channel.id != user_channel_id:
-           await ctx.send("You must be in your own autoroom to use this command.")
-           return
-
-      if member.voice and member.voice.channel and member.voice.channel.id == user_channel_id:
-          try:
-              await member.move_to(None)  # Disconnect
-              await ctx.send(f"{member.display_name} has been kicked from your room.")
-          except discord.errors.Forbidden:
-              await ctx.send("I don't have permission to move that user.")
-      else:
-          await ctx.send("That user is not in your room.")
-
-  @commands.command()
-  async def autoroomlock(self, ctx):
-    
-      """
-      `[p]autoroomlock` - Prevents anyone from joining your autorom
-      """
-
-      server_id = str(ctx.guild.id)
-      user_id = str(ctx.author.id)
-      autorooms = await autoroom_load()
-
-      if server_id not in autorooms:
-          await ctx.send("The autoroom feature is not set up for this server.")
-          return
-
-      if user_id not in autorooms[server_id]:
-          await ctx.send("You are not the owner of an autoroom in this server.")
-          return
-
-      user_channel_id = autorooms[server_id][user_id]
-
-      if ctx.author.voice and ctx.author.voice.channel.id == user_channel_id:
-          user_channel = ctx.author.voice.channel
-          await user_channel.set_permissions(ctx.guild.default_role, connect=False)
-          await ctx.send("Your room has been locked. No one can join now.")
-      else:
-          await ctx.send("You need to be in your autoroom to lock it.")
-
-  @commands.command()
-  async def autoroomunlock(self, ctx):
-
-      """
-      `[p]autoroomunlock` - Opens your room so anyone can join in
-      """
-    
-      server_id = str(ctx.guild.id)
-      user_id = str(ctx.author.id)
-      autorooms = await autoroom_load()
-
-      if server_id not in autorooms:
-          await ctx.send("The autoroom feature is not set up for this server.")
-          return
-
-      if user_id not in autorooms[server_id]:
-          await ctx.send("You are not the owner of an autoroom in this server.")
-          return
-
-      user_channel_id = autorooms[server_id][user_id]
-
-      if ctx.author.voice and ctx.author.voice.channel.id == user_channel_id:
-          user_channel = ctx.author.voice.channel
-          await user_channel.set_permissions(ctx.guild.default_role, connect=True)
-          await ctx.send("Your room has been unlocked. Anyone can join now.")
-      else:
-          await ctx.send("You need to be in your autoroom to unlock it.")
 
 async def setup(bot):
-  await bot.add_cog(autoroom(bot))
+  await bot.add_cog(Autoroom(bot))
