@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands, tasks
 import aiohttp
 from bs4 import BeautifulSoup
@@ -157,44 +158,43 @@ class PokemonGo(commands.Cog):
             logger.error(f"Error scraping LeekDuck: {e}")
             return []
 
-    # --- Commands ---
+    # --- Slash Commands ---
+    pogo_group = app_commands.Group(name="pogo", description="Pokemon GO Event Commands", guild_only=True)
 
-    @commands.group(invoke_without_command=True)
-    async def pogo(self, ctx):
-        """Pokemon GO Event Commands"""
-        await ctx.send_help(ctx.command)
-
-    @pogo.command(name="setchannel")
-    @commands.has_permissions(administrator=True)
-    async def set_channel(self, ctx, channel: discord.TextChannel):
+    @pogo_group.command(name="setchannel", description="Set the channel for POGO notifications.")
+    @app_commands.describe(channel="Channel to set (defaults to current)")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def set_channel(self, interaction: discord.Interaction, channel: discord.TextChannel = None):
         """Set the channel for POGO notifications."""
-        guild_id = str(ctx.guild.id)
+        target_channel = channel or interaction.channel
+        guild_id = str(interaction.guild_id)
         if guild_id not in self.settings:
             self.settings[guild_id] = {}
 
-        self.settings[guild_id]['channel_id'] = channel.id
+        self.settings[guild_id]['channel_id'] = target_channel.id
         await save_pogo_settings(self.settings)
-        await ctx.send(f"Pokemon GO notifications will be sent to {channel.mention}")
+        await interaction.response.send_message(f"Pokemon GO notifications will be sent to {target_channel.mention}")
 
-    @pogo.command(name="setrole")
-    @commands.has_permissions(administrator=True)
-    async def set_role(self, ctx, role: discord.Role):
+    @pogo_group.command(name="setrole", description="Set the role to ping for POGO notifications.")
+    @app_commands.describe(role="Role to ping")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def set_role(self, interaction: discord.Interaction, role: discord.Role):
         """Set the role to ping for POGO notifications."""
-        guild_id = str(ctx.guild.id)
+        guild_id = str(interaction.guild_id)
         if guild_id not in self.settings:
             self.settings[guild_id] = {}
 
         self.settings[guild_id]['role_id'] = role.id
         await save_pogo_settings(self.settings)
-        await ctx.send(f"Role {role.mention} will be pinged for notifications.")
+        await interaction.response.send_message(f"Role {role.mention} will be pinged for notifications.")
 
-    @pogo.command(name="forceupdate")
-    @commands.has_permissions(administrator=True)
-    async def force_update(self, ctx):
+    @pogo_group.command(name="forceupdate", description="Force update events from LeekDuck.")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def force_update(self, interaction: discord.Interaction):
         """Force update events from LeekDuck."""
-        msg = await ctx.send("Scraping events...")
+        await interaction.response.defer()
         events = await self.scrape_events()
-        await msg.edit(content=f"Updated! Found {len(events)} upcoming events.")
+        await interaction.followup.send(f"Updated! Found {len(events)} upcoming events.")
 
     async def send_weekly_summary_to_guild(self, guild_id, ping=True):
         """Sends weekly summary to a specific guild immediately."""
