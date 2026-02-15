@@ -39,8 +39,13 @@ class HelpSelect(Select):
         self.help_data = help_data
         options = []
 
-        # Sort categories to ensure consistent order
-        sorted_categories = sorted(help_data.keys())
+        # Sort categories to ensure consistent order (Player, Codex, Keeper, Music, Other, Admin)
+        # Use keys from COMMAND_CATEGORIES to maintain the desired order
+        sorted_categories = [cat for cat in COMMAND_CATEGORIES if cat in help_data]
+
+        # Add any categories in help_data that are not in COMMAND_CATEGORIES (fallback)
+        remaining = [cat for cat in help_data if cat not in sorted_categories]
+        sorted_categories.extend(sorted(remaining))
 
         # Define category emojis
         coc_emoji = "🐙"
