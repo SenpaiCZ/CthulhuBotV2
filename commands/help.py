@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, Select
+import traceback
 
 # Mapping of Command Names to Categories
 COMMAND_CATEGORIES = {
@@ -69,6 +70,12 @@ class HelpSelect(Select):
         super().__init__(placeholder="Select a category...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
+        # Defer immediately to prevent timeout on button click processing if needed,
+        # though usually fast enough. But just in case.
+        # Actually, editing a message doesn't need defer if response is fast,
+        # but let's be safe if generating the embed is slow.
+        # For Select callback, we use response.edit_message usually.
+
         category = self.values[0]
         commands_list = self.help_data.get(category, [])
 
@@ -160,43 +167,49 @@ class Help(commands.Cog):
             category_commands = []
 
             for name in cmd_names:
-                # 1. Check for Slash Command (App Command)
-                # App commands are in self.bot.tree.get_command(name)
-                # Note: get_command only gets top-level commands/groups
+                try:
+                    # 1. Check for Slash Command (App Command)
+                    # App commands are in self.bot.tree.get_command(name)
+                    # Note: get_command only gets top-level commands/groups
 
-                app_cmd = self.bot.tree.get_command(name)
+                    app_cmd = self.bot.tree.get_command(name)
 
-                # 2. Check for Text/Hybrid Command
-                # Hybrid commands are also in bot.commands
-                text_cmd = self.bot.get_command(name)
+                    # 2. Check for Text/Hybrid Command
+                    # Hybrid commands are also in bot.commands
+                    text_cmd = self.bot.get_command(name)
 
-                cmd_obj = None
+                    cmd_obj = None
 
-                if app_cmd:
-                    cmd_obj = app_cmd
-                elif text_cmd:
-                    # Only if not hidden
-                    if not text_cmd.hidden:
-                        cmd_obj = text_cmd
+                    if app_cmd:
+                        cmd_obj = app_cmd
+                    elif text_cmd:
+                        # Only if not hidden
+                        if not text_cmd.hidden:
+                            cmd_obj = text_cmd
 
-                if cmd_obj:
-                    # Check permissions if possible
-                    # For slash commands, checks are async and complex (interaction based)
-                    # For text commands, await cmd.can_run(ctx)
+                    if cmd_obj:
+                        # Check permissions if possible
+                        # For slash commands, checks are async and complex (interaction based)
+                        # For text commands, await cmd.can_run(ctx)
 
-                    can_run = True
-                    if isinstance(cmd_obj, commands.Command):
-                        try:
-                            can_run = await cmd_obj.can_run(ctx)
-                        except:
-                            can_run = False
+                        can_run = True
+                        if isinstance(cmd_obj, commands.Command):
+                            try:
+                                can_run = await cmd_obj.can_run(ctx)
+                            except:
+                                can_run = False
 
-                    # For app commands, we can't easily check 'can_run' without an interaction
-                    # We'll assume visible unless it's an owner command or guild only in DM
-                    # But listing them is usually fine for help menu
+                        # For app commands, we can't easily check 'can_run' without an interaction
+                        # We'll assume visible unless it's an owner command or guild only in DM
+                        # But listing them is usually fine for help menu
 
-                    if can_run:
-                        category_commands.append(cmd_obj)
+                        if can_run:
+                            category_commands.append(cmd_obj)
+
+                except Exception as e:
+                    print(f"Error processing command '{name}' for help menu: {e}")
+                    traceback.print_exc()
+                    continue
 
             if category_commands:
                 help_data[category] = category_commands
@@ -208,24 +221,33 @@ class Help(commands.Cog):
         """
         Shows the interactive help menu.
         """
-        # Create a Context for permission checking (hybrid commands need it)
-        ctx = await self.bot.get_context(interaction)
+        # Defer the interaction immediately to prevent timeout
+        await interaction.response.defer(ephemeral=True)
 
-        help_data = await self.generate_help_data(ctx)
+        try:
+            # Create a Context for permission checking (hybrid commands need it)
+            ctx = await self.bot.get_context(interaction)
 
-        if not help_data:
-            await interaction.response.send_message("No commands available for you.", ephemeral=True)
-            return
+            help_data = await self.generate_help_data(ctx)
 
-        embed = discord.Embed(
-            title="🐙 Cthulhu Bot Help",
-            description="Greetings, Investigator.\nThe stars align for you to seek knowledge. Consult the archives below to uncover the secrets of this bot.",
-            color=discord.Color.teal()
-        )
-        embed.set_footer(text="Only commands available to you are shown.")
+            if not help_data:
+                await interaction.followup.send("No commands available for you.")
+                return
 
-        view = HelpView(help_data, interaction.user)
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+            embed = discord.Embed(
+                title="🐙 Cthulhu Bot Help",
+                description="Greetings, Investigator.\nThe stars align for you to seek knowledge. Consult the archives below to uncover the secrets of this bot.",
+                color=discord.Color.teal()
+            )
+            embed.set_footer(text="Only commands available to you are shown.")
+
+            view = HelpView(help_data, interaction.user)
+            await interaction.followup.send(embed=embed, view=view)
+
+        except Exception as e:
+            print(f"Error generating help menu: {e}")
+            traceback.print_exc()
+            await interaction.followup.send("An error occurred while generating the help menu.")
 
 async def setup(bot):
     await bot.add_cog(Help(bot))
