@@ -3,61 +3,37 @@ from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, Select
 
-# Mapping of Cog Names (lowercase) to Categories
-COG_GROUPS = {
-    # Character Creation & Management
-    "newinvestigator": "Character",
-    "mycharacter": "Character",
-    "stat": "Character",
-    "printcharacter": "Character",
-    "rename": "Character",
-    "renameskill": "Character",
-    "addbackstory": "Character",
-    "removebackstory": "Character",
-    "updatebackstory": "Character",
-    "generatebackstory": "Character",
-    "retire_character": "Character",
-    "updatestats": "Character",
-
-    # Rolling & Session
-    "newroll": "Rolling",
-    "changeluck": "Rolling",
-    "sessionmanager": "Rolling",
-
-    # Keeper Tools
-    "codex": "Keeper",
-    "loot": "Keeper",
-    "macguffin": "Keeper",
-    "madness": "Keeper",
-    "randomname": "Keeper",
-    "chase": "Keeper",
-    "randomnpc": "Keeper",
-    "deleteinvestigator": "Keeper", # Arguably admin but fits keeper managing players
-
-    # Server Administration
-    "admin_slash": "Admin", # Includes Sync
-    "deleter": "Server",
-    "autoroom": "Server",
-    "reactionroles": "Server",
-    "gameroles": "Server",
-    "smartreaction": "Server",
-    "rss": "Server",
-    "giveaway": "Server",
-    "polls": "Server",
-    "reminders": "Server",
-    "backup": "Server",
-    "updatebot": "Server",
-    "botstatus": "Server",
-    "changeprefix": "Server",
-    "enroll": "Server",
-
-    # Utility & Fun
-    "ping": "Utility",
-    "uptime": "Utility",
-    "reportbug": "Utility",
-    "pogo": "Fun",
-    "music": "Fun",
+# Mapping of Command Names to Categories
+COMMAND_CATEGORIES = {
+    "Player": [
+        "newinvestigator", "mycharacter", "stat", "generatebackstory",
+        "addbackstory", "removebackstory", "updatebackstory", "roll",
+        "rename", "renameskill", "addskill", "printcharacter", "session",
+        "retire", "unretire", "deleteinvestigator"
+    ],
+    "Codex": [
+        "grimoire", "monster", "deity", "spell", "archetype", "talent",
+        "insane", "poison", "skill", "occupation", "invention", "year",
+        "weapon"
+    ],
+    "Keeper": [
+        "loot", "mania", "phobia", "madness", "madnessalone", "handout",
+        "macguffin", "randomname", "randomnpc", "chase"
+    ],
+    "Music": [
+        "play", "skip", "stop", "volume", "loop", "queue", "nowplaying"
+    ],
+    "Other": [
+        "karma", "leaderboard", "giveaway", "polls", "remind",
+        "reportbug", "uptime"
+    ],
+    "Admin": [
+        "enroll", "autoroom", "reactionrole", "gameroles", "rss",
+        "autodeleter", "setupkarma", "purge"
+    ]
 }
+
+COC_EMOJI_ID = 1472309439410344040
 
 class HelpSelect(Select):
     def __init__(self, help_data):
@@ -67,15 +43,17 @@ class HelpSelect(Select):
         # Sort categories to ensure consistent order
         sorted_categories = sorted(help_data.keys())
 
+        # Define category emojis
+        # Use PartialEmoji for custom emojis
+        coc_emoji = discord.PartialEmoji(name='coc', id=COC_EMOJI_ID)
+
         emoji_map = {
-            "Character": "👤",
-            "Rolling": "🎲",
-            "Keeper": "📜",
-            "Server": "🛠️",
-            "Admin": "🛡️",
-            "Utility": "🔧",
-            "Fun": "🎉",
-            "Other": "📁"
+            "Player": coc_emoji,
+            "Codex": coc_emoji,
+            "Keeper": coc_emoji,
+            "Music": "🎵",
+            "Other": "📁",
+            "Admin": "🛠️"
         }
 
         for category in sorted_categories:
@@ -103,28 +81,41 @@ class HelpSelect(Select):
         # Iterate commands and add fields
         # If too many commands, we might need to truncate or list simply
         # Discord Embed Field Value Limit is 1024 chars.
-        # We'll try to put multiple commands in one description or fields
+
+        # Sort commands alphabetically
+        commands_list.sort(key=lambda c: c.name)
 
         if len(commands_list) > 25:
              # Just list names if too many
-             command_names = [f"`/{cmd.name}`" if isinstance(cmd, app_commands.Command) else f"`!{cmd.name}`" for cmd in commands_list]
+             command_names = []
+             for cmd in commands_list:
+                 name = cmd.name
+                 if isinstance(cmd, (app_commands.Command, app_commands.Group)):
+                     name = f"/{name}"
+                 else:
+                     # Hybrid or Text
+                     name = f"/{name}" # Assume slash context mostly
+                 command_names.append(f"`{name}`")
+
              embed.description += "\n" + ", ".join(command_names)
         else:
             for cmd in commands_list:
                 name = cmd.name
-                if hasattr(cmd, 'app_command') and cmd.app_command:
-                     # Hybrid
-                     name = f"/{name}"
-                elif isinstance(cmd, app_commands.Command):
-                     name = f"/{name}"
-                else:
-                     name = f"!{name}"
+                desc = cmd.description or "No description."
 
-                desc = cmd.description or cmd.help or "No description."
+                # Check for hybrid commands which have help attribute
+                if hasattr(cmd, 'help') and cmd.help:
+                    desc = cmd.help
+
                 # Truncate desc
                 if len(desc) > 100: desc = desc[:97] + "..."
 
-                embed.add_field(name=name, value=desc, inline=False)
+                prefix = "/"
+                # Check if it's strictly a text command (unlikely given migration)
+                if isinstance(cmd, commands.Command) and not isinstance(cmd, commands.HybridCommand):
+                    prefix = "!"
+
+                embed.add_field(name=f"{prefix}{name}", value=desc, inline=False)
 
         await interaction.response.edit_message(embed=embed, view=self.view)
 
@@ -161,66 +152,54 @@ class Help(commands.Cog):
     async def generate_help_data(self, ctx):
         """
         Generates a dictionary of Category -> List of Commands.
-        Filters commands based on user permissions in ctx.
         """
         help_data = {}
 
-        # Iterate over all Cogs
-        for cog_name, cog in self.bot.cogs.items():
-            # Determine Category
-            category = COG_GROUPS.get(cog_name.lower(), "Other")
+        # Iterate defined categories
+        for category, cmd_names in COMMAND_CATEGORIES.items():
+            category_commands = []
 
-            # Get commands for this Cog
-            # We want to check both hybrid/text commands AND slash commands
-            # cog.get_commands() returns text/hybrid commands
-            # cog.get_app_commands() returns slash commands (if any are strictly slash)
+            for name in cmd_names:
+                # 1. Check for Slash Command (App Command)
+                # App commands are in self.bot.tree.get_command(name)
+                # Note: get_command only gets top-level commands/groups
 
-            commands_to_check = list(cog.get_commands())
-            # Note: Hybrid commands appear in get_commands().
-            # Pure app_commands might be in get_app_commands()
+                app_cmd = self.bot.tree.get_command(name)
 
-            # We also need to check permissions
-            visible_commands = []
+                # 2. Check for Text/Hybrid Command
+                # Hybrid commands are also in bot.commands
+                text_cmd = self.bot.get_command(name)
 
-            for cmd in commands_to_check:
-                if cmd.hidden:
-                    continue
+                cmd_obj = None
 
-                try:
-                    if await cmd.can_run(ctx):
-                        visible_commands.append(cmd)
-                except:
-                    # Permission check failed
-                    continue
+                if app_cmd:
+                    cmd_obj = app_cmd
+                elif text_cmd:
+                    # Only if not hidden
+                    if not text_cmd.hidden:
+                        cmd_obj = text_cmd
 
-            # Also check app_commands (pure slash)
-            app_cmds = cog.get_app_commands()
-            for cmd in app_cmds:
-                # Avoid duplicates if hybrid (Hybrid commands appear in get_commands, app_commands appear here)
-                # But Hybrid commands in get_commands have an app_command attribute.
-                # get_app_commands returns the app_command version.
-                # We can check by name.
-                if cmd.name not in [c.name for c in visible_commands]:
-                     visible_commands.append(cmd)
+                if cmd_obj:
+                    # Check permissions if possible
+                    # For slash commands, checks are async and complex (interaction based)
+                    # For text commands, await cmd.can_run(ctx)
 
-            if visible_commands:
-                if category not in help_data:
-                    help_data[category] = []
-                help_data[category].extend(visible_commands)
+                    can_run = True
+                    if isinstance(cmd_obj, commands.Command):
+                        try:
+                            can_run = await cmd_obj.can_run(ctx)
+                        except:
+                            can_run = False
 
-        # Handle Uncategorized (Commands not in any Cog)
-        # uncat = [c for c in self.bot.commands if not c.cog]
-        # visible_uncat = []
-        # for cmd in uncat:
-        #     if not cmd.hidden:
-        #          try:
-        #              if await cmd.can_run(ctx):
-        #                  visible_uncat.append(cmd)
-        #          except: pass
+                    # For app commands, we can't easily check 'can_run' without an interaction
+                    # We'll assume visible unless it's an owner command or guild only in DM
+                    # But listing them is usually fine for help menu
 
-        # if visible_uncat:
-        #     if "Other" not in help_data: help_data["Other"] = []
-        #     help_data["Other"].extend(visible_uncat)
+                    if can_run:
+                        category_commands.append(cmd_obj)
+
+            if category_commands:
+                help_data[category] = category_commands
 
         return help_data
 
@@ -229,8 +208,7 @@ class Help(commands.Cog):
         """
         Shows the interactive help menu.
         """
-        # Create a Context for permission checking
-        # We need a Message to create a Context, but for interaction we use from_interaction
+        # Create a Context for permission checking (hybrid commands need it)
         ctx = await self.bot.get_context(interaction)
 
         help_data = await self.generate_help_data(ctx)
