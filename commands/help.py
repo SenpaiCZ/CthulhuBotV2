@@ -34,8 +34,6 @@ COMMAND_CATEGORIES = {
     ]
 }
 
-COC_EMOJI_ID = 1472309439410344040
-
 class HelpSelect(Select):
     def __init__(self, help_data):
         self.help_data = help_data
@@ -45,8 +43,7 @@ class HelpSelect(Select):
         sorted_categories = sorted(help_data.keys())
 
         # Define category emojis
-        # Use PartialEmoji for custom emojis
-        coc_emoji = discord.PartialEmoji(name='coc', id=COC_EMOJI_ID)
+        coc_emoji = "🐙"
 
         emoji_map = {
             "Player": coc_emoji,
