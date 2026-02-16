@@ -11,10 +11,8 @@ from loadnsave import (
     load_player_stats, save_player_stats,
     load_retired_characters_data, save_retired_characters_data,
     load_occupations_data, load_pulp_talents_data,
-    load_archetype_data
+    load_archetype_data, load_skill_settings
 )
-
-MAX_STARTING_SKILL = 75
 
 BASE_SKILLS = {
     "Accounting": 5, "Anthropology": 1, "Appraise": 5, "Archaeology": 1, "Charm": 15,
@@ -475,8 +473,8 @@ class SkillPointSetModal(Modal, title="Set Skill Value"):
             if not (self.view.min_cr <= new_val <= self.view.max_cr):
                 return await interaction.response.send_message(f"Credit Rating must be between {self.view.min_cr} and {self.view.max_cr}.", ephemeral=True)
         else:
-            if new_val > MAX_STARTING_SKILL:
-                return await interaction.response.send_message(f"Cannot exceed starting limit of {MAX_STARTING_SKILL}%.", ephemeral=True)
+            if new_val > self.view.max_skill:
+                return await interaction.response.send_message(f"Cannot exceed starting limit of {self.view.max_skill}%.", ephemeral=True)
             if new_val < self.base_val:
                 return await interaction.response.send_message(f"Cannot go below base value of {self.base_val}%.", ephemeral=True)
 
@@ -516,8 +514,8 @@ class SkillSpecializationModal(Modal, title="Add Specialization"):
         except ValueError:
              return await interaction.response.send_message("Invalid number.", ephemeral=True)
 
-        if new_val > MAX_STARTING_SKILL:
-             return await interaction.response.send_message(f"Cannot exceed starting limit of {MAX_STARTING_SKILL}%.", ephemeral=True)
+        if new_val > self.view.max_skill:
+             return await interaction.response.send_message(f"Cannot exceed starting limit of {self.view.max_skill}%.", ephemeral=True)
         if new_val < self.base_val:
              return await interaction.response.send_message(f"Cannot go below base value of {self.base_val}%.", ephemeral=True)
 
@@ -554,8 +552,8 @@ class CustomSkillModal(Modal, title="Add Custom Skill"):
         if name in self.view.char_data:
             return await interaction.response.send_message("Skill already exists.", ephemeral=True)
 
-        if val > MAX_STARTING_SKILL:
-             return await interaction.response.send_message(f"Cannot exceed starting limit of {MAX_STARTING_SKILL}%.", ephemeral=True)
+        if val > self.view.max_skill:
+             return await interaction.response.send_message(f"Cannot exceed starting limit of {self.view.max_skill}%.", ephemeral=True)
         if val < base:
              return await interaction.response.send_message(f"Value cannot be lower than Base.", ephemeral=True)
 
@@ -625,7 +623,7 @@ class SkillPageSelect(Select):
              await interaction.response.send_modal(modal)
 
 class SkillPointAllocationView(View):
-    def __init__(self, cog, char_data, player_stats, remaining_points, min_cr, max_cr, is_occupation, allowed_skills=None, pi_points=0):
+    def __init__(self, cog, char_data, player_stats, remaining_points, min_cr, max_cr, is_occupation, allowed_skills=None, pi_points=0, max_skill=75):
         super().__init__(timeout=600)
         self.cog = cog
         self.char_data = char_data
@@ -636,6 +634,7 @@ class SkillPointAllocationView(View):
         self.is_occupation = is_occupation
         self.allowed_skills = allowed_skills
         self.pi_points = pi_points
+        self.max_skill = max_skill
 
         self.page = 0
         self.all_skills = self.get_skill_list()
@@ -728,7 +727,7 @@ class SkillPointAllocationView(View):
     def get_embed(self):
         embed = discord.Embed(title="Skill Assignment", color=discord.Color.gold())
 
-        desc = f"Points Remaining: **{self.remaining_points}**\nMax Skill Level: **{MAX_STARTING_SKILL}%**"
+        desc = f"Points Remaining: **{self.remaining_points}**\nMax Skill Level: **{self.max_skill}%**"
 
         if self.is_occupation:
              info = self.char_data.get("Occupation Info", {})
@@ -789,6 +788,12 @@ class newinvestigator(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         player_stats = await load_player_stats()
         await self.check_existing_and_start(interaction, player_stats)
+
+    async def get_max_skill(self, guild_id):
+        settings = await load_skill_settings()
+        if str(guild_id) in settings:
+            return settings[str(guild_id)].get("max_starting_skill", 75)
+        return 75
 
     async def check_existing_and_start(self, interaction: discord.Interaction, player_stats):
         user_id = str(interaction.user.id)
@@ -1069,7 +1074,8 @@ class newinvestigator(commands.Cog):
 
     # --- Skill Assignment Logic ---
     async def step_skill_assignment(self, interaction, char_data, player_stats, points, min_cr, max_cr, is_occupation, allowed_skills=None, pi_points=0):
-        view = SkillPointAllocationView(self, char_data, player_stats, points, min_cr, max_cr, is_occupation, allowed_skills, pi_points)
+        max_skill = await self.get_max_skill(interaction.guild.id)
+        view = SkillPointAllocationView(self, char_data, player_stats, points, min_cr, max_cr, is_occupation, allowed_skills, pi_points, max_skill=max_skill)
         embed = view.get_embed()
 
         if interaction.response.is_done():

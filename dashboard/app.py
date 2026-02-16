@@ -21,6 +21,7 @@ from loadnsave import (
     load_karma_settings, save_karma_settings,
     load_reaction_roles, save_reaction_roles,
     load_luck_stats, save_luck_stats,
+    load_skill_settings, save_skill_settings,
     load_rss_data, save_rss_data,
     load_deleter_data, save_deleter_data,
     autoroom_load, autoroom_save,
@@ -1274,40 +1275,66 @@ async def game_settings_data():
         return jsonify({"guilds": []})
 
     luck_stats = await load_luck_stats()
+    skill_settings = await load_skill_settings()
+
     guilds_data = []
 
     for guild in app.bot.guilds:
         guild_id_str = str(guild.id)
         current_luck = luck_stats.get(guild_id_str, 10)
 
+        # Skill settings
+        current_max_skill = 75
+        if guild_id_str in skill_settings:
+            current_max_skill = skill_settings[guild_id_str].get("max_starting_skill", 75)
+
         guilds_data.append({
             "id": guild_id_str,
             "name": guild.name,
-            "luck_threshold": current_luck
+            "luck_threshold": current_luck,
+            "max_starting_skill": current_max_skill
         })
 
     return jsonify({"guilds": guilds_data})
 
-@app.route('/api/game/luck/save', methods=['POST'])
-async def save_luck_threshold():
+@app.route('/api/game/settings/save_general', methods=['POST'])
+async def save_general_settings():
     if not is_admin(): return "Unauthorized", 401
 
     data = await request.get_json()
     guild_id = data.get('guild_id')
     luck_value = data.get('luck_value')
+    max_skill_value = data.get('max_skill_value')
 
-    if not guild_id or luck_value is None:
+    if not guild_id:
         return jsonify({"status": "error", "message": "Missing arguments"}), 400
 
-    try:
-        luck_val = int(luck_value)
-        if luck_val < 0: raise ValueError
-    except ValueError:
-        return jsonify({"status": "error", "message": "Invalid integer"}), 400
+    # Save Luck
+    if luck_value is not None:
+        try:
+            luck_val = int(luck_value)
+            if luck_val < 0: raise ValueError
 
-    luck_stats = await load_luck_stats()
-    luck_stats[str(guild_id)] = luck_val
-    await save_luck_stats(luck_stats)
+            luck_stats = await load_luck_stats()
+            luck_stats[str(guild_id)] = luck_val
+            await save_luck_stats(luck_stats)
+        except ValueError:
+            return jsonify({"status": "error", "message": "Invalid luck value"}), 400
+
+    # Save Max Skill
+    if max_skill_value is not None:
+        try:
+            skill_val = int(max_skill_value)
+            if skill_val < 1 or skill_val > 99: raise ValueError
+
+            skill_settings = await load_skill_settings()
+            if str(guild_id) not in skill_settings:
+                skill_settings[str(guild_id)] = {}
+
+            skill_settings[str(guild_id)]["max_starting_skill"] = skill_val
+            await save_skill_settings(skill_settings)
+        except ValueError:
+            return jsonify({"status": "error", "message": "Invalid max skill value (1-99)"}), 400
 
     return jsonify({"status": "success"})
 
