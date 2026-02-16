@@ -1,84 +1,121 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from discord.ui import View, Select, Button
 from loadnsave import load_player_stats, save_player_stats, load_retired_characters_data, save_retired_characters_data
 import asyncio
+
+class RetireConfirmationView(View):
+    def __init__(self):
+        super().__init__(timeout=60)
+        self.confirmed = False
+
+    @discord.ui.button(label="Yes", style=discord.ButtonStyle.danger, emoji="✅")
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.confirmed = True
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="No", style=discord.ButtonStyle.secondary, emoji="❌")
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.confirmed = False
+        await interaction.response.defer()
+        self.stop()
+
+class UnretireSelect(Select):
+    def __init__(self, characters):
+        options = []
+        for i, char in enumerate(characters):
+            # Ensure unique value for each option
+            options.append(discord.SelectOption(label=char.get('NAME', 'Unknown'), value=str(i)))
+        super().__init__(placeholder="Select a character to unretire...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        self.view.selected_index = int(self.values[0])
+        await interaction.response.defer()
+        self.view.stop()
+
+class UnretireView(View):
+    def __init__(self, characters):
+        super().__init__(timeout=60)
+        self.selected_index = None
+        self.add_item(UnretireSelect(characters))
 
 class CharacterManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command(description="Retire your current character.")
-    async def retire(self, ctx):
-        server_id = str(ctx.guild.id)
-        player_id = str(ctx.author.id)
+    @app_commands.command(name="retire", description="Retire your current character.")
+    async def retire(self, interaction: discord.Interaction):
+        """Retire your current character."""
+        server_id = str(interaction.guild_id)
+        player_id = str(interaction.user.id)
         player_stats = await load_player_stats()
 
         if server_id not in player_stats or player_id not in player_stats[server_id]:
-            await ctx.send("You do not have an active character to retire.")
+            await interaction.response.send_message("You do not have an active character to retire.", ephemeral=True)
             return
 
-        confirmation_message = await ctx.send("Are you sure you want to retire your character? Type 'yes' to confirm.")
+        view = RetireConfirmationView()
+        await interaction.response.send_message("Are you sure you want to retire your character?", view=view, ephemeral=True)
+        await view.wait()
 
-        def check(m):
-            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id and m.content.lower() == "yes"
+        if view.confirmed:
+            character_data = player_stats[server_id].pop(player_id)
+            retired_characters = await load_retired_characters_data()
 
-        try:
-            await self.bot.wait_for("message", timeout=30.0, check=check)
-        except asyncio.TimeoutError:
-            await ctx.send("Retirement cancelled due to timeout.")
-            return
+            if player_id not in retired_characters:
+                retired_characters[player_id] = []
 
-        character_data = player_stats[server_id].pop(player_id)
-        retired_characters = await load_retired_characters_data()
+            retired_characters[player_id].append(character_data)
+            await save_retired_characters_data(retired_characters)
+            await save_player_stats(player_stats)
 
-        if player_id not in retired_characters:
-            retired_characters[player_id] = []
+            await interaction.followup.send("Your character has been retired successfully. You can now create a new character.", ephemeral=True)
+        else:
+            await interaction.followup.send("Retirement cancelled.", ephemeral=True)
 
-        retired_characters[player_id].append(character_data)
-        await save_retired_characters_data(retired_characters)
-        await save_player_stats(player_stats)
-
-        await ctx.send("Your character has been retired successfully. You can now create a new character.")
-      
-    @commands.hybrid_command(description="Unretire a character.")
-    async def unretire(self, ctx):
-        server_id = str(ctx.guild.id)
-        player_id = str(ctx.author.id)
+    @app_commands.command(name="unretire", description="Unretire a character.")
+    async def unretire(self, interaction: discord.Interaction):
+        """Unretire a character."""
+        server_id = str(interaction.guild_id)
+        player_id = str(interaction.user.id)
         player_stats = await load_player_stats()
-    
-        # Kontrola, zda hráč má aktivní postavu
+
         if server_id in player_stats and player_id in player_stats[server_id]:
-            await ctx.send("You already have an active character. Please retire your current character first.")
+            await interaction.response.send_message("You already have an active character. Please retire your current character first.", ephemeral=True)
             return
-    
+
         retired_characters = await load_retired_characters_data()
         if player_id not in retired_characters or not retired_characters[player_id]:
-            await ctx.send("You do not have any retired characters.")
+            await interaction.response.send_message("You do not have any retired characters.", ephemeral=True)
             return
-    
-        # Zobrazení seznamu postav v důchodu
-        characters_list = "\n".join([f"{i+1}. {char['NAME']}" for i, char in enumerate(retired_characters[player_id])])
-        await ctx.send("Please select a character to unretire:\n" + characters_list)
-    
-        # Čekání na výběr hráče
-        def check(m):
-            return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id and m.content.isdigit()
-    
-        try:
-            message = await self.bot.wait_for("message", timeout=60.0, check=check)
-            selected_index = int(message.content) - 1
-    
-            if selected_index >= 0 and selected_index < len(retired_characters[player_id]):
-                selected_character = retired_characters[player_id].pop(selected_index)
-                player_stats.setdefault(server_id, {})[player_id] = selected_character
+
+        characters = retired_characters[player_id]
+        view = UnretireView(characters)
+        await interaction.response.send_message("Please select a character to unretire:", view=view, ephemeral=True)
+        await view.wait()
+
+        if view.selected_index is not None:
+            if 0 <= view.selected_index < len(characters):
+                selected_character = retired_characters[player_id].pop(view.selected_index)
+
+                if server_id not in player_stats:
+                    player_stats[server_id] = {}
+
+                player_stats[server_id][player_id] = selected_character
+
+                # If list is empty for user, remove key? optional but cleaner
+                if not retired_characters[player_id]:
+                    del retired_characters[player_id]
+
                 await save_retired_characters_data(retired_characters)
                 await save_player_stats(player_stats)
-                await ctx.send(f"Character '{selected_character['NAME']}' has been unretired and is now active.")
+                await interaction.followup.send(f"Character '**{selected_character.get('NAME', 'Unknown')}**' has been unretired and is now active.", ephemeral=True)
             else:
-                await ctx.send("Invalid selection.")
-        except asyncio.TimeoutError:
-            await ctx.send("No selection made.")
-          
+                 await interaction.followup.send("Invalid selection.", ephemeral=True)
+        else:
+             await interaction.followup.send("No selection made or timed out.", ephemeral=True)
+
 async def setup(bot):
     await bot.add_cog(CharacterManagement(bot))

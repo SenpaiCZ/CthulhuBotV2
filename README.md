@@ -32,7 +32,7 @@
 
 ## Commands
 
-The bot primarily uses **Slash Commands** (`/`). Legacy prefix commands (default `!`) are still supported for most features but may be deprecated in the future.
+The bot uses **Slash Commands** (`/`). Legacy prefix commands have been removed, with the exception of `!sync`.
 
 ### 🐙 Investigator Tools
 *   `/newinvestigator`: 🕵️‍♂️ Start the character creation wizard.
@@ -48,11 +48,11 @@ The bot primarily uses **Slash Commands** (`/`). Legacy prefix commands (default
 *   `/printcharacter`: 🖼️ Generate an image of your character sheet.
 
 ### 🎲 Dice Rolling & Session
-*   `/roll` (alias: `!newroll`, `!d`): 🎲 Perform a dice roll or skill check. Interactive interface allows for Bonus/Penalty dice and Luck spending.
-*   `!showluck`: 🍀 Show the luck threshold for the server.
-*   `!startsession`: 🎬 Start a new game session.
-*   `!showsession`: 📝 Show current session details.
-*   `!wipesession`: 🧹 Clear session data.
+*   `/roll`: 🎲 Perform a dice roll or skill check. Interactive interface allows for Bonus/Penalty dice and Luck spending.
+*   `/showluck`: 🍀 Show the luck threshold for the server.
+*   `/session start`: 🎬 Start a new game session.
+*   `/session show`: 📝 Show current session details.
+*   `/session wipe`: 🧹 Clear session data.
 
 ### 📚 The Grimoire (Codex)
 *   `/grimoire`: 📖 Open the main Grimoire menu to browse all categories.
@@ -70,9 +70,9 @@ The bot primarily uses **Slash Commands** (`/`). Legacy prefix commands (default
 *   `/invention` `[decade]`: 💡 Lookup inventions by decade (e.g., "1920s").
 *   `/year` `[year]`: 📅 Historical events for a specific year.
 *   `/randomnpc`: 👤 Generate a random NPC with region selection.
-*   `!randomname`: 🏷️ Generate a random name (1920s era).
-*   `!macguffin`: 🏺 Generate a plot device.
-*   `!loot`: 💰 Generate random loot.
+*   `/randomname`: 🏷️ Generate a random name (1920s era).
+*   `/macguffin`: 🏺 Generate a plot device.
+*   `/loot`: 💰 Generate random loot.
 
 ### 🎵 Music & Sound
 *   `/play` `[query]`: 🎵 Play a song from YouTube.
@@ -90,21 +90,22 @@ The bot primarily uses **Slash Commands** (`/`). Legacy prefix commands (default
 *   `/reportbug`: 🐛 Report a bug to the developer.
 *   `/ping`: 🏓 Check bot latency.
 *   `/uptime`: ⏱️ Check bot uptime.
-*   `!leaderboard` (alias: `!top`): 🏆 Show the Karma leaderboard.
-*   `!karma`: 🌟 Check karma for a user.
+*   `/leaderboard`: 🏆 Show the Karma leaderboard.
+*   `/karma`: 🌟 Check karma for a user.
 
-### ⚙️ Admin & Configuration (Prefix Only)
-*   `!sync`: 🔄 **Essential!** Sync slash commands to Discord. Use `!sync` (global) or `!sync guild` (current server).
-*   `!setupkarma`: ⚙️ Interactive setup wizard for the karma system.
-*   `!setupkarmaroles`: 🧙 Interactive wizard to manage karma rank roles.
-*   `!reactionrole`: 🎭 Setup a reaction role on a message.
-*   `!autoroomsetup`: ⚙️ Interactive setup wizard for Auto Rooms.
-*   `!rsssetup`: 📰 Interactive setup wizard for RSS/YouTube feeds.
-*   `!autodeleter`: 🤖 Interactive wizard to setup auto-deletion rules.
-*   `!changeprefix`: ❗ Change the bot's command prefix for the server.
-*   `!pogo setchannel`, `!pogo setrole`: 📱 Configure Pokemon GO notifications.
-*   `!backup`: 💾 Trigger a manual backup.
-*   `!update`: 🔄 Update the bot (if installed via git).
+### ⚙️ Admin & Configuration
+*   `!sync`: 🔄 **Essential!** Sync slash commands to Discord. Use `!sync` (global) or `!sync guild` (current server). This is the only prefix command.
+*   `/setupkarma`: ⚙️ Interactive setup wizard for the karma system.
+*   `/setupkarmaroles`: 🧙 Interactive wizard to manage karma rank roles.
+*   `/reactionrole`: 🎭 Setup a reaction role on a message.
+*   `/autoroom setup`: ⚙️ Interactive setup wizard for Auto Rooms.
+*   `/rsssetup`: 📰 Interactive setup wizard for RSS/YouTube feeds.
+*   `/autodeleter set`: 🤖 Set auto-deletion rules for a channel.
+*   `/autodeleter stop`: 🛑 Stop auto-deletion for a channel.
+*   `/purge`: 🗑️ Bulk delete messages.
+*   `/pogo setchannel`, `/pogo setrole`: 📱 Configure Pokemon GO notifications.
+*   `/backup`: 💾 Trigger a manual backup.
+*   `/updatebot`: 🔄 Update the bot (if installed via git).
 
 ## Installation
 
