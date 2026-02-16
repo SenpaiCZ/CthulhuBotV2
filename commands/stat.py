@@ -4,15 +4,114 @@ import math
 import asyncio
 from discord.ext import commands
 from discord import app_commands
+from discord.ui import View, Button
 from loadnsave import load_player_stats, save_player_stats, load_server_stats, load_gamemode_stats
 from emojis import get_stat_emoji
 from rapidfuzz import process, fuzz
 
+class LimitCheckView(View):
+    def __init__(self, ctx, limit):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.limit = limit
+        self.result = None # 'proceed', 'stop', 'max'
+
+    @discord.ui.button(label="Go over limit", style=discord.ButtonStyle.danger, emoji="✅")
+    async def proceed(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("Not your choice!", ephemeral=True)
+        self.result = 'proceed'
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Stop", style=discord.ButtonStyle.secondary, emoji="❌")
+    async def stop_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("Not your choice!", ephemeral=True)
+        self.result = 'stop'
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Set to Max", style=discord.ButtonStyle.success, emoji="📈")
+    async def set_max(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("Not your choice!", ephemeral=True)
+        self.result = 'max'
+        await interaction.response.defer()
+        self.stop()
+
+    async def on_timeout(self):
+        self.stop()
+
+class CalculationView(View):
+    def __init__(self, ctx):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.confirmed = None # True, False, None (timeout)
+
+    @discord.ui.button(label="Calculate", style=discord.ButtonStyle.success, emoji="✅")
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("Not your choice!", ephemeral=True)
+        self.confirmed = True
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Skip", style=discord.ButtonStyle.secondary, emoji="❌")
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("Not your choice!", ephemeral=True)
+        self.confirmed = False
+        await interaction.response.defer()
+        self.stop()
+
+    async def on_timeout(self):
+        self.stop()
 
 class stat(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    async def _send_ephemeral(self, ctx, content):
+        if ctx.interaction:
+            await ctx.send(content, ephemeral=True)
+        else:
+            await ctx.send(content, delete_after=10)
+
+    async def check_limit(self, ctx, stat_key, new_value, limit, emoji_key):
+        view = LimitCheckView(ctx, limit)
+        msg = await ctx.send(f"Are you sure you want to surpass your **{stat_key}**:{emoji_key}: limit ({limit})?", view=view)
+        await view.wait()
+
+        if view.result is None:
+             await msg.edit(content=f"Timed out. **{stat_key}**:{emoji_key}: will not be saved.", view=None)
+             return None
+        elif view.result == 'stop':
+             await msg.edit(content=f"**{stat_key}**:{emoji_key}: will not be saved.", view=None)
+             return None
+        elif view.result == 'max':
+             await msg.delete()
+             return limit
+        else: # proceed
+             await msg.delete()
+             return new_value
+
+    async def prompt_calculation(self, ctx, stat_name, calculated_value, player_stats, server_id, user_id):
+        emoji = get_stat_emoji(stat_name)
+        view = CalculationView(ctx)
+        msg = await ctx.send(f"{ctx.author.display_name} filled all stats for **{stat_name}**{emoji}. Calculate it to **{calculated_value}**?", view=view)
+        await view.wait()
+
+        if view.confirmed:
+            player_stats[server_id][user_id][stat_name] = calculated_value
+            await save_player_stats(player_stats)
+            await msg.edit(content=f"**{stat_name}** set to **{calculated_value}**.", view=None)
+        else:
+            if view.confirmed is False: # Cancelled explicitly
+                await msg.edit(content=f"Calculation for **{stat_name}** skipped.", view=None)
+            else: # Timeout
+                await msg.edit(content=f"Timed out. Calculation for **{stat_name}** skipped.", view=None)
 
     @commands.hybrid_command(aliases=["cstat"], description="Change the value of a skill or stat for your character.")
     @app_commands.describe(stat_name="The name of the stat/skill (e.g. HP, STR, Spot Hidden)", value="The new value (e.g. 50) or change (e.g. +5, -5)")
@@ -30,14 +129,12 @@ class stat(commands.Cog):
 
         # Check if the command is used in a valid channel
         if not isinstance(ctx.channel, discord.TextChannel):
-            await ctx.send("This command is not allowed in DMs.")
+            await self._send_ephemeral(ctx, "This command is not allowed in DMs.")
             return
 
         # Check if the player has an investigator
         if user_id not in player_stats[server_id]:
-            await ctx.send(
-                f"{ctx.author.display_name} doesn't have an investigator. Use `{prefix}newInv` for creating a new investigator."
-            )
+            await self._send_ephemeral(ctx, f"{ctx.author.display_name} doesn't have an investigator. Use `{prefix}newInv` for creating a new investigator.")
             return
 
         # Clean up stat_name from autocomplete (e.g. "Spot Hidden (50)" -> "Spot Hidden")
@@ -67,7 +164,7 @@ class stat(commands.Cog):
                     matching_stats.append(match_key)
 
         if not matching_stats:
-            await ctx.send(f"Stat '{clean_stat_name}' not found.")
+            await self._send_ephemeral(ctx, f"Stat '{clean_stat_name}' not found.")
             return
 
         stat_key = matching_stats[0]
@@ -77,7 +174,7 @@ class stat(commands.Cog):
         # Check for relative change (+5, -5) or absolute set (50)
         value_match = re.match(r'^([+\-]?)(\d+)$', value.strip())
         if not value_match:
-            await ctx.send("Invalid value format. Use numbers (e.g. 50) or relative changes (e.g. +5, -5).")
+            await self._send_ephemeral(ctx, "Invalid value format. Use numbers (e.g. 50) or relative changes (e.g. +5, -5).")
             return
 
         sign = value_match.group(1)
@@ -96,7 +193,6 @@ class stat(commands.Cog):
             change_value = new_value - current_value
 
         # Logic checks (Max HP, MP, SAN, etc.)
-        # Loading game mode
         server_stats = await load_gamemode_stats()
         if server_id not in server_stats:
             server_stats[server_id] = {}
@@ -104,105 +200,33 @@ class stat(commands.Cog):
             server_stats[server_id]['game_mode'] = 'Call of Cthulhu'
         current_mode = server_stats[server_id]['game_mode']
 
-        # Surpassing MAX_HP in Call of Cthulhu
-        if current_mode == 'Call of Cthulhu' and stat_key == "HP" and new_value > (math.floor((user_stats["CON"] + user_stats["SIZ"]) / 10)):
-            limit = math.floor((user_stats["CON"] + user_stats["SIZ"]) / 10)
-            msg = await ctx.send(f"Are you sure you want to surpass your **HP**:heartpulse: limit ({limit})? \n ✅ - Go over the limit \n ❌ - Stop \n 📈 - Set to max")
-            await msg.add_reaction("✅")
-            await msg.add_reaction("❌")
-            await msg.add_reaction("📈")
+        # Determine limits
+        limit = None
+        emoji_key = None
 
-            def check(reaction, user):
-                return user == ctx.author and reaction.message.id == msg.id and str(reaction.emoji) in ["✅", "❌", "📈"]
+        if stat_key == "HP":
+             emoji_key = "heartpulse"
+             con = user_stats.get("CON", 0)
+             siz = user_stats.get("SIZ", 0)
+             if current_mode == 'Call of Cthulhu':
+                 limit = math.floor((con + siz) / 10)
+             else: # Pulp
+                 limit = math.floor((con + siz) / 5)
+        elif stat_key == "MP":
+             emoji_key = "sparkles"
+             pow_stat = user_stats.get("POW", 0)
+             limit = math.floor(pow_stat / 5)
+        elif stat_key == "SAN":
+             emoji_key = "scales"
+             limit = 99 - user_stats.get("Cthulhu Mythos", 0)
 
-            try:
-                reaction, _ = await self.bot.wait_for("reaction_add", timeout=60, check=check)
-                if str(reaction.emoji) == "✅":
-                    pass
-                elif str(reaction.emoji) == "📈":
-                    new_value = limit
-                    change_value = new_value - current_value
-                elif str(reaction.emoji) == "❌":
-                    await ctx.send("**HP**:heartpulse: will not be saved.")
-                    return
-            except asyncio.TimeoutError:
-                await ctx.send("Timed out. **HP**:heartpulse: will not be saved.")
-                return
-
-        # Surpassing MAX_HP in Pulp of Cthulhu
-        if current_mode == 'Pulp of Cthulhu' and stat_key == "HP" and new_value > (math.floor((user_stats["CON"] + user_stats["SIZ"]) / 5)):
-            limit = math.floor((user_stats["CON"] + user_stats["SIZ"]) / 5)
-            msg = await ctx.send(f"Are you sure you want to surpass your **HP**:heartpulse: limit ({limit})? \n ✅ - Go over the limit \n ❌ - Stop \n 📈 - Set to max")
-            await msg.add_reaction("✅")
-            await msg.add_reaction("❌")
-            await msg.add_reaction("📈")
-
-            def check(reaction, user):
-                return user == ctx.author and reaction.message.id == msg.id and str(reaction.emoji) in ["✅", "❌", "📈"]
-
-            try:
-                reaction, _ = await self.bot.wait_for("reaction_add", timeout=60, check=check)
-                if str(reaction.emoji) == "✅":
-                    pass
-                elif str(reaction.emoji) == "📈":
-                    new_value = limit
-                    change_value = new_value - current_value
-                elif str(reaction.emoji) == "❌":
-                    await ctx.send("**HP**:heartpulse: will not be saved.")
-                    return
-            except asyncio.TimeoutError:
-                await ctx.send("Timed out. **HP**:heartpulse: will not be saved.")
-                return
-
-        # Surpassing MAX_MP
-        if stat_key == "MP" and new_value > (math.floor(user_stats["POW"] / 5)):
-            limit = math.floor(user_stats["POW"] / 5)
-            msg = await ctx.send(f"Are you sure you want to surpass your **MP**:sparkles: limit ({limit})? \n ✅ - Go over the limit \n ❌ - Stop \n 📈 - Set to max")
-            await msg.add_reaction("✅")
-            await msg.add_reaction("❌")
-            await msg.add_reaction("📈")
-
-            def check(reaction, user):
-                return user == ctx.author and reaction.message.id == msg.id and str(reaction.emoji) in ["✅", "❌", "📈"]
-
-            try:
-                reaction, _ = await self.bot.wait_for("reaction_add", timeout=60, check=check)
-                if str(reaction.emoji) == "✅":
-                    pass
-                elif str(reaction.emoji) == "📈":
-                    new_value = limit
-                    change_value = new_value - current_value
-                elif str(reaction.emoji) == "❌":
-                    await ctx.send("**MP**:sparkles: will not be saved.")
-                    return
-            except asyncio.TimeoutError:
-                await ctx.send("Timed out. **MP**:sparkles: will not be saved.")
-                return
-
-        # Surpassing MAX_SAN
-        if stat_key == "SAN" and new_value > (99 - user_stats.get("Cthulhu Mythos", 0)):
-            limit = 99 - user_stats.get("Cthulhu Mythos", 0)
-            msg = await ctx.send(f"Are you sure you want to surpass your **SAN**:scales: limit ({limit})? \n ✅ - Go over the limit \n ❌ - Stop \n 📈 - Set to max")
-            await msg.add_reaction("✅")
-            await msg.add_reaction("❌")
-            await msg.add_reaction("📈")
-
-            def check(reaction, user):
-                return user == ctx.author and reaction.message.id == msg.id and str(reaction.emoji) in ["✅", "❌", "📈"]
-
-            try:
-                reaction, _ = await self.bot.wait_for("reaction_add", timeout=60, check=check)
-                if str(reaction.emoji) == "✅":
-                    pass
-                elif str(reaction.emoji) == "📈":
-                    new_value = limit
-                    change_value = new_value - current_value
-                elif str(reaction.emoji) == "❌":
-                    await ctx.send("**SAN**:scales: will not be saved.")
-                    return
-            except asyncio.TimeoutError:
-                await ctx.send("Timed out. **SAN**:scales: will not be saved.")
-                return
+        # Check limit
+        if limit is not None and new_value > limit:
+             result = await self.check_limit(ctx, stat_key, new_value, limit, emoji_key)
+             if result is None: return # Stopped
+             new_value = result
+             # Recalculate change_value in case new_value changed (e.g. set to max)
+             change_value = new_value - current_value
 
         # Update and Save
         player_stats[server_id][user_id][stat_key] = new_value
@@ -223,27 +247,30 @@ class stat(commands.Cog):
 
         await ctx.send(embed=embed)
 
-        # Trigger auto-calcs (copied logic)
+        # Trigger auto-calcs
         # HP Calculation Trigger
         if stat_key in ["CON", "SIZ"]:
-            if user_stats["CON"] != 0 and user_stats["SIZ"] != 0 and user_stats["HP"] == 0:
-                 await self.prompt_calculation(ctx, "HP", math.floor((user_stats["CON"] + user_stats["SIZ"]) / 10), player_stats, server_id, user_id)
+            if user_stats.get("CON", 0) != 0 and user_stats.get("SIZ", 0) != 0 and user_stats.get("HP", 0) == 0:
+                 hp_val = 0
+                 if current_mode == 'Call of Cthulhu': hp_val = math.floor((user_stats["CON"] + user_stats["SIZ"]) / 10)
+                 else: hp_val = math.floor((user_stats["CON"] + user_stats["SIZ"]) / 5)
+                 await self.prompt_calculation(ctx, "HP", hp_val, player_stats, server_id, user_id)
 
         # MP Calculation Trigger
         if stat_key == "POW":
-            if user_stats["POW"] != 0 and user_stats["MP"] == 0:
+            if user_stats.get("POW", 0) != 0 and user_stats.get("MP", 0) == 0:
                 await self.prompt_calculation(ctx, "MP", math.floor(user_stats["POW"] / 5), player_stats, server_id, user_id)
-            if user_stats["POW"] != 0 and user_stats["SAN"] == 0:
+            if user_stats.get("POW", 0) != 0 and user_stats.get("SAN", 0) == 0:
                 await self.prompt_calculation(ctx, "SAN", user_stats["POW"], player_stats, server_id, user_id)
 
         # Dodge Calculation Trigger
         if stat_key == "DEX":
-            if user_stats["DEX"] != 0 and user_stats["Dodge"] == 0:
+            if user_stats.get("DEX", 0) != 0 and user_stats.get("Dodge", 0) == 0:
                 await self.prompt_calculation(ctx, "Dodge", math.floor(user_stats["DEX"] / 2), player_stats, server_id, user_id)
 
         # Language Own Calculation Trigger
         if stat_key == "EDU":
-             if user_stats["EDU"] != 0 and user_stats.get("Language own", 0) == 0:
+             if user_stats.get("EDU", 0) != 0 and user_stats.get("Language own", 0) == 0:
                  await self.prompt_calculation(ctx, "Language own", user_stats["EDU"], player_stats, server_id, user_id)
 
         # Age Warning
@@ -255,35 +282,15 @@ class stat(commands.Cog):
         # Age specific advice
         if stat_key == "Age":
             age = user_stats["Age"]
-            if age < 15: await ctx.send("Age Modifiers: No official rules for <15.")
-            elif age < 20: await ctx.send("Age Modifiers (<20): Deduct 5 from STR/SIZ. Deduct 5 from EDU. Roll Luck twice (take high).")
-            elif age < 40: await ctx.send("Age Modifiers (<40): Improvement check for EDU.")
-            elif age < 50: await ctx.send("Age Modifiers (<50): 2 EDU checks. Deduct 5 from STR/CON/DEX. APP -5.")
-            elif age < 60: await ctx.send("Age Modifiers (<60): 3 EDU checks. Deduct 10 from STR/CON/DEX. APP -10.")
-            elif age < 70: await ctx.send("Age Modifiers (<70): 4 EDU checks. Deduct 20 from STR/CON/DEX. APP -15.")
-            elif age < 80: await ctx.send("Age Modifiers (<80): 4 EDU checks. Deduct 40 from STR/CON/DEX. APP -20.")
-            elif age < 90: await ctx.send("Age Modifiers (<90): 4 EDU checks. Deduct 80 from STR/CON/DEX. APP -25.")
-            else: await ctx.send("Age Modifiers (90+): No official rules.")
-
-    async def prompt_calculation(self, ctx, stat_name, calculated_value, player_stats, server_id, user_id):
-        emoji = get_stat_emoji(stat_name)
-        msg = await ctx.send(f"{ctx.author.display_name} filled all stats for **{stat_name}**{emoji}. Calculate it to **{calculated_value}**?")
-        await msg.add_reaction("✅")
-        await msg.add_reaction("❌")
-
-        def check(reaction, user):
-            return user == ctx.author and reaction.message.id == msg.id and str(reaction.emoji) in ["✅", "❌"]
-
-        try:
-            reaction, _ = await self.bot.wait_for("reaction_add", timeout=60, check=check)
-            if str(reaction.emoji) == "✅":
-                player_stats[server_id][user_id][stat_name] = calculated_value
-                await save_player_stats(player_stats)
-                await ctx.send(f"**{stat_name}** set to **{calculated_value}**.")
-            else:
-                await ctx.send(f"Calculation for **{stat_name}** skipped.")
-        except asyncio.TimeoutError:
-            await ctx.send(f"Timed out. Calculation for **{stat_name}** skipped.")
+            if age < 15: await self._send_ephemeral(ctx, "Age Modifiers: No official rules for <15.")
+            elif age < 20: await self._send_ephemeral(ctx, "Age Modifiers (<20): Deduct 5 from STR/SIZ. Deduct 5 from EDU. Roll Luck twice (take high).")
+            elif age < 40: await self._send_ephemeral(ctx, "Age Modifiers (<40): Improvement check for EDU.")
+            elif age < 50: await self._send_ephemeral(ctx, "Age Modifiers (<50): 2 EDU checks. Deduct 5 from STR/CON/DEX. APP -5.")
+            elif age < 60: await self._send_ephemeral(ctx, "Age Modifiers (<60): 3 EDU checks. Deduct 10 from STR/CON/DEX. APP -10.")
+            elif age < 70: await self._send_ephemeral(ctx, "Age Modifiers (<70): 4 EDU checks. Deduct 20 from STR/CON/DEX. APP -15.")
+            elif age < 80: await self._send_ephemeral(ctx, "Age Modifiers (<80): 4 EDU checks. Deduct 40 from STR/CON/DEX. APP -20.")
+            elif age < 90: await self._send_ephemeral(ctx, "Age Modifiers (<90): 4 EDU checks. Deduct 80 from STR/CON/DEX. APP -25.")
+            else: await self._send_ephemeral(ctx, "Age Modifiers (90+): No official rules.")
 
     @stat.autocomplete('stat_name')
     async def stat_autocomplete(self, interaction: discord.Interaction, current: str):
