@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
+from discord import app_commands, ui
 import asyncio
 from loadnsave import load_polls_data, save_polls_data
 
@@ -28,6 +28,30 @@ class PollView(discord.ui.View):
             # Truncate label if too long (max 80 chars per button)
             label = option[:80]
             self.add_item(PollButton(label=label, index=i, poll_id=poll_id))
+
+class PollModal(ui.Modal, title="Create New Poll"):
+    question = ui.TextInput(label="Question", placeholder="What do you want to ask?", max_length=256)
+    options = ui.TextInput(label="Options (one per line)", style=discord.TextStyle.paragraph, placeholder="Option 1\nOption 2\nOption 3", max_length=2000, required=True)
+
+    def __init__(self, cog, ctx):
+        super().__init__()
+        self.cog = cog
+        self.ctx = ctx
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # Parse options
+        raw_options = self.options.value.split('\n')
+        parsed_options = [opt.strip() for opt in raw_options if opt.strip()]
+
+        if len(parsed_options) < 2:
+            await interaction.response.send_message("You need at least two options.", ephemeral=True)
+            return
+        if len(parsed_options) > 25:
+            await interaction.response.send_message("Too many options (max 25).", ephemeral=True)
+            return
+
+        # Proceed
+        await self.cog._create_poll_internal(self.ctx, self.question.value, parsed_options, interaction)
 
 class Polls(commands.Cog):
     def __init__(self, bot):
@@ -115,23 +139,24 @@ class Polls(commands.Cog):
         embed.set_footer(text=f"Total Votes: {total_votes}")
         return embed
 
-    @commands.hybrid_command(description="Create a poll with multiple options.")
-    @app_commands.describe(question="The question to ask", options="Comma-separated options (e.g. Yes, No, Maybe)")
-    async def poll(self, ctx, question: str, *, options: str = "Yes, No"):
-        """📊 Create a poll. Usage: !poll "Question" Option1, Option2..."""
-        option_list = [opt.strip() for opt in options.split(',') if opt.strip()]
-
-        if len(option_list) < 2:
-            await ctx.send("You need at least two options for a poll.", ephemeral=True)
-            return
-        if len(option_list) > 25: # Discord limit for buttons/selects is 25 per message (5x5 grid technically 25 components max)
-            await ctx.send("Too many options (max 25).", ephemeral=True)
-            return
+    async def _create_poll_internal(self, ctx, question: str, option_list: list, interaction=None):
+        """Internal helper to create poll from parsed data."""
+        # Check interaction status
+        # If called from Modal, interaction is provided and response needs to happen
+        # If called from command (hybrid), ctx handles sending message
 
         # Create initial embed
         embed = discord.Embed(title=f"📊 {question}", description="Setting up poll...", color=discord.Color.blurple())
 
-        msg = await ctx.send(embed=embed)
+        msg = None
+        if interaction:
+             # If from Modal, interaction is the response object
+             await interaction.response.send_message(embed=embed)
+             msg = await interaction.original_response()
+        else:
+             # From Command
+             msg = await ctx.send(embed=embed)
+
         poll_id = str(msg.id)
 
         # Initialize data
@@ -151,6 +176,35 @@ class Polls(commands.Cog):
         view = PollView(option_list, poll_id)
         final_embed = self.create_poll_embed(poll_data)
         await msg.edit(embed=final_embed, view=view)
+
+    @commands.hybrid_command(description="Create a poll with multiple options.")
+    @app_commands.describe(question="The question to ask (leave blank for Modal)", options="Comma-separated options (leave blank for Modal)")
+    async def poll(self, ctx, question: str = None, *, options: str = None):
+        """📊 Create a poll. Usage: !poll "Question" Option1, Option2... OR just /poll for Modal."""
+
+        # Scenario 1: Slash Command with no arguments -> Launch Modal
+        if question is None and ctx.interaction:
+             await ctx.interaction.response.send_modal(PollModal(self, ctx))
+             return
+
+        # Scenario 2: Arguments provided (Slash or Text)
+        if question:
+             # Use default if options missing
+             opt_str = options if options else "Yes, No"
+             parsed_options = [opt.strip() for opt in opt_str.split(',') if opt.strip()]
+
+             if len(parsed_options) < 2:
+                 await ctx.send("You need at least two options for a poll.", ephemeral=True)
+                 return
+             if len(parsed_options) > 25:
+                 await ctx.send("Too many options (max 25).", ephemeral=True)
+                 return
+
+             await self._create_poll_internal(ctx, question, parsed_options)
+             return
+
+        # Scenario 3: Text Command with no arguments -> Show Usage
+        await ctx.send("Usage: `!poll \"Question\" Option1, Option2...` or use `/poll` for interactive mode.", ephemeral=True)
 
     # API Method for Dashboard
     async def create_poll_api(self, guild_id, channel_id, question, options):
