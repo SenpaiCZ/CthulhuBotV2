@@ -53,10 +53,11 @@ class mycharacter(commands.Cog):
 
     # Instantiate View
     # Pass interaction.user so the dashboard is interactive for the caller
-    view = CharacterDashboardView(interaction.user, char_data, mode_label, current_mode)
+    view = CharacterDashboardView(interaction.user, char_data, mode_label, current_mode, server_id)
     
     # Send message with the initial Embed (Stats)
     await interaction.response.send_message(embed=view.get_embed(), view=view, ephemeral=True)
+    view.message = await interaction.original_response()
 
 async def setup(bot):
   await bot.add_cog(mycharacter(bot))
