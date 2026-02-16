@@ -50,56 +50,9 @@ class DisambiguationView(View):
             return False
         return True
 
-class RollTypeView(View):
-    def __init__(self, ctx):
-        super().__init__(timeout=60)
-        self.ctx = ctx
-        self.roll_type = None
-
-    @discord.ui.button(label="2x Bonus", style=discord.ButtonStyle.success, emoji="🌟")
-    async def bonus2(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.roll_type = "bonus2"
-        await interaction.response.defer()
-        self.stop()
-
-    @discord.ui.button(label="Bonus", style=discord.ButtonStyle.success, emoji="🟢")
-    async def bonus(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.roll_type = "bonus"
-        await interaction.response.defer()
-        self.stop()
-
-    @discord.ui.button(label="Normal", style=discord.ButtonStyle.primary, emoji="🎲")
-    async def normal(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.roll_type = "normal"
-        await interaction.response.defer()
-        self.stop()
-
-    @discord.ui.button(label="Penalty", style=discord.ButtonStyle.danger, emoji="🔴")
-    async def penalty(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.roll_type = "penalty"
-        await interaction.response.defer()
-        self.stop()
-
-    @discord.ui.button(label="2x Penalty", style=discord.ButtonStyle.danger, emoji="☠️")
-    async def penalty2(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.roll_type = "penalty2"
-        await interaction.response.defer()
-        self.stop()
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary, row=1)
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer()
-        self.stop()
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user != self.ctx.author:
-            await interaction.response.send_message("Not your session!", ephemeral=True)
-            return False
-        return True
-
-class PostRollView(View):
+class RollResultView(View):
     def __init__(self, ctx, cog, player_stats, server_id, user_id, stat_name, current_value,
-                 initial_roll, initial_tier, roll_type, luck_threshold):
+                 ones_roll, tens_rolls, net_dice, result_tier, luck_threshold):
         super().__init__(timeout=300)
         self.ctx = ctx
         self.cog = cog
@@ -108,25 +61,58 @@ class PostRollView(View):
         self.user_id = user_id
         self.stat_name = stat_name
         self.current_value = current_value
-        self.roll = initial_roll
-        self.result_tier = initial_tier
-        self.roll_type = roll_type
+
+        # Dice State
+        self.ones_roll = ones_roll
+        self.tens_rolls = tens_rolls # List of tens (0, 10, ... 90)
+        self.net_dice = net_dice # >0 Bonus, <0 Penalty
+
+        self.result_tier = result_tier
         self.luck_threshold = luck_threshold
 
-        self.message = None
+        self.roll = self._calculate_current_roll() # Initial calculation
         self.success = False
-
         if self.result_tier >= 2:
             self.success = True
 
         self.update_buttons()
 
+    def _calculate_current_roll(self):
+        # Calculate roll based on current dice state
+        # Determine how many dice to use based on net_dice
+        num_to_use = 1 + abs(self.net_dice)
+
+        # Ensure we have enough dice (safeguard, though buttons handle this)
+        while len(self.tens_rolls) < num_to_use:
+            self.tens_rolls.append(random.choice([0, 10, 20, 30, 40, 50, 60, 70, 80, 90]))
+
+        # Use only the required number of dice from the history
+        active_tens = self.tens_rolls[:num_to_use]
+
+        possible_rolls = []
+        for tens in active_tens:
+            val = tens + self.ones_roll
+            if val == 0: val = 100
+            possible_rolls.append(val)
+
+        if self.net_dice > 0:
+            # Bonus: Take lowest
+            return min(possible_rolls)
+        elif self.net_dice < 0:
+            # Penalty: Take highest
+            return max(possible_rolls)
+        else:
+            # Normal: Use the single result
+            return possible_rolls[0]
+
     def update_buttons(self):
+        # LUCK Logic
         can_luck = False
         luck_cost = 0
         player_luck = self.player_stats[self.server_id][self.user_id]['LUCK']
 
-        if self.roll_type == "normal" and self.stat_name != "LUCK" and self.result_tier != 0:
+        # Can only luck if Normal roll (net_dice == 0) and not LUCK roll itself
+        if self.net_dice == 0 and self.stat_name != "LUCK" and self.result_tier != 0:
             target_val = 0
             if self.result_tier == 1: # Fail -> Regular
                 target_val = self.current_value
@@ -147,13 +133,80 @@ class PostRollView(View):
         else:
             self.luck_button.label = "Use Luck"
 
+        # PUSH Logic (Only on Normal Fail)
         can_push = False
-        if self.roll_type == "normal" and self.stat_name != "LUCK" and self.result_tier == 1:
+        if self.net_dice == 0 and self.stat_name != "LUCK" and self.result_tier == 1:
              can_push = True
-
         self.push_button.disabled = not can_push
 
-    @discord.ui.button(label="Use Luck", style=discord.ButtonStyle.success, emoji="🍀")
+        # Max Dice Limit (CoC doesn't specify hard limit, but UI should)
+        # Limit to +/- 2 dice
+        self.add_bonus_btn.disabled = self.net_dice >= 2
+        self.add_penalty_btn.disabled = self.net_dice <= -2
+
+    async def _update_state_and_embed(self, interaction):
+        self.roll = self._calculate_current_roll()
+
+        result_text, result_tier = self.cog.calculate_roll_result(self.roll, self.current_value)
+        self.result_tier = result_tier
+        self.success = result_tier >= 2
+
+        self.update_buttons()
+
+        # Rebuild Embed
+        embed = interaction.message.embeds[0]
+
+        # Determine Color
+        color = discord.Color.green() # Default Regular/Hard
+        if result_tier == 5 or result_tier == 4: color = 0xF1C40F # Gold
+        elif result_tier == 3 or result_tier == 2: color = 0x2ECC71 # Green
+        elif result_tier == 1: color = 0xE74C3C # Red
+        elif result_tier == 0: color = 0x992D22 # Dark Red
+        embed.color = color
+
+        # Description
+        num_to_use = 1 + abs(self.net_dice)
+        active_tens = self.tens_rolls[:num_to_use]
+        tens_str = ", ".join(str(t) if t != 0 else "00" for t in active_tens)
+        ones_str = str(self.ones_roll)
+
+        dice_text = "Normal"
+        if self.net_dice > 0: dice_text = f"Bonus ({self.net_dice})"
+        elif self.net_dice < 0: dice_text = f"Penalty ({abs(self.net_dice)})"
+
+        description_roll_info = f"{self.ctx.author.mention} :game_die: **{dice_text}** Check\n"
+        description_roll_info += f"Dice: [{tens_str}] + {ones_str} -> **{self.roll}**"
+
+        formatted_luck = f":four_leaf_clover: LUCK: {self.player_stats[self.server_id][self.user_id]['LUCK']}"
+        formatted_skill = f"**{self.stat_name}**: {self.current_value} - {self.current_value // 2} - {self.current_value // 5}"
+
+        embed.description = f"{description_roll_info}\n\n**{result_text}**\n\n{formatted_skill}\n{formatted_luck}"
+
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Bonus Die", style=discord.ButtonStyle.success, emoji="🟢", row=0)
+    async def add_bonus_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.net_dice += 1
+
+        # Only add a new die if we don't have enough in history
+        num_needed = 1 + abs(self.net_dice)
+        while len(self.tens_rolls) < num_needed:
+            self.tens_rolls.append(random.choice([0, 10, 20, 30, 40, 50, 60, 70, 80, 90]))
+
+        await self._update_state_and_embed(interaction)
+
+    @discord.ui.button(label="Penalty Die", style=discord.ButtonStyle.danger, emoji="🔴", row=0)
+    async def add_penalty_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.net_dice -= 1
+
+        # Only add a new die if we don't have enough in history
+        num_needed = 1 + abs(self.net_dice)
+        while len(self.tens_rolls) < num_needed:
+            self.tens_rolls.append(random.choice([0, 10, 20, 30, 40, 50, 60, 70, 80, 90]))
+
+        await self._update_state_and_embed(interaction)
+
+    @discord.ui.button(label="Use Luck", style=discord.ButtonStyle.primary, emoji="🍀", row=1)
     async def luck_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         target_val = 0
         if self.result_tier == 1: target_val = self.current_value
@@ -164,10 +217,10 @@ class PostRollView(View):
 
         self.player_stats[self.server_id][self.user_id]['LUCK'] -= cost
         self.roll = target_val
-
         self.result_tier += 1
         self.success = True
 
+        # Visual Update
         result_text_map = {
             2: "Regular Success (LUCK Used) :heavy_check_mark:",
             3: "Hard Success (LUCK Used) :white_check_mark:",
@@ -175,15 +228,28 @@ class PostRollView(View):
         }
         result_text = result_text_map.get(self.result_tier, "Success (LUCK Used)")
 
-        await self.update_embed(interaction, result_text)
-
-        self.update_buttons()
+        # Disable stuff
+        self.add_bonus_btn.disabled = True
+        self.add_penalty_btn.disabled = True
         self.push_button.disabled = True
+        self.luck_button.disabled = True
 
-        await interaction.message.edit(view=self)
+        embed = interaction.message.embeds[0]
+        formatted_luck = f":four_leaf_clover: LUCK: {self.player_stats[self.server_id][self.user_id]['LUCK']}"
+        formatted_skill = f"**{self.stat_name}**: {self.current_value} - {self.current_value // 2} - {self.current_value // 5}"
 
-    @discord.ui.button(label="Push Roll", style=discord.ButtonStyle.danger, emoji="🔄")
+        # Reconstruct description with updated Luck
+        desc_parts = embed.description.split("\n\n")
+        # Keep roll info (part 0), update result (part 1), keep skill (part 2), update luck (part 3)
+        if len(desc_parts) >= 1:
+            embed.description = f"{desc_parts[0]}\n\n**{result_text}**\n\n{formatted_skill}\n{formatted_luck}"
+
+        embed.color = 0x2ECC71 # Green
+        await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Push Roll", style=discord.ButtonStyle.secondary, emoji="🔄", row=1)
     async def push_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Pushing a roll is a completely new roll
         new_roll = random.randint(1, 100)
         result_text, new_tier = self.cog.calculate_roll_result(new_roll, self.current_value)
 
@@ -200,27 +266,21 @@ class PostRollView(View):
         original_embed = interaction.message.embeds[0]
         original_embed.description += msg
 
-        self.luck_button.disabled = True
-        self.push_button.disabled = True
-        self.stop()
+        # Disable all
+        for child in self.children:
+            child.disabled = True
 
         await interaction.response.edit_message(embed=original_embed, view=None)
 
-    @discord.ui.button(label="Done", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Done", style=discord.ButtonStyle.secondary, row=1)
     async def done_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer()
         self.stop()
-
-    async def update_embed(self, interaction, result_text):
-        embed = interaction.message.embeds[0]
-        formatted_luck = f":four_leaf_clover: LUCK: {self.player_stats[self.server_id][self.user_id]['LUCK']}"
-        formatted_skill = f"**{self.stat_name}**: {self.current_value} - {self.current_value // 2} - {self.current_value // 5}"
-
-        description_roll_info = f"{self.ctx.author.mention} :game_die: Rolled: {self.roll}"
-
-        embed.description = f"{description_roll_info}\n{result_text}\n{formatted_skill}\n{formatted_luck}"
-
-        await interaction.response.edit_message(embed=embed)
+        # Disable
+        try:
+            for child in self.children: child.disabled = True
+            await interaction.message.edit(view=self)
+        except: pass
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user != self.ctx.author:
@@ -258,23 +318,18 @@ class Roll(commands.Cog):
         self.bot = bot
 
     def evaluate_dice_expression(self, expression):
-        # Replace D with 'd' and remove spaces
         expression = expression.replace('D', 'd').replace(' ', '')
         detail_parts = []
 
-        # Define a function to handle dice rolls
         def roll_dice(match):
             num, size = map(int, match.groups())
             rolls = [random.randint(1, size) for _ in range(num)]
             detail_parts.append(f":game_die: {num}d{size}: {' + '.join(map(str, rolls))} = {sum(rolls)}")
             return sum(rolls)
 
-        # Replace dice roll expressions with their results
         dice_pattern = re.compile(r'(\d+)d(\d+)')
         expression = dice_pattern.sub(lambda m: str(roll_dice(m)), expression)
 
-        # Evaluate the expression
-        # Only allow safe characters
         if not re.match(r'^[\d+\-*/().]+$', expression):
             raise ValueError("Invalid dice expression")
 
@@ -283,59 +338,52 @@ class Roll(commands.Cog):
         return result, detail
 
     def calculate_roll_result(self, roll, skill_value):
-        # Fumble Logic - Check first because 100 is always Fumble/Fail
         is_fumble = False
         if skill_value < 50:
-            if roll >= 96:
-                is_fumble = True
+            if roll >= 96: is_fumble = True
         else:
-            if roll == 100:
-                is_fumble = True
+            if roll == 100: is_fumble = True
 
-        if is_fumble:
-            return "Fumble :warning:", 0
-
-        # Success Logic
-        if roll == 1:
-            return "Critical Success :star2:", 5
-        elif roll <= skill_value // 5:
-            return "Extreme Success :star:", 4
-        elif roll <= skill_value // 2:
-            return "Hard Success :white_check_mark:", 3
-        elif roll <= skill_value:
-            return "Regular Success :heavy_check_mark:", 2
-
-        # If not Success and not Fumble, it is Fail
+        if is_fumble: return "Fumble :warning:", 0
+        if roll == 1: return "Critical Success :star2:", 5
+        elif roll <= skill_value // 5: return "Extreme Success :star:", 4
+        elif roll <= skill_value // 2: return "Hard Success :white_check_mark:", 3
+        elif roll <= skill_value: return "Regular Success :heavy_check_mark:", 2
         return "Fail :x:", 1
 
     @commands.hybrid_command(name="roll", aliases=["newroll", "diceroll", "d", "nd"], guild_only=True, description="Perform a dice roll or skill check.")
-    @app_commands.describe(dice_expression="The dice expression (e.g. 3d6) or skill name (e.g. Spot Hidden)", secret="Make the result ephemeral (hidden) - Slash command only")
-    async def roll(self, ctx, *, dice_expression: str, secret: bool = False):
+    @app_commands.describe(
+        dice_expression="The dice expression (e.g. 3d6) or skill name (e.g. Spot Hidden)",
+        bonus="Number of Bonus Dice (0-2)",
+        penalty="Number of Penalty Dice (0-2)",
+        secret="Make the result ephemeral (hidden)"
+    )
+    @app_commands.choices(
+        bonus=[app_commands.Choice(name="0", value=0), app_commands.Choice(name="1", value=1), app_commands.Choice(name="2", value=2)],
+        penalty=[app_commands.Choice(name="0", value=0), app_commands.Choice(name="1", value=1), app_commands.Choice(name="2", value=2)]
+    )
+    async def roll(self, ctx, *, dice_expression: str, bonus: int = 0, penalty: int = 0, secret: bool = False):
         """
         🎲 Perform a dice roll or skill check.
-        Interactive interface allows for Bonus/Penalty dice and Luck spending.
         """
-        # Helper to handle ephemeral messages
-        ephemeral = secret and (ctx.interaction is not None)
+        if not ctx.interaction:
+             # Prevent legacy use if possible, or just fail gracefully.
+             # The user asked to remove legacy prefix commands, so we can just return or send a message.
+             # Hybrid command might still trigger on !roll.
+             await ctx.send("Please use the slash command `/roll`.")
+             return
+
+        ephemeral = secret
 
         async def send_msg(content=None, embed=None, view=None):
-            if ephemeral:
-                if not ctx.interaction.response.is_done():
-                    await ctx.interaction.response.send_message(content=content, embed=embed, view=view, ephemeral=True)
-                    return await ctx.interaction.original_response()
-                else:
-                    return await ctx.interaction.followup.send(content=content, embed=embed, view=view, ephemeral=True, wait=True)
+            if not ctx.interaction.response.is_done():
+                await ctx.interaction.response.send_message(content=content, embed=embed, view=view, ephemeral=ephemeral)
+                return await ctx.interaction.original_response()
             else:
-                return await ctx.send(content=content, embed=embed, view=view)
+                return await ctx.interaction.followup.send(content=content, embed=embed, view=view, ephemeral=ephemeral, wait=True)
 
-        server_prefixes = await load_server_stats()
         server_id = str(ctx.guild.id)
-        prefix = server_prefixes.get(server_id, "!") if server_id else "!"
-
-        luck_stats = await load_luck_stats()
-        luck_threshold = luck_stats.get(server_id, 10)
-
-        # 1. Try to evaluate as dice expression (e.g. 3d6)
+        # 1. Dice Expression (e.g. 3d6)
         try:
             result, detail = self.evaluate_dice_expression(dice_expression)
             embed = discord.Embed(
@@ -348,128 +396,97 @@ class Roll(commands.Cog):
             await send_msg(embed=embed)
             return
         except Exception:
-            # Not a valid dice expression, assume it is a Skill Check
             pass
 
         # 2. Skill Check Logic
-        if not isinstance(ctx.channel, discord.TextChannel):
-            await send_msg(content="This command is not allowed in DMs.")
-            return
         user_id = str(ctx.author.id)
-
         player_stats = await load_player_stats()
 
-        if user_id not in player_stats[server_id]:
-            await send_msg(
-                content=f"{ctx.author.display_name} doesn't have an investigator. Use `{prefix}newInv` for creating a new investigator."
-            )
+        if user_id not in player_stats.get(server_id, {}):
+            await send_msg(content=f"{ctx.author.display_name} doesn't have an investigator. Use `/newinvestigator`.")
             return
 
         try:
-            normalized_dice_expression = dice_expression.lower()
+            # Skill Matching Logic
+            clean_expression = dice_expression
+            match = re.match(r"^(.*?)\s*\(\d+\)$", dice_expression)
+            if match: clean_expression = match.group(1)
+
+            normalized_input = clean_expression.lower()
             matching_stats = []
 
-            # Exact match
-            for stat_key, stat_value in player_stats[server_id][user_id].items():
-                # We need to handle potential autocomplete formatting which might include value like "Skill (50)"
-                # But here we are matching against keys in the json.
-                # If the user selected from autocomplete "Spot Hidden (50)", the dice_expression string is "Spot Hidden (50)"
-                # We should strip the value part for matching if it exists.
+            stats = player_stats[server_id][user_id]
 
-                # Try to clean up input if it came from autocomplete
-                clean_expression = dice_expression
-                match = re.match(r"^(.*?)\s*\(\d+\)$", dice_expression)
-                if match:
-                    clean_expression = match.group(1)
-
-                normalized_input = clean_expression.lower()
-
-                if stat_key.lower() == normalized_input:
-                    matching_stats.append(stat_key)
+            # 1. Exact Key Match
+            for k in stats.keys():
+                if k.lower() == normalized_input:
+                    matching_stats.append(k)
                     break
 
-            # If exact match failed, try the old logic of searching words
+            # 2. Word Match
             if not matching_stats:
-                # Revert to original logic for manual typing compatibility
-                normalized_dice_expression = dice_expression.lower()
-                for stat_key, stat_value in player_stats[server_id][user_id].items():
-                    if any(word.lower() == stat_key.lower() for word in normalized_dice_expression.split()):
-                        matching_stats.append(stat_key)
+                for k in stats.keys():
+                    if any(word.lower() == k.lower() for word in normalized_input.split()):
+                        matching_stats.append(k)
                         break
 
-            # Partial match if no exact match
+            # 3. Partial Match
             if not matching_stats:
-                for stat_key, stat_value in player_stats[server_id][user_id].items():
-                    if any(word.lower() in stat_key.lower() for word in normalized_dice_expression.split()):
-                        matching_stats.append(stat_key)
+                for k in stats.keys():
+                    if any(word.lower() in k.lower() for word in normalized_input.split()):
+                        matching_stats.append(k)
 
             if not matching_stats:
-                await send_msg(content="No matching stat found and invalid dice expression.")
+                await send_msg(content="No matching skill found.")
                 return
 
             stat_name = matching_stats[0]
-            current_value = player_stats[server_id][user_id][stat_name]
+            current_value = stats[stat_name]
 
             if len(matching_stats) > 1:
-                # Use DisambiguationView
                 view = DisambiguationView(ctx, matching_stats)
                 msg = await send_msg(content="Multiple matching stats found. Please select one:", view=view)
                 await view.wait()
-
                 if view.selected_stat:
                     stat_name = view.selected_stat
-                    current_value = player_stats[server_id][user_id][stat_name]
-                    await msg.delete()
+                    current_value = stats[stat_name]
+                    try: await msg.delete()
+                    except: pass
                 else:
-                    await msg.edit(content="Selection timed out or cancelled.", view=None)
+                    try: await msg.edit(content="Selection cancelled.", view=None)
+                    except: pass
                     return
 
-            # Ask for Roll Type
-            view = RollTypeView(ctx)
-            embed = discord.Embed(
-                title=f"Select Roll Type for {stat_name}",
-                description="Choose the type of roll:",
-                color=discord.Color.blue()
-            )
-            msg = await send_msg(embed=embed, view=view)
-            await view.wait()
+            # ROLL LOGIC
+            net_dice = bonus - penalty
 
-            if view.roll_type:
-                roll_type = view.roll_type
-                await msg.delete()
-            else:
-                await msg.edit(content="Roll cancelled.", view=None, embed=None)
-                return
+            # Roll Ones (0-9)
+            ones_roll = random.randint(0, 9)
 
-            # Perform the Roll
-            ASKFORSESSION = 0
-            SUCCESSFULLROLL = 0
-            session_data = await load_session_data()
-            if user_id not in session_data:
-                ASKFORSESSION = 1
+            # Roll Tens (00-90)
+            # Need 1 + abs(net_dice) tens rolls initially
+            num_tens = 1 + abs(net_dice)
+            tens_options = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+            tens_rolls = [random.choice(tens_options) for _ in range(num_tens)]
 
-            roll = 0
-            tens_rolls = []
-            ones_roll = 0
+            # Calculate Result
+            possible_rolls = []
+            for t in tens_rolls:
+                val = t + ones_roll
+                if val == 0: val = 100
+                possible_rolls.append(val)
 
-            if roll_type == "normal":
-                roll = random.randint(1, 100)
-            else:
-                num_tens = 3 if roll_type in ["bonus2", "penalty2"] else 2
-                tens_rolls = [random.randint(0, 9) * 10 for _ in range(num_tens)]
-                ones_roll = random.randint(1, 10)
+            final_roll = 0
+            if net_dice > 0: final_roll = min(possible_rolls)
+            elif net_dice < 0: final_roll = max(possible_rolls)
+            else: final_roll = possible_rolls[0] # Should only be 1
 
-                if roll_type in ["bonus", "bonus2"]:
-                    best_tens_roll = min(tens_rolls)
-                    roll = best_tens_roll + ones_roll
-                else: # penalty, penalty2
-                    worst_tens_roll = max(tens_rolls)
-                    roll = worst_tens_roll + ones_roll
+            result_text, result_tier = self.calculate_roll_result(final_roll, current_value)
 
-            result_text, result_tier = self.calculate_roll_result(roll, current_value)
+            luck_threshold = (await load_luck_stats()).get(server_id, 10)
 
-            # Post Roll Interaction (Luck/Push)
-            post_roll_view = PostRollView(
+            # View
+            view = RollResultView(
                 ctx=ctx,
                 cog=self,
                 player_stats=player_stats,
@@ -477,115 +494,82 @@ class Roll(commands.Cog):
                 user_id=user_id,
                 stat_name=stat_name,
                 current_value=current_value,
-                initial_roll=roll,
-                initial_tier=result_tier,
-                roll_type=roll_type,
+                ones_roll=ones_roll,
+                tens_rolls=tens_rolls,
+                net_dice=net_dice,
+                result_tier=result_tier,
                 luck_threshold=luck_threshold
             )
 
-            # Initial Embed construction
-            formatted_luck = f":four_leaf_clover: LUCK: {player_stats[server_id][user_id]['LUCK']}"
-            formatted_skill = f"**{stat_name}**: {current_value} - {current_value // 2} - {current_value // 5}"
+            # Embed
+            color = discord.Color.green()
+            if result_tier == 5 or result_tier == 4: color = 0xF1C40F
+            elif result_tier == 3 or result_tier == 2: color = 0x2ECC71
+            elif result_tier == 1: color = 0xE74C3C
+            elif result_tier == 0: color = 0x992D22
 
-            description_roll_info = f"{ctx.author.mention} :game_die: Rolled: {roll}"
-            if roll_type != "normal":
-                tens_str = "|".join(str(t) for t in tens_rolls)
-                description_roll_info = f"{ctx.author.mention} :game_die: Rolled: {tens_str} + {ones_roll} = {roll}"
+            tens_str = ", ".join(str(t) if t != 0 else "00" for t in tens_rolls)
+            dice_text = "Normal"
+            if net_dice > 0: dice_text = f"Bonus ({net_dice})"
+            elif net_dice < 0: dice_text = f"Penalty ({abs(net_dice)})"
 
-            embed = discord.Embed(
-                title=f"{ctx.author.display_name}'s {roll_type.capitalize()} Check for '{stat_name}{get_stat_emoji(stat_name)}'",
-                description=f"{description_roll_info}\n{result_text}\n{formatted_skill}\n{formatted_luck}",
-                color=discord.Color.green(),
-            )
+            description = f"{ctx.author.mention} :game_die: **{dice_text}** Check\n"
+            description += f"Dice: [{tens_str}] + {ones_roll} -> **{final_roll}**\n\n"
+            description += f"**{result_text}**\n\n"
+            description += f"**{stat_name}**: {current_value} - {current_value // 2} - {current_value // 5}\n"
+            description += f":four_leaf_clover: LUCK: {player_stats[server_id][user_id]['LUCK']}"
 
-            post_roll_view.message = await send_msg(embed=embed, view=post_roll_view)
-            await post_roll_view.wait()
+            embed = discord.Embed(description=description, color=color)
+            view.message = await send_msg(embed=embed, view=view)
+            await view.wait()
 
-            # After interaction, save stats (Luck might have changed)
             await save_player_stats(player_stats)
 
-            # Disable buttons on final message
-            if post_roll_view.message:
-                try:
-                    for child in post_roll_view.children:
-                        child.disabled = True
-                    await post_roll_view.message.edit(view=post_roll_view)
-                except:
-                    pass
+            # Session Check
+            if view.success:
+                 session_data = await load_session_data()
+                 if user_id not in session_data:
+                     # Ask
+                     sess_view = SessionView(ctx)
+                     msg = await send_msg(content="**Start a gaming session to record this success?**", view=sess_view)
+                     await sess_view.wait()
+                     if sess_view.create_session:
+                         session_data[user_id] = []
+                         await save_session_data(session_data)
+                         await session_success(user_id, stat_name)
+                         await msg.edit(content="Session started!", view=None)
+                     else:
+                         await msg.delete()
+                 else:
+                     await session_success(user_id, stat_name)
 
-            if post_roll_view.success:
-                SUCCESSFULLROLL = 1
-            else:
-                SUCCESSFULLROLL = 0
-
-            # Session Recording
-            if SUCCESSFULLROLL == 1 and ASKFORSESSION == 1:
-                view = SessionView(ctx)
-                msg = await send_msg(
-                    content="**Do you want to create a gaming session?**\n\nGaming session will record all your successful rolls for the character development phase.",
-                    view=view
-                )
-                await view.wait()
-
-                if view.create_session:
-                    session_data[user_id] = []
-                    await save_session_data(session_data)
-                    await send_msg(content="Session started! The first successful rolls have been recorded!")
-                    await session_success(user_id, stat_name)
-                else:
-                    await send_msg(content="Session creation canceled.")
-
-                try: await msg.edit(view=None)
-                except: pass
-
-            elif SUCCESSFULLROLL == 1 and ASKFORSESSION == 0:
-                await session_success(user_id, stat_name)
-
-        except ValueError:
-            embed = discord.Embed(
-                title="Invalid Input",
-                description=f"Use format {prefix}d <skill_name> or {prefix}d <expression>",
-                color=discord.Color.red(),
-            )
-            await send_msg(embed=embed)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            await send_msg(content=f"An error occurred: {e}")
 
     @roll.autocomplete('dice_expression')
     async def roll_autocomplete(self, interaction: discord.Interaction, current: str):
         server_id = str(interaction.guild_id)
         user_id = str(interaction.user.id)
-
         player_stats = await load_player_stats()
 
         choices = []
-        user_has_char = False
-
         if server_id in player_stats and user_id in player_stats[server_id]:
-            user_has_char = True
-            # Use user's skills
-            stats = player_stats[server_id][user_id]
-            # Create list of suggestions like "Skill (Value)"
-            # Filter out hidden/internal stats if necessary, but CoC stats are mostly public to the player
-            for stat, value in stats.items():
+            for stat, value in player_stats[server_id][user_id].items():
                 choices.append(f"{stat} ({value})")
         else:
-            # Fallback to generic skills
             skills_data = await load_skills_data()
             choices = list(skills_data.keys())
 
         if not current:
-            # Return first 25 sorted alphabetically
             sorted_choices = sorted(choices)[:25]
             return [app_commands.Choice(name=c[:100], value=c[:100]) for c in sorted_choices]
 
-        # Use rapidfuzz to find best matches
         matches = process.extract(current, choices, scorer=fuzz.WRatio, limit=25)
-
         results = []
         for m in matches:
-            name = m[0]
-            value = m[0]
-            results.append(app_commands.Choice(name=name[:100], value=value[:100]))
-
+            results.append(app_commands.Choice(name=m[0][:100], value=m[0][:100]))
         return results
 
 async def setup(bot):
