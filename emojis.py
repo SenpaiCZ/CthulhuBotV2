@@ -1,3 +1,5 @@
+import re
+
 stat_emojis = {
       "STR": ":muscle:",
       "DEX": ":runner:",
@@ -183,7 +185,84 @@ stat_emojis = {
       "Physics":":atom_symbol:",
       "Weird Science": ":scientist:",
       "Zoology":":paw_prints:",
+
+      # New Explicit Mappings
+      "Art / Craft (any)": ":art:",
+      "Fighting (Brawl)": ":boxing_glove:",
+      "Firearms (Handgun)": ":gun:",
+      "Firearms (Rifle/Shotgun)": ":gun:",
+      "Language (Other)": ":globe_with_meridians:",
+      "Language (Own)": ":speech_balloon:",
+      "Pilot (any)": ":airplane:",
+      "Science (any)": ":microscope:",
+      "Survival (any)": ":camping:",
+
+      # Base Keys for Fuzzy Matching
+      "Science": ":microscope:",
+      "Fighting": ":boxing_glove:",
+      "Firearms": ":gun:",
+      "Art / Craft": ":art:",
+      "Language": ":globe_with_meridians:",
+      "Drive": ":blue_car:",
+      "Survival": ":camping:",
+      "Pilot": ":airplane:",
+
+      # Era Specific / New Skills
+      "Computer Use": ":computer:",
+      "Electronics": ":electric_plug:",
+      "Alienism": ":brain:",
+      "Drive Carriage": ":horse:",
+      "Operate Heavy Machinery": ":bullettrain_front:",
+      "Reassure": ":handshake:",
+      "Religion": ":place_of_worship:",
+      "Animal Handling": ":lion_face:",
+      "Drive Wagon/Coach": ":horse:",
+      "Gambling": ":game_die:",
+      "Rope Use": ":knot:",
+      "Trap": ":mouse_trap:",
+      "Drive (Horses/Oxen)": ":ox:",
+      "Insight": ":bulb:",
+      "Other Kingdoms (any)": ":map:",
+      "Kingdom (Own)": ":castle:",
+      "Pilot Boat": ":sailboat:",
+      "Read/Write Language (any)": ":pencil:",
+      "Repair/Devise": ":tools:",
+      "Ride Horse": ":horse_racing:",
+      "Status": ":crown:",
+      "Natural World (any)": ":deciduous_tree:",
+      "Hypnosis": ":face_with_spiral_eyes:",
+      "Lore": ":scroll:",
+      "Artillery": ":crossed_swords:",
+
+      # Weapons
+      "Axe": ":axe:",
+      "Sword": ":crossed_swords:",
+      "Spear": ":dagger:",
+      "Bow": ":bow_and_arrow:",
+      "Flamethrower": ":fire:",
+      "Heavy Weapons": ":rocket:",
+      "Machine Gun": ":gun:",
+      "Submachine Gun": ":gun:",
+      "Chainsaw": ":axe:",
   }
 
 def get_stat_emoji(stat_name):
-  return stat_emojis.get(stat_name, ":question:")
+  # 1. Exact match
+  if stat_name in stat_emojis:
+      return stat_emojis[stat_name]
+
+  # 2. Check for "Name (Specialization)" pattern
+  match = re.match(r"(.+?) \((.+)\)$", stat_name)
+  if match:
+      base = match.group(1)
+      spec = match.group(2)
+
+      # Try looking up the specialization directly
+      if spec in stat_emojis:
+           return stat_emojis[spec]
+
+      # Try looking up the base name
+      if base in stat_emojis:
+           return stat_emojis[base]
+
+  return ":question:"
