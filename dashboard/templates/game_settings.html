@@ -7,10 +7,10 @@
 
 <div class="card">
     <div class="card-header">
-        Luck Threshold Settings
+        General Game Settings
     </div>
     <div class="card-body">
-        <p class="card-text">Set the maximum amount of Luck a player can spend on a single roll. (Default: 10)</p>
+        <p class="card-text">Configure general game rules per server.</p>
         <div class="table-responsive">
             <table class="table table-striped table-hover" id="settingsTable">
                 <thead>
@@ -18,11 +18,12 @@
                         <th>Server Name</th>
                         <th>Server ID</th>
                         <th>Luck Threshold</th>
+                        <th>Max Starting Skill</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="settingsBody">
-                    <tr><td colspan="4">Loading...</td></tr>
+                    <tr><td colspan="5">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -111,7 +112,10 @@ async function loadSettings() {
                     <input type="number" class="form-control" id="luck-${guild.id}" value="${guild.luck_threshold}" min="0" style="max-width: 100px;">
                 </td>
                 <td>
-                    <button class="btn btn-primary btn-sm" onclick="saveLuck('${guild.id}')">Save</button>
+                    <input type="number" class="form-control" id="skill-${guild.id}" value="${guild.max_starting_skill}" min="1" max="99" style="max-width: 100px;">
+                </td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="saveSettings('${guild.id}')">Save</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -119,7 +123,7 @@ async function loadSettings() {
 
     } catch (error) {
         console.error('Error loading settings:', error);
-        document.getElementById('settingsBody').innerHTML = '<tr><td colspan="4" class="text-danger">Error loading data.</td></tr>';
+        document.getElementById('settingsBody').innerHTML = '<tr><td colspan="5" class="text-danger">Error loading data.</td></tr>';
     }
 }
 
@@ -257,24 +261,33 @@ async function saveLootSettings() {
     }
 }
 
-async function saveLuck(guildId) {
-    const input = document.getElementById(`luck-${guildId}`);
-    const newValue = input.value;
+async function saveSettings(guildId) {
+    const luckInput = document.getElementById(`luck-${guildId}`);
+    const skillInput = document.getElementById(`skill-${guildId}`);
 
-    if (newValue === "" || parseInt(newValue) < 0) {
-        alert("Please enter a valid non-negative number.");
+    const luckValue = luckInput.value;
+    const skillValue = skillInput.value;
+
+    if (luckValue === "" || parseInt(luckValue) < 0) {
+        alert("Please enter a valid non-negative number for Luck Threshold.");
+        return;
+    }
+
+    if (skillValue === "" || parseInt(skillValue) < 1 || parseInt(skillValue) > 99) {
+        alert("Please enter a valid number (1-99) for Max Starting Skill.");
         return;
     }
 
     try {
-        const response = await fetch('/api/game/luck/save', {
+        const response = await fetch('/api/game/settings/save_general', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 guild_id: guildId,
-                luck_value: parseInt(newValue)
+                luck_value: parseInt(luckValue),
+                max_skill_value: parseInt(skillValue)
             })
         });
 
@@ -282,7 +295,8 @@ async function saveLuck(guildId) {
 
         if (data.status === 'success') {
             // Optional: Show a toast or small indicator
-            const btn = input.parentElement.nextElementSibling.querySelector('button');
+            // Button is in the next cell relative to skill input
+            const btn = skillInput.parentElement.nextElementSibling.querySelector('button');
             const originalText = btn.innerText;
             btn.innerText = "Saved!";
             btn.classList.remove('btn-primary');

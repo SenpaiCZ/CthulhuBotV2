@@ -257,6 +257,20 @@ async def save_luck_stats(server_stats):
     _LUCK_STATS_CACHE = server_stats.copy()
     await _save_json_file(DATA_FOLDER, 'luck_stats.json', server_stats)
 
+# --- Skill Settings ---
+_SKILL_SETTINGS_CACHE = None
+
+async def load_skill_settings():
+    global _SKILL_SETTINGS_CACHE
+    if _SKILL_SETTINGS_CACHE is None:
+        _SKILL_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'skill_settings.json')
+    return _SKILL_SETTINGS_CACHE.copy()
+
+async def save_skill_settings(settings):
+    global _SKILL_SETTINGS_CACHE
+    _SKILL_SETTINGS_CACHE = settings.copy()
+    await _save_json_file(DATA_FOLDER, 'skill_settings.json', settings)
+
 # --- Chase Data ---
 _CHASE_DATA_CACHE = None
 
