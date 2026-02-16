@@ -14,18 +14,98 @@ from loadnsave import (
     load_archetype_data, load_skill_settings
 )
 
-BASE_SKILLS = {
-    "Accounting": 5, "Anthropology": 1, "Appraise": 5, "Archaeology": 1, "Charm": 15,
-    "Art/Craft": 5, "Climb": 20, "Credit Rating": 0, "Cthulhu Mythos": 0, "Disguise": 5,
-    "Dodge": 0, "Drive Auto": 20, "Elec. Repair": 10, "Fast Talk": 5, "Fighting Brawl": 25,
-    "Firearms Handgun": 20, "Firearms Rifle/Shotgun": 25, "First Aid": 30, "History": 5,
-    "Intimidate": 15, "Jump": 10, "Language other": 1, "Language own": 0, "Law": 5,
-    "Library Use": 20, "Listen": 20, "Locksmith": 1, "Mech. Repair": 10, "Medicine": 1,
-    "Natural World": 10, "Navigate": 10, "Occult": 5, "Persuade": 10, "Pilot": 1,
-    "Psychoanalysis": 1, "Psychology": 10, "Ride": 5, "Science specific": 1,
-    "Sleight of Hand": 10, "Spot Hidden": 25, "Stealth": 20, "Survival": 10, "Swim": 20,
-    "Throw": 20, "Track": 10
+ERA_SKILLS = {
+    "1920s Era": {
+        "Accounting": 5, "Anthropology": 1, "Archaeology": 1, "Appraise": 5,
+        "Art / Craft (any)": 5, "Charm": 15, "Climb": 20, "Credit Rating": 0,
+        "Cthulhu Mythos": 0, "Disguise": 5, "Dodge": 0, "Drive Auto": 20,
+        "Elec. Repair": 10, "Fast Talk": 5, "Fighting (Brawl)": 25,
+        "Firearms (Handgun)": 20, "Firearms (Rifle/Shotgun)": 25, "First Aid": 30,
+        "History": 5, "Intimidate": 15, "Jump": 20, "Language (Other)": 1,
+        "Language (Own)": 0, "Law": 5, "Library Use": 20, "Listen": 20,
+        "Locksmith": 1, "Mech. Repair": 10, "Medicine": 1, "Natural World": 10,
+        "Navigate": 10, "Occult": 5, "Persuade": 10, "Pilot (any)": 1,
+        "Psychoanalysis": 1, "Psychology": 10, "Ride": 5, "Science (any)": 1,
+        "Sleight of Hand": 10, "Spot Hidden": 25, "Stealth": 20,
+        "Survival (any)": 10, "Swim": 20, "Throw": 20, "Track": 10
+    },
+    "1930s Era": {
+        "Accounting": 5, "Archaeology": 1, "Appraise": 5, "Art / Craft (any)": 5,
+        "Charm": 15, "Climb": 20, "Computer Use": 0, "Credit Rating": 0,
+        "Cthulhu Mythos": 0, "Disguise": 5, "Diving": 1, "Demolitions": 1,
+        "Dodge": 0, "Drive Auto": 20, "Elec. Repair": 10, "Fast Talk": 5,
+        "Fighting (Brawl)": 25, "Firearms (Handgun)": 20,
+        "Firearms (Rifle/Shotgun)": 25, "First Aid": 30, "History": 5,
+        "Intimidate": 15, "Jump": 20, "Language (Other)": 1, "Language (Own)": 0,
+        "Law": 5, "Library Use": 20, "Listen": 20, "Locksmith": 1,
+        "Mech. Repair": 10, "Medicine": 1, "Natural World": 10, "Navigate": 10,
+        "Occult": 5, "Persuade": 10, "Pilot (any)": 1, "Psychoanalysis": 1,
+        "Psychology": 10, "Ride": 5, "Read Lips": 1, "Science (any)": 1,
+        "Sleight of Hand": 10, "Spot Hidden": 25, "Stealth": 20,
+        "Survival (any)": 10, "Swim": 20, "Throw": 20, "Track": 10
+    },
+    "Modern Era": {
+        "Accounting": 5, "Anthropology": 1, "Archaeology": 1, "Appraise": 5,
+        "Art / Craft (any)": 5, "Charm": 15, "Climb": 20, "Computer Use": 5,
+        "Credit Rating": 0, "Cthulhu Mythos": 0, "Disguise": 5, "Dodge": 0,
+        "Drive Auto": 20, "Elec. Repair": 10, "Electronics": 1, "Fast Talk": 5,
+        "Fighting (Brawl)": 25, "Firearms (Handgun)": 20,
+        "Firearms (Rifle/Shotgun)": 25, "First Aid": 30, "History": 5,
+        "Intimidate": 15, "Jump": 20, "Language (Other)": 1, "Language (Own)": 0,
+        "Law": 5, "Library Use": 20, "Listen": 20, "Locksmith": 1,
+        "Mech. Repair": 10, "Medicine": 1, "Natural World": 10, "Navigate": 10,
+        "Occult": 5, "Persuade": 10, "Pilot (any)": 1, "Psychoanalysis": 1,
+        "Psychology": 10, "Ride": 5, "Science (any)": 1, "Sleight of Hand": 10,
+        "Spot Hidden": 25, "Stealth": 20, "Survival (any)": 10, "Swim": 20,
+        "Throw": 20, "Track": 10
+    },
+    "Cthulhu by Gaslight": {
+        "Accounting": 10, "Alienism": 1, "Anthropology": 1, "Appraise": 5,
+        "Archaeology": 1, "Art / Craft (any)": 5, "Charm": 15, "Climb": 20,
+        "Credit Rating": 0, "Cthulhu Mythos": 0, "Disguise": 5, "Dodge": 0,
+        "Drive Carriage": 20, "Fast Talk": 5, "Fighting (Brawl)": 25,
+        "Firearms (Handgun)": 20, "Firearms (Rifle/Shotgun)": 25, "First Aid": 30,
+        "History": 5, "Intimidate": 15, "Jump": 20, "Language (Other)": 1,
+        "Language (Own)": 0, "Law": 5, "Library Use": 20, "Listen": 20,
+        "Locksmith": 1, "Mech. Repair": 20, "Medicine": 1, "Natural World": 10,
+        "Navigate": 10, "Occult": 5, "Operate Heavy Machinery": 1, "Persuade": 10,
+        "Pilot (any)": 1, "Psychology": 10, "Reassure": 0,
+        "Religion": 10, "Ride": 20, "Science (any)": 1, "Sleight of Hand": 10,
+        "Spot Hidden": 25, "Stealth": 20, "Survival (any)": 10, "Swim": 30,
+        "Throw": 20, "Track": 10
+    },
+    "Down Darker Trails": {
+        "Accounting": 5, "Animal Handling": 5, "Anthropology": 1, "Appraise": 5,
+        "Art / Craft (any)": 5, "Charm": 15, "Climb": 20, "Credit Rating": 0,
+        "Cthulhu Mythos": 0, "Disguise": 5, "Dodge": 0, "Drive Wagon/Coach": 20,
+        "Elec. Repair": 0, "Fast Talk": 5, "Fighting (Brawl)": 25,
+        "Firearms (Handgun)": 20, "Firearms (Rifle/Shotgun)": 25, "First Aid": 30,
+        "Gambling": 10, "History": 5, "Intimidate": 15, "Jump": 20,
+        "Language (Other)": 1, "Language (Own)": 0, "Law": 5, "Library Use": 20,
+        "Listen": 20, "Locksmith": 1, "Mech. Repair": 10, "Medicine": 1,
+        "Natural World": 20, "Navigate": 10, "Occult": 5,
+        "Operate Heavy Machinery": 1, "Persuade": 10, "Pilot (any)": 1,
+        "Psychology": 10, "Ride": 15, "Rope Use": 5, "Science (any)": 1,
+        "Sleight of Hand": 10, "Spot Hidden": 25, "Stealth": 20,
+        "Survival (any)": 10, "Swim": 20, "Throw": 20, "Track": 10, "Trap": 10
+    },
+    "Dark Ages": {
+        "Accounting": 10, "Animal Handling": 15, "Appraise": 5,
+        "Art / Craft (any)": 5, "Charm": 15, "Climb": 20, "Cthulhu Mythos": 0,
+        "Disguise": 5, "Dodge": 0, "Drive (Horses/Oxen)": 20, "Fast Talk": 5,
+        "Fighting (Brawl)": 25, "First Aid": 30, "Insight": 5, "Intimidate": 15,
+        "Jump": 25, "Library Use": 5, "Listen": 25, "Medicine": 1,
+        "Natural World (any)": 20, "Navigate": 10, "Occult": 5,
+        "Other Kingdoms (any)": 10, "Language (Other)": 1, "Kingdom (Own)": 20,
+        "Language (Own)": 0, "Persuade": 15, "Pilot Boat": 1,
+        "Read/Write Language (any)": 1, "Repair/Devise": 20, "Religion": 20,
+        "Ride Horse": 5, "Science (any)": 1, "Sleight of Hand": 25,
+        "Spot Hidden": 25, "Status": 0, "Stealth": 20, "Swim": 25, "Throw": 25,
+        "Track": 10
+    }
 }
+
+BASE_SKILLS = ERA_SKILLS["1920s Era"]
 
 # ... (Previous imports and classes remain the same) ...
 # I will include all previous classes and add the new ones.
@@ -116,12 +196,66 @@ class GameModeView(View):
     async def coc_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.char_data["Game Mode"] = "Call of Cthulhu"
         await interaction.response.edit_message(content="Selected: **Call of Cthulhu**", view=None)
-        await self.cog.step_stats(interaction, self.char_data, self.player_stats)
+        await self.cog.step_era(interaction, self.char_data, self.player_stats)
     @discord.ui.button(label="Pulp Cthulhu", style=discord.ButtonStyle.danger)
     async def pulp_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.char_data["Game Mode"] = "Pulp of Cthulhu"
         await interaction.response.edit_message(content="Selected: **Pulp Cthulhu**", view=None)
-        await self.cog.select_pulp_archetype(interaction, self.char_data, self.player_stats)
+        await self.cog.step_era(interaction, self.char_data, self.player_stats)
+
+class EraSelectView(View):
+    def __init__(self, cog, char_data, player_stats):
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.char_data = char_data
+        self.player_stats = player_stats
+
+    async def select_era(self, interaction: discord.Interaction, era_name):
+        self.char_data["Era"] = era_name
+
+        # Cleanup old skills
+        all_possible_skills = set()
+        for s_map in ERA_SKILLS.values():
+            all_possible_skills.update(s_map.keys())
+
+        for k in all_possible_skills:
+            if k in self.char_data:
+                del self.char_data[k]
+
+        # Apply new era skills
+        skills = ERA_SKILLS.get(era_name, ERA_SKILLS["1920s Era"])
+        self.char_data.update(skills)
+
+        await interaction.response.edit_message(content=f"Selected Era: **{era_name}**", view=None)
+
+        if self.char_data.get("Game Mode") == "Pulp of Cthulhu":
+             await self.cog.select_pulp_archetype(interaction, self.char_data, self.player_stats)
+        else:
+             await self.cog.step_stats(interaction, self.char_data, self.player_stats)
+
+    @discord.ui.button(label="1920s", style=discord.ButtonStyle.primary)
+    async def era_1920s(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.select_era(interaction, "1920s Era")
+
+    @discord.ui.button(label="1930s", style=discord.ButtonStyle.primary)
+    async def era_1930s(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.select_era(interaction, "1930s Era")
+
+    @discord.ui.button(label="Modern", style=discord.ButtonStyle.primary)
+    async def era_modern(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.select_era(interaction, "Modern Era")
+
+    @discord.ui.button(label="Gaslight", style=discord.ButtonStyle.secondary)
+    async def era_gaslight(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.select_era(interaction, "Cthulhu by Gaslight")
+
+    @discord.ui.button(label="Down Darker Trails", style=discord.ButtonStyle.secondary)
+    async def era_ddt(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.select_era(interaction, "Down Darker Trails")
+
+    @discord.ui.button(label="Dark Ages", style=discord.ButtonStyle.secondary)
+    async def era_dark_ages(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.select_era(interaction, "Dark Ages")
 
 class ArchetypeSelect(Select):
     def __init__(self, archetypes_data):
@@ -615,7 +749,7 @@ class SkillPageSelect(Select):
         # I can copy that dict to a constant `BASE_SKILLS` and use it for lookup.
 
         base = BASE_SKILLS.get(skill, 0)
-        if "Any" in skill or "Other" in skill or "specific" in skill or "own" in skill:
+        if "Any" in skill or "any" in skill or "Other" in skill or "specific" in skill or "Own" in skill or "own" in skill:
              modal = SkillSpecializationModal(self.view, skill, base)
              await interaction.response.send_modal(modal)
         else:
@@ -641,7 +775,7 @@ class SkillPointAllocationView(View):
         self.update_view()
 
     def get_skill_list(self):
-        excluded_keys = ["NAME", "Residence", "STR", "DEX", "CON", "INT", "POW", "EDU", "SIZ", "APP", "SAN", "HP", "MP", "LUCK", "Move", "Build", "Damage Bonus", "Age", "Backstory", "CustomSkill", "CustomSkills", "CustomSkillss", "Game Mode", "Archetype", "Archetype Info", "Occupation", "Occupation Info", "Credit Rating"]
+        excluded_keys = ["NAME", "Residence", "STR", "DEX", "CON", "INT", "POW", "EDU", "SIZ", "APP", "SAN", "HP", "MP", "LUCK", "Move", "Build", "Damage Bonus", "Age", "Backstory", "CustomSkill", "CustomSkills", "CustomSkillss", "Game Mode", "Era", "Archetype", "Archetype Info", "Occupation", "Occupation Info", "Credit Rating"]
         skills = []
         for k in self.char_data:
             if k not in excluded_keys and isinstance(self.char_data[k], int):
@@ -819,17 +953,9 @@ class newinvestigator(commands.Cog):
             "Move": 0, "Build": 0, "Damage Bonus": 0,
             "Age": 0,
             "Occupation": "Unknown", "Credit Rating": 0, "Game Mode": "Call of Cthulhu",
-            "Accounting": 5, "Anthropology": 1, "Appraise": 5, "Archaeology": 1, "Charm": 15,
-            "Art/Craft": 5, "Climb": 20, "Credit Rating": 0, "Cthulhu Mythos": 0, "Disguise": 5,
-            "Dodge": 0, "Drive Auto": 20, "Elec. Repair": 10, "Fast Talk": 5, "Fighting Brawl": 25,
-            "Firearms Handgun": 20, "Firearms Rifle/Shotgun": 25, "First Aid": 30, "History": 5,
-            "Intimidate": 15, "Jump": 10, "Language other": 1, "Language own": 0, "Law": 5,
-            "Library Use": 20, "Listen": 20, "Locksmith": 1, "Mech. Repair": 10, "Medicine": 1,
-            "Natural World": 10, "Navigate": 10, "Occult": 5, "Persuade": 10, "Pilot": 1,
-            "Psychoanalysis": 1, "Psychology": 10, "Ride": 5, "Science specific": 1,
-            "Sleight of Hand": 10, "Spot Hidden": 25, "Stealth": 20, "Survival": 10, "Swim": 20,
-            "Throw": 20, "Track": 10, "CustomSkill": 0, "CustomSkills": 0, "CustomSkillss": 0,
-            "Backstory": {'Pulp Talents': []}, "Custom Emojis": {}
+            "CustomSkill": 0, "CustomSkills": 0, "CustomSkillss": 0,
+            "Backstory": {'Pulp Talents': []}, "Custom Emojis": {},
+            **BASE_SKILLS
         }
         view = BasicInfoStartView(self, new_char, player_stats)
         if interaction.response.is_done():
@@ -843,6 +969,10 @@ class newinvestigator(commands.Cog):
     async def step_gamemode(self, interaction, char_data, player_stats):
         view = GameModeView(self, char_data, player_stats)
         await interaction.response.send_message("Are you playing **Call of Cthulhu** (Normal) or **Pulp Cthulhu**?", view=view, ephemeral=True)
+
+    async def step_era(self, interaction, char_data, player_stats):
+        view = EraSelectView(self, char_data, player_stats)
+        await interaction.followup.send("Please select an **Era**:", view=view, ephemeral=True)
 
     async def select_pulp_archetype(self, interaction, char_data, player_stats):
         archetypes_data = await load_archetype_data()
@@ -972,7 +1102,9 @@ class newinvestigator(commands.Cog):
             char_data["APP"] = max(0, char_data["APP"] - app_penalty)
             messages.append(f"APP reduced by {app_penalty}.")
         char_data["Dodge"] = char_data["DEX"] // 2
-        char_data["Language own"] = char_data["EDU"]
+        char_data["Language (Own)"] = char_data["EDU"]
+        if "Reassure" in char_data:
+            char_data["Reassure"] = char_data.get("APP", 0) // 5
 
         report_embed = discord.Embed(title="Age Modifiers Report", description="\n".join(messages), color=discord.Color.orange())
         await interaction.followup.send(embed=report_embed, ephemeral=True)
