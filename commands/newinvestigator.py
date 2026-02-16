@@ -14,6 +14,21 @@ from loadnsave import (
     load_archetype_data
 )
 
+MAX_STARTING_SKILL = 75
+
+BASE_SKILLS = {
+    "Accounting": 5, "Anthropology": 1, "Appraise": 5, "Archaeology": 1, "Charm": 15,
+    "Art/Craft": 5, "Climb": 20, "Credit Rating": 0, "Cthulhu Mythos": 0, "Disguise": 5,
+    "Dodge": 0, "Drive Auto": 20, "Elec. Repair": 10, "Fast Talk": 5, "Fighting Brawl": 25,
+    "Firearms Handgun": 20, "Firearms Rifle/Shotgun": 25, "First Aid": 30, "History": 5,
+    "Intimidate": 15, "Jump": 10, "Language other": 1, "Language own": 0, "Law": 5,
+    "Library Use": 20, "Listen": 20, "Locksmith": 1, "Mech. Repair": 10, "Medicine": 1,
+    "Natural World": 10, "Navigate": 10, "Occult": 5, "Persuade": 10, "Pilot": 1,
+    "Psychoanalysis": 1, "Psychology": 10, "Ride": 5, "Science specific": 1,
+    "Sleight of Hand": 10, "Spot Hidden": 25, "Stealth": 20, "Survival": 10, "Swim": 20,
+    "Throw": 20, "Track": 10
+}
+
 # ... (Previous imports and classes remain the same) ...
 # I will include all previous classes and add the new ones.
 
@@ -340,6 +355,82 @@ class OccupationSelect(Select):
         occupation_name = self.values[0]
         await self.view.cog.assign_occupation_skills(interaction, self.view.char_data, self.view.player_stats, occupation_name, self.view.occupations_data[occupation_name])
 
+class PaginatedOccupationListView(View):
+    def __init__(self, cog, char_data, player_stats, occupations_data):
+        super().__init__(timeout=600)
+        self.cog = cog
+        self.char_data = char_data
+        self.player_stats = player_stats
+        self.occupations_data = occupations_data
+        self.page = 0
+
+        # Calculate points and sort
+        self.sorted_list = []
+        for name, info in occupations_data.items():
+            pts = cog.calculate_occupation_points(char_data, info)
+            self.sorted_list.append((name, pts))
+
+        # Sort descending by points, then alphabetical
+        self.sorted_list.sort(key=lambda x: (-x[1], x[0]))
+
+        self.update_view()
+
+    def update_view(self):
+        self.clear_items()
+
+        # Pagination logic
+        per_page = 25
+        max_pages = max(1, (len(self.sorted_list) - 1) // per_page + 1)
+        self.page = max(0, min(self.page, max_pages - 1))
+
+        start = self.page * per_page
+        end = start + per_page
+        current_items = self.sorted_list[start:end]
+
+        # Select Menu
+        options = []
+        for name, pts in current_items:
+            emoji_char = occupation_emoji.get_occupation_emoji(name)
+            label = f"{name} ({pts} pts)"
+            # Ensure label is not too long
+            if len(label) > 100: label = label[:97] + "..."
+            options.append(discord.SelectOption(label=label, value=name, emoji=emoji_char))
+
+        select = OccupationPageSelect(options)
+        self.add_item(select)
+
+        # Navigation Buttons
+        prev_btn = Button(label="Previous", style=discord.ButtonStyle.secondary, disabled=(self.page == 0), row=1)
+        prev_btn.callback = self.prev_page
+        self.add_item(prev_btn)
+
+        page_btn = Button(label=f"Page {self.page+1}/{max_pages}", style=discord.ButtonStyle.secondary, disabled=True, row=1)
+        self.add_item(page_btn)
+
+        next_btn = Button(label="Next", style=discord.ButtonStyle.secondary, disabled=(self.page >= max_pages - 1), row=1)
+        next_btn.callback = self.next_page
+        self.add_item(next_btn)
+
+    async def prev_page(self, interaction: discord.Interaction):
+        self.page -= 1
+        self.update_view()
+        await interaction.response.edit_message(view=self)
+
+    async def next_page(self, interaction: discord.Interaction):
+        self.page += 1
+        self.update_view()
+        await interaction.response.edit_message(view=self)
+
+class OccupationPageSelect(Select):
+    def __init__(self, options):
+        super().__init__(placeholder="Select an Occupation...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        occupation_name = self.values[0]
+        # Access parent view's cog and data
+        cog = self.view.cog
+        await cog.assign_occupation_skills(interaction, self.view.char_data, self.view.player_stats, occupation_name, self.view.occupations_data[occupation_name])
+
 class OccupationSearchStartView(View):
     def __init__(self, cog, char_data, player_stats, occupations_data):
         super().__init__(timeout=300)
@@ -351,15 +442,189 @@ class OccupationSearchStartView(View):
     async def search(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = OccupationSearchModal(self.cog, interaction, self.char_data, self.player_stats, self.occupations_data)
         await interaction.response.send_modal(modal)
-    @discord.ui.button(label="List All (Spam Warning)", style=discord.ButtonStyle.secondary)
-    async def list_all(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("Please use Search to find your occupation.", ephemeral=True)
+    @discord.ui.button(label="Browse Occupations (Sorted)", style=discord.ButtonStyle.success, emoji="📜")
+    async def browse(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = PaginatedOccupationListView(self.cog, self.char_data, self.player_stats, self.occupations_data)
+        await interaction.response.edit_message(content="Browsing Occupations (Sorted by Points):", view=view)
 
 # ==============================================================================
 # 6. Views (Skill Assignment)
 # ==============================================================================
 
-class SkillAssignmentView(View):
+class SkillPointSetModal(Modal, title="Set Skill Value"):
+    value_input = TextInput(label="New Total Value", placeholder="e.g. 50", min_length=1, max_length=3)
+
+    def __init__(self, view, skill_name, current_val, base_val):
+        super().__init__()
+        self.view = view
+        self.skill_name = skill_name
+        self.current_val = current_val
+        self.base_val = base_val
+        self.value_input.label = f"Set {skill_name} (Base: {base_val})"
+        self.value_input.default = str(current_val)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            new_val = int(self.value_input.value)
+        except ValueError:
+            return await interaction.response.send_message("Please enter a valid number.", ephemeral=True)
+
+        # Bounds check
+        # Credit Rating has its own bounds passed in view
+        if self.skill_name == "Credit Rating":
+            if not (self.view.min_cr <= new_val <= self.view.max_cr):
+                return await interaction.response.send_message(f"Credit Rating must be between {self.view.min_cr} and {self.view.max_cr}.", ephemeral=True)
+        else:
+            if new_val > MAX_STARTING_SKILL:
+                return await interaction.response.send_message(f"Cannot exceed starting limit of {MAX_STARTING_SKILL}%.", ephemeral=True)
+            if new_val < self.base_val:
+                return await interaction.response.send_message(f"Cannot go below base value of {self.base_val}%.", ephemeral=True)
+
+        cost = new_val - self.current_val
+
+        if cost > self.view.remaining_points:
+            return await interaction.response.send_message(f"Not enough points. Cost: {cost}, Remaining: {self.view.remaining_points}.", ephemeral=True)
+
+        # Apply
+        self.view.char_data[self.skill_name] = new_val
+        self.view.remaining_points -= cost
+
+        await self.view.refresh(interaction)
+
+class SkillSpecializationModal(Modal, title="Add Specialization"):
+    spec_name = TextInput(label="Specialization Name", placeholder="e.g. Painting, Geology, German", min_length=2, max_length=30)
+    value_input = TextInput(label="Total Value", placeholder="e.g. 50", min_length=1, max_length=3)
+
+    def __init__(self, view, parent_skill, base_val):
+        super().__init__()
+        self.view = view
+        self.parent_skill = parent_skill
+        self.base_val = base_val
+
+    async def on_submit(self, interaction: discord.Interaction):
+        name = self.spec_name.value.strip()
+        # Format: "Art/Craft (Painting)"
+        # parent_skill is e.g. "Art/Craft (Any)" -> remove (Any)
+        base_name = self.parent_skill.split("(")[0].strip()
+        new_skill_name = f"{base_name} ({name})"
+
+        if new_skill_name in self.view.char_data:
+             return await interaction.response.send_message("You already have this specialization.", ephemeral=True)
+
+        try:
+            new_val = int(self.value_input.value)
+        except ValueError:
+             return await interaction.response.send_message("Invalid number.", ephemeral=True)
+
+        if new_val > MAX_STARTING_SKILL:
+             return await interaction.response.send_message(f"Cannot exceed starting limit of {MAX_STARTING_SKILL}%.", ephemeral=True)
+        if new_val < self.base_val:
+             return await interaction.response.send_message(f"Cannot go below base value of {self.base_val}%.", ephemeral=True)
+
+        cost = new_val - self.base_val # It's a new skill starting from base
+        if cost > self.view.remaining_points:
+             return await interaction.response.send_message(f"Not enough points. Cost: {cost}, Remaining: {self.view.remaining_points}.", ephemeral=True)
+
+        self.view.char_data[new_skill_name] = new_val
+        self.view.remaining_points -= cost
+        self.view.all_skills.append(new_skill_name)
+        self.view.all_skills.sort()
+
+        await self.view.refresh(interaction)
+
+class CustomSkillModal(Modal, title="Add Custom Skill"):
+    skill_name = TextInput(label="Skill Name", placeholder="e.g. Lore (Vampires)", min_length=2, max_length=40)
+    base_val = TextInput(label="Base Value (%)", placeholder="e.g. 05", min_length=1, max_length=2, default="05")
+    value_input = TextInput(label="Total Value (%)", placeholder="e.g. 50", min_length=1, max_length=3)
+    # Emoji? Discord modals don't support file upload. Just text input for emoji char.
+    emoji_input = TextInput(label="Emoji (Optional)", placeholder="Paste emoji here", required=False, max_length=5)
+
+    def __init__(self, view):
+        super().__init__()
+        self.view = view
+
+    async def on_submit(self, interaction: discord.Interaction):
+        name = self.skill_name.value.strip()
+        try:
+            base = int(self.base_val.value)
+            val = int(self.value_input.value)
+        except ValueError:
+            return await interaction.response.send_message("Invalid numbers.", ephemeral=True)
+
+        if name in self.view.char_data:
+            return await interaction.response.send_message("Skill already exists.", ephemeral=True)
+
+        if val > MAX_STARTING_SKILL:
+             return await interaction.response.send_message(f"Cannot exceed starting limit of {MAX_STARTING_SKILL}%.", ephemeral=True)
+        if val < base:
+             return await interaction.response.send_message(f"Value cannot be lower than Base.", ephemeral=True)
+
+        cost = val - base # We pay for everything above base? Usually yes.
+        # But wait, if base is 05, and we set to 50, cost is 45.
+
+        if cost > self.view.remaining_points:
+             return await interaction.response.send_message(f"Not enough points. Cost: {cost}, Remaining: {self.view.remaining_points}.", ephemeral=True)
+
+        self.view.char_data[name] = val
+        self.view.remaining_points -= cost
+        self.view.all_skills.append(name)
+        self.view.all_skills.sort()
+
+        if self.emoji_input.value:
+             if "Custom Emojis" not in self.view.char_data:
+                 self.view.char_data["Custom Emojis"] = {}
+             self.view.char_data["Custom Emojis"][name] = self.emoji_input.value.strip()
+
+        await self.view.refresh(interaction)
+
+class SkillPageSelect(Select):
+    def __init__(self, options):
+        super().__init__(placeholder="Select a Skill to modify...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        skill = self.values[0]
+        current_val = self.view.char_data.get(skill, 0)
+        # Determine Base Value?
+        # Standard base values are implicit.
+        # For generic skills (Any/Other), base is usually what's there.
+        # For normal skills, base is... hard to know without lookup.
+        # Ideally we load `skills_data`. But we can assume current value IS base if it hasn't been touched?
+        # Or just allow going down to 0? No.
+        # If we don't have base value, we can assume it's `current_val` if unedited?
+        # But if they edited it up, we need to know original base to go down.
+        # Hack: Pass 0 as base for now, or just assume they can't go below what it was originally?
+        # Wait, if they spend points, `current_val` increases. If they want to lower it, `base` is needed.
+        # Let's try to pass `current_val` as base if it's their first time touching it? No.
+        # I'll just default base to 0 or 1 for simplicity if lookup fails, but warn user.
+        # Actually, `start_wizard` initialized `char_data` with base values!
+        # So `current_val` IS correct value. But if they increased it, `char_data` has new value.
+        # We need the ORIGINAL base.
+        # `start_wizard` initialized `new_char` with base values.
+        # We didn't save a copy of base values.
+        # However, we can probably just use a safe lower bound of 0 or 1, and trust the user not to exploit (lowering below base to gain free points).
+        # OR: We only allow ADDING points. "By setting you can lower the skill down too but dont let them lower under default value."
+        # This implies we need to know the default value.
+        # Since `char_data` is modified in place, we lost the default.
+        # Solution: Load `skills_data` in `SkillPointAllocationView` (async) or pass it.
+        # But `load_skills_data` is async. View init is sync.
+        # We can call `await self.load_data()` in `update_view`? No.
+        # We can pass `occupations_data`? No, skills info.
+        # I will assume base is 0 for custom skills, and for standard skills I will try to use a static map or just `1` to be safe.
+        # Or better: `SkillPointSetModal` will take `base_val` as argument.
+        # Where do we get it?
+        # I'll just set base to 0 for now to unblock, unless I can fetch it.
+        # Actually, `commands/newinvestigator.py` has a hardcoded dict in `start_wizard`!
+        # I can copy that dict to a constant `BASE_SKILLS` and use it for lookup.
+
+        base = BASE_SKILLS.get(skill, 0)
+        if "Any" in skill or "Other" in skill or "specific" in skill or "own" in skill:
+             modal = SkillSpecializationModal(self.view, skill, base)
+             await interaction.response.send_modal(modal)
+        else:
+             modal = SkillPointSetModal(self.view, skill, current_val, base)
+             await interaction.response.send_modal(modal)
+
+class SkillPointAllocationView(View):
     def __init__(self, cog, char_data, player_stats, remaining_points, min_cr, max_cr, is_occupation, allowed_skills=None, pi_points=0):
         super().__init__(timeout=600)
         self.cog = cog
@@ -372,48 +637,129 @@ class SkillAssignmentView(View):
         self.allowed_skills = allowed_skills
         self.pi_points = pi_points
 
-    @discord.ui.button(label="Assign Points", style=discord.ButtonStyle.primary, emoji="✏️")
-    async def assign(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = SkillEntryModal(self.cog, self, self.remaining_points)
+        self.page = 0
+        self.all_skills = self.get_skill_list()
+        self.update_view()
+
+    def get_skill_list(self):
+        excluded_keys = ["NAME", "Residence", "STR", "DEX", "CON", "INT", "POW", "EDU", "SIZ", "APP", "SAN", "HP", "MP", "LUCK", "Move", "Build", "Damage Bonus", "Age", "Backstory", "CustomSkill", "CustomSkills", "CustomSkillss", "Game Mode", "Archetype", "Archetype Info", "Occupation", "Occupation Info", "Credit Rating"]
+        skills = []
+        for k in self.char_data:
+            if k not in excluded_keys and isinstance(self.char_data[k], int):
+                skills.append(k)
+        if "Credit Rating" not in skills: skills.append("Credit Rating")
+        skills.sort()
+        return skills
+
+    def update_view(self):
+        self.clear_items()
+
+        # 0. Custom Skill Button
+        custom_btn = Button(label="Add Custom Skill", style=discord.ButtonStyle.success, row=0, emoji="➕")
+        custom_btn.callback = self.add_custom_skill
+        self.add_item(custom_btn)
+
+        # 1. Finish Button
+        finish_btn = Button(label="Finish", style=discord.ButtonStyle.primary, row=0, disabled=(self.remaining_points > 0), emoji="✅")
+        finish_btn.callback = self.finish
+        self.add_item(finish_btn)
+
+        # Filter Logic
+        current_list = self.all_skills
+        if self.allowed_skills:
+             current_list = [s for s in self.all_skills if self.cog.is_skill_allowed_for_archetype(s, self.allowed_skills)]
+
+        # Pagination
+        per_page = 20
+        max_pages = max(1, (len(current_list) - 1) // per_page + 1)
+        self.page = max(0, min(self.page, max_pages - 1))
+
+        start = self.page * per_page
+        end = start + per_page
+        page_items = current_list[start:end]
+
+        options = []
+        for s in page_items:
+            val = self.char_data.get(s, 0)
+            emoji_char = self.char_data.get("Custom Emojis", {}).get(s) or emojis.get_stat_emoji(s)
+            label = f"{s}: {val}%"
+            if len(label) > 100: label = label[:97] + "..."
+            options.append(discord.SelectOption(label=label, value=s, emoji=emoji_char))
+
+        if options:
+            select = SkillPageSelect(options)
+            self.add_item(select)
+
+        # Navigation
+        if max_pages > 1:
+            prev_btn = Button(label="Previous", style=discord.ButtonStyle.secondary, disabled=(self.page == 0), row=2)
+            prev_btn.callback = self.prev_page
+            self.add_item(prev_btn)
+
+            count_btn = Button(label=f"Page {self.page+1}/{max_pages}", style=discord.ButtonStyle.secondary, disabled=True, row=2)
+            self.add_item(count_btn)
+
+            next_btn = Button(label="Next", style=discord.ButtonStyle.secondary, disabled=(self.page >= max_pages - 1), row=2)
+            next_btn.callback = self.next_page
+            self.add_item(next_btn)
+
+    async def add_custom_skill(self, interaction: discord.Interaction):
+        modal = CustomSkillModal(self)
         await interaction.response.send_modal(modal)
 
-    @discord.ui.button(label="Finish", style=discord.ButtonStyle.success, emoji="✅")
-    async def finish(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def finish(self, interaction: discord.Interaction):
         await self.cog.finish_skill_assignment(interaction, self)
 
-class SkillEntryModal(Modal, title="Assign Skill Points"):
-    entries = TextInput(
-        label="Entries (e.g. 'Spot 40' or 'Stealth 20')",
-        style=discord.TextStyle.paragraph,
-        placeholder="Spot Hidden 40\nStealth 20\nFirearms 10",
-        required=True
-    )
+    async def prev_page(self, interaction: discord.Interaction):
+        self.page -= 1
+        self.update_view()
+        await interaction.response.edit_message(view=self)
 
-    def __init__(self, cog, view, remaining_points):
-        super().__init__()
-        self.cog = cog
-        self.view = view
-        self.remaining_points = remaining_points
+    async def next_page(self, interaction: discord.Interaction):
+        self.page += 1
+        self.update_view()
+        await interaction.response.edit_message(view=self)
 
-    async def on_submit(self, interaction: discord.Interaction):
-        await self.cog.process_skill_input(interaction, self.view, self.entries.value)
+    async def refresh(self, interaction: discord.Interaction):
+        self.update_view()
+        embed = self.get_embed()
+        await interaction.response.edit_message(embed=embed, view=self)
 
-class SkillConfirmationView(View):
-    def __init__(self, cog, parent_view, changes, total_cost):
-        super().__init__(timeout=60)
-        self.cog = cog
-        self.parent_view = parent_view
-        self.changes = changes
-        self.total_cost = total_cost
+    def get_embed(self):
+        embed = discord.Embed(title="Skill Assignment", color=discord.Color.gold())
 
-    @discord.ui.button(label="YES", style=discord.ButtonStyle.success)
-    async def yes(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.cog.apply_skill_changes(interaction, self.parent_view, self.changes, self.total_cost)
+        desc = f"Points Remaining: **{self.remaining_points}**\nMax Skill Level: **{MAX_STARTING_SKILL}%**"
 
-    @discord.ui.button(label="NO", style=discord.ButtonStyle.danger)
-    async def no(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("Changes cancelled.", ephemeral=True)
-        # Re-show the main assignment view? It is already there in the background.
+        if self.is_occupation:
+             info = self.char_data.get("Occupation Info", {})
+             if info:
+                 sug = info.get('skills', 'None')
+                 if len(sug) > 500: sug = sug[:497] + "..."
+                 desc += f"\n\n**Suggested Occupation Skills**:\n{sug}"
+
+        embed.description = desc
+
+        # Top Skills Field (Non-default or high value)
+        # Using BASE_SKILLS to filter "Improved" skills
+        improved_skills = []
+        for k, v in self.char_data.items():
+            if isinstance(v, int) and k in self.all_skills:
+                base = BASE_SKILLS.get(k, 0)
+                if v > base:
+                    improved_skills.append((k, v, v-base))
+
+        # Sort by points spent (v-base) descending
+        improved_skills.sort(key=lambda x: -x[2])
+
+        skill_text = ""
+        for k, v, diff in improved_skills[:20]: # Show top 20
+            skill_text += f"**{k}**: {v}% (+{diff})\n"
+
+        if not skill_text:
+            skill_text = "No points spent yet."
+
+        embed.add_field(name="Improved Skills", value=skill_text, inline=False)
+        return embed
 
 class FinishConfirmationView(View):
     def __init__(self, cog, parent_view, message):
@@ -478,7 +824,7 @@ class newinvestigator(commands.Cog):
             "Psychoanalysis": 1, "Psychology": 10, "Ride": 5, "Science specific": 1,
             "Sleight of Hand": 10, "Spot Hidden": 25, "Stealth": 20, "Survival": 10, "Swim": 20,
             "Throw": 20, "Track": 10, "CustomSkill": 0, "CustomSkills": 0, "CustomSkillss": 0,
-            "Backstory": {'Pulp Talents': []}
+            "Backstory": {'Pulp Talents': []}, "Custom Emojis": {}
         }
         view = BasicInfoStartView(self, new_char, player_stats)
         if interaction.response.is_done():
@@ -700,6 +1046,7 @@ class newinvestigator(commands.Cog):
 
     async def assign_occupation_skills(self, interaction, char_data, player_stats, occupation_name, info):
         char_data["Occupation"] = occupation_name
+        char_data["Occupation Info"] = info
         points = self.calculate_occupation_points(char_data, info)
         cr_range = info.get("credit_rating", "0-99")
         min_cr, max_cr = 0, 99
@@ -722,107 +1069,13 @@ class newinvestigator(commands.Cog):
 
     # --- Skill Assignment Logic ---
     async def step_skill_assignment(self, interaction, char_data, player_stats, points, min_cr, max_cr, is_occupation, allowed_skills=None, pi_points=0):
-        embed = discord.Embed(title="Skill Assignment", color=discord.Color.gold())
-        embed.description = f"Points Remaining: **{points}**"
+        view = SkillPointAllocationView(self, char_data, player_stats, points, min_cr, max_cr, is_occupation, allowed_skills, pi_points)
+        embed = view.get_embed()
 
-        # Display current skills (filter non-zero or important)
-        skills_text = ""
-        # To avoid spam, maybe just show changed skills or use a pagination approach?
-        # For now, let's just show top/relevant ones or rely on users memory/previous msgs?
-        # User requested: "can not easily check what skill they can have since we are printing list before that"
-        # So I should show the list.
-        excluded_keys = ["NAME", "Residence", "STR", "DEX", "CON", "INT", "POW", "EDU", "SIZ", "APP", "SAN", "HP", "MP", "LUCK", "Move", "Build", "Damage Bonus", "Age", "Backstory", "CustomSkill", "CustomSkills", "CustomSkillss", "Game Mode", "Archetype", "Archetype Info"]
-
-        skills_list = []
-        for k in sorted(char_data.keys()):
-             if k not in excluded_keys and isinstance(char_data[k], int):
-                 skills_list.append(f"{k}: {char_data[k]}")
-
-        # If too long, chunk it
-        chunk_size = 1000
-        current_chunk = ""
-        for s in skills_list:
-            if len(current_chunk) + len(s) > chunk_size:
-                embed.add_field(name="Skills", value=current_chunk, inline=False)
-                current_chunk = ""
-            current_chunk += s + "\n"
-        if current_chunk: embed.add_field(name="Skills", value=current_chunk, inline=False)
-
-        view = SkillAssignmentView(self, char_data, player_stats, points, min_cr, max_cr, is_occupation, allowed_skills, pi_points)
-        await interaction.followup.send(embed=embed, view=view, ephemeral=True)
-
-    async def process_skill_input(self, interaction, view, text_input):
-        lines = text_input.splitlines()
-        changes = {}
-        total_cost = 0
-        error_msgs = []
-
-        for line in lines:
-            parts = line.strip().split()
-            if len(parts) < 2: continue
-
-            # Last part should be number
-            if not parts[-1].isdigit():
-                error_msgs.append(f"Invalid format: '{line}' (Last part must be number)")
-                continue
-
-            val = int(parts[-1])
-            skill_input = " ".join(parts[:-1]).lower()
-            skill_input_norm = skill_input.replace("(", "").replace(")", "").strip()
-
-            # Find skill
-            match = None
-            for k in view.char_data.keys():
-                k_lower = k.lower()
-                k_norm = k_lower.replace("(", "").replace(")", "").strip()
-
-                if k_lower == skill_input: match = k; break # Exact
-                if k_norm == skill_input_norm: match = k; break # Normalized
-
-            if not match:
-                matches = [k for k in view.char_data.keys() if skill_input in k.lower()]
-                if len(matches) == 1: match = matches[0]
-                elif len(matches) > 1: error_msgs.append(f"Ambiguous: '{skill_input}' matches {', '.join(matches)}")
-                else: error_msgs.append(f"Unknown skill: '{skill_input}'")
-
-            if match:
-                # Check validation
-                if match == "Cthulhu Mythos": error_msgs.append("Cannot assign to Cthulhu Mythos."); continue
-                if view.allowed_skills and not self.is_skill_allowed_for_archetype(match, view.allowed_skills):
-                     error_msgs.append(f"Skill '{match}' not allowed in this phase.")
-                     continue
-
-                changes[match] = changes.get(match, 0) + val
-                total_cost += val
-
-        if error_msgs:
-            return await interaction.response.send_message(f"Errors:\n" + "\n".join(error_msgs), ephemeral=True)
-
-        if total_cost > view.remaining_points:
-            return await interaction.response.send_message(f"Not enough points. Cost: {total_cost}, Remaining: {view.remaining_points}", ephemeral=True)
-
-        if not changes:
-            return await interaction.response.send_message("No valid changes detected.", ephemeral=True)
-
-        # Confirmation
-        confirm_msg = "Confirm changes:\n" + "\n".join([f"**{k}**: +{v}" for k,v in changes.items()])
-        confirm_msg += f"\n\nTotal Cost: {total_cost}"
-
-        confirm_view = SkillConfirmationView(self, view, changes, total_cost)
-        await interaction.response.send_message(confirm_msg, view=confirm_view, ephemeral=True)
-
-    async def apply_skill_changes(self, interaction, view, changes, total_cost):
-        for k, v in changes.items():
-            view.char_data[k] = view.char_data.get(k, 0) + v
-        view.remaining_points -= total_cost
-
-        await interaction.response.edit_message(content="Changes applied.", view=None)
-
-        # Refresh the main view
-        # We can't edit the original ephemeral message easily if it's old, but we can send a new one or edit if we stored it.
-        # Since `step_skill_assignment` sends a new message each time usually? No, the view is attached to one message.
-        # We should send a new status message.
-        await self.step_skill_assignment(interaction, view.char_data, view.player_stats, view.remaining_points, view.min_cr, view.max_cr, view.is_occupation, view.allowed_skills, view.pi_points)
+        if interaction.response.is_done():
+             await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+        else:
+             await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
     async def finish_skill_assignment(self, interaction, view):
         if view.remaining_points > 0:
