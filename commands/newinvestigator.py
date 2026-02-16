@@ -3,6 +3,7 @@ import asyncio
 import random
 import math
 import emojis
+import emoji
 import occupation_emoji
 from discord.ext import commands
 from discord import app_commands
@@ -815,6 +816,10 @@ class SkillPointAllocationView(View):
         for s in page_items:
             val = self.char_data.get(s, 0)
             emoji_char = self.char_data.get("Custom Emojis", {}).get(s) or emojis.get_stat_emoji(s)
+            # Convert shortcodes to unicode for SelectOption
+            if emoji_char:
+                emoji_char = emoji.emojize(emoji_char, language='alias')
+
             label = f"{s}: {val}%"
             if len(label) > 100: label = label[:97] + "..."
             options.append(discord.SelectOption(label=label, value=s, emoji=emoji_char))
