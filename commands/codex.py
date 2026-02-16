@@ -164,7 +164,7 @@ class Codex(commands.Cog):
              return data.get(name)
         return None
 
-    async def _display_entry(self, ctx, name, type_slug, data, interaction=None):
+    async def _display_entry(self, ctx, name, type_slug, data, interaction=None, ephemeral=False):
         """Generates an Embed and sends it with a view to show the poster."""
 
         # 1. Get Image File
@@ -200,6 +200,9 @@ class Codex(commands.Cog):
         if interaction:
              # If this is a followup to a selection, we need to handle it carefully.
              # Interaction might be deferred or not.
+             if ephemeral:
+                 kwargs['ephemeral'] = True
+
              if interaction.response.is_done():
                  msg = await interaction.followup.send(**kwargs)
                  view.message = msg
@@ -575,7 +578,7 @@ class Codex(commands.Cog):
         return await self._get_autocomplete_choices(current, load_occupations_data, keys_only=True)
 
 class PaginatedListView(discord.ui.View):
-    def __init__(self, ctx, items, title, per_page=20):
+    def __init__(self, ctx, items, title, per_page=20, data=None, cog=None, type_slug=None, data_key=None, flatten_pulp=False, keys_only=False):
         super().__init__(timeout=60)
         self.ctx = ctx
         self.items = items
@@ -585,10 +588,64 @@ class PaginatedListView(discord.ui.View):
         self.total_pages = max(1, (len(items) + per_page - 1) // per_page)
         self.message = None
 
+        # Data context for dropdown selection
+        self.data = data
+        self.cog = cog
+        self.type_slug = type_slug
+        self.data_key = data_key
+        self.flatten_pulp = flatten_pulp
+        self.keys_only = keys_only
+
+        # Initialize Select Menu if data context is available
+        self.select_menu = None
+        if self.data is not None and self.cog is not None and self.type_slug is not None:
+             self.select_menu = discord.ui.Select(placeholder="Select an item to view...", min_values=1, max_values=1)
+             self.select_menu.callback = self.select_callback
+             self.add_item(self.select_menu)
+             self.update_select_options()
+
+    def update_select_options(self):
+        if not self.select_menu:
+            return
+
+        start = self.current_page * self.per_page
+        end = start + self.per_page
+        page_items = self.items[start:end]
+
+        self.select_menu.options.clear()
+        for item in page_items:
+            # Handle invention counts "Name (Count)" -> "Name" for value, but keep label
+            label = item[:100]
+            value = item[:100]
+
+            if self.type_slug == "invention":
+                 # Extract the decade part by splitting on the count suffix " (X entries)"
+                 value = item.split(' (')[0]
+
+            self.select_menu.add_option(label=label, value=value)
+
+    async def select_callback(self, interaction: discord.Interaction):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("This isn't for you!", ephemeral=True)
+
+        selected_name = interaction.data['values'][0]
+
+        # Get entry data
+        entry_data = self.cog._get_entry_data(self.data, selected_name, self.type_slug, self.data_key, self.flatten_pulp, self.keys_only)
+
+        if entry_data:
+            await self.cog._display_entry(self.ctx, selected_name, self.type_slug, entry_data, interaction=interaction, ephemeral=True)
+        else:
+             # Fallback
+             quoted_name = urllib.parse.quote(selected_name)
+             url = f"/render/{self.type_slug}?name={quoted_name}"
+             await self.cog._render_poster(self.ctx, url, selected_name, self.type_slug, interaction=interaction, ephemeral=True)
+
     def update_buttons(self):
         self.prev_button.disabled = self.current_page == 0
         self.next_button.disabled = self.current_page == self.total_pages - 1
         self.page_counter.label = f"Page {self.current_page + 1}/{self.total_pages}"
+        self.update_select_options()
 
     def get_embed(self):
         start = self.current_page * self.per_page
@@ -690,7 +747,11 @@ class OptionsView(discord.ui.View):
                  choices = list(data.keys())
 
         choices.sort()
-        view = PaginatedListView(self.ctx, choices, self.title)
+        view = PaginatedListView(
+            self.ctx, choices, self.title,
+            data=data, cog=self.cog, type_slug=self.type_slug,
+            data_key=self.data_key, flatten_pulp=self.flatten_pulp, keys_only=self.keys_only
+        )
         view.update_buttons()
         embed = view.get_embed()
         await interaction.response.edit_message(content=None, embed=embed, view=view)
@@ -847,7 +908,7 @@ class GrimoireView(discord.ui.View):
         self.cog = cog
         self.message = None
 
-    async def _launch_list(self, interaction, loader, title, data_key=None, flatten_pulp=False, type_slug=None):
+    async def _launch_list(self, interaction, loader, title, data_key=None, flatten_pulp=False, type_slug=None, keys_only=False):
         data = await loader()
         choices = []
         if flatten_pulp:
@@ -884,7 +945,11 @@ class GrimoireView(discord.ui.View):
                  choices = list(data.keys())
 
         choices.sort()
-        view = PaginatedListView(self.ctx, choices, title)
+        view = PaginatedListView(
+            self.ctx, choices, title,
+            data=data, cog=self.cog, type_slug=type_slug,
+            data_key=data_key, flatten_pulp=flatten_pulp, keys_only=keys_only
+        )
         view.update_buttons()
         embed = view.get_embed()
         await interaction.response.edit_message(content=None, embed=embed, view=view)
@@ -894,54 +959,54 @@ class GrimoireView(discord.ui.View):
     @discord.ui.button(label="Monsters", style=discord.ButtonStyle.danger, row=0)
     async def monsters_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_monsters_data, "Monsters List", data_key="monsters")
+        await self._launch_list(interaction, load_monsters_data, "Monsters List", data_key="monsters", type_slug="monster")
 
     @discord.ui.button(label="Deities", style=discord.ButtonStyle.danger, row=0)
     async def deities_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_deities_data, "Deities List", data_key="deities")
+        await self._launch_list(interaction, load_deities_data, "Deities List", data_key="deities", type_slug="deity")
 
     @discord.ui.button(label="Archetypes", style=discord.ButtonStyle.danger, row=0)
     async def archetypes_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_archetype_data, "Archetypes List")
+        await self._launch_list(interaction, load_archetype_data, "Archetypes List", type_slug="archetype", keys_only=True)
 
     @discord.ui.button(label="Occupations", style=discord.ButtonStyle.danger, row=0)
     async def occupations_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_occupations_data, "Occupations List")
+        await self._launch_list(interaction, load_occupations_data, "Occupations List", type_slug="occupation", keys_only=True)
 
     # Row 1
     @discord.ui.button(label="Spells", style=discord.ButtonStyle.danger, row=1)
     async def spells_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_spells_data, "Spells List", data_key="spells")
+        await self._launch_list(interaction, load_spells_data, "Spells List", data_key="spells", type_slug="spell")
 
     @discord.ui.button(label="Talents", style=discord.ButtonStyle.danger, row=1)
     async def talents_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_pulp_talents_data, "Pulp Talents List", flatten_pulp=True)
+        await self._launch_list(interaction, load_pulp_talents_data, "Pulp Talents List", flatten_pulp=True, type_slug="pulp_talent")
 
     @discord.ui.button(label="Insane Talents", style=discord.ButtonStyle.danger, row=1)
     async def insane_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_madness_insane_talent_data, "Insane Talents List")
+        await self._launch_list(interaction, load_madness_insane_talent_data, "Insane Talents List", type_slug="insane_talent", keys_only=True)
 
     @discord.ui.button(label="Skills", style=discord.ButtonStyle.danger, row=1)
     async def skills_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_skills_data, "Skills List")
+        await self._launch_list(interaction, load_skills_data, "Skills List", type_slug="skill", keys_only=True)
 
     # Row 2
     @discord.ui.button(label="Weapons", style=discord.ButtonStyle.danger, row=2)
     async def weapons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_weapons_data, "Weapons List")
+        await self._launch_list(interaction, load_weapons_data, "Weapons List", type_slug="weapon", keys_only=True)
 
     @discord.ui.button(label="Poisons", style=discord.ButtonStyle.danger, row=2)
     async def poisons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_poisons_data, "Poisons List")
+        await self._launch_list(interaction, load_poisons_data, "Poisons List", type_slug="poison", keys_only=True)
 
     @discord.ui.button(label="Inventions", style=discord.ButtonStyle.danger, row=2)
     async def inventions_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -952,17 +1017,17 @@ class GrimoireView(discord.ui.View):
     @discord.ui.button(label="Manias", style=discord.ButtonStyle.danger, row=3)
     async def manias_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_manias_data, "Manias List")
+        await self._launch_list(interaction, load_manias_data, "Manias List", type_slug="mania", keys_only=True)
 
     @discord.ui.button(label="Phobias", style=discord.ButtonStyle.danger, row=3)
     async def phobias_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_phobias_data, "Phobias List")
+        await self._launch_list(interaction, load_phobias_data, "Phobias List", type_slug="phobia", keys_only=True)
 
     @discord.ui.button(label="Years", style=discord.ButtonStyle.danger, row=3)
     async def years_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author: return
-        await self._launch_list(interaction, load_years_data, "Years List")
+        await self._launch_list(interaction, load_years_data, "Years List", type_slug="year", keys_only=True)
 
     async def on_timeout(self):
         if self.message:
