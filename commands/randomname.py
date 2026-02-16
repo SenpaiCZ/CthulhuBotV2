@@ -92,7 +92,9 @@ class randomname(commands.Cog):
       app_commands.Choice(name="French", value="french"),
       app_commands.Choice(name="Arabic", value="arabic"),
       app_commands.Choice(name="Spanish", value="spanish"),
-      app_commands.Choice(name="Russian", value="russian")
+      app_commands.Choice(name="Russian", value="russian"),
+      app_commands.Choice(name="Chinese", value="chinese"),
+      app_commands.Choice(name="Japanese", value="japanese")
   ])
   async def randomname(self, ctx, region: str = "english"):
     """
