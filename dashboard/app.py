@@ -2745,11 +2745,69 @@ async def gameroles_data():
             "settings": {
                 "enabled": guild_settings.get("enabled", False),
                 "color": guild_settings.get("color", "#0000FF"),
-                "ignored_activities": guild_settings.get("ignored_activities", ["Custom Status"])
+                "ignored_activities": guild_settings.get("ignored_activities", ["Custom Status"]),
+                "activity_emojis": guild_settings.get("activity_emojis", {})
             }
         })
 
     return jsonify({"guilds": guilds_data})
+
+@app.route('/api/gameroles/emoji/set', methods=['POST'])
+async def gameroles_emoji_set():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    activity = data.get('activity')
+    emoji_char = data.get('emoji')
+
+    if not guild_id or not activity or not emoji_char:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    guild = app.bot.get_guild(int(guild_id))
+    if not guild:
+        return jsonify({"status": "error", "message": "Guild not found"}), 404
+
+    cog = app.bot.get_cog("GamerRoles")
+    if cog:
+        try:
+            await cog.update_activity_emoji(guild, activity, emoji_char)
+            return jsonify({"status": "success"})
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+
+    return jsonify({"status": "error", "message": "GamerRoles Cog not loaded"}), 500
+
+@app.route('/api/gameroles/emoji/delete', methods=['POST'])
+async def gameroles_emoji_delete():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    activity = data.get('activity')
+
+    if not guild_id or not activity:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    guild = app.bot.get_guild(int(guild_id))
+    if not guild:
+        return jsonify({"status": "error", "message": "Guild not found"}), 404
+
+    cog = app.bot.get_cog("GamerRoles")
+    if cog:
+        try:
+            await cog.update_activity_emoji(guild, activity, None)
+            return jsonify({"status": "success"})
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+
+    return jsonify({"status": "error", "message": "GamerRoles Cog not loaded"}), 500
 
 @app.route('/api/gameroles/save', methods=['POST'])
 async def gameroles_save():

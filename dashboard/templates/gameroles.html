@@ -56,6 +56,19 @@ function renderGuilds(guilds) {
             `;
         });
 
+        let emojiListHtml = '';
+        const emojis = guild.settings.activity_emojis || {};
+        for (const [activity, emoji] of Object.entries(emojis)) {
+            emojiListHtml += `
+                <li class="list-group-item d-flex justify-content-between align-items-center bg-dark text-light border-secondary">
+                    <span>${emoji} <strong>${activity}</strong></span>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeEmoji('${guild.id}', '${activity}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </li>
+            `;
+        }
+
         card.innerHTML = `
             <div class="card-header border-secondary d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">${guild.name}</h5>
@@ -88,6 +101,23 @@ function renderGuilds(guilds) {
                         <input type="text" class="form-control bg-dark text-light border-secondary"
                                id="new-ignore-${guild.id}" placeholder="Activity Name (e.g. Custom Status)">
                         <button class="btn btn-outline-success" onclick="addIgnored('${guild.id}')">Add</button>
+                    </div>
+                </div>
+
+                <hr class="border-secondary">
+
+                <div class="mb-3">
+                    <label class="form-label">Activity Emojis</label>
+                    <div class="form-text text-light mb-2">Set specific emojis for games. Default is 🎮.</div>
+                    <ul class="list-group mb-2" id="emoji-list-${guild.id}">
+                        ${emojiListHtml}
+                    </ul>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-dark text-light border-secondary"
+                               id="new-emoji-activity-${guild.id}" placeholder="Activity Name (e.g. Minecraft)">
+                        <input type="text" class="form-control bg-dark text-light border-secondary"
+                               id="new-emoji-char-${guild.id}" placeholder="Emoji (e.g. ⛏️)" style="max-width: 80px;">
+                        <button class="btn btn-outline-success" onclick="addEmoji('${guild.id}')">Set</button>
                     </div>
                 </div>
             </div>
@@ -155,6 +185,49 @@ window.removeIgnored = async (guildId, activity) => {
         const res = await response.json();
         if (res.status === 'success') {
             loadData(); // Reload UI
+        } else {
+            alert('Failed to remove: ' + res.message);
+        }
+    } catch (e) { alert('Error: ' + e); }
+};
+
+window.addEmoji = async (guildId) => {
+    const activityInput = document.getElementById(`new-emoji-activity-${guildId}`);
+    const emojiInput = document.getElementById(`new-emoji-char-${guildId}`);
+
+    const activity = activityInput.value.trim();
+    const emoji = emojiInput.value.trim();
+
+    if (!activity || !emoji) return;
+
+    try {
+        const response = await fetch('/api/gameroles/emoji/set', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ guild_id: guildId, activity: activity, emoji: emoji })
+        });
+        const res = await response.json();
+        if (res.status === 'success') {
+            activityInput.value = '';
+            emojiInput.value = '';
+            loadData();
+        } else {
+            alert('Failed to set emoji: ' + res.message);
+        }
+    } catch (e) { alert('Error: ' + e); }
+};
+
+window.removeEmoji = async (guildId, activity) => {
+    if (!confirm(`Remove custom emoji for "${activity}"?`)) return;
+    try {
+        const response = await fetch('/api/gameroles/emoji/delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ guild_id: guildId, activity: activity })
+        });
+        const res = await response.json();
+        if (res.status === 'success') {
+            loadData();
         } else {
             alert('Failed to remove: ' + res.message);
         }
