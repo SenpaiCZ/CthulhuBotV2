@@ -544,15 +544,39 @@ class PaginatedOccupationListView(View):
         next_btn.callback = self.next_page
         self.add_item(next_btn)
 
+    def get_embed(self):
+        per_page = 25
+        start = self.page * per_page
+        end = start + per_page
+        current_items = self.sorted_list[start:end]
+
+        description = ""
+        for name, pts in current_items:
+            emoji_char = occupation_emoji.get_occupation_emoji(name)
+            line = f"**{name}**: {pts} pts"
+            if emoji_char:
+                 line = f"{emoji_char} {line}"
+            description += line + "\n"
+
+        if not description:
+            description = "No occupations found."
+
+        max_pages = max(1, (len(self.sorted_list) - 1) // per_page + 1)
+        embed = discord.Embed(title="Occupations List", description=description, color=discord.Color.blue())
+        embed.set_footer(text=f"Page {self.page + 1} / {max_pages} | Total: {len(self.sorted_list)}")
+        return embed
+
     async def prev_page(self, interaction: discord.Interaction):
         self.page -= 1
         self.update_view()
-        await interaction.response.edit_message(view=self)
+        embed = self.get_embed()
+        await interaction.response.edit_message(embed=embed, view=self)
 
     async def next_page(self, interaction: discord.Interaction):
         self.page += 1
         self.update_view()
-        await interaction.response.edit_message(view=self)
+        embed = self.get_embed()
+        await interaction.response.edit_message(embed=embed, view=self)
 
 class OccupationPageSelect(Select):
     def __init__(self, options):
@@ -578,7 +602,8 @@ class OccupationSearchStartView(View):
     @discord.ui.button(label="Browse Occupations (Sorted)", style=discord.ButtonStyle.success, emoji="📜")
     async def browse(self, interaction: discord.Interaction, button: discord.ui.Button):
         view = PaginatedOccupationListView(self.cog, self.char_data, self.player_stats, self.occupations_data)
-        await interaction.response.edit_message(content="Browsing Occupations (Sorted by Points):", view=view)
+        embed = view.get_embed()
+        await interaction.response.edit_message(content="Browsing Occupations (Sorted by Points):", embed=embed, view=view)
 
 # ==============================================================================
 # 6. Views (Skill Assignment)
@@ -851,12 +876,14 @@ class SkillPointAllocationView(View):
     async def prev_page(self, interaction: discord.Interaction):
         self.page -= 1
         self.update_view()
-        await interaction.response.edit_message(view=self)
+        embed = self.get_embed()
+        await interaction.response.edit_message(embed=embed, view=self)
 
     async def next_page(self, interaction: discord.Interaction):
         self.page += 1
         self.update_view()
-        await interaction.response.edit_message(view=self)
+        embed = self.get_embed()
+        await interaction.response.edit_message(embed=embed, view=self)
 
     async def refresh(self, interaction: discord.Interaction):
         self.update_view()
@@ -876,6 +903,33 @@ class SkillPointAllocationView(View):
                  desc += f"\n\n**Suggested Occupation Skills**:\n{sug}"
 
         embed.description = desc
+
+        # Current Page Skills Table
+        current_list = self.all_skills
+        if self.allowed_skills:
+             current_list = [s for s in self.all_skills if self.cog.is_skill_allowed_for_archetype(s, self.allowed_skills)]
+
+        per_page = 20
+        max_pages = max(1, (len(current_list) - 1) // per_page + 1)
+        self.page = max(0, min(self.page, max_pages - 1))
+
+        start = self.page * per_page
+        end = start + per_page
+        page_items = current_list[start:end]
+
+        page_text = ""
+        for s in page_items:
+            val = self.char_data.get(s, 0)
+            emoji_char = self.char_data.get("Custom Emojis", {}).get(s) or emojis.get_stat_emoji(s)
+            line = f"**{s}**: {val}%"
+            if emoji_char:
+                 line = f"{emoji_char} {line}"
+            page_text += line + "\n"
+
+        if not page_text:
+            page_text = "No skills found."
+
+        embed.add_field(name=f"Skills (Page {self.page+1}/{max_pages})", value=page_text, inline=False)
 
         # Top Skills Field (Non-default or high value)
         # Using BASE_SKILLS to filter "Improved" skills
@@ -1055,13 +1109,16 @@ class newinvestigator(commands.Cog):
         elif f == "(2D6 + 6) * 5": return (sum([random.randint(1, 6) for _ in range(2)]) + 6) * 5
         return 0
 
-    async def display_stats_and_continue(self, interaction, char_data, player_stats):
+    async def display_stats_only(self, interaction, char_data):
         embed = discord.Embed(title=f"Stats for {char_data['NAME']}", color=discord.Color.green())
         stats_list = ["STR", "DEX", "CON", "APP", "POW", "SIZ", "INT", "EDU", "LUCK"]
         desc = "\n".join([f"{emojis.get_stat_emoji(s)} **{s}**: {char_data.get(s, 0)}" for s in stats_list])
         embed.description = desc
         if interaction.response.is_done(): await interaction.followup.send(embed=embed, ephemeral=True)
         else: await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    async def display_stats_and_continue(self, interaction, char_data, player_stats):
+        await self.display_stats_only(interaction, char_data)
         if char_data.get("Game Mode") == "Pulp of Cthulhu" and "Archetype Info" in char_data:
              await self.apply_archetype_core_stat(interaction, char_data, player_stats)
         else:
@@ -1307,7 +1364,7 @@ class newinvestigator(commands.Cog):
 
         await interaction.followup.send(f"**Character Creation Complete!**\nInvestigator **{char_data['NAME']}** has been saved.", ephemeral=True)
         # Display Final Stats
-        await self.display_stats_and_continue(interaction, char_data, player_stats) # Shows embed
+        await self.display_stats_only(interaction, char_data) # Shows embed
 
     # Helpers
     def get_archetype_skills(self, adjustments):
