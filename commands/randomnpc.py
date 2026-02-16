@@ -39,6 +39,8 @@ class RegionSelect(Select):
             discord.SelectOption(label="Arabic", value="arabic", emoji="🇸🇦"),
             discord.SelectOption(label="Spanish", value="spanish", emoji="🇪🇸"),
             discord.SelectOption(label="Russian", value="russian", emoji="🇷🇺"),
+            discord.SelectOption(label="Chinese", value="chinese", emoji="🇨🇳"),
+            discord.SelectOption(label="Japanese", value="japanese", emoji="🇯🇵"),
             discord.SelectOption(label="Random", value="random", emoji="🎲")
         ]
         super().__init__(placeholder="Select a region...", min_values=1, max_values=1, options=options)
@@ -46,7 +48,7 @@ class RegionSelect(Select):
     async def callback(self, interaction: discord.Interaction):
         region = self.values[0]
         if region == "random":
-             regions = ["english", "scandinavian", "german", "french", "arabic", "spanish", "russian"]
+             regions = ["english", "scandinavian", "german", "french", "arabic", "spanish", "russian", "chinese", "japanese"]
              region = random.choice(regions)
         await self.cog.generate_and_send(interaction, self.gender, region)
 
