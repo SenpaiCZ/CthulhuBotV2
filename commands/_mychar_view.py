@@ -5,17 +5,21 @@ from discord.ui import View, Select, Button
 from emojis import get_stat_emoji, stat_emojis
 from descriptions import get_description
 import occupation_emoji
+from commands._backstory_common import BackstoryCategorySelectView
+from loadnsave import load_player_stats
 
 class CharacterDashboardView(View):
-    def __init__(self, user, char_data, mode_label, current_mode):
+    def __init__(self, user, char_data, mode_label, current_mode, server_id):
         super().__init__(timeout=300) # 5 minute timeout
         self.user = user
         self.char_data = char_data
         self.mode_label = mode_label
         self.current_mode = current_mode
+        self.server_id = server_id
         self.current_section = "stats"
         self.page = 0
         self.items_per_page = 24 # Safe limit for embed fields
+        self.message = None
 
         # Build the initial Select Menu
         self.update_components()
@@ -53,6 +57,16 @@ class CharacterDashboardView(View):
                 next_btn.callback = self.next_page_callback
                 self.add_item(next_btn)
 
+        # Interactive Buttons for Backstory
+        if self.current_section == "backstory":
+             add_btn = Button(label="Add Entry", style=discord.ButtonStyle.success, row=1, emoji="➕")
+             add_btn.callback = self.add_entry_callback
+             self.add_item(add_btn)
+
+             remove_btn = Button(label="Remove Entry", style=discord.ButtonStyle.danger, row=1, emoji="➖")
+             remove_btn.callback = self.remove_entry_callback
+             self.add_item(remove_btn)
+
         # Dismiss Button (Always available)
         dismiss_btn = Button(label="Dismiss", style=discord.ButtonStyle.danger, row=2)
         dismiss_btn.callback = self.dismiss_callback
@@ -67,6 +81,7 @@ class CharacterDashboardView(View):
         self.page = 0 # Reset page on section change
         self.update_components()
         await interaction.response.edit_message(embed=self.get_embed(), view=self)
+        self.message = interaction.message
 
     async def prev_page_callback(self, interaction: discord.Interaction):
         if interaction.user != self.user: return
@@ -74,18 +89,53 @@ class CharacterDashboardView(View):
             self.page -= 1
             self.update_components()
             await interaction.response.edit_message(embed=self.get_embed(), view=self)
+            self.message = interaction.message
 
     async def next_page_callback(self, interaction: discord.Interaction):
         if interaction.user != self.user: return
         self.page += 1
         self.update_components()
         await interaction.response.edit_message(embed=self.get_embed(), view=self)
+        self.message = interaction.message
 
     async def dismiss_callback(self, interaction: discord.Interaction):
         if interaction.user == self.user:
             await interaction.message.delete()
         else:
             await interaction.response.send_message("You cannot dismiss this.", ephemeral=True)
+
+    async def refresh_dashboard(self, interaction: discord.Interaction):
+        # Refresh dashboard view
+        if not self.message:
+            return
+
+        try:
+            # Re-fetch data to ensure we have the latest updates
+            player_stats = await load_player_stats()
+            # server_id and user.id are used to get the specific char_data
+            if self.server_id in player_stats and str(self.user.id) in player_stats[self.server_id]:
+                self.char_data = player_stats[self.server_id][str(self.user.id)]
+
+            self.update_components()
+            await self.message.edit(embed=self.get_embed(), view=self)
+        except discord.NotFound:
+            pass
+        except Exception as e:
+            print(f"Error refreshing dashboard: {e}")
+
+    async def add_entry_callback(self, interaction: discord.Interaction):
+        if interaction.user != self.user:
+            return await interaction.response.send_message("Not your dashboard!", ephemeral=True)
+
+        view = BackstoryCategorySelectView(self.user, self.server_id, str(self.user.id), mode="add", callback=self.refresh_dashboard)
+        await interaction.response.send_message("Select a category to add to:", view=view, ephemeral=True)
+
+    async def remove_entry_callback(self, interaction: discord.Interaction):
+        if interaction.user != self.user:
+            return await interaction.response.send_message("Not your dashboard!", ephemeral=True)
+
+        view = BackstoryCategorySelectView(self.user, self.server_id, str(self.user.id), mode="remove", callback=self.refresh_dashboard)
+        await interaction.response.send_message("Select a category to remove from:", view=view, ephemeral=True)
 
     def get_embed(self):
         if self.current_section == "stats":
