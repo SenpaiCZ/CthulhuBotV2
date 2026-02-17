@@ -9,9 +9,10 @@ import subprocess
 import platform
 import argparse
 import datetime
+import signal
 
 # Configuration
-REPO_URL = "https://github.com/SenpaiCZ/CthulhuBotV2/archive/refs/heads/master.zip"
+REPO_URL = "https://github.com/SenpaiCZ/CthulhuBotV2/archive/refs/heads/main.zip"
 ZIP_FILENAME = "update_pkg.zip"
 EXTRACT_DIR = "update_extract_temp"
 BACKUP_DIR = "backups"  # Must match BACKUP_FOLDER in dashboard/app.py
@@ -35,9 +36,23 @@ PROTECTED_FILES = {
     "config.json", ZIP_FILENAME, "updater.py.old", "update_temp_script.ps1"
 }
 
+# Ignore SIGHUP on Linux to prevent termination when parent shell exits/fluctuates
+if platform.system() != "Windows":
+    signal.signal(signal.SIGHUP, signal.SIG_IGN)
+
 def log(message):
     timestamp = time.strftime("[%H:%M:%S]")
-    print(f"{timestamp} [Updater] {message}", flush=True)
+    log_line = f"{timestamp} [Updater] {message}"
+
+    # Print to console (visible to user)
+    print(log_line, flush=True)
+
+    # Write to file
+    try:
+        with open("updater.log", "a", encoding="utf-8") as f:
+            f.write(log_line + "\n")
+    except Exception as e:
+        print(f"Failed to write to updater.log: {e}", flush=True)
 
 def wait_for_pid(pid):
     if not pid:
@@ -255,35 +270,23 @@ def update_dependencies():
 
 def restart_bot(detached=True):
     if detached:
-        log("Restarting bot (detached)...")
+        log("Restarting bot...")
         cmd = [sys.executable, "bot.py"]
         if platform.system() == "Windows":
             flags = subprocess.CREATE_NEW_CONSOLE
             subprocess.Popen(cmd, creationflags=flags)
         else:
+            # On Linux, using close_fds=True but NOT setsid allows inheriting stdout/stderr
+            # provided they were not closed.
             subprocess.Popen(cmd, close_fds=True)
         log("Bot restarted. Exiting updater.")
         sys.exit(0)
     else:
         log("Restarting bot (foreground)...")
         # Just return, let the calling script handle it?
-        # Or exec?
-        # If we return, the calling script (e.g. update.bat) can continue.
         pass
 
-def setup_logging():
-    """Redirects stdout and stderr to a log file."""
-    try:
-        log_file = open("updater.log", "a")
-        # Redirect stdout and stderr to the log file
-        os.dup2(log_file.fileno(), 1)
-        os.dup2(log_file.fileno(), 2)
-        log("Logging initialized.")
-    except Exception as e:
-        print(f"Failed to setup logging: {e}")
-
 if __name__ == "__main__":
-    setup_logging()
     parser = argparse.ArgumentParser(description="CthulhuBotV2 Auto-Updater")
     parser.add_argument("pid", nargs='?', type=int, help="PID of the process to wait for")
     parser.add_argument("--no-restart", action="store_true", help="Do not restart the bot automatically")

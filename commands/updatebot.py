@@ -32,7 +32,7 @@ class UpdateBotView(discord.ui.View):
             if os.name == 'nt':
                 subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
             else:
-                subprocess.Popen(cmd, start_new_session=True)
+                subprocess.Popen(cmd)
         except Exception as e:
              await interaction.followup.send(f"❌ Failed to start updater: {e}", ephemeral=True)
              return

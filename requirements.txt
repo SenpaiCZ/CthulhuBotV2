@@ -11,3 +11,4 @@ yt-dlp
 emoji
 playwright>=1.40.0
 rapidfuzz>=3.0.0
+psutil
