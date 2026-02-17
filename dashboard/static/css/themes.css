@@ -1,0 +1,430 @@
+:root, [data-bs-theme="dark"] {
+    /* Default fallback variables (Cthulhu) if not overridden */
+    --theme-primary-dark: #1b4d3e;
+    --theme-primary-main: #2E8B57; /* SeaGreen */
+    --theme-primary-bright: #00ff7f; /* SpringGreen */
+    --theme-bg-dark: #0a0a0a;
+    --theme-bg-card: #151515;
+    --theme-navbar-bg: #050505;
+    --theme-text-color: #e0e0e0;
+    --theme-link-color: #66cdaa; /* MediumAquamarine */
+    --theme-border-color: #333;
+    --theme-accent-hover: rgba(46, 139, 87, 0.1);
+    --theme-primary-rgb: 46, 139, 87;
+
+    /* Bootstrap Overrides */
+    --bs-primary: var(--theme-primary-main);
+    --bs-primary-rgb: var(--theme-primary-rgb);
+
+    --bs-body-bg: var(--theme-bg-dark);
+    --bs-body-color: var(--theme-text-color);
+
+    --bs-link-color: var(--theme-link-color);
+    --bs-link-hover-color: var(--theme-primary-bright);
+
+    --bs-border-color: var(--theme-border-color);
+    --bs-border-color-translucent: rgba(255, 255, 255, 0.15);
+}
+
+/* --- THEMES --- */
+
+[data-theme="cthulhu"] {
+    --theme-primary-dark: #1b4d3e;
+    --theme-primary-main: #2E8B57;
+    --theme-primary-bright: #00ff7f;
+    --theme-bg-dark: #0a0a0a;
+    --theme-bg-card: #151515;
+    --theme-navbar-bg: #050505;
+    --theme-text-color: #e0e0e0;
+    --theme-link-color: #66cdaa;
+    --theme-border-color: #333;
+    --theme-accent-hover: rgba(46, 139, 87, 0.1);
+    --theme-primary-rgb: 46, 139, 87;
+}
+
+[data-theme="blood"] {
+    --theme-primary-dark: #4d0a0a;
+    --theme-primary-main: #8b0000;
+    --theme-primary-bright: #ff0000;
+    --theme-bg-dark: #0a0505;
+    --theme-bg-card: #150a0a;
+    --theme-navbar-bg: #050000;
+    --theme-text-color: #e0e0e0;
+    --theme-link-color: #cd5c5c;
+    --theme-border-color: #331a1a;
+    --theme-accent-hover: rgba(139, 0, 0, 0.1);
+    --theme-primary-rgb: 139, 0, 0;
+}
+
+[data-theme="ocean"] {
+    --theme-primary-dark: #0a2d4d;
+    --theme-primary-main: #00008b;
+    --theme-primary-bright: #00bfff;
+    --theme-bg-dark: #050a0f;
+    --theme-bg-card: #0a151f;
+    --theme-navbar-bg: #00050a;
+    --theme-text-color: #e0e0e0;
+    --theme-link-color: #5f9ea0;
+    --theme-border-color: #1a2633;
+    --theme-accent-hover: rgba(0, 0, 139, 0.1);
+    --theme-primary-rgb: 0, 0, 139;
+}
+
+[data-theme="royal"] {
+    --theme-primary-dark: #2d0a4d;
+    --theme-primary-main: #4b0082;
+    --theme-primary-bright: #8a2be2;
+    --theme-bg-dark: #0a050f;
+    --theme-bg-card: #150a1f;
+    --theme-navbar-bg: #05000a;
+    --theme-text-color: #e0e0e0;
+    --theme-link-color: #9370db;
+    --theme-border-color: #261a33;
+    --theme-accent-hover: rgba(75, 0, 130, 0.1);
+    --theme-primary-rgb: 75, 0, 130;
+}
+
+[data-theme="gold"] {
+    --theme-primary-dark: #4d3e0a;
+    --theme-primary-main: #daa520;
+    --theme-primary-bright: #ffd700;
+    --theme-bg-dark: #0f0c05;
+    --theme-bg-card: #1f190a;
+    --theme-navbar-bg: #0a0800;
+    --theme-text-color: #e0e0e0;
+    --theme-link-color: #f0e68c;
+    --theme-border-color: #332d1a;
+    --theme-accent-hover: rgba(218, 165, 32, 0.1);
+    --theme-primary-rgb: 218, 165, 32;
+}
+
+[data-theme="noir"] {
+    --theme-primary-dark: #1a1a1a;
+    --theme-primary-main: #404040;
+    --theme-primary-bright: #808080;
+    --theme-bg-dark: #000000;
+    --theme-bg-card: #111111;
+    --theme-navbar-bg: #000000;
+    --theme-text-color: #e0e0e0;
+    --theme-link-color: #a9a9a9;
+    --theme-border-color: #333333;
+    --theme-accent-hover: rgba(255, 255, 255, 0.1);
+    --theme-primary-rgb: 64, 64, 64;
+}
+
+/* Navbar Customization */
+.navbar-dark.bg-dark {
+    background-color: var(--theme-navbar-bg) !important;
+    border-bottom: 1px solid var(--theme-primary-dark);
+}
+
+.navbar-brand {
+    color: var(--theme-primary-main) !important;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(var(--theme-primary-rgb), 0.5);
+}
+
+.nav-link.active {
+    color: var(--theme-primary-bright) !important;
+}
+
+/* Card Customization */
+.card {
+    background-color: var(--theme-bg-card);
+    border: 1px solid var(--theme-border-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
+    background-color: rgba(var(--theme-primary-rgb), 0.1); /* Slightly tinted header */
+    border-bottom: 1px solid var(--theme-border-color);
+    color: var(--theme-primary-main);
+    font-weight: bold;
+}
+
+/* Primary buttons override to ensure they look good */
+.btn-primary {
+    --bs-btn-bg: var(--theme-primary-main);
+    --bs-btn-border-color: var(--theme-primary-main);
+    --bs-btn-hover-bg: var(--theme-primary-dark);
+    --bs-btn-hover-border-color: var(--theme-primary-dark);
+    --bs-btn-active-bg: var(--theme-primary-dark);
+    --bs-btn-active-border-color: var(--theme-primary-dark);
+}
+
+/* Specific component overrides for "Cthulhu" vibe (now themed) */
+
+/* Soundboard specific overrides */
+.border-primary {
+    border-color: var(--theme-primary-dark) !important;
+}
+
+.bg-primary {
+    background-color: var(--theme-primary-dark) !important;
+}
+
+/* Range inputs */
+.form-range::-webkit-slider-thumb {
+    background: var(--theme-primary-main);
+}
+.form-range::-moz-range-thumb {
+    background: var(--theme-primary-main);
+}
+
+/* Table overrides */
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--bs-body-color);
+    --bs-table-border-color: var(--theme-border-color);
+}
+
+.table-hover > tbody > tr:hover > * {
+    --bs-table-accent-bg: var(--theme-accent-hover);
+    color: var(--theme-primary-bright);
+}
+
+/* Base.html existing styles moved here */
+body {
+    padding-top: 60px;
+}
+.editor-container {
+    height: 600px;
+}
+
+/* --- Dashboard Layout (Monsters, Deities, etc) --- */
+
+.dashboard-container {
+    display: flex;
+    height: calc(100vh - 100px); /* Adjust for navbar */
+    gap: 20px;
+    padding-bottom: 20px;
+}
+
+/* Sidebar */
+.sidebar-panel {
+    width: 300px;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-list {
+    overflow-y: auto;
+    flex-grow: 1;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0 0 var(--bs-border-radius) var(--bs-border-radius);
+    background-color: var(--theme-bg-dark);
+}
+
+.sidebar-list .list-group-item {
+    background-color: var(--theme-bg-dark);
+    color: var(--bs-body-color);
+    border-color: var(--bs-border-color);
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar-list .list-group-item:hover {
+    background-color: var(--theme-accent-hover);
+    color: var(--theme-primary-bright);
+}
+
+.sidebar-list .list-group-item.active {
+    background-color: var(--theme-primary-main) !important;
+    border-color: var(--theme-primary-main) !important;
+    color: white !important;
+    font-weight: bold;
+}
+
+/* Detail Panel */
+.detail-panel {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid var(--bs-border-color);
+    background-color: var(--theme-bg-card);
+    border-radius: var(--bs-border-radius);
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Custom scrollbars */
+.sidebar-list::-webkit-scrollbar,
+.detail-panel::-webkit-scrollbar {
+    width: 8px;
+}
+.sidebar-list::-webkit-scrollbar-track,
+.detail-panel::-webkit-scrollbar-track {
+    background: var(--theme-bg-dark);
+}
+.sidebar-list::-webkit-scrollbar-thumb,
+.detail-panel::-webkit-scrollbar-thumb {
+    background: var(--theme-border-color);
+    border-radius: 4px;
+}
+.sidebar-list::-webkit-scrollbar-thumb:hover,
+.detail-panel::-webkit-scrollbar-thumb:hover {
+    background: var(--theme-primary-main);
+}
+
+/* Components */
+.stat-box {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 4px;
+    padding: 10px;
+    text-align: center;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: var(--bs-secondary);
+    font-weight: bold;
+}
+
+.stat-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--bs-body-color);
+}
+
+.section-header {
+    border-bottom: 1px solid var(--bs-border-color);
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+    margin-top: 25px;
+    color: var(--theme-primary-bright);
+    font-weight: 500;
+    font-size: 1.2rem;
+}
+
+.quote-block {
+    font-style: italic;
+    border-left: 3px solid var(--theme-primary-main);
+    background: var(--theme-accent-hover);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 0 4px 4px 0;
+    color: var(--bs-secondary);
+}
+
+/* Helpers */
+.hidden { display: none !important; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dashboard-container {
+        flex-direction: column;
+        height: auto;
+    }
+    .sidebar-panel {
+        width: 100%;
+        min-width: 0;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    .detail-panel {
+        height: auto;
+        min-height: 500px;
+    }
+}
+
+/* --- Accordion Overrides --- */
+.accordion-button:not(.collapsed) {
+    color: var(--theme-primary-bright);
+    background-color: rgba(var(--theme-primary-rgb), 0.2);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.125);
+}
+
+.accordion-button:focus {
+    border-color: var(--theme-primary-dark);
+    box-shadow: 0 0 0 0.25rem rgba(var(--theme-primary-rgb), 0.25);
+}
+
+/* Override the default accordion button color when collapsed */
+.accordion-button {
+    color: var(--theme-primary-main);
+    background-color: var(--theme-bg-card); /* Match card background */
+}
+
+/* Custom chevron icons - We use CSS filters to colorize standard SVG or leave as is if tricky.
+   The original used data-uris with hardcoded colors.
+   To make this dynamic with CSS variables is tricky for background-image data URIs.
+   Instead, we can use mask-image or just accept that chevrons might be slightly off or use a generic white one.
+   Alternatively, we can use ::after content as an icon font character if bootstrap icons are loaded.
+   Bootstrap uses SVG background images.
+   Let's try to use a filter approach or just remove the override and let Bootstrap handle it (it will be white/dark).
+   Or better, we can use a generic color for the chevron.
+*/
+
+.accordion-button::after {
+    /* Use mask-image to colorize */
+    filter: invert(1) sepia(1) saturate(5) hue-rotate(180deg); /* Approximate filter, hard to get exact theme color */
+    /* Actually, if we want to match theme, we can't easily use data URI with var(). */
+    /* We will fallback to default Bootstrap behavior which usually adapts to dark theme (white chevron). */
+    background-image: none !important; /* Reset custom image */
+    content: "\F282"; /* Bootstrap Icon Chevron Down */
+    font-family: bootstrap-icons;
+    color: var(--theme-primary-main);
+    transform: rotate(0deg);
+    transition: transform 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute; /* Position it where the pseudo-element usually is */
+    right: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.accordion-button:not(.collapsed)::after {
+    background-image: none !important;
+    transform: rotate(-180deg);
+    color: var(--theme-primary-bright);
+}
+
+/* --- Code Block Overrides --- */
+code {
+    color: var(--theme-primary-bright);
+}
+
+/* --- Nested Dropdowns Customization --- */
+
+/* Desktop: Show submenus on hover and position correctly */
+@media (min-width: 992px) {
+    .dropdown-menu .dropstart {
+        position: relative;
+    }
+
+    .dropdown-menu .dropstart:hover > .dropdown-menu {
+        display: block;
+        top: 0;
+        right: 100%;
+        left: auto;
+        margin-top: -6px;
+        margin-right: 0.1rem;
+    }
+}
+
+/* Mobile: Stack submenus vertically, static positioning */
+@media (max-width: 991.98px) {
+    .dropdown-menu .dropstart .dropdown-menu {
+        position: static;
+        float: none;
+        width: auto;
+        margin-top: 0;
+        background-color: transparent;
+        border: 0;
+        box-shadow: none;
+        padding-left: 1.5rem; /* Indentation */
+    }
+
+    /* Ensure text wraps nicely */
+    .dropdown-menu .dropstart .dropdown-menu .dropdown-item {
+        white-space: normal;
+    }
+}

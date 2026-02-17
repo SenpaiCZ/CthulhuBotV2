@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en" data-bs-theme="dark" data-theme="{{ dashboard_theme|default('cthulhu') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,7 +20,7 @@
             background-color: #1a1a1a;
             color: #e0e0e0;
             font-family: 'Courier New', Courier, monospace;
-            border: 2px solid var(--cthulhu-green-dark, #2E8B57);
+            border: 2px solid var(--theme-primary-dark, #2E8B57);
             padding: 20px;
             border-radius: 5px;
             width: 800px;

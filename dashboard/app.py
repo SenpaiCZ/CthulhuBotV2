@@ -196,6 +196,12 @@ async def get_or_join_voice_channel(guild_id, channel_id):
 def inject_user():
     return dict(is_admin=is_admin())
 
+@app.context_processor
+def inject_theme():
+    settings = load_settings()
+    theme = settings.get('dashboard_theme', 'cthulhu')
+    return dict(dashboard_theme=theme)
+
 @app.route('/api/status')
 async def bot_status():
     is_ready = False
@@ -1025,6 +1031,29 @@ async def fonts_delete():
 async def admin_dashboard():
     if not is_admin(): return redirect(url_for('login'))
     return await render_template('admin_dashboard.html')
+
+@app.route('/admin/design')
+async def admin_design():
+    if not is_admin(): return redirect(url_for('login'))
+    settings = load_settings()
+    current_theme = settings.get('dashboard_theme', 'cthulhu')
+    return await render_template('design_dashboard.html', current_theme=current_theme)
+
+@app.route('/api/design/save', methods=['POST'])
+async def save_design():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    theme = data.get('theme')
+
+    if not theme:
+        return jsonify({"status": "error", "message": "Missing theme"}), 400
+
+    settings = load_settings()
+    settings['dashboard_theme'] = theme
+    await save_settings(settings)
+
+    return jsonify({"status": "success"})
 
 @app.route('/monsters')
 async def admin_monsters():

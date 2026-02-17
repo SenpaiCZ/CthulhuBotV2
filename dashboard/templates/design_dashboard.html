@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Design Settings{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Dashboard Design</h2>
+<p class="text-muted">Select a color theme for the dashboard. This will apply to all users.</p>
+
+<div class="row" id="theme-selector">
+
+    <!-- Cthulhu -->
+    <div class="col-md-4 mb-4">
+        <div class="card theme-card {% if current_theme == 'cthulhu' %}border-primary{% endif %}" onclick="setTheme('cthulhu')" style="cursor: pointer;">
+            <div class="card-header">Cthulhu (Default)</div>
+            <div class="card-body">
+                <div style="height: 50px; background-color: #2E8B57; border-radius: 4px;" class="mb-2"></div>
+                <p class="card-text small text-muted">The classic Cthulhu green theme.</p>
+                {% if current_theme == 'cthulhu' %}<span class="badge bg-primary">Active</span>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Blood -->
+    <div class="col-md-4 mb-4">
+        <div class="card theme-card {% if current_theme == 'blood' %}border-primary{% endif %}" onclick="setTheme('blood')" style="cursor: pointer;">
+            <div class="card-header">Blood</div>
+            <div class="card-body">
+                <div style="height: 50px; background-color: #8b0000; border-radius: 4px;" class="mb-2"></div>
+                <p class="card-text small text-muted">A dark red theme for those who spill blood.</p>
+                {% if current_theme == 'blood' %}<span class="badge bg-primary">Active</span>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Ocean -->
+    <div class="col-md-4 mb-4">
+        <div class="card theme-card {% if current_theme == 'ocean' %}border-primary{% endif %}" onclick="setTheme('ocean')" style="cursor: pointer;">
+            <div class="card-header">Ocean</div>
+            <div class="card-body">
+                <div style="height: 50px; background-color: #00008b; border-radius: 4px;" class="mb-2"></div>
+                <p class="card-text small text-muted">Deep blue for adventures at sea.</p>
+                {% if current_theme == 'ocean' %}<span class="badge bg-primary">Active</span>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Royal -->
+    <div class="col-md-4 mb-4">
+        <div class="card theme-card {% if current_theme == 'royal' %}border-primary{% endif %}" onclick="setTheme('royal')" style="cursor: pointer;">
+            <div class="card-header">Royal</div>
+            <div class="card-body">
+                <div style="height: 50px; background-color: #4b0082; border-radius: 4px;" class="mb-2"></div>
+                <p class="card-text small text-muted">A mystical purple theme.</p>
+                {% if current_theme == 'royal' %}<span class="badge bg-primary">Active</span>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Gold -->
+    <div class="col-md-4 mb-4">
+        <div class="card theme-card {% if current_theme == 'gold' %}border-primary{% endif %}" onclick="setTheme('gold')" style="cursor: pointer;">
+            <div class="card-header">Gold</div>
+            <div class="card-body">
+                <div style="height: 50px; background-color: #daa520; border-radius: 4px;" class="mb-2"></div>
+                <p class="card-text small text-muted">Wealth and luxury.</p>
+                {% if current_theme == 'gold' %}<span class="badge bg-primary">Active</span>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Noir -->
+    <div class="col-md-4 mb-4">
+        <div class="card theme-card {% if current_theme == 'noir' %}border-primary{% endif %}" onclick="setTheme('noir')" style="cursor: pointer;">
+            <div class="card-header">Noir</div>
+            <div class="card-body">
+                <div style="height: 50px; background-color: #404040; border-radius: 4px;" class="mb-2"></div>
+                <p class="card-text small text-muted">Monochrome for a classic detective feel.</p>
+                {% if current_theme == 'noir' %}<span class="badge bg-primary">Active</span>{% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+async function setTheme(themeName) {
+    try {
+        const response = await fetch('/api/design/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ theme: themeName })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            // Reload page to apply changes
+            location.reload();
+        } else {
+            alert("Error saving theme: " + data.message);
+        }
+    } catch (e) {
+        alert("Error: " + e);
+    }
+}
+</script>
+
+<style>
+.theme-card:hover {
+    border-color: var(--bs-primary) !important;
+    transform: translateY(-2px);
+    transition: all 0.2s;
+}
+</style>
+{% endblock %}
