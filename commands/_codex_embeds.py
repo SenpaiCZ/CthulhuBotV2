@@ -233,7 +233,9 @@ def create_weapon_embed(data, title, file=None):
         embed.description = " | ".join(desc_parts)
 
     if weapon.get('description'):
-        embed.add_field(name="Description", value=weapon['description'], inline=False)
+        desc = weapon['description']
+        if len(desc) > 1024: desc = desc[:1021] + "..."
+        embed.add_field(name="Description", value=desc, inline=False)
 
     stats = []
     if weapon.get('damage'): stats.append(f"**Damage**: {weapon['damage']}")
