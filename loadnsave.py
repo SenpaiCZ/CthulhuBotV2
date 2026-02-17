@@ -636,3 +636,17 @@ async def save_loot_settings(data):
     global _LOOT_SETTINGS_CACHE
     _LOOT_SETTINGS_CACHE = data
     await _save_json_file(DATA_FOLDER, 'loot_settings.json', data)
+
+# --- Skill Sound Settings ---
+_SKILL_SOUND_SETTINGS_CACHE = None
+
+async def load_skill_sound_settings():
+    global _SKILL_SOUND_SETTINGS_CACHE
+    if _SKILL_SOUND_SETTINGS_CACHE is None:
+        _SKILL_SOUND_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'skill_sound_settings.json')
+    return _SKILL_SOUND_SETTINGS_CACHE.copy()
+
+async def save_skill_sound_settings(data):
+    global _SKILL_SOUND_SETTINGS_CACHE
+    _SKILL_SOUND_SETTINGS_CACHE = data
+    await _save_json_file(DATA_FOLDER, 'skill_sound_settings.json', data)

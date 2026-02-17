@@ -31,6 +31,7 @@ from loadnsave import (
     load_gamerole_settings, save_gamerole_settings,
     load_enroll_settings, save_enroll_settings,
     load_loot_settings, save_loot_settings,
+    load_skill_sound_settings, save_skill_sound_settings,
     load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
     load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
     load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
@@ -1399,6 +1400,64 @@ async def game_loot_save():
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
+
+# --- Skill Sound Settings Routes ---
+
+@app.route('/api/game/sounds/data')
+async def game_sounds_data():
+    if not is_admin(): return "Unauthorized", 401
+
+    settings = await load_skill_sound_settings()
+    files = await asyncio.to_thread(sync_get_soundboard_files, SOUNDBOARD_FOLDER)
+
+    # Flatten files dict to list for easier consumption
+    # sync_get_soundboard_files returns a dict { "Folder": [ {name, path}, ... ] }
+
+    flat_files = []
+    for folder_name, file_list in files.items():
+        if isinstance(file_list, list):
+            for file_info in file_list:
+                if 'path' in file_info:
+                    # path is relative to SOUNDBOARD_FOLDER already (e.g. "Root/file.mp3" or just "file.mp3"?)
+                    # file_utils says:
+                    # Root: entry (just filename)
+                    # Subdir: os.path.join(entry, f) (subdir/filename)
+                    # So we just take 'path'.
+                    flat_files.append(file_info['path'].replace("\\", "/"))
+
+    flat_files.sort()
+
+    return jsonify({
+        "settings": settings,
+        "files": flat_files
+    })
+
+@app.route('/api/game/sounds/save', methods=['POST'])
+async def game_sounds_save():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+
+    if not guild_id:
+        return jsonify({"status": "error", "message": "Missing guild_id"}), 400
+
+    settings = await load_skill_sound_settings()
+
+    # Update for specific guild
+    # Structure:
+    # {
+    #   "default": { "critical": "file", ... },
+    #   "skills": { "Skill Name": { "critical": "file", ... }, ... }
+    # }
+
+    settings[str(guild_id)] = {
+        "default": data.get("default", {}),
+        "skills": data.get("skills", {})
+    }
+
+    await save_skill_sound_settings(settings)
+    return jsonify({"status": "success"})
 
 # --- Karma Routes ---
 

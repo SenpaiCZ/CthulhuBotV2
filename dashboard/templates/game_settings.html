@@ -83,7 +83,46 @@
     </div>
 </div>
 
+<!-- Sound Settings Modal -->
+<div class="modal fade" id="soundSettingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="soundSettingsModalLabel">Sound Settings</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="soundSettingsGuildId">
+
+                <h6 class="border-bottom border-secondary pb-2 mb-3">Default Sounds</h6>
+                <div class="row g-3 mb-4" id="defaultSoundsContainer">
+                    <!-- Default dropdowns injected here -->
+                </div>
+
+                <h6 class="border-bottom border-secondary pb-2 mb-3">Individual Skill Sounds</h6>
+                <div id="skillSoundsContainer">
+                    <!-- Skill rows injected here -->
+                </div>
+
+                <div class="mt-3">
+                    <button type="button" class="btn btn-outline-light btn-sm" onclick="addSkillSoundRow()">
+                        <i class="bi bi-plus-lg"></i> Add Skill Rule
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="saveSoundSettings()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+let soundFiles = [];
+let soundSettingsData = {};
+let currentSoundGuildId = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     loadLootSettings();
@@ -115,7 +154,10 @@ async function loadSettings() {
                     <input type="number" class="form-control" id="skill-${guild.id}" value="${guild.max_starting_skill}" min="1" max="99" style="max-width: 100px;">
                 </td>
                 <td>
-                    <button class="btn btn-primary btn-sm" onclick="saveSettings('${guild.id}')">Save</button>
+                    <div class="btn-group">
+                        <button class="btn btn-primary btn-sm" onclick="saveSettings('${guild.id}')">Save</button>
+                        <button class="btn btn-secondary btn-sm" onclick="openSoundSettings('${guild.id}', '${escapeHtml(guild.name).replace(/'/g, "\\'")}')">Sounds</button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -312,6 +354,169 @@ async function saveSettings(guildId) {
     } catch (error) {
         console.error('Error:', error);
         alert("An error occurred while saving.");
+    }
+}
+
+// Sound Settings Logic
+
+async function fetchSoundData() {
+    try {
+        const response = await fetch('/api/game/sounds/data');
+        const data = await response.json();
+        soundFiles = data.files || [];
+        soundSettingsData = data.settings || {};
+    } catch (e) {
+        console.error("Error fetching sound data", e);
+    }
+}
+
+async function openSoundSettings(guildId, guildName) {
+    currentSoundGuildId = guildId;
+    const modalEl = document.getElementById('soundSettingsModal');
+    const modal = new bootstrap.Modal(modalEl);
+
+    document.getElementById('soundSettingsModalLabel').innerText = `Sound Settings: ${guildName}`;
+    document.getElementById('soundSettingsGuildId').value = guildId;
+
+    await fetchSoundData();
+    renderSoundUI();
+
+    modal.show();
+}
+
+function renderSoundUI() {
+    const defaultContainer = document.getElementById('defaultSoundsContainer');
+    const skillContainer = document.getElementById('skillSoundsContainer');
+    defaultContainer.innerHTML = '';
+    skillContainer.innerHTML = '';
+
+    const guildSettings = soundSettingsData[currentSoundGuildId] || { default: {}, skills: {} };
+    const defaultSettings = guildSettings.default || {};
+    const skillSettings = guildSettings.skills || {};
+
+    // Default Sounds
+    const tiers = ['Critical Success', 'Extreme Success', 'Hard Success', 'Regular Success', 'Fail', 'Fumble'];
+    const tierKeys = ['critical', 'extreme', 'hard', 'regular', 'fail', 'fumble'];
+
+    tierKeys.forEach((key, index) => {
+        const col = document.createElement('div');
+        col.className = 'col-md-4';
+        const label = tiers[index];
+        const value = defaultSettings[key] || '';
+
+        col.innerHTML = `
+            <label class="form-label text-info">${label}</label>
+            <select class="form-select bg-secondary text-light border-secondary" id="default-${key}">
+                <option value="">(None)</option>
+                ${soundFiles.map(f => `<option value="${escapeHtml(f)}" ${f === value ? 'selected' : ''}>${escapeHtml(f)}</option>`).join('')}
+            </select>
+        `;
+        defaultContainer.appendChild(col);
+    });
+
+    // Skill Sounds
+    Object.keys(skillSettings).forEach(skillName => {
+        addSkillSoundRow(skillName, skillSettings[skillName]);
+    });
+}
+
+function addSkillSoundRow(skillName = '', values = {}) {
+    const container = document.getElementById('skillSoundsContainer');
+    const rowId = 'skill-row-' + Date.now() + Math.random().toString(36).substr(2, 5);
+
+    const row = document.createElement('div');
+    row.className = 'card bg-secondary mb-3 border-dark skill-sound-row';
+    row.id = rowId;
+
+    const tierKeys = ['critical', 'extreme', 'hard', 'regular', 'fail', 'fumble'];
+    const tiers = ['Critical', 'Extreme', 'Hard', 'Regular', 'Fail', 'Fumble']; // Shortened
+
+    let dropdownsHtml = '';
+    tierKeys.forEach((key, index) => {
+        const val = values[key] || '';
+        dropdownsHtml += `
+            <div class="col-md-2 mb-2">
+                <label class="form-label small text-light">${tiers[index]}</label>
+                <select class="form-select form-select-sm bg-dark text-light border-secondary skill-tier-select" data-tier="${key}">
+                    <option value="">(Default)</option>
+                    ${soundFiles.map(f => `<option value="${escapeHtml(f)}" ${f === val ? 'selected' : ''}>${escapeHtml(f)}</option>`).join('')}
+                </select>
+            </div>
+        `;
+    });
+
+    row.innerHTML = `
+        <div class="card-body p-2">
+            <div class="row align-items-center mb-2">
+                <div class="col-md-10">
+                    <input type="text" class="form-control bg-dark text-light border-secondary skill-name-input" placeholder="Skill Name (e.g. Fighting (Brawl))" value="${escapeHtml(skillName)}">
+                </div>
+                <div class="col-md-2 text-end">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+            <div class="row g-2">
+                ${dropdownsHtml}
+            </div>
+        </div>
+    `;
+
+    container.appendChild(row);
+}
+
+async function saveSoundSettings() {
+    if (!currentSoundGuildId) return;
+
+    const defaults = {};
+    ['critical', 'extreme', 'hard', 'regular', 'fail', 'fumble'].forEach(key => {
+        const val = document.getElementById(`default-${key}`).value;
+        if (val) defaults[key] = val;
+    });
+
+    const skills = {};
+    const rows = document.querySelectorAll('.skill-sound-row');
+    rows.forEach(row => {
+        const nameInput = row.querySelector('.skill-name-input');
+        const name = nameInput.value.trim();
+        if (!name) return; // Skip empty names
+
+        const rules = {};
+        row.querySelectorAll('.skill-tier-select').forEach(select => {
+            const tier = select.dataset.tier;
+            const val = select.value;
+            if (val) rules[tier] = val;
+        });
+
+        if (Object.keys(rules).length > 0) {
+            skills[name] = rules;
+        }
+    });
+
+    const payload = {
+        guild_id: currentSoundGuildId,
+        default: defaults,
+        skills: skills
+    };
+
+    try {
+        const response = await fetch('/api/game/sounds/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const res = await response.json();
+        if (res.status === 'success') {
+            alert("Settings saved successfully!");
+            // Hide modal
+            const modalEl = document.getElementById('soundSettingsModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+        } else {
+            alert("Error saving settings: " + res.message);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error saving settings.");
     }
 }
 </script>
