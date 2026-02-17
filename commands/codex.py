@@ -18,7 +18,8 @@ from loadnsave import (
     load_monsters_data, load_deities_data, load_spells_data, load_settings,
     load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
     load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
-    load_inventions_data, load_years_data, load_weapons_data, load_occupations_data
+    load_inventions_data, load_years_data, load_weapons_data, load_occupations_data,
+    load_player_stats, save_player_stats
 )
 from rapidfuzz import process, fuzz
 
@@ -876,6 +877,11 @@ class RenderView(discord.ui.View):
         self.type_slug = type_slug
         self.message = None
 
+        if self.type_slug == "weapon":
+             btn = discord.ui.Button(label="Add to Inventory", style=discord.ButtonStyle.success, emoji="🎒", row=1)
+             btn.callback = self.add_to_inventory_button
+             self.add_item(btn)
+
     @discord.ui.button(label="📜 View Poster", style=discord.ButtonStyle.secondary)
     async def poster_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Allow anyone to view poster? Or just author? Let's check ctx.author.
@@ -889,6 +895,32 @@ class RenderView(discord.ui.View):
         url = f"/render/{self.type_slug}?name={quoted_name}"
 
         await self.cog._render_poster(self.ctx, url, self.name, self.type_slug, interaction=interaction)
+
+    async def add_to_inventory_button(self, interaction: discord.Interaction):
+        if not interaction.guild:
+             return await interaction.response.send_message("This action can only be performed in a server.", ephemeral=True)
+
+        server_id = str(interaction.guild.id)
+        user_id = str(interaction.user.id)
+
+        player_stats = await load_player_stats()
+
+        if server_id not in player_stats or user_id not in player_stats[server_id]:
+            return await interaction.response.send_message("You don't have an investigator! Use `/newinvestigator` to create one.", ephemeral=True)
+
+        char_data = player_stats[server_id][user_id]
+
+        if "Backstory" not in char_data:
+            char_data["Backstory"] = {}
+
+        if "Gear and Possessions" not in char_data["Backstory"]:
+            char_data["Backstory"]["Gear and Possessions"] = []
+
+        char_data["Backstory"]["Gear and Possessions"].append(self.name)
+
+        await save_player_stats(player_stats)
+
+        await interaction.response.send_message(f"Added **{self.name}** to your inventory (Gear and Possessions).", ephemeral=True)
 
     async def on_timeout(self):
         # Disable buttons
