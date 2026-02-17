@@ -56,7 +56,7 @@ async function loadFonts() {
             // Create font-face dynamically for preview
             // Replace non-alphanumeric in font name for safe CSS identifier
             const fontName = font.replace(/[^a-zA-Z0-9]/g, '_');
-            const fontUrl = `/static/fonts/${font}`;
+            const fontUrl = `/fonts/${font}`;
 
             // Check if style already exists (to avoid duplicates on reload)
             if (!document.getElementById(`style-${fontName}`)) {
