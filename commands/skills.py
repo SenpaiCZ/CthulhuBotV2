@@ -18,6 +18,7 @@ RESTRICTED_SKILLS = {
 class AddSkillModal(ui.Modal, title="Add Custom Skill"):
     skill_name = ui.TextInput(label="Skill Name", placeholder="e.g. Drive (Tank)", min_length=1, max_length=100)
     skill_value = ui.TextInput(label="Starting Value", placeholder="e.g. 40", min_length=1, max_length=3)
+    emoji_input = ui.TextInput(label="Emoji (Optional)", placeholder="Paste emoji here", required=False, max_length=5)
 
     def __init__(self, bot):
         super().__init__()
@@ -64,9 +65,21 @@ class AddSkillModal(ui.Modal, title="Add Custom Skill"):
 
         # Add Skill
         player_stats[server_id][user_id][skill_name] = skill_value
+
+        # Handle Emoji
+        emoji_char = self.emoji_input.value.strip()
+        if emoji_char:
+            if "Custom Emojis" not in user_stats:
+                player_stats[server_id][user_id]["Custom Emojis"] = {}
+            player_stats[server_id][user_id]["Custom Emojis"][skill_name] = emoji_char
+
         await save_player_stats(player_stats)
 
-        await interaction.response.send_message(f"Added skill **{skill_name}** with value **{skill_value}**.", ephemeral=True)
+        msg = f"Added skill **{skill_name}** with value **{skill_value}**."
+        if emoji_char:
+            msg += f" Emoji: {emoji_char}"
+
+        await interaction.response.send_message(msg, ephemeral=True)
 
 class RemoveSkillView(ui.View):
     def __init__(self, skill_name, user_id, confirm_callback):
