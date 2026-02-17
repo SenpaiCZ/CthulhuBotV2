@@ -11,6 +11,14 @@ from loadnsave import load_karma_settings, save_karma_settings, load_karma_stats
 class Karma(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.ctx_menu = app_commands.ContextMenu(
+            name='Check Karma',
+            callback=self.karma_context_menu,
+        )
+        self.bot.tree.add_command(self.ctx_menu)
+
+    def cog_unload(self):
+        self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
 
     async def get_guild_settings(self, guild_id):
         settings = await load_karma_settings()
@@ -384,7 +392,6 @@ class Karma(commands.Cog):
 
         await self._send_karma_response(interaction, user)
 
-    @app_commands.context_menu(name="Check Karma")
     async def karma_context_menu(self, interaction: discord.Interaction, user: discord.User):
         await self._send_karma_response(interaction, user)
 
