@@ -556,15 +556,33 @@ class Roll(commands.Cog):
 
         choices = []
         if server_id in player_stats and user_id in player_stats[server_id]:
-            for stat, value in player_stats[server_id][user_id].items():
-                choices.append(f"{stat} ({value})")
+            stats = player_stats[server_id][user_id]
+            valid_stats = []
+            # Keys to exclude from rolling
+            ignored_keys = [
+                "NAME", "Name", "Residence", "Occupation", "Game Mode",
+                "Archetype", "Archetype Info", "Backstory", "Custom Emojis",
+                "Age", "Move", "Build", "Damage Bonus", "Bonus Damage",
+                "CustomSkill", "CustomSkills", "CustomSkillss", "Occupation Info"
+            ]
+
+            for k, v in stats.items():
+                if k in ignored_keys: continue
+                # Only include numeric values (rolls need numbers)
+                if isinstance(v, (int, float)):
+                    valid_stats.append((k, v))
+
+            # Sort by value descending (highest skill first)
+            valid_stats.sort(key=lambda x: x[1], reverse=True)
+
+            choices = [f"{k} ({v})" for k, v in valid_stats]
         else:
             skills_data = await load_skills_data()
-            choices = list(skills_data.keys())
+            choices = sorted(list(skills_data.keys()))
 
         if not current:
-            sorted_choices = sorted(choices)[:25]
-            return [app_commands.Choice(name=c[:100], value=c[:100]) for c in sorted_choices]
+            # Already sorted by value if we had stats
+            return [app_commands.Choice(name=c[:100], value=c[:100]) for c in choices[:25]]
 
         matches = process.extract(current, choices, scorer=fuzz.WRatio, limit=25)
         results = []

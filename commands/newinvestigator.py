@@ -1024,7 +1024,6 @@ class newinvestigator(commands.Cog):
             "Move": 0, "Build": 0, "Damage Bonus": 0,
             "Age": 0,
             "Occupation": "Unknown", "Credit Rating": 0, "Game Mode": "Call of Cthulhu",
-            "CustomSkill": 0, "CustomSkills": 0, "CustomSkillss": 0,
             "Backstory": {'Pulp Talents': []}, "Custom Emojis": {},
             **BASE_SKILLS
         }

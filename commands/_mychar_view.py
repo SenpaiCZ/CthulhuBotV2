@@ -311,6 +311,10 @@ class CharacterDashboardView(View):
         return sorted(skills, key=lambda item: item[0])
 
     def _get_skill_emoji(self, skill_name):
+        custom_emojis = self.char_data.get("Custom Emojis", {})
+        if skill_name in custom_emojis:
+            return custom_emojis[skill_name]
+
         if skill_name in stat_emojis:
             return stat_emojis[skill_name]
 
