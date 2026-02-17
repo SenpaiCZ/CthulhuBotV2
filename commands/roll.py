@@ -12,7 +12,9 @@ from loadnsave import (
     load_session_data,
     save_session_data,
     load_luck_stats,
-    load_skills_data
+    load_skills_data,
+    load_skill_sound_settings,
+    load_server_volumes
 )
 from emojis import get_stat_emoji
 from support_functions import session_success
@@ -482,6 +484,80 @@ class Roll(commands.Cog):
             else: final_roll = possible_rolls[0] # Should only be 1
 
             result_text, result_tier = self.calculate_roll_result(final_roll, current_value)
+
+            # Sound Logic
+            try:
+                if ctx.guild and ctx.guild.voice_client and ctx.guild.voice_client.is_connected():
+                    # Check settings
+                    sound_settings = await load_skill_sound_settings()
+                    guild_settings = sound_settings.get(server_id, {})
+
+                    tier_map = {
+                        5: 'critical',
+                        4: 'extreme',
+                        3: 'hard',
+                        2: 'regular',
+                        1: 'fail',
+                        0: 'fumble'
+                    }
+                    result_key = tier_map.get(result_tier)
+
+                    if result_key:
+                        sound_file = None
+                        # 1. Check Specific Skill
+                        if 'skills' in guild_settings and stat_name in guild_settings['skills']:
+                             sound_file = guild_settings['skills'][stat_name].get(result_key)
+
+                        # 2. Check Default
+                        if not sound_file and 'default' in guild_settings:
+                             sound_file = guild_settings['default'].get(result_key)
+
+                        if sound_file:
+                             # Import inside function to avoid potential circular dependency issues at top level if any
+                             # though we already established it might be safe, being cautious.
+                             from dashboard.app import guild_mixers, SOUNDBOARD_FOLDER
+                             import os
+
+                             mixer = guild_mixers.get(server_id)
+                             # If no mixer exists for this guild yet, we should create one?
+                             # Usually created by Music cog or Soundboard join.
+                             # If user manually joined bot but didn't play anything, mixer might not exist.
+                             if not mixer:
+                                 from dashboard.audio_mixer import MixingAudioSource
+                                 mixer = MixingAudioSource()
+                                 guild_mixers[server_id] = mixer
+
+                             full_path = os.path.join(SOUNDBOARD_FOLDER, sound_file)
+                             if os.path.exists(full_path):
+                                 # Check if voice_client is playing mixer
+                                 vc = ctx.guild.voice_client
+                                 is_playing_mixer = False
+                                 if vc.is_playing() and isinstance(vc.source, discord.PCMVolumeTransformer):
+                                     if vc.source.original == mixer:
+                                         is_playing_mixer = True
+
+                                 if not is_playing_mixer:
+                                     # If not playing mixer, we should play it.
+                                     # Stop whatever is playing (if anything)
+                                     if vc.is_playing():
+                                         vc.stop()
+
+                                     source = discord.PCMVolumeTransformer(mixer, volume=1.0)
+                                     vc.play(source)
+
+                                 # Get Volume
+                                 volumes = await load_server_volumes()
+                                 vol_data = volumes.get(server_id, {'music': 1.0, 'soundboard': 0.5})
+                                 sb_vol = vol_data.get('soundboard', 0.5)
+
+                                 mixer.add_track(
+                                     full_path,
+                                     volume=sb_vol,
+                                     loop=False,
+                                     metadata={'type': 'soundboard', 'trigger': 'roll'}
+                                 )
+            except Exception as e:
+                print(f"Error playing roll sound: {e}")
 
             luck_threshold = (await load_luck_stats()).get(server_id, 10)
 
