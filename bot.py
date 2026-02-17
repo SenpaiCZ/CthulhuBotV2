@@ -43,6 +43,7 @@ async def main():
   async with bot:
     await load()
 
+    server_task = None
     # Start Dashboard if enabled
     if settings.get("enable_dashboard", False):
         print(f"Starting Dashboard on port {settings.get('dashboard_port', 5000)}...")
@@ -50,15 +51,25 @@ async def main():
         config = Config()
         config.bind = [f"0.0.0.0:{settings.get('dashboard_port', 5000)}"]
         # Run Hypercorn in the background
-        asyncio.create_task(serve(app, config))
+        server_task = asyncio.create_task(serve(app, config))
         print(f"Dashboard accessible at http://127.0.0.1:{settings.get('dashboard_port', 5000)}")
     
-    # Ensure token exists before starting
-    if settings.get("token"):
-        TOKEN = settings["token"]
-        await bot.start(TOKEN)
-    else:
-        print("Error: Bot token not found in settings or environment variables.")
+    try:
+        # Ensure token exists before starting
+        if settings.get("token"):
+            TOKEN = settings["token"]
+            await bot.start(TOKEN)
+        else:
+            print("Error: Bot token not found in settings or environment variables.")
+    finally:
+        if server_task:
+            print("Stopping Dashboard...")
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+            print("Dashboard stopped.")
 
 if __name__ == "__main__":
     asyncio.run(main())
