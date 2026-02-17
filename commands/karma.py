@@ -634,7 +634,7 @@ class KarmaRoleSelectView(View):
 
 
 class KarmaThresholdModal(discord.ui.Modal, title="Karma Threshold"):
-    amount = discord.ui.TextInput(label="Karma Amount", placeholder="e.g. 10", required=True, min_length=1, max_length=5)
+    amount = discord.ui.Label(text="Karma Amount", component=discord.ui.TextInput(placeholder="e.g. 10", required=True, min_length=1, max_length=5))
 
     def __init__(self, role, bot):
         super().__init__()
@@ -643,7 +643,7 @@ class KarmaThresholdModal(discord.ui.Modal, title="Karma Threshold"):
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            amount_val = int(self.amount.value.strip())
+            amount_val = int(self.amount.component.value.strip())
 
             # Save
             settings = await load_karma_settings()
@@ -775,8 +775,8 @@ class KarmaSetupChannelView(View):
         await interaction.response.send_modal(KarmaSetupEmojiModal(self.bot, self.user, self.channel_id))
 
 class KarmaSetupEmojiModal(discord.ui.Modal, title="Karma Emojis"):
-    upvote = discord.ui.TextInput(label="Upvote Emoji", placeholder="e.g. 👌 or :custom:", required=True, max_length=50)
-    downvote = discord.ui.TextInput(label="Downvote Emoji", placeholder="e.g. 🤏 or :custom:", required=True, max_length=50)
+    upvote = discord.ui.Label(text="Upvote Emoji", component=discord.ui.TextInput(placeholder="e.g. 👌 or :custom:", required=True, max_length=50))
+    downvote = discord.ui.Label(text="Downvote Emoji", component=discord.ui.TextInput(placeholder="e.g. 🤏 or :custom:", required=True, max_length=50))
 
     def __init__(self, bot, user, channel_id):
         super().__init__()
@@ -787,9 +787,9 @@ class KarmaSetupEmojiModal(discord.ui.Modal, title="Karma Emojis"):
     async def on_submit(self, interaction: discord.Interaction):
         # Move to next step: Notification Channel
         await interaction.response.send_message(
-            f"Emojis set: {self.upvote.value} / {self.downvote.value}.\n"
+            f"Emojis set: {self.upvote.component.value} / {self.downvote.component.value}.\n"
             "Now, select a **Notification Channel** for rank updates (or skip to disable).",
-            view=KarmaSetupNotifyView(self.bot, self.user, self.channel_id, self.upvote.value, self.downvote.value),
+            view=KarmaSetupNotifyView(self.bot, self.user, self.channel_id, self.upvote.component.value, self.downvote.component.value),
             ephemeral=True
         )
 

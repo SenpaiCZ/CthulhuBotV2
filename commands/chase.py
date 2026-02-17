@@ -244,8 +244,8 @@ class ChaseSetupView(View):
         await self.cog.initialize_chase(self.ctx, self.environment, self.mode, interaction)
 
 class AddNPCModal(Modal, title="Add NPC Threat"):
-    name = TextInput(label="Name", placeholder="Cultist Leader")
-    stats = TextInput(label="Stats (MOV, DEX, STR, CON)", placeholder="8, 60, 50, 50", required=False)
+    name = discord.ui.Label(text="Name", component=TextInput(placeholder="Cultist Leader"))
+    stats = discord.ui.Label(text="Stats (MOV, DEX, STR, CON)", component=TextInput(placeholder="8, 60, 50, 50", required=False))
 
     def __init__(self, cog, session_key):
         super().__init__()
@@ -259,8 +259,8 @@ class AddNPCModal(Modal, title="Add NPC Threat"):
             await interaction.response.send_message("Session not found.", ephemeral=True)
             return
 
-        name = self.name.value
-        stats_str = self.stats.value
+        name = self.name.component.value
+        stats_str = self.stats.component.value
         mov, dex, strength, con = 8, 50, 50, 50
 
         if stats_str:

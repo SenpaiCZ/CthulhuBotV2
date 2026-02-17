@@ -17,13 +17,12 @@ class BackstoryAddModal(discord.ui.Modal):
         self.player_stats = player_stats_ref
 
         self.entry = discord.ui.TextInput(
-            label=f"New entry for {category}"[:45],
             style=discord.TextStyle.paragraph,
             placeholder="Type your backstory details here...",
             required=True,
             max_length=4000
         )
-        self.add_item(self.entry)
+        self.add_item(discord.ui.Label(text=f"New entry for {category}"[:45], component=self.entry))
 
     async def on_submit(self, interaction: discord.Interaction):
         # Ensure data structure exists
