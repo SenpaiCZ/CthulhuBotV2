@@ -1,7 +1,53 @@
 import discord, random
 from discord.ext import commands
 from discord import app_commands
+from loadnsave import load_player_stats, save_player_stats
 
+class BackstoryGenerationButton(discord.ui.Button):
+    def __init__(self, category, content):
+        super().__init__(style=discord.ButtonStyle.secondary, label=f"Add to {category}")
+        self.category = category
+        self.content = content
+
+    async def callback(self, interaction: discord.Interaction):
+        view: BackstoryGenerationView = self.view
+        if interaction.user != view.user:
+            await interaction.response.send_message("This isn't for you!", ephemeral=True)
+            return
+
+        server_id = str(interaction.guild.id)
+        user_id = str(interaction.user.id)
+
+        player_stats = await load_player_stats()
+
+        if server_id not in player_stats or user_id not in player_stats[server_id]:
+             await interaction.response.send_message("Error: Investigator not found. Please create one first.", ephemeral=True)
+             return
+
+        if "Backstory" not in player_stats[server_id][user_id]:
+            player_stats[server_id][user_id]["Backstory"] = {}
+
+        if self.category not in player_stats[server_id][user_id]["Backstory"]:
+            player_stats[server_id][user_id]["Backstory"][self.category] = []
+
+        player_stats[server_id][user_id]["Backstory"][self.category].append(self.content)
+        await save_player_stats(player_stats)
+
+        await interaction.response.send_message(f"✅ Added to **{self.category}**.", ephemeral=True)
+
+        self.disabled = True
+        await interaction.message.edit(view=view)
+
+class BackstoryGenerationView(discord.ui.View):
+    def __init__(self, user, ideology, people, location, possession, trait):
+        super().__init__(timeout=900)
+        self.user = user
+
+        self.add_item(BackstoryGenerationButton("Ideology and Beliefs", ideology))
+        self.add_item(BackstoryGenerationButton("Significant People", people))
+        self.add_item(BackstoryGenerationButton("Meaningful Locations", location))
+        self.add_item(BackstoryGenerationButton("Treasured Possessions", possession))
+        self.add_item(BackstoryGenerationButton("Traits", trait))
 
 class generatebackstory(commands.Cog):
 
@@ -144,12 +190,23 @@ class generatebackstory(commands.Cog):
       embed = discord.Embed(title="Character Backstory Generator", color=0x00ff00)
       embed.add_field(name=":biting_lip: Personal Description (chose one):", value=personal_description_text, inline=False)
       embed.add_field(name=":church: Ideology/Beliefs:", value=selected_ideology_beliefs, inline=False)
-      embed.add_field(name=":bust_in_silhouette: Significant People:", value=f":grey_question: First, who?\n {selected_significant_people_first}\n :grey_question: Why?\n {selected_significant_people_why}", inline=False)
+
+      significant_people_content = f":grey_question: First, who?\n {selected_significant_people_first}\n :grey_question: Why?\n {selected_significant_people_why}"
+      embed.add_field(name=":bust_in_silhouette: Significant People:", value=significant_people_content, inline=False)
       embed.add_field(name=":map: Meaningful Locations:", value=selected_meaningful_locations, inline=False)
       embed.add_field(name=":gem: Treasured Possessions:", value=selected_treasured_possessions, inline=False)
       embed.add_field(name=":beginner: Traits:", value=selected_traits, inline=False)
   
-      await interaction.response.send_message(embed=embed, ephemeral=True)
+      view = BackstoryGenerationView(
+          user=interaction.user,
+          ideology=selected_ideology_beliefs,
+          people=significant_people_content,
+          location=selected_meaningful_locations,
+          possession=selected_treasured_possessions,
+          trait=selected_traits
+      )
+
+      await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
 async def setup(bot):
