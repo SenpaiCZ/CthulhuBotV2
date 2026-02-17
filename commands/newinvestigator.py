@@ -842,10 +842,15 @@ class SkillPointAllocationView(View):
         options = []
         for s in page_items:
             val = self.char_data.get(s, 0)
-            emoji_char = self.char_data.get("Custom Emojis", {}).get(s) or emojis.get_stat_emoji(s)
-            # Convert shortcodes to unicode for SelectOption
-            if emoji_char:
-                emoji_char = emoji.emojize(emoji_char, language='alias')
+
+            # Special handling for Language skills to avoid flag issues
+            if s.startswith("Language"):
+                emoji_char = emoji.emojize(":lips:", language='alias')
+            else:
+                emoji_char = self.char_data.get("Custom Emojis", {}).get(s) or emojis.get_stat_emoji(s)
+                # Convert shortcodes to unicode for SelectOption
+                if emoji_char:
+                    emoji_char = emoji.emojize(emoji_char, language='alias')
 
             label = f"{s}: {val}%"
             if len(label) > 100: label = label[:97] + "..."
@@ -922,7 +927,12 @@ class SkillPointAllocationView(View):
         page_text = ""
         for s in page_items:
             val = self.char_data.get(s, 0)
-            emoji_char = self.char_data.get("Custom Emojis", {}).get(s) or emojis.get_stat_emoji(s)
+
+            if s.startswith("Language"):
+                emoji_char = ":lips:"
+            else:
+                emoji_char = self.char_data.get("Custom Emojis", {}).get(s) or emojis.get_stat_emoji(s)
+
             line = f"**{s}**: {val}%"
             if emoji_char:
                  line = f"{emoji_char} {line}"
