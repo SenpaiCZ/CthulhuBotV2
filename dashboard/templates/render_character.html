@@ -318,6 +318,7 @@
 
             {% for section in backstory_order %}
                 {% if section in char_backstory %}
+                    {% if section != 'Pulp Talents' or (char.get('Game Mode') == 'Pulp of Cthulhu' or 'pulp' in (char.get('Game Mode')|default('')|lower)) %}
                     <div class="col-12 mb-3">
                         <div class="coc-label" style="font-size: 1em; border-bottom: 1px solid #333; margin-bottom: 5px;">{{ section }}</div>
                         {% set entries = char_backstory[section] %}
@@ -329,6 +330,7 @@
                             <div class="text-white small" style="min-height: 1.2em;">&nbsp;</div>
                         {% endif %}
                     </div>
+                    {% endif %}
                 {% endif %}
             {% endfor %}
 

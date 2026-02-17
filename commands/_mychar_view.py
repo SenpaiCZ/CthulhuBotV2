@@ -286,7 +286,7 @@ class CharacterDashboardView(View):
             embed.add_field(name=key, value=content, inline=False)
 
         # Pulp Talents if applicable
-        if "Pulp Talents" in backstory:
+        if "Pulp Talents" in backstory and self.current_mode == "Pulp of Cthulhu":
             embed.add_field(name="🦸 Pulp Talents", value=format_entries(backstory["Pulp Talents"]), inline=False)
 
         return embed
