@@ -15,7 +15,7 @@ class MockContext:
         self.channel = interaction.channel
 
 class CombatView(View):
-    def __init__(self, interaction, char_data, weapon_db, player_stats, server_id, user_id):
+    def __init__(self, interaction, char_data, weapon_db, player_stats, server_id, user_id, initial_weapon_states=None):
         super().__init__(timeout=900) # 15 min timeout
         self.interaction = interaction
         self.char_data = char_data
@@ -29,16 +29,19 @@ class CombatView(View):
         self.active_weapon_idx = 0 if self.available_weapons else -1
 
         # Initial State
-        self.weapon_states = {} # key: idx, value: {ammo: int, jammed: bool}
-        if self.available_weapons:
-            for i, w_key in enumerate(self.available_weapons):
-                w_data = self.weapon_db.get(w_key, {})
-                cap_str = w_data.get("capacity", "0")
-                try:
-                    cap = int(str(cap_str).split("/")[0].strip()) # Handle "20/30"
-                except:
-                    cap = 0
-                self.weapon_states[i] = {"ammo": cap, "jammed": False, "cap": cap}
+        if initial_weapon_states:
+            self.weapon_states = initial_weapon_states
+        else:
+            self.weapon_states = {} # key: idx, value: {ammo: int, jammed: bool}
+            if self.available_weapons:
+                for i, w_key in enumerate(self.available_weapons):
+                    w_data = self.weapon_db.get(w_key, {})
+                    cap_str = w_data.get("capacity", "0")
+                    try:
+                        cap = int(str(cap_str).split("/")[0].strip()) # Handle "20/30"
+                    except:
+                        cap = 0
+                    self.weapon_states[i] = {"ammo": cap, "jammed": False, "cap": cap}
 
         self.message = None
         self.update_components()
@@ -191,10 +194,10 @@ class CombatView(View):
 
     # Callbacks
     async def brawl_callback(self, interaction: discord.Interaction):
-        await self.perform_roll(interaction, "Fighting (Brawl)")
+        await self.perform_roll(interaction, "Fighting (Brawl)", custom_title="Fighting (Brawl)")
 
     async def dodge_callback(self, interaction: discord.Interaction):
-        await self.perform_roll(interaction, "Dodge")
+        await self.perform_roll(interaction, "Dodge", custom_title="Dodge")
 
     async def maneuver_callback(self, interaction: discord.Interaction):
         await self.perform_roll(interaction, "Fighting (Brawl)", custom_title="Maneuver")
@@ -215,39 +218,16 @@ class CombatView(View):
         w_data = self.weapon_db.get(w_key, {})
         skill_name = self._get_firearm_skill(w_key)
 
-        # Malfunction Check
-        # Usually Malfunction is checked ON the roll result.
-        # But if the roll is >= malf number, it jams.
-        # We need to roll first.
-
         state["ammo"] -= 1
 
         # Perform Roll
-        # We need to intercept the roll result to check for malfunction
-        # But perform_roll uses RollResultView which displays the result.
-        # I'll create a wrapper or just use perform_roll and let the user see the number.
-        # But the malfunction state needs to be updated.
-        # So I have to implement the roll logic here to capture the dice value.
-
-        await self.perform_roll(interaction, skill_name, check_malfunction=True, malfunction_val=w_data.get("malfunction", "100"))
-
-        # Update view (ammo changed)
-        # Note: perform_roll sends a NEW message. We need to update THIS message too.
-        # Since perform_roll is async and handles response, we need to edit the original message afterwards.
-        # But `perform_roll` will likely defer or respond.
-        # If perform_roll responds, we can't edit `interaction.message` using `interaction.response` again.
-        # We must use `self.message.edit`.
-        if self.message:
-            await self.message.edit(embed=self.get_embed(), view=self)
+        await self.perform_roll(interaction, skill_name, custom_title=f"Shoot ({w_key})", check_malfunction=True, malfunction_val=w_data.get("malfunction", "100"))
 
     async def reload_callback(self, interaction: discord.Interaction):
         idx = self.active_weapon_idx
         state = self.weapon_states[idx]
         state["ammo"] = state["cap"]
-        state["jammed"] = False # Reloading usually clears or implies fixing? Rules say fixing is separate.
-        # But usually you reload a fresh mag. If it was jammed, maybe it stays jammed?
-        # CoC 7e: Fixing a jam takes 1d6 rounds or Mech Repair.
-        # For simplicity, Reload fills ammo. Fix Jam clears jam.
+        state["jammed"] = False
 
         await self._update_view(interaction)
         await interaction.followup.send(f"Reloaded **{self.available_weapons[idx]}**.", ephemeral=True)
@@ -295,14 +275,10 @@ class CombatView(View):
                 real_name = match[0]
                 skill_val = self.char_data[real_name]
             else:
-                # Default to base if not found? Or 0?
-                # For Firearms, base is usually 20 or 25.
-                # Let's just use 0 and warn.
                 real_name = skill_name
                 skill_val = self.char_data.get(skill_name, 0) # Fallback
 
         # Calculate Roll
-        # We duplicate logic slightly to capture the roll value for Malfunction
         ones = random.randint(0, 9)
         tens = random.choice([0, 10, 20, 30, 40, 50, 60, 70, 80, 90])
         roll_val = tens + ones
@@ -312,7 +288,6 @@ class CombatView(View):
         is_malfunction = False
         malf_limit = 100
         try:
-            # malf string can be range "96-100" or single "100"
             if "-" in str(malfunction_val):
                 parts = str(malfunction_val).split("-")
                 malf_limit = int(parts[0])
@@ -323,7 +298,6 @@ class CombatView(View):
 
         if check_malfunction and roll_val >= malf_limit:
             is_malfunction = True
-            # Update state
             self.weapon_states[self.active_weapon_idx]["jammed"] = True
 
         # Use RollResultView
@@ -345,7 +319,7 @@ class CombatView(View):
             tens_rolls=[tens],
             net_dice=0,
             result_tier=result_tier,
-            luck_threshold=10 # Simplified
+            luck_threshold=10
         )
 
         # Create Embed
@@ -366,11 +340,40 @@ class CombatView(View):
 
         embed = discord.Embed(description=desc, color=color)
 
-        if not interaction.response.is_done():
-            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-            view.message = await interaction.original_response()
-        else:
-            view.message = await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+        # 1. Send Public Roll Result to Channel
+        # Using interaction.channel.send ensures it is public.
+        # We attach the view (RollResultView) so buttons work (they use ctx.author check).
+        public_msg = await interaction.channel.send(embed=embed, view=view)
+        view.message = public_msg
+
+        # 2. Update Old Dashboard (Interaction Response)
+        # Replace it with a placeholder message.
+        action_text = f"You chose **{custom_title or skill_name}**."
+        try:
+            await interaction.response.edit_message(content=action_text, embed=None, view=None)
+        except discord.errors.InteractionResponded:
+            # Should not happen if this is the first response to the button click
+            pass
+        except Exception:
+            pass
+
+        # 3. Create New Dashboard (Ephemeral Followup)
+        # Pass the updated weapon_states to preserve ammo/jams.
+        new_view = CombatView(
+            interaction,
+            self.char_data,
+            self.weapon_db,
+            self.player_stats,
+            self.server_id,
+            self.user_id,
+            initial_weapon_states=self.weapon_states
+        )
+        # Set active weapon to match current
+        new_view.active_weapon_idx = self.active_weapon_idx
+        new_view.update_components() # Refresh components to reflect active weapon
+
+        new_msg = await interaction.followup.send(embed=new_view.get_embed(), view=new_view, ephemeral=True)
+        new_view.message = new_msg
 
 
 class Combat(commands.Cog):
