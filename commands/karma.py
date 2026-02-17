@@ -382,6 +382,13 @@ class Karma(commands.Cog):
         if user is None:
             user = interaction.user
 
+        await self._send_karma_response(interaction, user)
+
+    @app_commands.context_menu(name="Check Karma")
+    async def karma_context_menu(self, interaction: discord.Interaction, user: discord.User):
+        await self._send_karma_response(interaction, user)
+
+    async def _send_karma_response(self, interaction: discord.Interaction, user: discord.User):
         stats = await load_karma_stats()
         guild_id = str(interaction.guild_id)
         user_id = str(user.id)
