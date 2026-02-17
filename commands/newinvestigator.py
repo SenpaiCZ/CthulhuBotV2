@@ -491,12 +491,13 @@ class OccupationSelect(Select):
         await self.view.cog.assign_occupation_skills(interaction, self.view.char_data, self.view.player_stats, occupation_name, self.view.occupations_data[occupation_name])
 
 class PaginatedOccupationListView(View):
-    def __init__(self, cog, char_data, player_stats, occupations_data):
+    def __init__(self, cog, char_data, player_stats, occupations_data, sort_mode="points"):
         super().__init__(timeout=600)
         self.cog = cog
         self.char_data = char_data
         self.player_stats = player_stats
         self.occupations_data = occupations_data
+        self.sort_mode = sort_mode
         self.page = 0
 
         # Calculate points and sort
@@ -505,8 +506,11 @@ class PaginatedOccupationListView(View):
             pts = cog.calculate_occupation_points(char_data, info)
             self.sorted_list.append((name, pts))
 
-        # Sort descending by points, then alphabetical
-        self.sorted_list.sort(key=lambda x: (-x[1], x[0]))
+        if sort_mode == "alpha":
+            self.sorted_list.sort(key=lambda x: x[0])
+        else:
+            # Sort descending by points, then alphabetical
+            self.sorted_list.sort(key=lambda x: (-x[1], x[0]))
 
         self.update_view()
 
@@ -564,7 +568,9 @@ class PaginatedOccupationListView(View):
             description = "No occupations found."
 
         max_pages = max(1, (len(self.sorted_list) - 1) // per_page + 1)
-        embed = discord.Embed(title="Occupations List", description=description, color=discord.Color.blue())
+
+        title_suffix = " (A-Z)" if self.sort_mode == "alpha" else " (Sorted by Points)"
+        embed = discord.Embed(title=f"Occupations List{title_suffix}", description=description, color=discord.Color.blue())
         embed.set_footer(text=f"Page {self.page + 1} / {max_pages} | Total: {len(self.sorted_list)}")
         return embed
 
@@ -603,9 +609,15 @@ class OccupationSearchStartView(View):
         await interaction.response.send_modal(modal)
     @discord.ui.button(label="Browse Occupations (Sorted)", style=discord.ButtonStyle.success, emoji="📜")
     async def browse(self, interaction: discord.Interaction, button: discord.ui.Button):
-        view = PaginatedOccupationListView(self.cog, self.char_data, self.player_stats, self.occupations_data)
+        view = PaginatedOccupationListView(self.cog, self.char_data, self.player_stats, self.occupations_data, sort_mode="points")
         embed = view.get_embed()
         await interaction.response.edit_message(content="Browsing Occupations (Sorted by Points):", embed=embed, view=view)
+
+    @discord.ui.button(label="Browse Occupations (A-Z)", style=discord.ButtonStyle.secondary, emoji="🔤")
+    async def browse_alpha(self, interaction: discord.Interaction, button: discord.ui.Button):
+        view = PaginatedOccupationListView(self.cog, self.char_data, self.player_stats, self.occupations_data, sort_mode="alpha")
+        embed = view.get_embed()
+        await interaction.response.edit_message(content="Browsing Occupations (A-Z):", embed=embed, view=view)
 
 # ==============================================================================
 # 6. Views (Skill Assignment)
