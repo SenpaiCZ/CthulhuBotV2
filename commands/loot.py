@@ -6,15 +6,15 @@ from discord.ui import View, Button
 from loadnsave import load_loot_settings, load_player_stats, save_player_stats
 
 class LootItemButton(discord.ui.Button):
-    def __init__(self, item_name, server_id, user_id):
+    def __init__(self, item_name, server_id, user_id=None):
         super().__init__(label=f"Take: {item_name}"[:80], style=discord.ButtonStyle.secondary, emoji="📥")
         self.item_name = item_name
         self.server_id = str(server_id)
-        self.user_id = str(user_id)
+        self.user_id = str(user_id) if user_id else None
 
     async def callback(self, interaction: discord.Interaction):
         # Verify user
-        if str(interaction.user.id) != self.user_id:
+        if self.user_id and str(interaction.user.id) != self.user_id:
             await interaction.response.send_message("This loot is not for you!", ephemeral=True)
             return
 
@@ -24,13 +24,14 @@ class LootItemButton(discord.ui.Button):
         if self.server_id not in player_stats:
             player_stats[self.server_id] = {}
 
-        if self.user_id not in player_stats[self.server_id]:
+        current_user_id = str(interaction.user.id)
+        if current_user_id not in player_stats[self.server_id]:
              # Create basic structure if missing (though usually user should have character)
              # But let's fail gracefully if no character
              await interaction.response.send_message("You don't have an investigator to give this to. Use `/newinvestigator` first.", ephemeral=True)
              return
 
-        user_stats = player_stats[self.server_id][self.user_id]
+        user_stats = player_stats[self.server_id][current_user_id]
 
         if "Backstory" not in user_stats:
             user_stats["Backstory"] = {}
@@ -179,12 +180,53 @@ class LootView(discord.ui.View):
             except:
                 pass
 
+class LootCustomView(discord.ui.View):
+    def __init__(self, items, server_id):
+        super().__init__(timeout=None)
+        self.items = items
+        self.server_id = str(server_id)
+
+        for item in items:
+            self.add_item(LootItemButton(item, server_id, user_id=None))
+
+class LootCustomModal(discord.ui.Modal, title="Create Custom Loot"):
+    items = discord.ui.TextInput(
+        label="Items (one per line)",
+        style=discord.TextStyle.paragraph,
+        placeholder="A Mysterious Sword\nHealing Potion\nOld Map",
+        required=True,
+        max_length=2000
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # Parse items
+        items_text = self.items.value
+        items = [line.strip() for line in items_text.split('\n') if line.strip()]
+
+        if not items:
+            await interaction.response.send_message("You must provide at least one item.", ephemeral=True)
+            return
+
+        # Create View
+        view = LootCustomView(items, interaction.guild.id)
+
+        # Create Embed
+        embed = discord.Embed(title="Custom Loot Available", color=discord.Color.gold())
+        embed.description = "Items available for taking:"
+
+        for item in items:
+            embed.add_field(name=f"📦 {item}", value="\u200b", inline=False)
+
+        await interaction.response.send_message(embed=embed, view=view)
+
 class loot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="loot", description="Generate random loot from the 1920s.")
-    async def loot(self, interaction: discord.Interaction):
+    loot_group = app_commands.Group(name="loot", description="Loot related commands")
+
+    @loot_group.command(name="random", description="Generate random loot from the 1920s.")
+    async def loot_random(self, interaction: discord.Interaction):
         """
         Generate random loot from 1920s.
         """
@@ -243,6 +285,13 @@ class loot(commands.Cog):
         view = LootView(chosen_items, money_str, interaction.guild.id, interaction.user.id)
         msg = await interaction.followup.send(embed=embed, view=view)
         view.message = msg
+
+    @loot_group.command(name="custom", description="Create custom loot distribution.")
+    async def loot_custom(self, interaction: discord.Interaction):
+        """
+        Create a custom loot drop via a modal.
+        """
+        await interaction.response.send_modal(LootCustomModal())
 
 async def setup(bot):
     await bot.add_cog(loot(bot))
