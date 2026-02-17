@@ -30,8 +30,8 @@ class PollView(discord.ui.View):
             self.add_item(PollButton(label=label, index=i, poll_id=poll_id))
 
 class PollModal(ui.Modal, title="Create New Poll"):
-    question = ui.TextInput(label="Question", placeholder="What do you want to ask?", max_length=256)
-    options = ui.TextInput(label="Options (one per line)", style=discord.TextStyle.paragraph, placeholder="Option 1\nOption 2\nOption 3", max_length=2000, required=True)
+    question = ui.Label(text="Question", component=ui.TextInput(placeholder="What do you want to ask?", max_length=256))
+    options = ui.Label(text="Options (one per line)", component=ui.TextInput(style=discord.TextStyle.paragraph, placeholder="Option 1\nOption 2\nOption 3", max_length=2000, required=True))
 
     def __init__(self, cog, ctx):
         super().__init__()
@@ -40,7 +40,7 @@ class PollModal(ui.Modal, title="Create New Poll"):
 
     async def on_submit(self, interaction: discord.Interaction):
         # Parse options
-        raw_options = self.options.value.split('\n')
+        raw_options = self.options.component.value.split('\n')
         parsed_options = [opt.strip() for opt in raw_options if opt.strip()]
 
         if len(parsed_options) < 2:
@@ -51,7 +51,7 @@ class PollModal(ui.Modal, title="Create New Poll"):
             return
 
         # Proceed
-        await self.cog._create_poll_internal(self.ctx, self.question.value, parsed_options, interaction)
+        await self.cog._create_poll_internal(self.ctx, self.question.component.value, parsed_options, interaction)
 
 class Polls(commands.Cog):
     def __init__(self, bot):

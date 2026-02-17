@@ -19,13 +19,12 @@ class UpdateBackstoryModal(discord.ui.Modal):
         self.player_stats = player_stats_ref
 
         self.new_text = discord.ui.TextInput(
-            label="Edit content",
             style=discord.TextStyle.paragraph,
             default=item_text[:4000],
             required=True,
             max_length=4000
         )
-        self.add_item(self.new_text)
+        self.add_item(discord.ui.Label(text="Edit content", component=self.new_text))
 
     async def on_submit(self, interaction: discord.Interaction):
         # Refresh stats to be safe? Or rely on ref.

@@ -7,7 +7,7 @@ import emoji
 import occupation_emoji
 from discord.ext import commands
 from discord import app_commands
-from discord.ui import View, Button, Select, Modal, TextInput
+from discord.ui import View, Button, Select, Modal, TextInput, Label
 from loadnsave import (
     load_player_stats, save_player_stats,
     load_retired_characters_data, save_retired_characters_data,
@@ -116,10 +116,10 @@ BASE_SKILLS = ERA_SKILLS["1920s Era"]
 # ==============================================================================
 
 class BasicInfoModal(Modal, title="Investigator Details"):
-    name = TextInput(label="Name", placeholder="Enter character name...", max_length=100)
-    residence = TextInput(label="Residence", placeholder="e.g. Arkham", required=False, max_length=100)
-    age = TextInput(label="Age", placeholder="15-90", min_length=2, max_length=2)
-    language = TextInput(label="First Language", placeholder="e.g. English, French, Chinese...", max_length=50)
+    name = Label(text="Name", component=TextInput(placeholder="Enter character name...", max_length=100))
+    residence = Label(text="Residence", component=TextInput(placeholder="e.g. Arkham", required=False, max_length=100))
+    age = Label(text="Age", component=TextInput(placeholder="15-90", min_length=2, max_length=2))
+    language = Label(text="First Language", component=TextInput(placeholder="e.g. English, French, Chinese...", max_length=50))
 
     def __init__(self, cog, interaction, char_data, player_stats):
         super().__init__()
@@ -130,15 +130,15 @@ class BasicInfoModal(Modal, title="Investigator Details"):
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            age_val = int(self.age.value)
+            age_val = int(self.age.component.value)
             if not (15 <= age_val <= 90): raise ValueError
         except ValueError:
             await interaction.response.send_message("Age must be a number between 15 and 90.", ephemeral=True)
             return
-        self.char_data["NAME"] = self.name.value
-        self.char_data["Residence"] = self.residence.value if self.residence.value else "Unknown"
+        self.char_data["NAME"] = self.name.component.value
+        self.char_data["Residence"] = self.residence.component.value if self.residence.component.value else "Unknown"
         self.char_data["Age"] = age_val
-        self.char_data["First Language"] = self.language.value.strip() if self.language.value else "Own"
+        self.char_data["First Language"] = self.language.component.value.strip() if self.language.component.value else "Own"
         await self.cog.step_gamemode(interaction, self.char_data, self.player_stats)
 
 class RetireCharacterView(View):
@@ -328,7 +328,7 @@ class StatGenerationView(View):
         await self.cog.mode_forced(interaction, self.char_data, self.player_stats)
 
 class StatsBulkEntryModal(Modal, title="Enter Stats"):
-    stats_input = TextInput(label="Stats", style=discord.TextStyle.paragraph, placeholder="STR 60\nCON 70\nSIZ 50\n...", required=True)
+    stats_input = Label(text="Stats", component=TextInput(style=discord.TextStyle.paragraph, placeholder="STR 60\nCON 70\nSIZ 50\n...", required=True))
     def __init__(self, cog, interaction, char_data, player_stats, mode, expected_values=None):
         super().__init__()
         self.cog = cog
@@ -337,7 +337,7 @@ class StatsBulkEntryModal(Modal, title="Enter Stats"):
         self.mode = mode
         self.expected_values = expected_values
     async def on_submit(self, interaction: discord.Interaction):
-        content = self.stats_input.value
+        content = self.stats_input.component.value
         lines = content.splitlines()
         parsed = {}
         valid_stats = ["STR", "CON", "SIZ", "DEX", "APP", "INT", "POW", "EDU", "LUCK"]
@@ -457,7 +457,7 @@ class TalentOptionView(View):
 # ==============================================================================
 
 class OccupationSearchModal(Modal, title="Search Occupation"):
-    search_term = TextInput(label="Search", placeholder="e.g. Detective, Soldier...", min_length=2)
+    search_term = Label(text="Search", component=TextInput(placeholder="e.g. Detective, Soldier...", min_length=2))
     def __init__(self, cog, interaction, char_data, player_stats, occupations_data):
         super().__init__()
         self.cog = cog
@@ -465,7 +465,7 @@ class OccupationSearchModal(Modal, title="Search Occupation"):
         self.player_stats = player_stats
         self.occupations_data = occupations_data
     async def on_submit(self, interaction: discord.Interaction):
-        term = self.search_term.value.lower()
+        term = self.search_term.component.value.lower()
         matches = []
         for name, info in self.occupations_data.items():
             if term in name.lower(): matches.append(name)
@@ -612,7 +612,7 @@ class OccupationSearchStartView(View):
 # ==============================================================================
 
 class SkillPointSetModal(Modal, title="Set Skill Value"):
-    value_input = TextInput(label="New Total Value", placeholder="e.g. 50", min_length=1, max_length=3)
+    value_input = Label(text="New Total Value", component=TextInput(placeholder="e.g. 50", min_length=1, max_length=3))
 
     def __init__(self, view, skill_name, current_val, base_val):
         super().__init__()
@@ -620,12 +620,12 @@ class SkillPointSetModal(Modal, title="Set Skill Value"):
         self.skill_name = skill_name
         self.current_val = current_val
         self.base_val = base_val
-        self.value_input.label = f"Set {skill_name} (Base: {base_val})"
-        self.value_input.default = str(current_val)
+        self.value_input.text = f"Set {skill_name} (Base: {base_val})"
+        self.value_input.component.default = str(current_val)
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            new_val = int(self.value_input.value)
+            new_val = int(self.value_input.component.value)
         except ValueError:
             return await interaction.response.send_message("Please enter a valid number.", ephemeral=True)
 
@@ -652,8 +652,8 @@ class SkillPointSetModal(Modal, title="Set Skill Value"):
         await self.view.refresh(interaction)
 
 class SkillSpecializationModal(Modal, title="Add Specialization"):
-    spec_name = TextInput(label="Specialization Name", placeholder="e.g. Painting, Geology, German", min_length=2, max_length=30)
-    value_input = TextInput(label="Total Value", placeholder="e.g. 50", min_length=1, max_length=3)
+    spec_name = Label(text="Specialization Name", component=TextInput(placeholder="e.g. Painting, Geology, German", min_length=2, max_length=30))
+    value_input = Label(text="Total Value", component=TextInput(placeholder="e.g. 50", min_length=1, max_length=3))
 
     def __init__(self, view, parent_skill, base_val):
         super().__init__()
@@ -662,7 +662,7 @@ class SkillSpecializationModal(Modal, title="Add Specialization"):
         self.base_val = base_val
 
     async def on_submit(self, interaction: discord.Interaction):
-        name = self.spec_name.value.strip()
+        name = self.spec_name.component.value.strip()
         # Format: "Art/Craft (Painting)"
         # parent_skill is e.g. "Art/Craft (Any)" -> remove (Any)
         base_name = self.parent_skill.split("(")[0].strip()
@@ -672,7 +672,7 @@ class SkillSpecializationModal(Modal, title="Add Specialization"):
              return await interaction.response.send_message("You already have this specialization.", ephemeral=True)
 
         try:
-            new_val = int(self.value_input.value)
+            new_val = int(self.value_input.component.value)
         except ValueError:
              return await interaction.response.send_message("Invalid number.", ephemeral=True)
 
@@ -693,21 +693,21 @@ class SkillSpecializationModal(Modal, title="Add Specialization"):
         await self.view.refresh(interaction)
 
 class CustomSkillModal(Modal, title="Add Custom Skill"):
-    skill_name = TextInput(label="Skill Name", placeholder="e.g. Lore (Vampires)", min_length=2, max_length=40)
-    base_val = TextInput(label="Base Value (%)", placeholder="e.g. 05", min_length=1, max_length=2, default="05")
-    value_input = TextInput(label="Total Value (%)", placeholder="e.g. 50", min_length=1, max_length=3)
+    skill_name = Label(text="Skill Name", component=TextInput(placeholder="e.g. Lore (Vampires)", min_length=2, max_length=40))
+    base_val = Label(text="Base Value (%)", component=TextInput(placeholder="e.g. 05", min_length=1, max_length=2, default="05"))
+    value_input = Label(text="Total Value (%)", component=TextInput(placeholder="e.g. 50", min_length=1, max_length=3))
     # Emoji? Discord modals don't support file upload. Just text input for emoji char.
-    emoji_input = TextInput(label="Emoji (Optional)", placeholder="Paste emoji here", required=False, max_length=5)
+    emoji_input = Label(text="Emoji (Optional)", component=TextInput(placeholder="Paste emoji here", required=False, max_length=5))
 
     def __init__(self, view):
         super().__init__()
         self.view = view
 
     async def on_submit(self, interaction: discord.Interaction):
-        name = self.skill_name.value.strip()
+        name = self.skill_name.component.value.strip()
         try:
-            base = int(self.base_val.value)
-            val = int(self.value_input.value)
+            base = int(self.base_val.component.value)
+            val = int(self.value_input.component.value)
         except ValueError:
             return await interaction.response.send_message("Invalid numbers.", ephemeral=True)
 
@@ -730,10 +730,10 @@ class CustomSkillModal(Modal, title="Add Custom Skill"):
         self.view.all_skills.append(name)
         self.view.all_skills.sort()
 
-        if self.emoji_input.value:
+        if self.emoji_input.component.value:
              if "Custom Emojis" not in self.view.char_data:
                  self.view.char_data["Custom Emojis"] = {}
-             self.view.char_data["Custom Emojis"][name] = self.emoji_input.value.strip()
+             self.view.char_data["Custom Emojis"][name] = self.emoji_input.component.value.strip()
 
         await self.view.refresh(interaction)
 

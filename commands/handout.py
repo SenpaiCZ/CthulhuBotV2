@@ -40,11 +40,11 @@ class NewspaperModal(HandoutBaseModal):
     def __init__(self, bot, ctx):
         super().__init__(bot, ctx, "Newspaper Generator")
 
-    name = discord.ui.TextInput(label="Newspaper Name", placeholder="The Arkham Advertiser", default="The Arkham Advertiser", max_length=50)
-    city = discord.ui.TextInput(label="City", placeholder="Arkham", default="Arkham", max_length=50)
-    date_field = discord.ui.TextInput(label="Date", placeholder="October 24, 1929", default="October 24, 1929", max_length=30)
-    headline = discord.ui.TextInput(label="Headline", placeholder="MYSTERIOUS LIGHTS SEEN...", style=discord.TextStyle.paragraph, max_length=100)
-    body = discord.ui.TextInput(label="Article Body", placeholder="Residents were awoken...", style=discord.TextStyle.paragraph, max_length=2000)
+    name = discord.ui.Label(text="Newspaper Name", component=discord.ui.TextInput(placeholder="The Arkham Advertiser", default="The Arkham Advertiser", max_length=50))
+    city = discord.ui.Label(text="City", component=discord.ui.TextInput(placeholder="Arkham", default="Arkham", max_length=50))
+    date_field = discord.ui.Label(text="Date", component=discord.ui.TextInput(placeholder="October 24, 1929", default="October 24, 1929", max_length=30))
+    headline = discord.ui.Label(text="Headline", component=discord.ui.TextInput(placeholder="MYSTERIOUS LIGHTS SEEN...", style=discord.TextStyle.paragraph, max_length=100))
+    body = discord.ui.Label(text="Article Body", component=discord.ui.TextInput(placeholder="Residents were awoken...", style=discord.TextStyle.paragraph, max_length=2000))
 
     async def on_submit(self, interaction: discord.Interaction):
         width = random.randint(450, 650)
@@ -71,34 +71,34 @@ class NewspaperModal(HandoutBaseModal):
         clip_path = ", ".join(top + right + bottom + left)
 
         params = {
-            "name": self.name.value,
-            "city": self.city.value,
-            "date": self.date_field.value,
-            "headline": self.headline.value,
-            "body": self.body.value,
+            "name": self.name.component.value,
+            "city": self.city.component.value,
+            "date": self.date_field.component.value,
+            "headline": self.headline.component.value,
+            "body": self.body.component.value,
             "width": width,
             "clip_path": clip_path
         }
         query = urllib.parse.urlencode(params)
-        await self._render(interaction, f"/render/newspaper?{query}", self.headline.value[:50], "newspaper")
+        await self._render(interaction, f"/render/newspaper?{query}", self.headline.component.value[:50], "newspaper")
 
 class TelegramModal(HandoutBaseModal):
     def __init__(self, bot, ctx):
         super().__init__(bot, ctx, "Telegram Generator")
 
-    origin = discord.ui.TextInput(label="Origin", placeholder="ARKHAM", default="ARKHAM", max_length=50)
-    date_field = discord.ui.TextInput(label="Date", placeholder="OCT 24 1929", default="OCT 24 1929", max_length=30)
-    recipient = discord.ui.TextInput(label="Recipient", placeholder="INVESTIGATOR", default="INVESTIGATOR", max_length=50)
-    sender = discord.ui.TextInput(label="Sender", placeholder="UNKNOWN", default="UNKNOWN", max_length=50)
-    body = discord.ui.TextInput(label="Message", placeholder="STOP", style=discord.TextStyle.paragraph, max_length=500)
+    origin = discord.ui.Label(text="Origin", component=discord.ui.TextInput(placeholder="ARKHAM", default="ARKHAM", max_length=50))
+    date_field = discord.ui.Label(text="Date", component=discord.ui.TextInput(placeholder="OCT 24 1929", default="OCT 24 1929", max_length=30))
+    recipient = discord.ui.Label(text="Recipient", component=discord.ui.TextInput(placeholder="INVESTIGATOR", default="INVESTIGATOR", max_length=50))
+    sender = discord.ui.Label(text="Sender", component=discord.ui.TextInput(placeholder="UNKNOWN", default="UNKNOWN", max_length=50))
+    body = discord.ui.Label(text="Message", component=discord.ui.TextInput(placeholder="STOP", style=discord.TextStyle.paragraph, max_length=500))
 
     async def on_submit(self, interaction: discord.Interaction):
         params = {
-            "origin": self.origin.value,
-            "date": self.date_field.value,
-            "recipient": self.recipient.value,
-            "sender": self.sender.value,
-            "body": self.body.value
+            "origin": self.origin.component.value,
+            "date": self.date_field.component.value,
+            "recipient": self.recipient.component.value,
+            "sender": self.sender.component.value,
+            "body": self.body.component.value
         }
         query = urllib.parse.urlencode(params)
         await self._render(interaction, f"/render/telegram?{query}", "Telegram", "telegram")
@@ -107,17 +107,17 @@ class LetterModal(HandoutBaseModal):
     def __init__(self, bot, ctx):
         super().__init__(bot, ctx, "Letter Generator")
 
-    date_field = discord.ui.TextInput(label="Date", placeholder="October 24, 1929", default="October 24, 1929", max_length=50)
-    salutation = discord.ui.TextInput(label="Salutation", placeholder="Dear Friend,", default="Dear Friend,", max_length=50)
-    body = discord.ui.TextInput(label="Body", placeholder="I write to you...", style=discord.TextStyle.paragraph, max_length=2000)
-    signature = discord.ui.TextInput(label="Signature", placeholder="Sincerely, H.P.L.", default="Sincerely, H.P.L.", max_length=50)
+    date_field = discord.ui.Label(text="Date", component=discord.ui.TextInput(placeholder="October 24, 1929", default="October 24, 1929", max_length=50))
+    salutation = discord.ui.Label(text="Salutation", component=discord.ui.TextInput(placeholder="Dear Friend,", default="Dear Friend,", max_length=50))
+    body = discord.ui.Label(text="Body", component=discord.ui.TextInput(placeholder="I write to you...", style=discord.TextStyle.paragraph, max_length=2000))
+    signature = discord.ui.Label(text="Signature", component=discord.ui.TextInput(placeholder="Sincerely, H.P.L.", default="Sincerely, H.P.L.", max_length=50))
 
     async def on_submit(self, interaction: discord.Interaction):
         params = {
-            "date": self.date_field.value,
-            "salutation": self.salutation.value,
-            "body": self.body.value,
-            "signature": self.signature.value
+            "date": self.date_field.component.value,
+            "salutation": self.salutation.component.value,
+            "body": self.body.component.value,
+            "signature": self.signature.component.value
         }
         query = urllib.parse.urlencode(params)
         await self._render(interaction, f"/render/letter?{query}", "Letter", "letter")
@@ -127,11 +127,11 @@ class ScriptModal(HandoutBaseModal):
         super().__init__(bot, ctx, f"Script Generator ({font_name})")
         self.font_name = font_name
 
-    text = discord.ui.TextInput(label="Text to Transcribe", style=discord.TextStyle.paragraph, max_length=1000)
+    text = discord.ui.Label(text="Text to Transcribe", component=discord.ui.TextInput(style=discord.TextStyle.paragraph, max_length=1000))
 
     async def on_submit(self, interaction: discord.Interaction):
         params = {
-            "text": self.text.value,
+            "text": self.text.component.value,
             "font": self.font_name
         }
         query = urllib.parse.urlencode(params)

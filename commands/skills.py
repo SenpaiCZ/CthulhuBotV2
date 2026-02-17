@@ -16,9 +16,9 @@ RESTRICTED_SKILLS = {
 }
 
 class AddSkillModal(ui.Modal, title="Add Custom Skill"):
-    skill_name = ui.TextInput(label="Skill Name", placeholder="e.g. Drive (Tank)", min_length=1, max_length=100)
-    skill_value = ui.TextInput(label="Starting Value", placeholder="e.g. 40", min_length=1, max_length=3)
-    emoji_input = ui.TextInput(label="Emoji (Optional)", placeholder="Paste emoji here", required=False, max_length=5)
+    skill_name = ui.Label(text="Skill Name", component=ui.TextInput(placeholder="e.g. Drive (Tank)", min_length=1, max_length=100))
+    skill_value = ui.Label(text="Starting Value", component=ui.TextInput(placeholder="e.g. 40", min_length=1, max_length=3))
+    emoji_input = ui.Label(text="Emoji (Optional)", component=ui.TextInput(placeholder="Paste emoji here", required=False, max_length=5))
 
     def __init__(self, bot):
         super().__init__()
@@ -29,8 +29,8 @@ class AddSkillModal(ui.Modal, title="Add Custom Skill"):
             await interaction.response.send_message("This command is not allowed in DMs.", ephemeral=True)
             return
 
-        skill_name = self.skill_name.value.strip()
-        skill_value_str = self.skill_value.value.strip()
+        skill_name = self.skill_name.component.value.strip()
+        skill_value_str = self.skill_value.component.value.strip()
 
         # Validate Value
         if not skill_value_str.isdigit():
@@ -67,7 +67,7 @@ class AddSkillModal(ui.Modal, title="Add Custom Skill"):
         player_stats[server_id][user_id][skill_name] = skill_value
 
         # Handle Emoji
-        emoji_char = self.emoji_input.value.strip()
+        emoji_char = self.emoji_input.component.value.strip()
         if emoji_char:
             if "Custom Emojis" not in user_stats:
                 player_stats[server_id][user_id]["Custom Emojis"] = {}
