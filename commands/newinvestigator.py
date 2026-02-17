@@ -119,6 +119,7 @@ class BasicInfoModal(Modal, title="Investigator Details"):
     name = TextInput(label="Name", placeholder="Enter character name...", max_length=100)
     residence = TextInput(label="Residence", placeholder="e.g. Arkham", required=False, max_length=100)
     age = TextInput(label="Age", placeholder="15-90", min_length=2, max_length=2)
+    language = TextInput(label="First Language", placeholder="e.g. English, French, Chinese...", max_length=50)
 
     def __init__(self, cog, interaction, char_data, player_stats):
         super().__init__()
@@ -137,6 +138,7 @@ class BasicInfoModal(Modal, title="Investigator Details"):
         self.char_data["NAME"] = self.name.value
         self.char_data["Residence"] = self.residence.value if self.residence.value else "Unknown"
         self.char_data["Age"] = age_val
+        self.char_data["First Language"] = self.language.value.strip() if self.language.value else "Own"
         await self.cog.step_gamemode(interaction, self.char_data, self.player_stats)
 
 class RetireCharacterView(View):
@@ -1164,7 +1166,17 @@ class newinvestigator(commands.Cog):
             char_data["APP"] = max(0, char_data["APP"] - app_penalty)
             messages.append(f"APP reduced by {app_penalty}.")
         char_data["Dodge"] = char_data["DEX"] // 2
-        char_data["Language (Own)"] = char_data["EDU"]
+
+        # Language (Own) Logic
+        lang = char_data.get("First Language", "Own")
+        if not lang: lang = "Own"
+        lang_skill_name = f"Language ({lang})"
+        char_data[lang_skill_name] = char_data["EDU"]
+
+        # Remove generic 'Language (Own)' if it exists and we have a specific one
+        if lang_skill_name != "Language (Own)" and "Language (Own)" in char_data:
+             del char_data["Language (Own)"]
+
         if "Reassure" in char_data:
             char_data["Reassure"] = char_data.get("APP", 0) // 5
 
