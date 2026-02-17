@@ -9,5 +9,5 @@ hypercorn
 PyNaCl
 yt-dlp
 emoji
-playwright
-rapidfuzz
+playwright>=1.40.0
+rapidfuzz>=3.0.0
