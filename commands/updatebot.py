@@ -39,7 +39,6 @@ class UpdateBotView(discord.ui.View):
 
         # Close the bot
         await self.bot.close()
-        sys.exit(0)
 
     @discord.ui.button(label="Update System Only", style=discord.ButtonStyle.success)
     async def update_system(self, interaction: discord.Interaction, button: discord.ui.Button):
