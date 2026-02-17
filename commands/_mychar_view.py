@@ -100,7 +100,7 @@ class CharacterDashboardView(View):
 
     async def dismiss_callback(self, interaction: discord.Interaction):
         if interaction.user == self.user:
-            await interaction.message.delete()
+            await interaction.response.edit_message(content="Dashboard dismissed.", embed=None, view=None)
         else:
             await interaction.response.send_message("You cannot dismiss this.", ephemeral=True)
 
