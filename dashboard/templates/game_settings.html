@@ -156,7 +156,7 @@ async function loadSettings() {
                 <td>
                     <div class="btn-group">
                         <button class="btn btn-primary btn-sm" onclick="saveSettings('${guild.id}')">Save</button>
-                        <button class="btn btn-secondary btn-sm" onclick="openSoundSettings('${guild.id}', '${escapeHtml(guild.name).replace(/'/g, "\\'")}')">Sounds</button>
+                        <button class="btn btn-secondary btn-sm" onclick="openSoundSettings(this.dataset.guildId, this.dataset.guildName)" data-guild-id="${guild.id}" data-guild-name="${escapeHtml(guild.name)}">Sounds</button>
                     </div>
                 </td>
             `;
