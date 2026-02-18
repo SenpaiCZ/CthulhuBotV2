@@ -428,3 +428,37 @@ code {
         white-space: normal;
     }
 }
+
+/* --- Global Success Override to match Theme --- */
+/* This forces "green" (success) elements to use the theme's primary color instead,
+   ensuring full thematic consistency across the dashboard. */
+
+.text-success {
+    color: var(--theme-primary-bright) !important;
+}
+
+.bg-success {
+    background-color: var(--theme-primary-main) !important;
+}
+
+.border-success {
+    border-color: var(--theme-primary-main) !important;
+}
+
+.btn-success {
+    --bs-btn-bg: var(--theme-primary-main);
+    --bs-btn-border-color: var(--theme-primary-main);
+    --bs-btn-hover-bg: var(--theme-primary-dark);
+    --bs-btn-hover-border-color: var(--theme-primary-dark);
+    --bs-btn-active-bg: var(--theme-primary-dark);
+    --bs-btn-active-border-color: var(--theme-primary-dark);
+}
+
+.btn-outline-success {
+    --bs-btn-color: var(--theme-primary-bright);
+    --bs-btn-border-color: var(--theme-primary-main);
+    --bs-btn-hover-bg: var(--theme-primary-main);
+    --bs-btn-hover-border-color: var(--theme-primary-main);
+    --bs-btn-active-bg: var(--theme-primary-main);
+    --bs-btn-active-border-color: var(--theme-primary-main);
+}
