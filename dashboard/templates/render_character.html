@@ -16,7 +16,7 @@
         .coc-sheet {
             background-color: #1a1a1a;
             color: #e0e0e0;
-            font-family: 'Courier New', Courier, monospace; /* Retro feel */
+            font-family: 'Courier New', Courier, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', monospace; /* Retro feel with Emoji support */
             border: 2px solid var(--theme-primary-dark);
             padding: 20px;
             border-radius: 5px;
@@ -118,7 +118,7 @@
         }
 
         .coc-skill-row-2 {
-            font-family: 'Courier New', monospace;
+            font-family: 'Courier New', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', monospace;
         }
 
         .coc-skill-val-big {
@@ -146,7 +146,7 @@
     <div class="coc-sheet">
         <!-- Game Mode Header -->
         <div class="text-center mb-3" style="border-bottom: 2px solid var(--theme-primary-dark); padding-bottom: 10px;">
-            <h2 style="color: var(--theme-primary-bright); font-family: 'Courier New', Courier, monospace; text-transform: uppercase;">
+            <h2 style="color: var(--theme-primary-bright); font-family: 'Courier New', Courier, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', monospace; text-transform: uppercase;">
                 {% if char.get('Game Mode') == 'Pulp of Cthulhu' or 'pulp' in (char.get('Game Mode')|default('')|lower) %}
                     Pulp of Cthulhu Character
                 {% else %}
@@ -182,7 +182,7 @@
             <div class="coc-stat-box">
                 <div class="coc-label">{{ stat }}</div>
                 <div class="coc-stat-big">
-                    {{ emoji_lib.emojize(emojis.get_stat_emoji(stat), language='alias') }}
+                    {{ emoji_lib.emojize(emojis.get_stat_emoji(stat), language='alias') | format_custom_emoji | safe }}
                     {{ char.get(stat, 0) }}
                 </div>
                 <div style="font-size:0.7em; color:#666;">{{ char.get(stat,0)|int // 2 }} / {{ char.get(stat,0)|int // 5 }}</div>
@@ -196,25 +196,25 @@
             <div class="text-center">
                 <div class="coc-label">Hit Points</div>
                 <div class="coc-stat-big text-danger">
-                    {{ emoji_lib.emojize(emojis.get_stat_emoji('HP'), language='alias') }} {{ char.get('HP') }}
+                    {{ emoji_lib.emojize(emojis.get_stat_emoji('HP'), language='alias') | format_custom_emoji | safe }} {{ char.get('HP') }}
                 </div>
             </div>
             <div class="text-center">
                 <div class="coc-label">Sanity</div>
                 <div class="coc-stat-big text-warning">
-                    {{ emoji_lib.emojize(emojis.get_stat_emoji('SAN'), language='alias') }} {{ char.get('SAN') }}
+                    {{ emoji_lib.emojize(emojis.get_stat_emoji('SAN'), language='alias') | format_custom_emoji | safe }} {{ char.get('SAN') }}
                 </div>
             </div>
             <div class="text-center">
                 <div class="coc-label">Magic Points</div>
                 <div class="coc-stat-big text-info">
-                    {{ emoji_lib.emojize(emojis.get_stat_emoji('MP'), language='alias') }} {{ char.get('MP') }}
+                    {{ emoji_lib.emojize(emojis.get_stat_emoji('MP'), language='alias') | format_custom_emoji | safe }} {{ char.get('MP') }}
                 </div>
             </div>
             <div class="text-center">
                 <div class="coc-label">Luck</div>
                 <div class="coc-stat-big text-success">
-                    {{ emoji_lib.emojize(emojis.get_stat_emoji('LUCK'), language='alias') }} {{ char.get('LUCK') }}
+                    {{ emoji_lib.emojize(emojis.get_stat_emoji('LUCK'), language='alias') | format_custom_emoji | safe }} {{ char.get('LUCK') }}
                 </div>
             </div>
         </div>
@@ -252,13 +252,13 @@
         <div class="coc-skills-grid">
             {% set excluded = ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU',
                                'HP', 'MP', 'SAN', 'LUCK', 'Move', 'Build', 'Damage Bonus', 'Dodge',
-                               'NAME', 'Occupation', 'Age', 'Sex', 'Residence', 'Birthplace',
+                               'NAME', 'Occupation', 'Occupation Info', 'Age', 'Sex', 'Residence', 'Birthplace',
                                'Credit Rating', 'Archetype', 'Archetype Info', 'Talent', 'Backstory'] %}
 
             <!-- Explicit Credit Rating first -->
             <div class="coc-skill-item">
                 <div class="coc-skill-row-1">
-                    {{ emoji_lib.emojize(emojis.get_stat_emoji('Credit Rating'), language='alias') }} Credit Rating
+                    {{ emoji_lib.emojize(emojis.get_stat_emoji('Credit Rating'), language='alias') | format_custom_emoji | safe }} Credit Rating
                 </div>
                 <div class="coc-skill-row-2">
                     <span class="coc-skill-val-big">{{ char.get('Credit Rating', 0) }}</span>
@@ -273,7 +273,7 @@
                     {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
                     <div class="coc-skill-item">
                         <div class="coc-skill-row-1">
-                            {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}
+                            {{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') | format_custom_emoji | safe }} {{ key }}
                         </div>
                         <div class="coc-skill-row-2">
                             <span class="coc-skill-val-big">{{ val }}</span>
