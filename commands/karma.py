@@ -11,14 +11,20 @@ from loadnsave import load_karma_settings, save_karma_settings, load_karma_stats
 class Karma(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.ctx_menu = app_commands.ContextMenu(
+        self.ctx_menu_check = app_commands.ContextMenu(
             name='Check Karma',
             callback=self.karma_context_menu,
         )
-        self.bot.tree.add_command(self.ctx_menu, override=True)
+        self.ctx_menu_rank = app_commands.ContextMenu(
+            name='View Rank Card',
+            callback=self.view_rank_card_menu,
+        )
+        self.bot.tree.add_command(self.ctx_menu_check, override=True)
+        self.bot.tree.add_command(self.ctx_menu_rank, override=True)
 
     def cog_unload(self):
-        self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
+        self.bot.tree.remove_command(self.ctx_menu_check.name, type=self.ctx_menu_check.type)
+        self.bot.tree.remove_command(self.ctx_menu_rank.name, type=self.ctx_menu_rank.type)
 
     async def get_guild_settings(self, guild_id):
         settings = await load_karma_settings()
@@ -395,6 +401,9 @@ class Karma(commands.Cog):
     async def karma_context_menu(self, interaction: discord.Interaction, user: discord.User):
         await self._send_karma_response(interaction, user)
 
+    async def view_rank_card_menu(self, interaction: discord.Interaction, user: discord.Member):
+        await self._show_rank_card(interaction, user)
+
     async def _send_karma_response(self, interaction: discord.Interaction, user: discord.User):
         stats = await load_karma_stats()
         guild_id = str(interaction.guild_id)
@@ -413,6 +422,9 @@ class Karma(commands.Cog):
         if user is None:
             user = interaction.user
 
+        await self._show_rank_card(interaction, user)
+
+    async def _show_rank_card(self, interaction: discord.Interaction, user: discord.Member):
         stats = await load_karma_stats()
         guild_id = str(interaction.guild_id)
         user_id = str(user.id)
@@ -426,7 +438,8 @@ class Karma(commands.Cog):
 
         rank_name = self._get_rank_name(karma, settings, interaction.guild)
 
-        await interaction.response.defer(ephemeral=True)
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=True)
 
         # Generate image
         img_bytes = await self.generate_notification_image(interaction.guild_id, user.id, rank_name, "status")
