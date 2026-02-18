@@ -102,20 +102,24 @@ def format_custom_emoji(text):
     if not isinstance(text, str):
         return text
 
+    # 1. Handle standard Unicode shortcodes first (e.g. :muscle: -> 💪)
+    text = emoji.emojize(text, language='alias')
+
     # Escape text to prevent XSS, as this filter is used with | safe
     text = str(escape(text))
 
-    # 1. Handle explicit Discord format <(a):name:id> (escaped as &lt;...&gt;)
+    # 3. Handle explicit Discord format <(a):name:id> (escaped as &lt;...&gt;)
     def replace_discord_fmt(match):
         animated = match.group(1) == 'a'
         name = match.group(2)
         emoji_id = match.group(3)
         ext = 'gif' if animated else 'png'
-        return f'<img src="https://cdn.discordapp.com/emojis/{emoji_id}.{ext}" alt=":{name}:" title=":{name}:" class="discord-emoji" style="width: 1.5em; height: 1.5em; vertical-align: middle;">'
+        # Remove colons from alt/title to prevent subsequent regex matches (recursion)
+        return f'<img src="https://cdn.discordapp.com/emojis/{emoji_id}.{ext}" alt="{name}" title="{name}" class="discord-emoji" style="width: 1.5em; height: 1.5em; vertical-align: middle;">'
 
     text = re.sub(r'&lt;([a]?):(\w+):(\d+)&gt;', replace_discord_fmt, text)
 
-    # 2. Handle shortcodes :name: via bot lookup
+    # 4. Handle shortcodes :name: via bot lookup (Custom Emojis)
     if app.bot:
         def replace_shortcode(match):
             name = match.group(1)
@@ -123,10 +127,22 @@ def format_custom_emoji(text):
             emoji_obj = discord.utils.get(app.bot.emojis, name=name)
             if emoji_obj:
                 ext = 'gif' if emoji_obj.animated else 'png'
-                return f'<img src="https://cdn.discordapp.com/emojis/{emoji_obj.id}.{ext}" alt=":{name}:" title=":{name}:" class="discord-emoji" style="width: 1.5em; height: 1.5em; vertical-align: middle;">'
+                return f'<img src="https://cdn.discordapp.com/emojis/{emoji_obj.id}.{ext}" alt="{name}" title="{name}" class="discord-emoji" style="width: 1.5em; height: 1.5em; vertical-align: middle;">'
             return match.group(0) # No change if not found
 
         text = re.sub(r':(\w+):', replace_shortcode, text)
+
+    # 5. Handle Discord Flag shortcodes (e.g. :flag_us: -> 🇺🇸)
+    # Done last so custom emojis take precedence if they exist
+    def replace_flag(match):
+        name = match.group(1)
+        if len(name) == 7 and name.startswith('flag_'):
+             code = name[5:].lower()
+             if len(code) == 2 and code.isalpha():
+                  return chr(ord(code[0]) - 97 + 0x1F1E6) + chr(ord(code[1]) - 97 + 0x1F1E6)
+        return match.group(0)
+
+    text = re.sub(r':(flag_[a-zA-Z]{2}):', replace_flag, text)
 
     return text
 

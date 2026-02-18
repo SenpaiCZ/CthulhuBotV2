@@ -178,14 +178,14 @@
         <div class="section-header">Physical Manifestation <span class="fs-6 text-muted ms-2 fw-normal">{{ pm.title or '' }}</span></div>
 
         <div class="row row-cols-4 row-cols-md-8 g-2 mb-4">
-            <div class="col"><div class="stat-box"><div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('STR'), language='alias') }} STR</div><div class="stat-value">{{ chars.STR or '-' }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('CON'), language='alias') }} CON</div><div class="stat-value">{{ chars.CON or '-' }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('SIZ'), language='alias') }} SIZ</div><div class="stat-value">{{ chars.SIZ or '-' }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('DEX'), language='alias') }} DEX</div><div class="stat-value">{{ chars.DEX or '-' }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('HP'), language='alias') }} HP</div><div class="stat-value text-danger">{{ chars.HP or '-' }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('DB'), language='alias') }} DB</div><div class="stat-value">{{ chars.DB or '-' }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('Build'), language='alias') }} Build</div><div class="stat-value">{{ chars.Build or '-' }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('Move'), language='alias') }} Move</div><div class="stat-value">{{ chars.Move or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">{{ emojis.get_stat_emoji('STR') | format_custom_emoji | safe }} STR</div><div class="stat-value">{{ chars.STR or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">{{ emojis.get_stat_emoji('CON') | format_custom_emoji | safe }} CON</div><div class="stat-value">{{ chars.CON or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">{{ emojis.get_stat_emoji('SIZ') | format_custom_emoji | safe }} SIZ</div><div class="stat-value">{{ chars.SIZ or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">{{ emojis.get_stat_emoji('DEX') | format_custom_emoji | safe }} DEX</div><div class="stat-value">{{ chars.DEX or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">{{ emojis.get_stat_emoji('HP') | format_custom_emoji | safe }} HP</div><div class="stat-value text-danger">{{ chars.HP or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">{{ emojis.get_stat_emoji('DB') | format_custom_emoji | safe }} DB</div><div class="stat-value">{{ chars.DB or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">{{ emojis.get_stat_emoji('Build') | format_custom_emoji | safe }} Build</div><div class="stat-value">{{ chars.Build or '-' }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">{{ emojis.get_stat_emoji('Move') | format_custom_emoji | safe }} Move</div><div class="stat-value">{{ chars.Move or '-' }}</div></div></div>
         </div>
 
         <div class="row">
