@@ -11,6 +11,10 @@
         <div class="mb-4">
             <h5>Upload New Font</h5>
             <div class="input-group">
+                <select class="form-select bg-secondary text-light border-secondary" id="fontCategory" style="max-width: 150px;">
+                    <option value="Decorative" selected>Decorative</option>
+                    <option value="Cryptic">Cryptic</option>
+                </select>
                 <input type="file" class="form-control bg-secondary text-light border-secondary" id="fontFile" accept=".ttf,.otf,.woff,.woff2" multiple>
                 <button class="btn btn-success" type="button" onclick="uploadFonts()">Upload</button>
             </div>
@@ -50,7 +54,10 @@ async function loadFonts() {
             return;
         }
 
-        data.fonts.forEach(font => {
+        data.fonts.forEach(fontObj => {
+            const font = fontObj.filename;
+            const category = fontObj.category || 'Decorative';
+
             const row = document.createElement('tr');
 
             // Create font-face dynamically for preview
@@ -75,7 +82,11 @@ async function loadFonts() {
                 <td>${font}</td>
                 <td style="font-family: 'Preview-${fontName}', serif; font-size: 1.5em;">The quick brown fox jumps over the lazy dog.</td>
                 <td>
-                    <button class="btn btn-sm btn-danger" onclick="deleteFont('${font}')">Delete</button>
+                    <select class="form-select form-select-sm bg-dark text-light border-secondary mb-1" onchange="updateCategory('${font}', this.value)">
+                        <option value="Decorative" ${category === 'Decorative' ? 'selected' : ''}>Decorative</option>
+                        <option value="Cryptic" ${category === 'Cryptic' ? 'selected' : ''}>Cryptic</option>
+                    </select>
+                    <button class="btn btn-sm btn-danger w-100" onclick="deleteFont('${font}')">Delete</button>
                 </td>
             `;
             tbody.appendChild(row);
@@ -87,6 +98,7 @@ async function loadFonts() {
 
 async function uploadFonts() {
     const fileInput = document.getElementById('fontFile');
+    const categorySelect = document.getElementById('fontCategory');
     const status = document.getElementById('uploadStatus');
 
     if (fileInput.files.length === 0) {
@@ -98,6 +110,7 @@ async function uploadFonts() {
     for (let i = 0; i < fileInput.files.length; i++) {
         formData.append('files', fileInput.files[i]);
     }
+    formData.append('category', categorySelect.value);
 
     status.innerHTML = '<span class="text-info">Uploading...</span>';
 
@@ -141,6 +154,25 @@ async function deleteFont(filename) {
         }
     } catch (e) {
         alert('Error: ' + e.message);
+    }
+}
+
+async function updateCategory(filename, category) {
+    try {
+        const response = await fetch('/api/fonts/update_category', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: filename, category: category })
+        });
+        const data = await response.json();
+
+        if (data.status !== 'success') {
+            alert('Error updating category: ' + data.message);
+            loadFonts(); // Reload to revert UI
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+        loadFonts();
     }
 }
 
