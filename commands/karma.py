@@ -402,7 +402,7 @@ class Karma(commands.Cog):
 
         karma_score = stats.get(guild_id, {}).get(user_id, 0)
 
-        await interaction.response.send_message(f"{user.display_name} has {karma_score} karma.")
+        await interaction.response.send_message(f"{user.display_name} has {karma_score} karma.", ephemeral=True)
 
     @app_commands.command(name="memelevel", description="🔮 Show your current rank card.")
     @app_commands.describe(user="The user whose rank card you want to see (defaults to you)")
@@ -426,7 +426,7 @@ class Karma(commands.Cog):
 
         rank_name = self._get_rank_name(karma, settings, interaction.guild)
 
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
 
         # Generate image
         img_bytes = await self.generate_notification_image(interaction.guild_id, user.id, rank_name, "status")
