@@ -300,6 +300,7 @@ body {
     color: var(--theme-primary-bright);
     font-weight: 500;
     font-size: 1.2rem;
+    font-family: var(--font-headers, sans-serif) !important;
 }
 
 .quote-block {
