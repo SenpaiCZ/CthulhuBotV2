@@ -4,6 +4,7 @@ from discord.ext import commands
 import urllib.parse
 import random
 import os
+from loadnsave import load_fonts_config
 
 def get_available_fonts():
     fonts_dir = os.path.join("data", "fonts")
@@ -150,8 +151,12 @@ class ScriptFontSelectView(discord.ui.View):
             label = os.path.splitext(f)[0]
             options.append(discord.SelectOption(label=label, value=f))
 
-        select = discord.ui.Select(placeholder="Select a Font", options=options)
-        select.callback = self.select_callback
+        if not options:
+             select = discord.ui.Select(placeholder="No fonts available", options=[discord.SelectOption(label="None", value="none")], disabled=True)
+        else:
+             select = discord.ui.Select(placeholder="Select a Font", options=options)
+             select.callback = self.select_callback
+
         self.add_item(select)
 
     async def select_callback(self, interaction: discord.Interaction):
@@ -161,6 +166,44 @@ class ScriptFontSelectView(discord.ui.View):
         selected_font = interaction.data['values'][0]
         modal = ScriptModal(self.bot, self.ctx, selected_font)
         await interaction.response.send_modal(modal)
+
+class ScriptCategorySelectView(discord.ui.View):
+    def __init__(self, bot, ctx):
+        super().__init__(timeout=60)
+        self.bot = bot
+        self.ctx = ctx
+
+    async def _handle_category(self, interaction, category):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("This isn't for you!", ephemeral=True)
+
+        # Defer to allow async loading
+        await interaction.response.defer(ephemeral=True)
+
+        fonts = get_available_fonts()
+        config = await load_fonts_config()
+
+        filtered_fonts = []
+        for f in fonts:
+            # Default to Decorative
+            font_cat = config.get(f, "Decorative")
+            if font_cat == category:
+                filtered_fonts.append(f)
+
+        if not filtered_fonts:
+             await interaction.followup.send(f"No fonts found for category '{category}'.", ephemeral=True)
+             return
+
+        view = ScriptFontSelectView(self.bot, self.ctx, filtered_fonts)
+        await interaction.followup.send(f"Select a {category} Font:", view=view, ephemeral=True)
+
+    @discord.ui.button(label="Decorative", style=discord.ButtonStyle.primary)
+    async def decorative_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self._handle_category(interaction, "Decorative")
+
+    @discord.ui.button(label="Cryptic", style=discord.ButtonStyle.secondary)
+    async def cryptic_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self._handle_category(interaction, "Cryptic")
 
 class HandoutTypeSelectView(discord.ui.View):
     def __init__(self, bot, ctx):
@@ -197,8 +240,8 @@ class HandoutTypeSelectView(discord.ui.View):
              await interaction.response.send_modal(modal)
              return
 
-        view = ScriptFontSelectView(self.bot, self.ctx, fonts)
-        await interaction.response.send_message("Select a font for your script:", view=view, ephemeral=True)
+        view = ScriptCategorySelectView(self.bot, self.ctx)
+        await interaction.response.send_message("Select a font category:", view=view, ephemeral=True)
 
 class Handout(commands.Cog):
     def __init__(self, bot):
@@ -243,8 +286,8 @@ class Handout(commands.Cog):
                 else:
                     await ctx.send("Use slash command.")
             else:
-                view = ScriptFontSelectView(self.bot, ctx, fonts)
-                await ctx.send("Select a font:", view=view, ephemeral=True)
+                view = ScriptCategorySelectView(self.bot, ctx)
+                await ctx.send("Select a font category:", view=view, ephemeral=True)
 
         else:
             # No argument provided, show selection view

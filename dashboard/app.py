@@ -37,6 +37,7 @@ from loadnsave import (
     load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
     load_inventions_data, load_years_data, load_occupations_data,
     load_bot_status, save_bot_status,
+    load_fonts_config, save_fonts_config,
     _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
 )
 from .audio_mixer import MixingAudioSource
@@ -967,11 +968,13 @@ async def fonts_list():
     if not is_admin(): return "Unauthorized", 401
 
     files = []
+    config = await load_fonts_config()
     if os.path.exists(FONTS_FOLDER):
         for f in os.listdir(FONTS_FOLDER):
             if f.lower().endswith(('.ttf', '.otf', '.woff', '.woff2')):
-                files.append(f)
-    files.sort()
+                category = config.get(f, "Decorative")
+                files.append({"filename": f, "category": category})
+    files.sort(key=lambda x: x['filename'])
     return jsonify({"fonts": files})
 
 @app.route('/api/fonts/upload', methods=['POST'])
@@ -980,11 +983,15 @@ async def fonts_upload():
 
     files = await request.files
     uploaded_files = files.getlist('files')
+    form = await request.form
+    category = form.get('category', 'Decorative')
 
     if not uploaded_files:
         return jsonify({"status": "error", "message": "No files uploaded"}), 400
 
     results = []
+    config = await load_fonts_config()
+
     for file in uploaded_files:
         if not file.filename: continue
 
@@ -1012,10 +1019,13 @@ async def fonts_upload():
 
             with open(target_path, 'wb') as f:
                 f.write(file_bytes)
-            results.append(f"Uploaded {safe_filename}")
+
+            config[safe_filename] = category
+            results.append(f"Uploaded {safe_filename} ({category})")
         except Exception as e:
             results.append(f"Error {file.filename}: {e}")
 
+    await save_fonts_config(config)
     return jsonify({"status": "success", "results": results})
 
 @app.route('/api/fonts/delete', methods=['POST'])
@@ -1036,11 +1046,35 @@ async def fonts_delete():
     if os.path.exists(target_path):
         try:
             os.remove(target_path)
+
+            # Remove from config
+            config = await load_fonts_config()
+            if filename in config:
+                del config[filename]
+                await save_fonts_config(config)
+
             return jsonify({"status": "success"})
         except Exception as e:
             return jsonify({"status": "error", "message": str(e)}), 500
 
     return jsonify({"status": "error", "message": "File not found"}), 404
+
+@app.route('/api/fonts/update_category', methods=['POST'])
+async def fonts_update_category():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    filename = data.get('filename')
+    category = data.get('category')
+
+    if not filename or not category:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    config = await load_fonts_config()
+    config[filename] = category
+    await save_fonts_config(config)
+
+    return jsonify({"status": "success"})
 
 # --- Admin Routes ---
 

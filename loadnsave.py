@@ -664,3 +664,17 @@ async def save_skill_sound_settings(data):
     global _SKILL_SOUND_SETTINGS_CACHE
     _SKILL_SOUND_SETTINGS_CACHE = data
     await _save_json_file(DATA_FOLDER, 'skill_sound_settings.json', data)
+
+# --- Fonts Config ---
+_FONTS_CONFIG_CACHE = None
+
+async def load_fonts_config():
+    global _FONTS_CONFIG_CACHE
+    if _FONTS_CONFIG_CACHE is None:
+        _FONTS_CONFIG_CACHE = await _load_json_file(DATA_FOLDER, 'fonts_config.json')
+    return _FONTS_CONFIG_CACHE.copy()
+
+async def save_fonts_config(data):
+    global _FONTS_CONFIG_CACHE
+    _FONTS_CONFIG_CACHE = data
+    await _save_json_file(DATA_FOLDER, 'fonts_config.json', data)
