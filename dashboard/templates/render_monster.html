@@ -24,7 +24,15 @@
             border: 2px solid var(--theme-primary-dark, #2E8B57);
             padding: 20px;
             border-radius: 5px;
-            width: 800px;
+            width: 1000px;
+        }
+
+        .monster-image-floated {
+            float: right;
+            width: 450px;
+            margin-left: 20px;
+            margin-bottom: 20px;
+            max-width: 50%;
         }
 
         .text-success { color: var(--theme-primary-bright, #00FF7F) !important; }
@@ -63,12 +71,7 @@
     </style>
 </head>
 <body>
-    <div class="coc-sheet">
-        {% if image_url %}
-        <div class="d-flex align-items-start">
-            <div class="flex-grow-1">
-        {% endif %}
-
+    <div class="coc-sheet clearfix">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
                 <h1 class="display-5 mb-0 text-success">{{ monster.name }}</h1>
@@ -82,6 +85,12 @@
                 {% endif %}
             </div>
         </div>
+
+        {% if image_url %}
+        <div class="monster-image-floated">
+            <img src="{{ image_url }}" class="img-fluid rounded border border-secondary" alt="{{ monster.name }}" style="width: 100%;">
+        </div>
+        {% endif %}
 
         <div class="card bg-dark border-secondary mb-4">
             <div class="card-body">
@@ -238,14 +247,6 @@
             <div class="mt-4 pt-2 border-top border-secondary small text-muted text-center">
                 <em>Also known as: {{ monster.alternative_names | join(', ') }}</em>
             </div>
-        {% endif %}
-
-        {% if image_url %}
-            </div>
-            <div class="ms-3" style="width: 300px; flex-shrink: 0;">
-                <img src="{{ image_url }}" class="img-fluid rounded border border-secondary" alt="{{ monster.name }}" style="width: 100%; object-fit: contain;">
-            </div>
-        </div>
         {% endif %}
     </div>
 </body>

@@ -13,7 +13,7 @@ COMMAND_CATEGORIES = {
         "retire", "unretire", "deleteinvestigator"
     ],
     "Codex": [
-        "grimoire", "monster", "deity", "spell", "archetype", "talent",
+        "codex", "monster", "deity", "spell", "archetype", "talent",
         "insane", "poison", "skill", "occupation", "invention", "year",
         "weapon"
     ],

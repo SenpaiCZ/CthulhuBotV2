@@ -244,7 +244,7 @@ class Codex(commands.Cog):
             full_url = f"http://127.0.0.1:{port}{url}"
 
             browser = await self._get_browser()
-            page = await browser.new_page(viewport={'width': 850, 'height': 1200})
+            page = await browser.new_page(viewport={'width': 1100, 'height': 1200})
 
             try:
                 response = await page.goto(full_url, timeout=10000)
@@ -425,10 +425,10 @@ class Codex(commands.Cog):
     async def deity_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_deities_data, data_key="deities")
 
-    @commands.hybrid_command(description="Opens the Grimoire to view lists of all Codex entries.")
-    async def grimoire(self, ctx):
-        """Opens the Grimoire to view lists of all Codex entries."""
-        view = GrimoireView(ctx, self)
+    @commands.hybrid_command(description="Opens the Codex to view lists of all entries.")
+    async def codex(self, ctx):
+        """Opens the Codex to view lists of all entries."""
+        view = CodexView(ctx, self)
         ephemeral = False
         if ctx.interaction:
             ephemeral = True
@@ -933,7 +933,7 @@ class RenderView(discord.ui.View):
                 pass
         self.stop()
 
-class GrimoireView(discord.ui.View):
+class CodexView(discord.ui.View):
     def __init__(self, ctx, cog):
         super().__init__(timeout=60)
         self.ctx = ctx
