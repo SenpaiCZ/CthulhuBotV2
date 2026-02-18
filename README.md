@@ -94,7 +94,11 @@ The bot uses **Slash Commands** (`/`). Legacy prefix commands have been removed,
 *   `/karma`: 🌟 Check karma for a user.
 
 ### ⚙️ Admin & Configuration
-*   `!sync`: 🔄 **Essential!** Sync slash commands to Discord. Use `!sync` (global) or `!sync guild` (current server). This is the only prefix command.
+*   `!sync`: 🔄 **Essential!** Sync slash commands to Discord. This is the only prefix command.
+    *   `!sync`: Sync global commands (takes up to 1 hour to propagate).
+    *   `!sync guild`: Sync to current guild (instant).
+    *   `!sync clear`: Clear global commands.
+    *   `!sync clearguild`: Clear guild-specific commands (use to fix duplicates).
 *   `/setupkarma`: ⚙️ Interactive setup wizard for the karma system.
 *   `/setupkarmaroles`: 🧙 Interactive wizard to manage karma rank roles.
 *   `/reactionrole`: 🎭 Setup a reaction role on a message.
@@ -152,6 +156,10 @@ After running the setup script, edit the `config.json` file in the root director
 1.  Ensure you are in a server where the bot is present.
 2.  Run the command `!sync guild` to instantly sync commands to that specific server.
 3.  Run `!sync` to sync commands globally (this can take up to an hour to propagate to all servers).
+
+**Troubleshooting:**
+*   `!sync clear`: Clear global commands.
+*   `!sync clearguild`: Clear guild-specific commands (use to fix duplicates).
 
 ---
 
