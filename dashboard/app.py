@@ -144,6 +144,15 @@ def format_custom_emoji(text):
 
     text = re.sub(r':(flag_[a-zA-Z]{2}):', replace_flag, text)
 
+    # 6. Replace Unicode Emojis with Images (Twemoji) for consistent server-side rendering
+    def replace_unicode_emoji(chars, data_dict):
+        # Strip VS16 (fe0f) as Twemoji filenames don't include it
+        hex_chars = [c for c in chars if c != '\ufe0f']
+        hex_code = "-".join(f"{ord(c):x}" for c in hex_chars)
+        return f'<img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/{hex_code}.png" alt="{chars}" class="discord-emoji" style="width: 1.5em; height: 1.5em; vertical-align: middle;">'
+
+    text = emoji.replace_emoji(text, replace=replace_unicode_emoji)
+
     return text
 
 app.add_template_filter(format_custom_emoji, 'format_custom_emoji')
