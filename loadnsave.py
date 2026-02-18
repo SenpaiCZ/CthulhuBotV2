@@ -491,6 +491,20 @@ async def save_polls_data(data):
     _POLLS_DATA_CACHE = data
     await _save_json_file(DATA_FOLDER, 'polls_data.json', data)
 
+# --- Journal Data ---
+_JOURNAL_DATA_CACHE = None
+
+async def load_journal_data():
+    global _JOURNAL_DATA_CACHE
+    if _JOURNAL_DATA_CACHE is None:
+        _JOURNAL_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'journal_data.json')
+    return _JOURNAL_DATA_CACHE
+
+async def save_journal_data(data):
+    global _JOURNAL_DATA_CACHE
+    _JOURNAL_DATA_CACHE = data
+    await _save_json_file(DATA_FOLDER, 'journal_data.json', data)
+
 # --- Gamer Roles Data ---
 _GAMEROLE_SETTINGS_CACHE = None
 
