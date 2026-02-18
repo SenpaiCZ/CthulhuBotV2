@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ deity.name }} - Origin Render</title>
+    {% include 'includes/origin_font_styles.html' %}
+    <style>
+        body {
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .origin-sheet {
+            background-color: #fdf5e6;
+            color: #2b2b2b;
+            font-family: var(--font-origin-body, 'Georgia', serif);
+            padding: 40px;
+            width: 900px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .origin-image {
+            float: right;
+            width: 300px;
+            margin-left: 30px;
+            margin-bottom: 20px;
+            border: 1px solid #8b7d6b;
+            padding: 5px;
+            background-color: #fff;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .origin-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: sepia(0.3) contrast(1.1);
+        }
+
+        h1 {
+            font-family: var(--font-origin-headers, 'Times New Roman', serif);
+            font-size: 3em;
+            color: #4a3b2a;
+            margin-top: 0;
+            margin-bottom: 5px;
+            border-bottom: 2px solid #8b7d6b;
+            padding-bottom: 10px;
+        }
+
+        .classification {
+            font-family: var(--font-origin-special, 'Courier New', monospace);
+            font-style: italic;
+            font-size: 1.1em;
+            color: #5c4d3c;
+            margin-bottom: 20px;
+        }
+
+        .quote-block {
+            font-style: italic;
+            color: #555;
+            border-left: 3px solid #8b0000;
+            padding-left: 15px;
+            margin: 20px 0;
+            font-family: var(--font-origin-special, 'Courier New', monospace);
+        }
+
+        .section-title {
+            font-family: var(--font-origin-headers, 'Times New Roman', serif);
+            font-size: 1.4em;
+            color: #800000;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        p {
+            margin-bottom: 12px;
+            line-height: 1.5;
+            text-align: justify;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #4a3b2a;
+        }
+
+        .highlight {
+            color: #8b0000;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .stat-box {
+            display: inline-block;
+            border: 1px solid #ccc;
+            padding: 5px 10px;
+            margin-right: 10px;
+            text-align: center;
+            background: rgba(255,255,255,0.5);
+        }
+        .stat-label {
+            display: block;
+            font-size: 0.7em;
+            text-transform: uppercase;
+            color: #666;
+        }
+        .stat-val {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+    </style>
+</head>
+<body>
+    <div class="origin-sheet clearfix">
+        {% if image_url %}
+        <div class="origin-image">
+            <img src="{{ image_url }}" alt="{{ deity.name }}">
+        </div>
+        {% endif %}
+
+        <h1>{{ deity.name }}</h1>
+        <div class="classification">{{ deity.classification or 'Unknown Entity' }}</div>
+
+        {% if deity.description_quote %}
+            <div class="quote-block">"{{ deity.description_quote }}"</div>
+        {% endif %}
+
+        {% if deity.main_entry_text %}
+            <p>{{ deity.main_entry_text }}</p>
+        {% endif %}
+
+        <div class="section-title">Cult & Worship</div>
+        {% if deity.cult %}
+            <p>{{ deity.cult.text or '' }}</p>
+            {% if deity.cult.possible_blessings %}
+                <p><strong>Possible Blessings:</strong></p>
+                <ul>
+                    {% for b in deity.cult.possible_blessings %}
+                        <li><span class="highlight">{{ b.name }}:</span> {{ b.description }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% else %}
+            <p>No cult information available.</p>
+        {% endif %}
+
+        <div class="section-title">Encounters & Aura</div>
+        <p><span class="label">Encounters:</span> {{ deity.encounters or 'None detailed.' }}</p>
+        <p><span class="label">Aura:</span> {{ deity.aura or 'None detailed.' }}</p>
+
+        <div class="section-title">Magic & Powers</div>
+        <div style="margin-bottom: 15px;">
+            <div class="stat-box"><span class="stat-label">POW</span><span class="stat-val">{{ deity.magic.pow if deity.magic else '-' }}</span></div>
+            <div class="stat-box"><span class="stat-label">MP</span><span class="stat-val">{{ deity.magic.magic_points if deity.magic else '-' }}</span></div>
+            <div class="stat-box"><span class="stat-label">Sanity Loss</span><span class="stat-val highlight">{{ deity.sanity_loss or '-' }}</span></div>
+        </div>
+
+        <p><span class="label">Spells:</span> {{ deity.magic.spells if deity.magic else 'None' }}</p>
+
+        {% if deity.powers %}
+            <ul>
+                {% for p in deity.powers %}
+                    <li><span class="highlight">{{ p.name }}:</span> {{ p.description }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <!-- Physical Manifestation -->
+        {% set pm = deity.physical_manifestation or {} %}
+        {% set chars = pm.characteristics or {} %}
+        {% set combat = pm.combat or {} %}
+        {% set armor = pm.armor or {} %}
+
+        {% if pm %}
+        <div class="section-title">Physical Manifestation: {{ pm.title or 'Avatar' }}</div>
+
+        <div style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 5px;">
+            {% for key, val in chars.items() %}
+                <div class="stat-box">
+                    <span class="stat-label">{{ key }}</span>
+                    <span class="stat-val">{{ val }}</span>
+                </div>
+            {% endfor %}
+        </div>
+
+        <p><span class="label">Armor:</span> {{ armor.rating or 'None' }} {% if armor.notes %}({{ armor.notes }}){% endif %}</p>
+
+        <p><span class="label">Attacks per round:</span> {{ combat.attacks_per_round or 'N/A' }}</p>
+        <p><em>{{ combat.description }}</em></p>
+
+        {% if combat.attacks %}
+            <ul>
+            {% for atk in combat.attacks %}
+                <li><strong>{{ atk.name }}</strong> ({{ atk.success_chance or '' }}): {{ atk.damage or '' }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if combat.special_maneuvers %}
+            <p><strong>Special Maneuvers:</strong></p>
+            <ul>
+                {% for sm in combat.special_maneuvers %}
+                    <li><span class="highlight">{{ sm.name }}:</span> {{ sm.description }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% endif %}
+
+        {% if deity.other_names %}
+            <div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; font-size: 0.9em; color: #777; text-align: center;">
+                <em>Other Names: {{ deity.other_names | join(', ') }}</em>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

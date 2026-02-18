@@ -1,0 +1,33 @@
+{% if origin_fonts %}
+<style>
+    /* Generate font faces for custom uploaded fonts in Origin theme */
+    {% for key, font in origin_fonts.items() %}
+        {% if font and font != 'default' and '.' in font %}
+            @font-face {
+                font-family: 'Custom-origin-{{ key }}';
+                src: url('/fonts/{{ font }}');
+            }
+        {% endif %}
+    {% endfor %}
+
+    :root {
+        {% if origin_fonts.headers and origin_fonts.headers != 'default' %}
+            --font-origin-headers: {% if '.' in origin_fonts.headers %}'Custom-origin-headers'{% else %}"{{ origin_fonts.headers }}"{% endif %}, serif;
+        {% else %}
+            --font-origin-headers: "Times New Roman", serif;
+        {% endif %}
+
+        {% if origin_fonts.body and origin_fonts.body != 'default' %}
+            --font-origin-body: {% if '.' in origin_fonts.body %}'Custom-origin-body'{% else %}"{{ origin_fonts.body }}"{% endif %}, serif;
+        {% else %}
+            --font-origin-body: "Georgia", serif;
+        {% endif %}
+
+        {% if origin_fonts.special and origin_fonts.special != 'default' %}
+            --font-origin-special: {% if '.' in origin_fonts.special %}'Custom-origin-special'{% else %}"{{ origin_fonts.special }}"{% endif %}, serif;
+        {% else %}
+            --font-origin-special: "Courier New", monospace;
+        {% endif %}
+    }
+</style>
+{% endif %}

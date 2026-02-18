@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ monster.name }} - Origin Render</title>
+    {% include 'includes/origin_font_styles.html' %}
+    <style>
+        body {
+            background-color: #333; /* Dark outside */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .origin-sheet {
+            background-color: #fdf5e6; /* Old Lace / Parchment */
+            color: #2b2b2b; /* Dark Gray text */
+            font-family: var(--font-origin-body, 'Georgia', serif);
+            padding: 40px;
+            width: 1000px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        /* Float image to the right */
+        .origin-image {
+            float: right;
+            width: 400px;
+            margin-left: 30px;
+            margin-bottom: 20px;
+            border: 1px solid #8b7d6b; /* Sepia-ish border */
+            padding: 5px;
+            background-color: #fff;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .origin-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: sepia(0.3) contrast(1.1); /* Slight vintage effect */
+        }
+
+        h1 {
+            font-family: var(--font-origin-headers, 'Times New Roman', serif);
+            font-size: 3em;
+            color: #4a3b2a; /* Dark Brown */
+            margin-top: 0;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #8b7d6b;
+            padding-bottom: 10px;
+        }
+
+        .subtitle {
+            font-family: var(--font-origin-special, 'Courier New', monospace);
+            font-style: italic;
+            font-size: 1.2em;
+            color: #5c4d3c;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: var(--font-origin-headers, 'Times New Roman', serif);
+            font-size: 1.5em;
+            color: #800000; /* Dark Red */
+            margin-top: 25px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        p {
+            margin-bottom: 15px;
+            line-height: 1.5;
+            text-align: justify;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            font-family: var(--font-origin-special, 'Courier New', monospace);
+        }
+
+        .stat-item {
+            text-align: center;
+            border: 1px solid #dcdcdc;
+            padding: 5px;
+            background-color: rgba(255,255,255,0.5);
+        }
+
+        .stat-label {
+            display: block;
+            font-weight: bold;
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .stat-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .combat-list, .skills-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .combat-item, .skill-item {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #dcdcdc;
+        }
+
+        .combat-item:last-child, .skill-item:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #4a3b2a;
+        }
+
+        .highlight {
+            color: #8b0000; /* Blood red highlight */
+        }
+
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+
+        .powers-list {
+            margin-top: 10px;
+        }
+
+        .power-item {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="origin-sheet clearfix">
+        {% if image_url %}
+        <div class="origin-image">
+            <img src="{{ image_url }}" alt="{{ monster.name }}">
+        </div>
+        {% endif %}
+
+        <h1>{{ monster.name }}</h1>
+        {% if monster.subtitle %}
+        <div class="subtitle">{{ monster.subtitle }}</div>
+        {% endif %}
+
+        {% if monster.description %}
+            <p>{{ monster.description }}</p>
+        {% endif %}
+
+        {% if monster.main_entry_text %}
+            <p style="font-style: italic; color: #555;">{{ monster.main_entry_text }}</p>
+        {% endif %}
+
+        <div class="section-title">Characteristics</div>
+        <div class="stats-grid">
+            {% if monster.characteristics %}
+                {% for key, val in monster.characteristics.items() %}
+                <div class="stat-item">
+                    <span class="stat-label">{{ key }}</span>
+                    {% if val is mapping %}
+                        <span class="stat-value">{{ val.average or val }}</span>
+                        {% if val.roll %}<div style="font-size: 0.7em;">{{ val.roll }}</div>{% endif %}
+                    {% else %}
+                         <span class="stat-value">{{ val }}</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="grid-column: 1 / -1;">None listed.</div>
+            {% endif %}
+        </div>
+
+        <div class="section-title">Derived Attributes</div>
+        <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
+            <div class="stat-item"><span class="stat-label">HP</span><span class="stat-value highlight">{{ monster.derived_stats.hit_points }}</span></div>
+            <div class="stat-item"><span class="stat-label">DB</span><span class="stat-value">{{ monster.derived_stats.damage_bonus }}</span></div>
+            <div class="stat-item"><span class="stat-label">Build</span><span class="stat-value">{{ monster.derived_stats.build }}</span></div>
+            <div class="stat-item"><span class="stat-label">MP</span><span class="stat-value">{{ monster.derived_stats.magic_points }}</span></div>
+            <div class="stat-item">
+                <span class="stat-label">Move</span>
+                <span class="stat-value">
+                    {% if monster.derived_stats.move is mapping %}
+                        {{ monster.derived_stats.move.base }}
+                    {% else %}
+                        {{ monster.derived_stats.move }}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 40px;">
+            <div style="flex: 1;">
+                <div class="section-title">Combat</div>
+                <p><span class="label">Attacks per round:</span> {{ monster.combat.attacks_per_round }}</p>
+
+                <ul class="combat-list">
+                    {% if monster.combat.attacks %}
+                        {% for atk in monster.combat.attacks %}
+                        <li class="combat-item">
+                            <div><strong style="font-size: 1.1em;">{{ atk.name }}</strong> <span class="highlight">({{ atk.success_chance or 'Auto' }})</span></div>
+                            <div>Damage: {{ atk.damage }}</div>
+                            {% if atk.special_effect %}<div style="font-size: 0.9em; font-style: italic;">{{ atk.special_effect }}</div>{% endif %}
+                            {% if atk.description %}<div style="font-size: 0.9em;">{{ atk.description }}</div>{% endif %}
+                        </li>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+                <p><span class="label">Dodge:</span> {{ monster.combat.dodge.success_chance or 'N/A' }}</p>
+                <p><span class="label">Armor:</span> {{ monster.armor.rating if monster.armor else 'None' }}
+                {% if monster.armor and monster.armor.modifiers %}({{ monster.armor.modifiers }}){% endif %}</p>
+            </div>
+
+            <div style="flex: 1;">
+                <div class="section-title">Skills & Powers</div>
+                {% if monster.skills %}
+                    <div><strong>Skills:</strong>
+                    {% for s in monster.skills %}
+                        {{ s.name }} ({{ s.value }}){% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if monster.powers_and_abilities %}
+                    <div class="powers-list">
+                        {% for p in monster.powers_and_abilities %}
+                            <div class="power-item">
+                                <strong style="color: #8b0000;">{{ p.name }}:</strong> {{ p.description }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if monster.spells %}
+                <div style="margin-top: 15px;">
+                    <strong class="label">Spells:</strong> {{ monster.spells }}
+                </div>
+                {% endif %}
+
+                <div style="margin-top: 15px;">
+                    <strong class="label">Sanity Loss:</strong> <span class="highlight">{{ monster.sanity_loss or 'None' }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if monster.alternative_names %}
+            <div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; font-size: 0.9em; color: #777; text-align: center;">
+                <em>Alternative Names: {{ monster.alternative_names | join(', ') }}</em>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

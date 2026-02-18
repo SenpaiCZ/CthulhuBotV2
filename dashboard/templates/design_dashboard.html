@@ -146,6 +146,70 @@
     </div>
 </div>
 
+<hr class="my-5 border-secondary">
+
+<h2 class="mb-4">Origin Theme Typography</h2>
+<p class="text-muted">Customize fonts for the "Origin Poster" design (Monsters, Deities, Spells).</p>
+
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="originHeaders" class="form-label">Origin Headers</label>
+                <select class="form-select bg-secondary text-light border-secondary" id="originHeaders">
+                    <option value="" {% if not current_origin_fonts.headers %}selected{% endif %}>Default</option>
+                    <optgroup label="Basic Fonts">
+                        {% for font in basic_fonts %}
+                        <option value="{{ font }}" {% if current_origin_fonts.headers == font %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    <optgroup label="Custom Fonts">
+                        {% for font in uploaded_fonts %}
+                        <option value="{{ font }}" {% if current_origin_fonts.headers == font %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="originBody" class="form-label">Origin Body Text</label>
+                <select class="form-select bg-secondary text-light border-secondary" id="originBody">
+                    <option value="" {% if not current_origin_fonts.body %}selected{% endif %}>Default</option>
+                    <optgroup label="Basic Fonts">
+                        {% for font in basic_fonts %}
+                        <option value="{{ font }}" {% if current_origin_fonts.body == font %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    <optgroup label="Custom Fonts">
+                        {% for font in uploaded_fonts %}
+                        <option value="{{ font }}" {% if current_origin_fonts.body == font %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="originSpecial" class="form-label">Origin Special Text</label>
+                <select class="form-select bg-secondary text-light border-secondary" id="originSpecial">
+                    <option value="" {% if not current_origin_fonts.special %}selected{% endif %}>Default</option>
+                    <optgroup label="Basic Fonts">
+                        {% for font in basic_fonts %}
+                        <option value="{{ font }}" {% if current_origin_fonts.special == font %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    <optgroup label="Custom Fonts">
+                        {% for font in uploaded_fonts %}
+                        <option value="{{ font }}" {% if current_origin_fonts.special == font %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+            </div>
+        </div>
+        <div class="mt-4">
+            <button class="btn btn-success me-2" onclick="saveOriginFonts()">Save Origin Fonts</button>
+            <button class="btn btn-outline-secondary" onclick="resetOriginFonts()">Reset Defaults</button>
+        </div>
+    </div>
+</div>
+
 <script>
 async function setTheme(themeName) {
     try {
@@ -204,6 +268,46 @@ async function resetFonts() {
             location.reload();
         } else {
             alert("Error resetting fonts: " + data.message);
+        }
+    } catch (e) {
+        alert("Error: " + e);
+    }
+}
+
+async function saveOriginFonts() {
+    const headers = document.getElementById('originHeaders').value;
+    const body = document.getElementById('originBody').value;
+    const special = document.getElementById('originSpecial').value;
+
+    try {
+        const response = await fetch('/api/design/save_origin_fonts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ headers, body, special })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert("Error saving origin fonts: " + data.message);
+        }
+    } catch (e) {
+        alert("Error: " + e);
+    }
+}
+
+async function resetOriginFonts() {
+    try {
+        const response = await fetch('/api/design/save_origin_fonts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ headers: '', body: '', special: '' })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert("Error resetting origin fonts: " + data.message);
         }
     } catch (e) {
         alert("Error: " + e);

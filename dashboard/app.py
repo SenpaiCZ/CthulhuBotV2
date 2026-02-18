@@ -228,7 +228,12 @@ def inject_theme():
         'body': '',
         'special': ''
     })
-    return dict(dashboard_theme=theme, dashboard_fonts=fonts)
+    origin_fonts = settings.get('origin_fonts', {
+        'headers': '',
+        'body': '',
+        'special': ''
+    })
+    return dict(dashboard_theme=theme, dashboard_fonts=fonts, origin_fonts=origin_fonts)
 
 @app.route('/api/status')
 async def bot_status():
@@ -552,6 +557,7 @@ async def render_karma_notification(guild_id, user_id):
 @app.route('/render/monster')
 async def render_monster_view():
     name = request.args.get('name')
+    style = request.args.get('style')
     if not name:
         return "Missing name parameter", 400
 
@@ -572,11 +578,13 @@ async def render_monster_view():
         return f"Monster '{name}' not found", 404
 
     image_url = get_image_url("monster", target['name'])
-    return await render_template('render_monster.html', monster=target, emojis=emojis, emoji_lib=emoji, image_url=image_url)
+    template = 'render_monster_origin.html' if style == 'origin' else 'render_monster.html'
+    return await render_template(template, monster=target, emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/deity')
 async def render_deity_view():
     name = request.args.get('name')
+    style = request.args.get('style')
     if not name:
         return "Missing name parameter", 400
 
@@ -597,11 +605,13 @@ async def render_deity_view():
         return f"Deity '{name}' not found", 404
 
     image_url = get_image_url("deity", target['name'])
-    return await render_template('render_deity.html', deity=target, emojis=emojis, emoji_lib=emoji, image_url=image_url)
+    template = 'render_deity_origin.html' if style == 'origin' else 'render_deity.html'
+    return await render_template(template, deity=target, emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/spell')
 async def render_spell_view():
     name = request.args.get('name')
+    style = request.args.get('style')
     if not name:
         return "Missing name parameter", 400
 
@@ -622,7 +632,8 @@ async def render_spell_view():
         return f"Spell '{name}' not found", 404
 
     image_url = get_image_url("spell", target['name'])
-    return await render_template('render_spell.html', spell=target, emojis=emojis, emoji_lib=emoji, image_url=image_url)
+    template = 'render_spell_origin.html' if style == 'origin' else 'render_spell.html'
+    return await render_template(template, spell=target, emojis=emojis, emoji_lib=emoji, image_url=image_url)
 
 @app.route('/render/weapon')
 async def render_weapon_view():
@@ -1099,6 +1110,7 @@ async def admin_design():
     settings = load_settings()
     current_theme = settings.get('dashboard_theme', 'cthulhu')
     current_fonts = settings.get('dashboard_fonts', {})
+    current_origin_fonts = settings.get('origin_fonts', {})
 
     # Load uploaded fonts
     uploaded_fonts = []
@@ -1112,7 +1124,8 @@ async def admin_design():
                                current_theme=current_theme,
                                basic_fonts=BASIC_FONTS,
                                uploaded_fonts=uploaded_fonts,
-                               current_fonts=current_fonts)
+                               current_fonts=current_fonts,
+                               current_origin_fonts=current_origin_fonts)
 
 @app.route('/api/design/save_fonts', methods=['POST'])
 async def save_fonts():
@@ -1130,6 +1143,26 @@ async def save_fonts():
     settings['dashboard_fonts']['headers'] = headers_font
     settings['dashboard_fonts']['body'] = body_font
     settings['dashboard_fonts']['special'] = special_font
+
+    await save_settings(settings)
+    return jsonify({"status": "success"})
+
+@app.route('/api/design/save_origin_fonts', methods=['POST'])
+async def save_origin_fonts():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    headers_font = data.get('headers')
+    body_font = data.get('body')
+    special_font = data.get('special')
+
+    settings = load_settings()
+    if 'origin_fonts' not in settings:
+        settings['origin_fonts'] = {}
+
+    settings['origin_fonts']['headers'] = headers_font
+    settings['origin_fonts']['body'] = body_font
+    settings['origin_fonts']['special'] = special_font
 
     await save_settings(settings)
     return jsonify({"status": "success"})

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ spell.name }} - Origin Render</title>
+    {% include 'includes/origin_font_styles.html' %}
+    <style>
+        body {
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .origin-sheet {
+            background-color: #fdf5e6;
+            color: #2b2b2b;
+            font-family: var(--font-origin-body, 'Georgia', serif);
+            padding: 40px;
+            width: 800px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .origin-image {
+            float: right;
+            width: 250px;
+            margin-left: 30px;
+            margin-bottom: 20px;
+            border: 1px solid #8b7d6b;
+            padding: 5px;
+            background-color: #fff;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .origin-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: sepia(0.3) contrast(1.1);
+        }
+
+        h1 {
+            font-family: var(--font-origin-headers, 'Times New Roman', serif);
+            font-size: 3em;
+            color: #4a3b2a;
+            margin-top: 0;
+            margin-bottom: 5px;
+            border-bottom: 2px solid #8b7d6b;
+            padding-bottom: 10px;
+        }
+
+        .category {
+            font-family: var(--font-origin-special, 'Courier New', monospace);
+            font-style: italic;
+            font-size: 1.1em;
+            color: #5c4d3c;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: var(--font-origin-headers, 'Times New Roman', serif);
+            font-size: 1.4em;
+            color: #800000;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        p {
+            margin-bottom: 12px;
+            line-height: 1.5;
+            text-align: justify;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #4a3b2a;
+        }
+
+        .highlight {
+            color: #8b0000;
+        }
+
+        .stat-box {
+            display: inline-block;
+            border: 1px solid #ccc;
+            padding: 5px 10px;
+            margin-right: 10px;
+            text-align: center;
+            background: rgba(255,255,255,0.5);
+            min-width: 80px;
+        }
+        .stat-label {
+            display: block;
+            font-size: 0.7em;
+            text-transform: uppercase;
+            color: #666;
+        }
+        .stat-val {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+
+        .deeper-magic {
+            font-style: italic;
+            color: #444;
+            border: 1px solid #8b7d6b;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.3);
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="origin-sheet clearfix">
+        {% if image_url %}
+        <div class="origin-image">
+            <img src="{{ image_url }}" alt="{{ spell.name }}">
+        </div>
+        {% endif %}
+
+        <h1>{{ spell.name }}</h1>
+        <div class="category">{{ spell.category or 'Unknown Category' }}</div>
+
+        {% if spell.effect and spell.effect.description %}
+            <p>{{ spell.effect.description }}</p>
+        {% endif %}
+
+        <div class="section-title">Costs & Requirements</div>
+        <div style="margin-bottom: 15px;">
+            <div class="stat-box"><span class="stat-label">MP Cost</span><span class="stat-val">{{ spell.costs.magic_points if spell.costs and spell.costs.magic_points else 'None' }}</span></div>
+            <div class="stat-box"><span class="stat-label">Sanity</span><span class="stat-val highlight">{{ spell.costs.sanity if spell.costs and spell.costs.sanity else 'None' }}</span></div>
+            <div class="stat-box"><span class="stat-label">Time</span><span class="stat-val">{{ spell.casting_time or 'Instant' }}</span></div>
+        </div>
+
+        <p><span class="label">Range:</span> {{ spell.range or 'Touch' }}</p>
+
+        {% if spell.costs and spell.costs.components %}
+            <p><span class="label">Components:</span> {{ spell.costs.components }}</p>
+        {% endif %}
+
+        {% if (spell.effect and spell.effect.damage) or (spell.effect and spell.effect.opposed_roll) %}
+        <div class="section-title">Effect details</div>
+        {% endif %}
+
+        {% if spell.effect and spell.effect.damage %}
+            <p><span class="label highlight">Damage:</span> {{ spell.effect.damage }}</p>
+        {% endif %}
+
+        {% if spell.effect and spell.effect.opposed_roll %}
+            <p><span class="label">Opposed Roll:</span> {{ spell.effect.opposed_roll }}</p>
+        {% endif %}
+
+        {% if spell.deeper_magic %}
+        <div class="section-title">Deeper Magic</div>
+        <div class="deeper-magic">
+            {{ spell.deeper_magic }}
+        </div>
+        {% endif %}
+
+        {% if spell.alternate_names %}
+            <div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; font-size: 0.9em; color: #777; text-align: center;">
+                <em>Alternate Names: {{ spell.alternate_names | join(', ') }}</em>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

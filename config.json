@@ -8,5 +8,10 @@
         "headers": "Arial",
         "body": "",
         "special": ""
+    },
+    "origin_fonts": {
+        "headers": "TestHeaderFont",
+        "body": "TestBodyFont",
+        "special": "TestSpecialFont"
     }
 }
