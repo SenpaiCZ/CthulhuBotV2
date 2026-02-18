@@ -882,6 +882,11 @@ class RenderView(discord.ui.View):
              btn.callback = self.add_to_inventory_button
              self.add_item(btn)
 
+        if self.type_slug in ["monster", "deity", "spell"]:
+             btn = discord.ui.Button(label="📜 View Origin", style=discord.ButtonStyle.secondary)
+             btn.callback = self.origin_poster_button
+             self.add_item(btn)
+
     @discord.ui.button(label="📜 View Poster", style=discord.ButtonStyle.secondary)
     async def poster_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         # Allow anyone to view poster? Or just author? Let's check ctx.author.
@@ -895,6 +900,17 @@ class RenderView(discord.ui.View):
         url = f"/render/{self.type_slug}?name={quoted_name}"
 
         await self.cog._render_poster(self.ctx, url, self.name, self.type_slug, interaction=interaction)
+
+    async def origin_poster_button(self, interaction: discord.Interaction):
+        if interaction.user != self.ctx.author:
+             return await interaction.response.send_message("This isn't for you!", ephemeral=True)
+
+        await interaction.response.defer(ephemeral=True)
+
+        quoted_name = urllib.parse.quote(self.name)
+        url = f"/render/{self.type_slug}?name={quoted_name}&style=origin"
+
+        await self.cog._render_poster(self.ctx, url, self.name, f"{self.type_slug}_origin", interaction=interaction)
 
     async def add_to_inventory_button(self, interaction: discord.Interaction):
         if not interaction.guild:
