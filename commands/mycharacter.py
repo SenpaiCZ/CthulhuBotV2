@@ -8,11 +8,24 @@ class mycharacter(commands.Cog):
 
   def __init__(self, bot):
     self.bot = bot
-    
+    self.ctx_menu = app_commands.ContextMenu(
+        name='View Investigator',
+        callback=self.view_investigator_menu,
+    )
+    self.bot.tree.add_command(self.ctx_menu)
+
+  def cog_unload(self):
+    self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
+
+  async def view_investigator_menu(self, interaction: discord.Interaction, member: discord.Member):
+      await self._show_character(interaction, member)
+
   @app_commands.command(name="mycharacter", description="Show your investigator's stats, skills, backstory and inventory.")
   @app_commands.describe(member="The member whose character you want to see")
   async def mycharacter(self, interaction: discord.Interaction, member: discord.Member = None):
+      await self._show_character(interaction, member)
 
+  async def _show_character(self, interaction: discord.Interaction, member: discord.Member = None):
     if interaction.guild is None:
       await interaction.response.send_message("This command is not allowed in DMs.", ephemeral=True)
       return    
