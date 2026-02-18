@@ -100,7 +100,7 @@
                 {% for key, val in monster.characteristics.items() %}
                 <div class="col">
                     <div class="stat-box">
-                        <div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji(key), language='alias') }} {{ key }}</div>
+                        <div class="stat-label">{{ emojis.get_stat_emoji(key) | format_custom_emoji | safe }} {{ key }}</div>
                         {% if val is mapping %}
                             <div class="stat-value text-light">{{ val.average or val }}</div>
                             <div class="small text-muted">{{ val.roll or '' }}</div>
@@ -117,13 +117,13 @@
 
         <div class="section-header">Derived Stats</div>
         <div class="row row-cols-2 row-cols-md-5 g-2 mb-4">
-            <div class="col"><div class="stat-box"><div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('HP'), language='alias') }} HP</div><div class="stat-value text-danger">{{ monster.derived_stats.hit_points }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('DB'), language='alias') }} DB</div><div class="stat-value">{{ monster.derived_stats.damage_bonus }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('Build'), language='alias') }} Build</div><div class="stat-value">{{ monster.derived_stats.build }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('MP'), language='alias') }} MP</div><div class="stat-value text-info">{{ monster.derived_stats.magic_points }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">{{ emojis.get_stat_emoji('HP') | format_custom_emoji | safe }} HP</div><div class="stat-value text-danger">{{ monster.derived_stats.hit_points }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">{{ emojis.get_stat_emoji('DB') | format_custom_emoji | safe }} DB</div><div class="stat-value">{{ monster.derived_stats.damage_bonus }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">{{ emojis.get_stat_emoji('Build') | format_custom_emoji | safe }} Build</div><div class="stat-value">{{ monster.derived_stats.build }}</div></div></div>
+            <div class="col"><div class="stat-box"><div class="stat-label">{{ emojis.get_stat_emoji('MP') | format_custom_emoji | safe }} MP</div><div class="stat-value text-info">{{ monster.derived_stats.magic_points }}</div></div></div>
             <div class="col">
                 <div class="stat-box">
-                    <div class="stat-label">{{ emoji_lib.emojize(emojis.get_stat_emoji('Move'), language='alias') }} Move</div>
+                    <div class="stat-label">{{ emojis.get_stat_emoji('Move') | format_custom_emoji | safe }} Move</div>
                     <div class="stat-value">
                         {% if monster.derived_stats.move is mapping %}
                             {{ monster.derived_stats.move.base }}

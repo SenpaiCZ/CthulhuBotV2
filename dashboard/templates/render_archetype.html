@@ -56,7 +56,7 @@
 
         <div class="card bg-dark border-secondary mb-4">
             <div class="card-body">
-                <p class="card-text border-start border-success border-3 ps-3">{{ archetype.description }}</p>
+                <p class="card-text border-start border-success border-3 ps-3">{{ archetype.description | format_custom_emoji | safe }}</p>
             </div>
         </div>
 
