@@ -9,6 +9,17 @@ from loadnsave import load_player_stats, load_settings
 class PrintCharacter(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.ctx_menu = app_commands.ContextMenu(
+            name='Print Character',
+            callback=self.print_character_menu,
+        )
+        self.bot.tree.add_command(self.ctx_menu)
+
+    def cog_unload(self):
+        self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
+
+    async def print_character_menu(self, interaction: discord.Interaction, user: discord.Member):
+        await self._print_character(interaction, user)
 
     @app_commands.command(name="printcharacter", description="Prints the character sheet of the user as an image.")
     @app_commands.describe(user="The user whose character you want to print (defaults to you)")
@@ -16,14 +27,18 @@ class PrintCharacter(commands.Cog):
         """
         Prints the character sheet of the user as an image.
         """
-        if not interaction.guild:
-            await interaction.response.send_message("This command can only be used in a server.", ephemeral=True)
-            return
-
-        await interaction.response.defer()
-
         if user is None:
             user = interaction.user
+        await self._print_character(interaction, user)
+
+    async def _print_character(self, interaction: discord.Interaction, user: discord.Member):
+        if not interaction.guild:
+            if not interaction.response.is_done():
+                await interaction.response.send_message("This command can only be used in a server.", ephemeral=True)
+            return
+
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
         guild_id = str(interaction.guild.id)
         user_id = str(user.id)
@@ -85,7 +100,10 @@ class PrintCharacter(commands.Cog):
                     await browser.close()
 
         except Exception as e:
-            await msg.edit(content=f"An error occurred while generating the image: {e}")
+            try:
+                await msg.edit(content=f"An error occurred while generating the image: {e}")
+            except:
+                pass # Message might be deleted
             print(f"PrintCharacter Error: {e}")
 
 async def setup(bot):
