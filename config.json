@@ -3,5 +3,10 @@
     "enable_dashboard": false,
     "dashboard_port": 5000,
     "admin_password": "changeme",
-    "backup_time": "03:00"
+    "backup_time": "03:00",
+    "dashboard_fonts": {
+        "headers": "Arial",
+        "body": "",
+        "special": ""
+    }
 }

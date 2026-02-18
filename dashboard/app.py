@@ -57,6 +57,11 @@ OLD_FONTS_FOLDER = os.path.join("dashboard", "static", "fonts")
 server_volumes = {} # guild_id (str) -> {'music': 1.0, 'soundboard': 0.5}
 guild_mixers = {} # guild_id (str) -> MixingAudioSource
 
+BASIC_FONTS = [
+    "Arial", "Verdana", "Helvetica", "Tahoma", "Trebuchet MS", "Times New Roman",
+    "Georgia", "Garamond", "Courier New", "Brush Script MT"
+]
+
 app = Quart(__name__)
 app.secret_key = os.urandom(24)
 app.bot = None  # Placeholder for the Discord bot instance
@@ -218,7 +223,12 @@ def inject_user():
 def inject_theme():
     settings = load_settings()
     theme = settings.get('dashboard_theme', 'cthulhu')
-    return dict(dashboard_theme=theme)
+    fonts = settings.get('dashboard_fonts', {
+        'headers': '',
+        'body': '',
+        'special': ''
+    })
+    return dict(dashboard_theme=theme, dashboard_fonts=fonts)
 
 @app.route('/api/status')
 async def bot_status():
@@ -1088,7 +1098,41 @@ async def admin_design():
     if not is_admin(): return redirect(url_for('login'))
     settings = load_settings()
     current_theme = settings.get('dashboard_theme', 'cthulhu')
-    return await render_template('design_dashboard.html', current_theme=current_theme)
+    current_fonts = settings.get('dashboard_fonts', {})
+
+    # Load uploaded fonts
+    uploaded_fonts = []
+    if os.path.exists(FONTS_FOLDER):
+        for f in os.listdir(FONTS_FOLDER):
+            if f.lower().endswith(('.ttf', '.otf', '.woff', '.woff2')):
+                uploaded_fonts.append(f)
+    uploaded_fonts.sort()
+
+    return await render_template('design_dashboard.html',
+                               current_theme=current_theme,
+                               basic_fonts=BASIC_FONTS,
+                               uploaded_fonts=uploaded_fonts,
+                               current_fonts=current_fonts)
+
+@app.route('/api/design/save_fonts', methods=['POST'])
+async def save_fonts():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    headers_font = data.get('headers')
+    body_font = data.get('body')
+    special_font = data.get('special')
+
+    settings = load_settings()
+    if 'dashboard_fonts' not in settings:
+        settings['dashboard_fonts'] = {}
+
+    settings['dashboard_fonts']['headers'] = headers_font
+    settings['dashboard_fonts']['body'] = body_font
+    settings['dashboard_fonts']['special'] = special_font
+
+    await save_settings(settings)
+    return jsonify({"status": "success"})
 
 @app.route('/api/design/save', methods=['POST'])
 async def save_design():
