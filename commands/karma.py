@@ -15,7 +15,7 @@ class Karma(commands.Cog):
             name='Check Karma',
             callback=self.karma_context_menu,
         )
-        self.bot.tree.add_command(self.ctx_menu)
+        self.bot.tree.add_command(self.ctx_menu, override=True)
 
     def cog_unload(self):
         self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
