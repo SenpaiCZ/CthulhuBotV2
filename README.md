@@ -55,7 +55,7 @@ The bot uses **Slash Commands** (`/`). Legacy prefix commands have been removed,
 *   `/session wipe`: 🧹 Clear session data.
 
 ### 📚 The Grimoire (Codex)
-*   `/grimoire`: 📖 Open the main Grimoire menu to browse all categories.
+*   `/codex`: 📖 Open the main Codex menu to browse all categories.
 *   `/monster` `[name]`: 👹 Lookup a Cthulhu Mythos monster.
 *   `/deity` `[name]`: 👁️ Lookup a Great Old One or Outer God.
 *   `/spell` `[name]`: ✨ Lookup a spell.
