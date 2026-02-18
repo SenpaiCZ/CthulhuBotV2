@@ -2,6 +2,16 @@
 
 echo "Starting CthulhuBotV2 Setup for Linux/macOS..."
 
+# Check for Pi OS and install Emoji Font
+if [ -f /etc/os-release ]; then
+    if grep -qi "Raspberry Pi" /etc/os-release || grep -qi "Raspbian" /etc/os-release; then
+        echo "Raspberry Pi OS detected. Installing Noto Color Emoji font..."
+        # sudo is typically available on Pi OS default user
+        sudo apt update
+        sudo apt install -y fonts-noto-color-emoji
+    fi
+fi
+
 # Check for Python 3
 if ! command -v python3 &> /dev/null; then
     echo "Error: Python 3 is not installed. Please install Python 3.11 or higher."
