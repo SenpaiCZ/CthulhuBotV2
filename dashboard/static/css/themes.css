@@ -1,3 +1,10 @@
+@font-face {
+    font-family: 'Noto Color Emoji';
+    src: url('/fonts/NotoColorEmoji.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 :root, [data-bs-theme="dark"] {
     /* Default fallback variables (Cthulhu) if not overridden */
     --theme-primary-dark: #1b4d3e;
