@@ -12,7 +12,6 @@ import emoji
 import emojis
 import feedparser
 import datetime
-import aiohttp
 from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort, send_from_directory
 from markupsafe import escape
 from loadnsave import (
@@ -87,24 +86,6 @@ async def app_startup():
             print(f"Migrated fonts from {OLD_FONTS_FOLDER} to {FONTS_FOLDER}")
         except Exception as e:
             print(f"Error migrating fonts: {e}")
-
-    # Check for Noto Color Emoji
-    emoji_font_path = os.path.join(FONTS_FOLDER, "NotoColorEmoji.ttf")
-    if not os.path.exists(emoji_font_path):
-        print("Downloading Noto Color Emoji font...")
-        try:
-            url = "https://github.com/googlefonts/noto-emoji/raw/main/fonts/NotoColorEmoji.ttf"
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as resp:
-                    if resp.status == 200:
-                        content = await resp.read()
-                        with open(emoji_font_path, 'wb') as f:
-                            f.write(content)
-                        print("Downloaded NotoColorEmoji.ttf")
-                    else:
-                        print(f"Failed to download emoji font: {resp.status}")
-        except Exception as e:
-            print(f"Error downloading emoji font: {e}")
 
 # Helper to check login
 def is_admin():
