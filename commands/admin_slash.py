@@ -18,6 +18,7 @@ class AdminSlash(commands.Cog):
         !sync -> Sync globally (takes up to 1 hour to propagate)
         !sync guild -> Sync to current guild (instant)
         !sync clear -> Clear global commands
+        !sync clearguild -> Clear guild-specific commands (use to fix duplicates)
         """
         msg = await ctx.send("Syncing...")
         try:
@@ -26,6 +27,13 @@ class AdminSlash(commands.Cog):
                     self.bot.tree.copy_global_to(guild=ctx.guild)
                     synced = await self.bot.tree.sync(guild=ctx.guild)
                     await msg.edit(content=f"✅ Synced {len(synced)} commands to this guild.")
+                else:
+                    await msg.edit(content="❌ This command must be run in a guild.")
+            elif spec == "clearguild":
+                if ctx.guild:
+                    self.bot.tree.clear_commands(guild=ctx.guild)
+                    await self.bot.tree.sync(guild=ctx.guild)
+                    await msg.edit(content="✅ Cleared all guild-specific commands for this guild.")
                 else:
                     await msg.edit(content="❌ This command must be run in a guild.")
             elif spec == "clear":
