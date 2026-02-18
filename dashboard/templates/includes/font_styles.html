@@ -1,0 +1,40 @@
+{% if dashboard_fonts %}
+<style>
+    /* Generate font faces for custom uploaded fonts */
+    {% for key, font in dashboard_fonts.items() %}
+        {% if font and font != 'default' and '.' in font %}
+            @font-face {
+                font-family: 'Custom-{{ key }}';
+                src: url('/fonts/{{ font }}');
+            }
+        {% endif %}
+    {% endfor %}
+
+    :root {
+        {% if dashboard_fonts.headers and dashboard_fonts.headers != 'default' %}
+            --font-headers: {% if '.' in dashboard_fonts.headers %}'Custom-headers'{% else %}"{{ dashboard_fonts.headers }}"{% endif %}, sans-serif;
+        {% endif %}
+
+        {% if dashboard_fonts.body and dashboard_fonts.body != 'default' %}
+            --font-body: {% if '.' in dashboard_fonts.body %}'Custom-body'{% else %}"{{ dashboard_fonts.body }}"{% endif %}, sans-serif;
+        {% endif %}
+
+        {% if dashboard_fonts.special and dashboard_fonts.special != 'default' %}
+            --font-special: {% if '.' in dashboard_fonts.special %}'Custom-special'{% else %}"{{ dashboard_fonts.special }}"{% endif %}, serif;
+        {% endif %}
+    }
+
+    /* Apply Fonts - Only if defined (for global overrides) */
+    {% if dashboard_fonts.body and dashboard_fonts.body != 'default' %}
+        body { font-family: var(--font-body) !important; }
+    {% endif %}
+
+    {% if dashboard_fonts.headers and dashboard_fonts.headers != 'default' %}
+        h1, h2, h3, h4, h5, h6, .card-header, .navbar-brand { font-family: var(--font-headers) !important; }
+    {% endif %}
+
+    {% if dashboard_fonts.special and dashboard_fonts.special != 'default' %}
+        .special-text, .quote-block, code, pre { font-family: var(--font-special) !important; }
+    {% endif %}
+</style>
+{% endif %}
