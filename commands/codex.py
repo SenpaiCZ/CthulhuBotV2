@@ -22,6 +22,7 @@ from loadnsave import (
     load_player_stats, save_player_stats
 )
 from rapidfuzz import process, fuzz
+from dashboard.file_utils import sanitize_filename
 
 class Codex(commands.Cog):
     def __init__(self, bot):
@@ -114,9 +115,8 @@ class Codex(commands.Cog):
 
     def _get_image_file(self, type_slug, name):
         """Checks if a local image exists and returns a discord.File object."""
-        # Sanitize filename (basic replacement, should match file_utils logic ideally)
-        # Using a simple regex to mimic sanitize_filename from dashboard/file_utils.py
-        safe_name = re.sub(r'[\\/*?:"<>|]', "", name)
+        # Sanitize filename to match dashboard/file_utils logic
+        safe_name = sanitize_filename(name)
 
         # Dashboard uses 'images' folder at root
         target_dir = os.path.join("images", type_slug)
