@@ -7,6 +7,33 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/themes.css') }}" rel="stylesheet">
+
+    <style>
+        /* Font Injection */
+        {% if dashboard_fonts %}
+            /* Generate font faces for custom uploaded fonts */
+            {% for key, font in dashboard_fonts.items() %}
+                {% if font and font != 'default' and '.' in font %}
+                    @font-face {
+                        font-family: 'Custom-{{ key }}';
+                        src: url('/fonts/{{ font }}');
+                    }
+                {% endif %}
+            {% endfor %}
+
+            :root {
+                --font-headers: {% if dashboard_fonts.headers and dashboard_fonts.headers != 'default' %}{% if '.' in dashboard_fonts.headers %}'Custom-headers'{% else %}"{{ dashboard_fonts.headers }}"{% endif %}, sans-serif{% else %}inherit{% endif %};
+                --font-body: {% if dashboard_fonts.body and dashboard_fonts.body != 'default' %}{% if '.' in dashboard_fonts.body %}'Custom-body'{% else %}"{{ dashboard_fonts.body }}"{% endif %}, sans-serif{% else %}inherit{% endif %};
+                --font-special: {% if dashboard_fonts.special and dashboard_fonts.special != 'default' %}{% if '.' in dashboard_fonts.special %}'Custom-special'{% else %}"{{ dashboard_fonts.special }}"{% endif %}, serif{% else %}inherit{% endif %};
+            }
+        {% endif %}
+
+        /* Apply Fonts */
+        body { font-family: var(--font-body) !important; }
+        h1, h2, h3, h4, h5, h6, .card-header, .navbar-brand { font-family: var(--font-headers) !important; }
+        .special-text, .quote-block, code, pre { font-family: var(--font-special) !important; }
+    </style>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>

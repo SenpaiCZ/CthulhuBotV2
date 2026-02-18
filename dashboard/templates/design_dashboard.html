@@ -82,6 +82,70 @@
 
 </div>
 
+<hr class="my-5 border-secondary">
+
+<h2 class="mb-4">Typography</h2>
+<p class="text-muted">Customize fonts for different elements. You can manage custom fonts in the <a href="/admin/fonts" class="text-decoration-none">Font Management</a> page.</p>
+
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="fontHeaders" class="form-label">Headers (H1-H6)</label>
+                <select class="form-select bg-secondary text-light border-secondary" id="fontHeaders">
+                    <option value="" {% if not current_fonts.headers %}selected{% endif %}>Default</option>
+                    <optgroup label="Basic Fonts">
+                        {% for font in basic_fonts %}
+                        <option value="{{ font }}" {% if current_fonts.headers == font %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    <optgroup label="Custom Fonts">
+                        {% for font in uploaded_fonts %}
+                        <option value="{{ font }}" {% if current_fonts.headers == font %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="fontBody" class="form-label">Body Text</label>
+                <select class="form-select bg-secondary text-light border-secondary" id="fontBody">
+                    <option value="" {% if not current_fonts.body %}selected{% endif %}>Default</option>
+                    <optgroup label="Basic Fonts">
+                        {% for font in basic_fonts %}
+                        <option value="{{ font }}" {% if current_fonts.body == font %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    <optgroup label="Custom Fonts">
+                        {% for font in uploaded_fonts %}
+                        <option value="{{ font }}" {% if current_fonts.body == font %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="fontSpecial" class="form-label">Special Text</label>
+                <select class="form-select bg-secondary text-light border-secondary" id="fontSpecial">
+                    <option value="" {% if not current_fonts.special %}selected{% endif %}>Default</option>
+                    <optgroup label="Basic Fonts">
+                        {% for font in basic_fonts %}
+                        <option value="{{ font }}" {% if current_fonts.special == font %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    <optgroup label="Custom Fonts">
+                        {% for font in uploaded_fonts %}
+                        <option value="{{ font }}" {% if current_fonts.special == font %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </optgroup>
+                </select>
+            </div>
+        </div>
+        <div class="mt-4">
+            <button class="btn btn-success me-2" onclick="saveFonts()">Save Fonts</button>
+            <button class="btn btn-outline-secondary" onclick="resetFonts()">Reset to Defaults</button>
+        </div>
+    </div>
+</div>
+
 <script>
 async function setTheme(themeName) {
     try {
@@ -100,6 +164,46 @@ async function setTheme(themeName) {
             location.reload();
         } else {
             alert("Error saving theme: " + data.message);
+        }
+    } catch (e) {
+        alert("Error: " + e);
+    }
+}
+
+async function saveFonts() {
+    const headers = document.getElementById('fontHeaders').value;
+    const body = document.getElementById('fontBody').value;
+    const special = document.getElementById('fontSpecial').value;
+
+    try {
+        const response = await fetch('/api/design/save_fonts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ headers, body, special })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert("Error saving fonts: " + data.message);
+        }
+    } catch (e) {
+        alert("Error: " + e);
+    }
+}
+
+async function resetFonts() {
+    try {
+        const response = await fetch('/api/design/save_fonts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ headers: '', body: '', special: '' })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert("Error resetting fonts: " + data.message);
         }
     } catch (e) {
         alert("Error: " + e);
