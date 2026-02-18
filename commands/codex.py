@@ -265,7 +265,7 @@ class Codex(commands.Cog):
                 return
 
             try:
-                element = await page.wait_for_selector('.coc-sheet', timeout=5000)
+                element = await page.wait_for_selector('.coc-sheet, .origin-sheet', timeout=5000)
             except:
                 element = None
 
