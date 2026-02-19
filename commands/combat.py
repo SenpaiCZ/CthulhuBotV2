@@ -1,9 +1,10 @@
 import discord
 import random
+import re
 from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, Button, Select
-from loadnsave import load_player_stats, load_weapons_data
+from loadnsave import load_player_stats, load_weapons_data, save_player_stats
 from commands.roll import RollResultView
 from rapidfuzz import process, fuzz
 
@@ -26,23 +27,26 @@ class CombatView(View):
         self.last_action = last_action or "Combat started."
 
         # Parse Inventory for Weapons
+        # self.available_weapons is now a list of dicts:
+        # [{'key': 'AK-47', 'display': 'AK-47 [30/30]', 'ammo': 30, 'cap': 30, 'original': 'AK-47 [30/30]'}, ...]
         self.available_weapons = self._parse_weapons()
         self.active_weapon_idx = 0 if self.available_weapons else -1
 
         # Initial State
-        if initial_weapon_states:
-            self.weapon_states = initial_weapon_states
-        else:
-            self.weapon_states = {} # key: idx, value: {ammo: int, jammed: bool}
-            if self.available_weapons:
-                for i, w_key in enumerate(self.available_weapons):
-                    w_data = self.weapon_db.get(w_key, {})
-                    cap_str = w_data.get("capacity", "0")
-                    try:
-                        cap = int(str(cap_str).split("/")[0].strip()) # Handle "20/30"
-                    except:
-                        cap = 0
-                    self.weapon_states[i] = {"ammo": cap, "jammed": False, "cap": cap}
+        self.weapon_states = {} # key: idx, value: {ammo: int, jammed: bool, cap: int}
+
+        if self.available_weapons:
+            for i, w_obj in enumerate(self.available_weapons):
+                # Default from parsed object
+                self.weapon_states[i] = {
+                    "ammo": w_obj['ammo'],
+                    "cap": w_obj['cap'],
+                    "jammed": False
+                }
+                # If we had previous state (e.g. preserving jammed status if view reloaded), apply it
+                if initial_weapon_states and i in initial_weapon_states:
+                     prev = initial_weapon_states[i]
+                     self.weapon_states[i]["jammed"] = prev.get("jammed", False)
 
         self.message = None
         self.update_components()
@@ -65,30 +69,64 @@ class CombatView(View):
         for item in inventory:
             if not isinstance(item, str): continue
 
-            # clean "A " or "An " prefix
-            clean_item = item
+            # Regex parse Name [Current/Max] or Name [Capacity]
+            match = re.match(r"^(.*?)\s*\[(\d+)(?:/(\d+))?\]\s*$", item)
+
+            clean_name_candidate = item
+            current_ammo = None
+            max_ammo = None
+
+            if match:
+                clean_name_candidate = match.group(1).strip()
+                current_ammo = int(match.group(2))
+                if match.group(3):
+                    max_ammo = int(match.group(3))
+                else:
+                    max_ammo = current_ammo # If just [30], assume 30/30
+
+            # Clean "A " or "An " prefix
+            clean_item = clean_name_candidate
             if clean_item.lower().startswith("a "): clean_item = clean_item[2:].strip()
             elif clean_item.lower().startswith("an "): clean_item = clean_item[3:].strip()
 
-            # Exact match
+            # Identify Weapon in DB
+            db_key = None
             if clean_item in weapon_keys:
-                found_weapons.append(clean_item)
-                continue
+                db_key = clean_item
+            else:
+                # Fuzzy match
+                fuzzy = process.extractOne(clean_item, weapon_keys, scorer=fuzz.token_set_ratio)
+                if fuzzy and fuzzy[1] > 85:
+                    db_key = fuzzy[0]
 
-            # Fuzzy match
-            match = process.extractOne(clean_item, weapon_keys, scorer=fuzz.token_set_ratio)
-            if match and match[1] > 85: # High confidence
-                found_weapons.append(match[0])
+            if db_key:
+                w_data = self.weapon_db.get(db_key, {})
 
-        # Remove duplicates while preserving order
-        seen = set()
-        unique_weapons = []
-        for w in found_weapons:
-            if w not in seen:
-                unique_weapons.append(w)
-                seen.add(w)
+                # Determine Capacity if not parsed
+                if max_ammo is None:
+                    cap_str = w_data.get("capacity", "0")
+                    try:
+                        cap_match = re.search(r"(\d+)", str(cap_str))
+                        if cap_match:
+                            max_ammo = int(cap_match.group(1))
+                        else:
+                            max_ammo = 0
+                    except:
+                        max_ammo = 0
 
-        return unique_weapons
+                if current_ammo is None:
+                    current_ammo = max_ammo
+
+                found_weapons.append({
+                    "key": db_key,
+                    "display": item, # The full original string
+                    "clean_name": clean_name_candidate, # The name part of the string (e.g. "AK-47")
+                    "ammo": current_ammo,
+                    "cap": max_ammo,
+                    "original": item # Valid for finding and replacing
+                })
+
+        return found_weapons
 
     def _generate_health_bar(self, current, max_val, length=8):
         if max_val <= 0: max_val = 1
@@ -100,15 +138,10 @@ class CombatView(View):
         empty = length - filled
 
         # Color Logic
-        # 🟩 Green for > 50%
-        # 🟨 Yellow for > 20%
-        # 🟥 Red for <= 20%
-
         fill_char = "🟩"
         if pct <= 0.2: fill_char = "🟥"
         elif pct <= 0.5: fill_char = "🟨"
 
-        # Using Black Square for empty
         bar = (fill_char * filled) + ("⬛" * empty)
         return bar
 
@@ -131,12 +164,20 @@ class CombatView(View):
         # Row 1: Weapon Selection
         if self.available_weapons:
             options = []
-            for i, w_key in enumerate(self.available_weapons):
+            for i, w_obj in enumerate(self.available_weapons):
                 state = self.weapon_states.get(i, {})
-                ammo = state.get("ammo", "?")
-                cap = state.get("cap", "?")
-                jammed = " (JAMMED)" if state.get("jammed") else ""
-                label = f"{w_key[:50]} [{ammo}/{cap}]{jammed}"
+                ammo = state.get("ammo", 0)
+                cap = state.get("cap", 0)
+                jammed = state.get("jammed", False)
+
+                # Emojis for Dropdown
+                status_emoji = "🟩"
+                if jammed: status_emoji = "🔴"
+                elif ammo == 0: status_emoji = "🟡"
+
+                label = f"{status_emoji} {w_obj['clean_name'][:50]} [{ammo}/{cap}]"
+                if jammed: label += " (JAMMED)"
+
                 options.append(discord.SelectOption(label=label, value=str(i), default=(i == self.active_weapon_idx)))
 
             select = Select(placeholder="Select Active Weapon", options=options[:25], row=1)
@@ -147,6 +188,7 @@ class CombatView(View):
             if self.active_weapon_idx >= 0:
                 current_state = self.weapon_states[self.active_weapon_idx]
                 is_jammed = current_state["jammed"]
+                ammo = current_state["ammo"]
 
                 shoot_btn = Button(label="Shoot", style=discord.ButtonStyle.danger, row=2, emoji="🔫", disabled=is_jammed)
                 shoot_btn.callback = self.shoot_callback
@@ -169,11 +211,10 @@ class CombatView(View):
     def get_embed(self):
         embed = discord.Embed(title="Combat Mode", color=discord.Color.red())
 
-        # Stats Summary with Bars
+        # Stats Summary
         hp = self.char_data.get("HP", 0)
         max_hp = (self.char_data.get("CON", 0) + self.char_data.get("SIZ", 0)) // 10
         if self.char_data.get("Game Mode") == "Pulp of Cthulhu": max_hp = (self.char_data.get("CON", 0) + self.char_data.get("SIZ", 0)) // 5
-
         hp_bar = self._generate_health_bar(hp, max_hp)
 
         mp = self.char_data.get("MP", 0)
@@ -197,8 +238,9 @@ class CombatView(View):
         embed.description = stats_line
 
         # Active Weapon Info
-        if self.active_weapon_idx >= 0:
-            w_key = self.available_weapons[self.active_weapon_idx]
+        if self.active_weapon_idx >= 0 and self.available_weapons:
+            w_obj = self.available_weapons[self.active_weapon_idx]
+            w_key = w_obj["key"]
             w_data = self.weapon_db.get(w_key, {})
             state = self.weapon_states.get(self.active_weapon_idx, {})
 
@@ -210,10 +252,11 @@ class CombatView(View):
             malf = w_data.get("malfunction", "100")
             shots = w_data.get("shots_per_round", "1")
 
-            status = "🔴 **JAMMED**" if jammed else "🟢 Ready"
-            if ammo <= 0 and not jammed: status = "🟡 Empty"
+            status = "🟢 Ready"
+            if jammed: status = "🔴 **JAMMED**"
+            elif ammo <= 0: status = "🟡 Empty"
 
-            w_info = (f"**{w_key}**\n"
+            w_info = (f"**{w_obj['clean_name']}**\n"
                       f"Damage: `{damage}` | Malfunction: `{malf}` | ROF: `{shots}`\n"
                       f"Ammo: **{ammo}/{cap}** | Status: {status}")
 
@@ -223,7 +266,7 @@ class CombatView(View):
         else:
              embed.add_field(name="Active Weapon", value="None selected.", inline=False)
 
-        # Footer with Last Action
+        # Footer
         embed.set_footer(text=f"Last Action: {self.last_action}")
 
         return embed
@@ -253,31 +296,76 @@ class CombatView(View):
         self.last_action = f"Switched weapon."
         await self._update_view(interaction)
 
+    async def _update_inventory_string(self, idx, new_ammo, max_ammo):
+        # Helper to update the inventory string in char_data
+        w_obj = self.available_weapons[idx]
+        original_str = w_obj["original"]
+        base_name = w_obj["clean_name"]
+
+        new_str = f"{base_name} [{new_ammo}/{max_ammo}]"
+
+        # Find and replace in char_data["Backstory"]["Gear and Possessions"] (etc)
+        # We search all possible keys again or just iterate
+        sources = ["Gear and Possessions", "Weapons", "Equipment", "Assets"]
+        updated = False
+
+        backstory = self.char_data.get("Backstory", {})
+        for key in sources:
+            if key in backstory and isinstance(backstory[key], list):
+                # Try to find index of original_str
+                try:
+                    list_idx = backstory[key].index(original_str)
+                    backstory[key][list_idx] = new_str
+                    updated = True
+                    # Update local object so future updates find the new string
+                    self.available_weapons[idx]["original"] = new_str
+                    self.available_weapons[idx]["display"] = new_str # keeping consistent
+                    break
+                except ValueError:
+                    continue
+
+        if updated:
+            # Save to disk
+            # We need to update the main player_stats object
+            # Note: self.player_stats must be initialized in __init__
+            self.player_stats[self.server_id][self.user_id] = self.char_data
+            await save_player_stats(self.player_stats)
+
     async def shoot_callback(self, interaction: discord.Interaction):
         idx = self.active_weapon_idx
         state = self.weapon_states[idx]
+        w_obj = self.available_weapons[idx]
 
         if state["ammo"] <= 0:
             return await interaction.response.send_message("Click... (Out of Ammo!)", ephemeral=True)
 
-        # Determine Skill
-        w_key = self.available_weapons[idx]
-        w_data = self.weapon_db.get(w_key, {})
-        skill_name = self._get_firearm_skill(w_key)
-
         state["ammo"] -= 1
-        self.last_action = f"Fired {w_key}."
+
+        # Determine Skill
+        skill_name = self._get_firearm_skill(w_obj["key"])
+
+        self.last_action = f"Fired {w_obj['clean_name']}."
+
+        # Save Ammo Change
+        await self._update_inventory_string(idx, state["ammo"], state["cap"])
 
         # Perform Roll
-        await self.perform_roll(interaction, skill_name, custom_title=f"Shoot ({w_key})", check_malfunction=True, malfunction_val=w_data.get("malfunction", "100"))
+        w_data = self.weapon_db.get(w_obj["key"], {})
+        await self.perform_roll(interaction, skill_name, custom_title=f"Shoot ({w_obj['clean_name']})", check_malfunction=True, malfunction_val=w_data.get("malfunction", "100"))
 
     async def reload_callback(self, interaction: discord.Interaction):
         idx = self.active_weapon_idx
         state = self.weapon_states[idx]
+        w_obj = self.available_weapons[idx]
+
         state["ammo"] = state["cap"]
         state["jammed"] = False
 
-        self.last_action = f"Reloaded {self.available_weapons[idx]}."
+        self.last_action = f"Reloaded {w_obj['clean_name']}."
+
+        # Save Ammo Change
+        await self._update_inventory_string(idx, state["ammo"], state["cap"])
+
         await self._update_view(interaction)
 
     async def fix_jam_callback(self, interaction: discord.Interaction):
@@ -285,20 +373,44 @@ class CombatView(View):
         state = self.weapon_states[idx]
         state["jammed"] = False
 
-        self.last_action = f"Cleared jam on {self.available_weapons[idx]}."
+        self.last_action = f"Cleared jam on {self.available_weapons[idx]['clean_name']}."
         await self._update_view(interaction)
 
     async def exit_callback(self, interaction: discord.Interaction):
         await interaction.response.edit_message(content="Combat ended.", view=None, embed=None)
         self.stop()
 
-    def _get_firearm_skill(self, weapon_name):
-        name_lower = weapon_name.lower()
-        if "rifle" in name_lower or "carbine" in name_lower: return "Firearms (Rifle/Shotgun)"
-        if "shotgun" in name_lower: return "Firearms (Rifle/Shotgun)"
-        if "submachine" in name_lower or "smg" in name_lower or "tommy" in name_lower or "mp18" in name_lower or "mp40" in name_lower or "sten" in name_lower: return "Firearms (Submachine Gun)"
-        if "machine gun" in name_lower or "lewis" in name_lower or "browning" in name_lower or "vickers" in name_lower or "mg42" in name_lower: return "Firearms (Machine Gun)"
-        return "Firearms (Handgun)"
+    def _get_firearm_skill(self, weapon_key):
+        """
+        Determines the correct skill name to use for rolling.
+        Attempts to use simplified "Pistol" / "Rifle/Shotgun" if present on character.
+        Falls back to legacy "Firearms (Handgun)" / "Firearms (Rifle/Shotgun)" if simplified not found.
+        """
+        w_data = self.weapon_db.get(weapon_key, {})
+        target_skill = w_data.get("Skill", "Rifle/Shotgun") # Default new schema
+
+        # Check if the character actually HAS this skill
+        # If they do, return it.
+        # If not, check if they have the legacy equivalent.
+
+        # Logic:
+        # 1. Exact match
+        if target_skill in self.char_data:
+            return target_skill
+
+        # 2. Legacy Fallback
+        legacy_map = {
+            "Pistol": "Firearms (Handgun)",
+            "Rifle/Shotgun": "Firearms (Rifle/Shotgun)"
+        }
+
+        if target_skill in legacy_map:
+            legacy_name = legacy_map[target_skill]
+            if legacy_name in self.char_data:
+                return legacy_name
+
+        # 3. Fallback (if they have neither, return new name and let fuzzy match fail/default to base chance)
+        return target_skill
 
     async def perform_roll(self, interaction, skill_name, custom_title=None, check_malfunction=False, malfunction_val="100"):
         # Get Roll Cog
@@ -309,11 +421,9 @@ class CombatView(View):
             return
 
         # Get Skill Value
-        # Fuzzy match skill name in char_data
         skill_val = 0
         real_name = skill_name
 
-        # Try exact
         if skill_name in self.char_data:
             skill_val = self.char_data[skill_name]
         else:
@@ -351,9 +461,7 @@ class CombatView(View):
             self.last_action += " (JAMMED!)"
 
         # Use RollResultView
-        # We need a Mock Context
         ctx = MockContext(interaction)
-
         result_text, result_tier = roll_cog.calculate_roll_result(roll_val, skill_val)
 
         # Prepare View
@@ -390,17 +498,15 @@ class CombatView(View):
 
         embed = discord.Embed(description=desc, color=color)
 
-        # 1. Send Public Roll Result to Channel
+        # 1. Send Public Roll Result
         public_msg = await interaction.channel.send(embed=embed, view=view)
         view.message = public_msg
 
         # 2. Update Dashboard IN PLACE
-        # This fulfills the button interaction (shoot, brawl, etc.)
         self.update_components()
         if not interaction.response.is_done():
             await interaction.response.edit_message(embed=self.get_embed(), view=self)
         else:
-            # If already responded (unlikely unless defer called), modify original
             await interaction.edit_original_response(embed=self.get_embed(), view=self)
 
 
