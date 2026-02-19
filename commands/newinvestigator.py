@@ -749,6 +749,26 @@ class CustomSkillModal(Modal, title="Add Custom Skill"):
 
         await self.view.refresh(interaction)
 
+class CthulhuMythosWarningView(View):
+    def __init__(self, parent_view, skill_name, current_val, base_val):
+        super().__init__(timeout=60)
+        self.parent_view = parent_view
+        self.skill_name = skill_name
+        self.current_val = current_val
+        self.base_val = base_val
+
+    @discord.ui.button(label="Assign Points", style=discord.ButtonStyle.danger, emoji="🐙")
+    async def assign(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Proceed to modal
+        modal = SkillPointSetModal(self.parent_view, self.skill_name, self.current_val, self.base_val)
+        await interaction.response.send_modal(modal)
+        self.stop()
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="Action cancelled.", view=None)
+        self.stop()
+
 class SkillPageSelect(Select):
     def __init__(self, options):
         super().__init__(placeholder="Select a Skill to modify...", min_values=1, max_values=1, options=options)
@@ -756,39 +776,19 @@ class SkillPageSelect(Select):
     async def callback(self, interaction: discord.Interaction):
         skill = self.values[0]
         current_val = self.view.char_data.get(skill, 0)
-        # Determine Base Value?
-        # Standard base values are implicit.
-        # For generic skills (Any/Other), base is usually what's there.
-        # For normal skills, base is... hard to know without lookup.
-        # Ideally we load `skills_data`. But we can assume current value IS base if it hasn't been touched?
-        # Or just allow going down to 0? No.
-        # If we don't have base value, we can assume it's `current_val` if unedited?
-        # But if they edited it up, we need to know original base to go down.
-        # Hack: Pass 0 as base for now, or just assume they can't go below what it was originally?
-        # Wait, if they spend points, `current_val` increases. If they want to lower it, `base` is needed.
-        # Let's try to pass `current_val` as base if it's their first time touching it? No.
-        # I'll just default base to 0 or 1 for simplicity if lookup fails, but warn user.
-        # Actually, `start_wizard` initialized `char_data` with base values!
-        # So `current_val` IS correct value. But if they increased it, `char_data` has new value.
-        # We need the ORIGINAL base.
-        # `start_wizard` initialized `new_char` with base values.
-        # We didn't save a copy of base values.
-        # However, we can probably just use a safe lower bound of 0 or 1, and trust the user not to exploit (lowering below base to gain free points).
-        # OR: We only allow ADDING points. "By setting you can lower the skill down too but dont let them lower under default value."
-        # This implies we need to know the default value.
-        # Since `char_data` is modified in place, we lost the default.
-        # Solution: Load `skills_data` in `SkillPointAllocationView` (async) or pass it.
-        # But `load_skills_data` is async. View init is sync.
-        # We can call `await self.load_data()` in `update_view`? No.
-        # We can pass `occupations_data`? No, skills info.
-        # I will assume base is 0 for custom skills, and for standard skills I will try to use a static map or just `1` to be safe.
-        # Or better: `SkillPointSetModal` will take `base_val` as argument.
-        # Where do we get it?
-        # I'll just set base to 0 for now to unblock, unless I can fetch it.
-        # Actually, `commands/newinvestigator.py` has a hardcoded dict in `start_wizard`!
-        # I can copy that dict to a constant `BASE_SKILLS` and use it for lookup.
-
         base = BASE_SKILLS.get(skill, 0)
+
+        # Cthulhu Mythos Warning Logic
+        if skill == "Cthulhu Mythos":
+            embed = discord.Embed(
+                title="Forbidden Knowledge: Keeper Approval Required",
+                description="Normally you are not allowed to put any points into Cthulhu Mythos.\nTalk to your keeper before you assign points to Cthulhu Mythos.",
+                color=discord.Color.red()
+            )
+            view = CthulhuMythosWarningView(self.view, skill, current_val, base)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+            return
+
         if "Any" in skill or "any" in skill or "Other" in skill or "specific" in skill or "Own" in skill or "own" in skill:
              modal = SkillSpecializationModal(self.view, skill, base)
              await interaction.response.send_modal(modal)
