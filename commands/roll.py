@@ -8,7 +8,6 @@ from discord.ui import View, Button, Select
 from loadnsave import (
     load_player_stats,
     save_player_stats,
-    load_server_stats,
     load_session_data,
     save_session_data,
     load_luck_stats,

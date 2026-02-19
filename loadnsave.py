@@ -124,7 +124,7 @@ async def load_server_stats():
     global _SERVER_STATS_CACHE
     if _SERVER_STATS_CACHE is None:
         _SERVER_STATS_CACHE = await _load_json_file(DATA_FOLDER, 'server_stats.json')
-    return _SERVER_STATS_CACHE.copy()
+    return _SERVER_STATS_CACHE
 
 async def save_server_stats(server_stats):
     global _SERVER_STATS_CACHE
