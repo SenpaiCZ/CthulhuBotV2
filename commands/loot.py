@@ -3,7 +3,71 @@ import random
 from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, Button
-from loadnsave import load_loot_settings, load_player_stats, save_player_stats
+from loadnsave import load_loot_settings, load_player_stats, save_player_stats, load_weapons_data
+
+class CapacityModal(discord.ui.Modal):
+    def __init__(self, item_name, server_id, user_id, button_ref, view_ref, default_cap_str=""):
+        super().__init__(title=f"Setup {item_name}"[:45])
+        self.item_name = item_name
+        self.server_id = server_id
+        self.user_id = user_id
+        self.button = button_ref
+        self.view = view_ref
+
+        self.capacity = discord.ui.TextInput(
+            label="Ammo Capacity",
+            placeholder=f"e.g. 30 (Default: {default_cap_str})",
+            default=str(default_cap_str) if str(default_cap_str).isdigit() else "",
+            required=True,
+            max_length=10
+        )
+        self.add_item(self.capacity)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # 1. Validate Input
+        cap_val = self.capacity.value.strip()
+        if not cap_val.isdigit():
+             await interaction.response.send_message("Please enter a valid number for capacity.", ephemeral=True)
+             return
+
+        # 2. Add Item to Inventory
+        player_stats = await load_player_stats()
+        if self.server_id not in player_stats: player_stats[self.server_id] = {}
+
+        # Check user again (though button checked it)
+        if str(interaction.user.id) != str(self.user_id) and self.user_id:
+             await interaction.response.send_message("This loot is not for you!", ephemeral=True)
+             return
+
+        if str(interaction.user.id) not in player_stats[self.server_id]:
+             await interaction.response.send_message("You don't have an investigator.", ephemeral=True)
+             return
+
+        user_stats = player_stats[self.server_id][str(interaction.user.id)]
+        if "Backstory" not in user_stats: user_stats["Backstory"] = {}
+        if "Gear and Possessions" not in user_stats["Backstory"]:
+            user_stats["Backstory"]["Gear and Possessions"] = []
+
+        # Format: Name [Cap/Cap]
+        full_name = f"{self.item_name} [{cap_val}/{cap_val}]"
+        user_stats["Backstory"]["Gear and Possessions"].append(full_name)
+
+        await save_player_stats(player_stats)
+
+        # 3. Update Button in Original View
+        self.button.disabled = True
+        self.button.label = f"Taken: {self.item_name}"[:80]
+        self.button.style = discord.ButtonStyle.success
+
+        # Update the message
+        try:
+            await self.view.message.edit(view=self.view)
+        except Exception as e:
+            # Message might be deleted or interaction expired
+            pass
+
+        await interaction.response.send_message(f"✅ Added **{full_name}** to your inventory.", ephemeral=True)
+
 
 class LootItemButton(discord.ui.Button):
     def __init__(self, item_name, server_id, user_id=None):
@@ -18,7 +82,37 @@ class LootItemButton(discord.ui.Button):
             await interaction.response.send_message("This loot is not for you!", ephemeral=True)
             return
 
-        # Load Stats
+        # Load Weapons DB to check if it needs capacity
+        weapon_db = await load_weapons_data()
+
+        # Check if item is a weapon
+        # Simple check: exact match or contained
+        # The item_name from loot might match a key in weapon_db
+        is_weapon = False
+        w_data = {}
+
+        if self.item_name in weapon_db:
+            is_weapon = True
+            w_data = weapon_db[self.item_name]
+
+        if is_weapon:
+            cap_str = str(w_data.get("capacity", "0"))
+            # Check if complex (contains / or or) or user prompt required
+            # If it's a simple number like "6", we can just assume 6/6
+            # If it's "20/30", we ask.
+            needs_modal = False
+            if "/" in cap_str or "or" in cap_str or not cap_str.isdigit():
+                needs_modal = True
+
+            # Allow always setting capacity if desired?
+            # The prompt implies "if its not just number, ask user".
+
+            if needs_modal:
+                modal = CapacityModal(self.item_name, self.server_id, self.user_id, self, self.view, cap_str)
+                await interaction.response.send_modal(modal)
+                return
+
+        # Standard Add Logic (No Modal or Simple Weapon)
         player_stats = await load_player_stats()
 
         if self.server_id not in player_stats:
@@ -26,8 +120,6 @@ class LootItemButton(discord.ui.Button):
 
         current_user_id = str(interaction.user.id)
         if current_user_id not in player_stats[self.server_id]:
-             # Create basic structure if missing (though usually user should have character)
-             # But let's fail gracefully if no character
              await interaction.response.send_message("You don't have an investigator to give this to. Use `/newinvestigator` first.", ephemeral=True)
              return
 
@@ -40,7 +132,17 @@ class LootItemButton(discord.ui.Button):
             user_stats["Backstory"]["Gear and Possessions"] = []
 
         # Add Item
-        user_stats["Backstory"]["Gear and Possessions"].append(self.item_name)
+        item_to_add = self.item_name
+
+        # If it was a simple weapon, format it as [Cap/Cap] automatically
+        if is_weapon:
+            cap_str = str(w_data.get("capacity", "0"))
+            if cap_str.isdigit():
+                item_to_add = f"{self.item_name} [{cap_str}/{cap_str}]"
+            # If it was complex but we skipped modal (logic error?), ensure we don't break.
+            # But logic above handles complex cases.
+
+        user_stats["Backstory"]["Gear and Possessions"].append(item_to_add)
         await save_player_stats(player_stats)
 
         # Disable button
@@ -49,7 +151,7 @@ class LootItemButton(discord.ui.Button):
         self.style = discord.ButtonStyle.success
 
         await interaction.response.edit_message(view=self.view)
-        await interaction.followup.send(f"✅ Added **{self.item_name}** to your inventory.", ephemeral=True)
+        await interaction.followup.send(f"✅ Added **{item_to_add}** to your inventory.", ephemeral=True)
 
 class LootMoneyButton(discord.ui.Button):
     def __init__(self, amount_str, server_id, user_id):
@@ -94,13 +196,30 @@ class TakeAllButton(discord.ui.Button):
         items_to_add = []
         money_to_add = None
 
+        # Load Weapons DB for auto-formatting simple weapons
+        weapon_db = await load_weapons_data()
+
         # Iterate through view children to find untaken loot
+        # WARNING: Take All will skip Modals for complex weapons and just add them as-is?
+        # Or should it trigger modals? Triggering multiple modals is impossible.
+        # Decision: "Take All" adds items raw, or tries to apply defaults.
+        # If capacity is complex, it just adds the name. User can edit later.
+        # Or better: "Take All" formats simple ones, leaves complex ones raw.
+
         for child in self.view.children:
             if child.disabled:
                 continue
 
             if isinstance(child, LootItemButton):
-                items_to_add.append(child.item_name)
+                # Logic to format name
+                final_name = child.item_name
+                if child.item_name in weapon_db:
+                    cap_str = str(weapon_db[child.item_name].get("capacity", "0"))
+                    if cap_str.isdigit():
+                        final_name = f"{child.item_name} [{cap_str}/{cap_str}]"
+                    # Complex ones added raw
+
+                items_to_add.append(final_name)
                 # Mark as taken for UI update
                 child.disabled = True
                 child.style = discord.ButtonStyle.success
@@ -185,7 +304,8 @@ class LootCustomView(discord.ui.View):
         super().__init__(timeout=None)
         self.items = items
         self.server_id = str(server_id)
-
+        # Fix: passing None as user_id to allow anyone to take custom loot?
+        # Or assume creator? The original code had user_id=None for CustomView buttons.
         for item in items:
             self.add_item(LootItemButton(item, server_id, user_id=None))
 
