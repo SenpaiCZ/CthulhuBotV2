@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark" data-theme="{{ dashboard_theme|default('cthulhu') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Investigator Sheet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/themes.css') }}" rel="stylesheet">
+    {% include 'includes/font_styles.html' %}
+    <style>
+        body {
+            background-color: var(--theme-bg, #121212);
+            color: var(--theme-text, #e0e0e0);
+            font-family: var(--font-body, 'Courier New', monospace);
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        .char-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--theme-primary-dark);
+            padding-bottom: 10px;
+        }
+
+        .char-name {
+            font-family: var(--font-headers, 'Courier New', monospace);
+            font-size: 1.5rem;
+            color: var(--theme-primary-bright);
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 cols for mobile */
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--theme-primary-dark);
+            border-radius: 8px;
+            padding: 10px 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .stat-box:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--theme-primary-main);
+        }
+
+        .skill-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .skill-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px 15px;
+            border-radius: 6px;
+            border-left: 3px solid var(--theme-primary-dark);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .skill-row:active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .skill-name {
+            font-weight: bold;
+        }
+
+        .skill-val {
+            font-family: monospace;
+            color: var(--theme-primary-bright);
+            font-size: 1.1rem;
+        }
+
+        .section-title {
+            color: var(--theme-primary-main);
+            border-bottom: 1px solid var(--theme-primary-dark);
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            font-family: var(--font-headers, sans-serif);
+        }
+
+        /* Result Modal Overlay */
+        #resultOverlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .result-card {
+            background: #1a1a1a;
+            border: 2px solid var(--theme-primary-bright);
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            animation: popIn 0.3s ease-out;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .result-tier {
+            font-size: 1.5rem;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .result-roll {
+            font-size: 3rem;
+            font-family: monospace;
+            color: #fff;
+        }
+
+        .result-detail {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .close-btn {
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        /* Dice Rolling Animation */
+        .rolling {
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            50% { transform: rotate(0eg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+    </style>
+</head>
+<body>
+    {% if error %}
+        <div class="alert alert-danger text-center">{{ error }}</div>
+    {% elif not char %}
+        <div class="text-center mt-5">
+            <h3>No Active Investigator</h3>
+            <p>Please use <code>/newinvestigator</code> in the server to create one, or <code>/setactive</code> to select one.</p>
+        </div>
+    {% else %}
+        <div class="char-header">
+            <div class="char-name">{{ char.get('NAME', 'Unknown') }}</div>
+            <div style="font-size: 0.8rem; color: #888;">{{ char.get('Occupation', 'Unknown') }}</div>
+        </div>
+
+        <!-- Characteristics -->
+        <div class="section-title">Characteristics</div>
+        <div class="stat-grid">
+            {% for stat in ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU', 'LUCK'] %}
+            <div class="stat-box" onclick="rollStat('{{ stat }}', {{ char.get(stat, 0) }})">
+                <div class="stat-label">{{ stat }}</div>
+                <div class="stat-value">{{ char.get(stat, 0) }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Status (Non-rollable usually, but maybe convenient?) -->
+        <div class="section-title">Status</div>
+        <div class="stat-grid">
+            <div class="stat-box" style="border-color: #d9534f;">
+                <div class="stat-label">HP</div>
+                <div class="stat-value text-danger">{{ char.get('HP') }}</div>
+            </div>
+            <div class="stat-box" style="border-color: #f0ad4e;">
+                <div class="stat-label">SAN</div>
+                <div class="stat-value text-warning">{{ char.get('SAN') }}</div>
+            </div>
+            <div class="stat-box" style="border-color: #5bc0de;">
+                <div class="stat-label">MP</div>
+                <div class="stat-value text-info">{{ char.get('MP') }}</div>
+            </div>
+        </div>
+
+        <!-- Skills -->
+        <div class="section-title">Skills</div>
+        <div class="skill-list">
+            <!-- Explicit Credit Rating -->
+             <div class="skill-row" onclick="rollStat('Credit Rating', {{ char.get('Credit Rating', 0) }})">
+                <div class="skill-name">Credit Rating</div>
+                <div class="skill-val">{{ char.get('Credit Rating', 0) }}</div>
+            </div>
+
+            {% set excluded = ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU',
+                               'HP', 'MP', 'SAN', 'LUCK', 'Move', 'Build', 'Damage Bonus', 'Dodge',
+                               'NAME', 'Occupation', 'Occupation Info', 'Age', 'Sex', 'Residence', 'Birthplace',
+                               'Credit Rating', 'Archetype', 'Archetype Info', 'Talent', 'Backstory'] %}
+
+            {% for key, val in char.items()|sort %}
+                {% if key not in excluded and key|length > 0 %}
+                    {# Check if value is numeric #}
+                    {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
+                    <div class="skill-row" onclick="rollStat('{{ key }}', {{ val }})">
+                        <div class="skill-name">{{ key }}</div>
+                        <div class="skill-val">{{ val }}</div>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Result Overlay -->
+    <div id="resultOverlay">
+        <div class="result-card">
+            <h3 id="resultTitle">Rolling...</h3>
+            <div id="resultRoll" class="result-roll rolling">🎲</div>
+            <div id="resultText" class="result-tier"></div>
+            <div id="resultDetail" class="result-detail"></div>
+            <button class="btn btn-secondary close-btn" onclick="closeOverlay()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        function closeOverlay() {
+            document.getElementById('resultOverlay').style.display = 'none';
+        }
+
+        const guildId = "{{ guild_id }}";
+
+        async function rollStat(statName, value) {
+            const overlay = document.getElementById('resultOverlay');
+            const titleEl = document.getElementById('resultTitle');
+            const rollEl = document.getElementById('resultRoll');
+            const textEl = document.getElementById('resultText');
+            const detailEl = document.getElementById('resultDetail');
+
+            // Show overlay immediately
+            document.getElementById('resultOverlay').style.display = 'flex';
+
+            overlay.style.display = 'flex';
+            titleEl.textContent = `Rolling ${statName}...`;
+            rollEl.textContent = '🎲';
+            rollEl.classList.add('rolling');
+            textEl.textContent = '';
+            detailEl.textContent = '';
+
+            try {
+                const response = await fetch('/api/activity/roll', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        stat_name: statName,
+                        value: value,
+                        guild_id: guildId
+                    })
+                });
+
+                const data = await response.json();
+
+                // Update UI with result
+                document.getElementById('resultTitle').textContent = `Rolled ${statName}`;
+                document.getElementById('resultRoll').textContent = data.final_roll;
+                document.getElementById('resultText').textContent = data.result_text;
+                document.getElementById('resultDetail').textContent = `Target: ${value}`;
+
+                rollEl.classList.remove('rolling');
+
+                if (data.status === 'success') {
+                     // Color coding
+                    if (data.result_tier >= 2) {
+                        rollEl.style.color = '#5cb85c'; // Success Green
+                    } else {
+                        rollEl.style.color = '#d9534f'; // Fail Red
+                    }
+                    if (data.result_tier >= 4) rollEl.style.color = '#f0ad4e'; // Extreme/Crit Gold
+
+                } else {
+                    titleEl.textContent = 'Error';
+                    textEl.textContent = data.message || 'Unknown error';
+                }
+
+            } catch (e) {
+                console.error(e);
+                rollEl.classList.remove('rolling');
+                titleEl.textContent = 'Error';
+                textEl.textContent = 'Network or Server Error';
+            }
+        }
+    </script>
+</body>
+</html>

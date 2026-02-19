@@ -8,12 +8,14 @@ import shutil
 from collections import Counter
 import discord
 import asyncio
+import aiohttp
 import emoji
 import emojis
 import feedparser
 import datetime
 from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort, send_from_directory
 from markupsafe import escape
+from commands.dice_utils import DiceUtils
 from loadnsave import (
     load_player_stats, save_player_stats, load_retired_characters_data, save_retired_characters_data, load_settings, save_settings,
     load_soundboard_settings, save_soundboard_settings, load_music_blacklist, save_music_blacklist,
@@ -1096,6 +1098,228 @@ async def fonts_update_category():
     await save_fonts_config(config)
 
     return jsonify({"status": "success"})
+
+# --- Discord Activity Routes ---
+
+@app.route('/activity')
+@app.route('/activity/')
+async def activity_entry():
+    settings = load_settings()
+    if not settings.get('activity_enabled', False):
+        return "Discord Activity feature is disabled.", 403
+
+    # If already logged in for activity, go to player view
+    if session.get('discord_user_id'):
+        return redirect(url_for('activity_player'))
+
+    # Redirect to Discord OAuth2
+    client_id = settings.get('discord_client_id')
+    redirect_uri = settings.get('discord_redirect_uri')
+
+    if not client_id or not redirect_uri:
+        return "Discord Activity not configured (Missing Client ID or Redirect URI).", 500
+
+    scope = "identify guilds"
+    oauth_url = (
+        f"https://discord.com/api/oauth2/authorize?client_id={client_id}"
+        f"&redirect_uri={redirect_uri}&response_type=code&scope={scope}"
+    )
+    return redirect(oauth_url)
+
+@app.route('/activity/callback')
+async def activity_callback():
+    code = request.args.get('code')
+    if not code:
+        return "No code provided.", 400
+
+    settings = load_settings()
+    client_id = settings.get('discord_client_id')
+    client_secret = settings.get('discord_client_secret')
+    redirect_uri = settings.get('discord_redirect_uri')
+
+    if not client_secret:
+        return "Missing Client Secret configuration.", 500
+
+    data = {
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': redirect_uri
+    }
+
+    try:
+        async with aiohttp.ClientSession() as http_session:
+            async with http_session.post('https://discord.com/api/oauth2/token', data=data) as resp:
+                if resp.status != 200:
+                    return f"OAuth2 Token Error: {resp.status} {await resp.text()}", 500
+                token_data = await resp.json()
+                access_token = token_data.get('access_token')
+
+            # Get User Info
+            headers = {'Authorization': f"Bearer {access_token}"}
+            async with http_session.get('https://discord.com/api/users/@me', headers=headers) as resp:
+                if resp.status != 200:
+                    return f"User Info Error: {resp.status}", 500
+                user_data = await resp.json()
+                user_id = user_data.get('id')
+
+        session['discord_user_id'] = user_id
+        session['discord_access_token'] = access_token
+
+        return redirect(url_for('activity_player'))
+
+    except Exception as e:
+        return f"Authentication Error: {str(e)}", 500
+
+@app.route('/activity/player')
+async def activity_player():
+    settings = load_settings()
+    if not settings.get('activity_enabled', False):
+        return "Feature disabled.", 403
+
+    user_id = session.get('discord_user_id')
+    # For testing without OAuth (if enabled in dev), bypass check? No, strictly enforce.
+    if not user_id:
+        # Check if launched directly with ?user_id (INSECURE - Only for dev/testing behind auth/VPN)
+        # But we don't have auth here. So standard flow is redirect to /activity
+        return redirect(url_for('activity_entry'))
+
+    # We need a guild_id to find the correct character.
+    # Discord Activities usually run in a guild context.
+    # The client-side SDK gets the guild ID.
+    # But for the initial render, we might not know it unless passed in query params or we search all guilds.
+    # Let's check query params.
+    guild_id = request.args.get('guild_id')
+
+    # If no guild_id, we can search all player stats for this user.
+    stats = await load_player_stats()
+
+    target_char = None
+    target_guild_id = guild_id
+
+    if guild_id and str(guild_id) in stats:
+        if str(user_id) in stats[str(guild_id)]:
+            target_char = stats[str(guild_id)][str(user_id)]
+
+    # Fallback: Find first character for user if no guild specified or not found in specified guild
+    if not target_char:
+        for gid, users in stats.items():
+            if str(user_id) in users:
+                target_char = users[str(user_id)]
+                target_guild_id = gid
+                break
+
+    error_msg = None
+    if not target_char:
+        error_msg = "No active investigator found."
+
+    return await render_template(
+        'activity_player.html',
+        char=target_char,
+        error=error_msg,
+        guild_id=target_guild_id,
+        emojis=emojis,
+        emoji_lib=emoji
+    )
+
+@app.route('/api/activity/roll', methods=['POST'])
+async def activity_roll_api():
+    if not is_admin() and not session.get('discord_user_id'):
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    data = await request.get_json()
+    stat_name = data.get('stat_name')
+    target_value = data.get('value')
+    guild_id = data.get('guild_id')
+
+    user_id = session.get('discord_user_id')
+
+    # Admin override for testing?
+    if is_admin() and not user_id:
+        # Admins can simulate rolls? Maybe later.
+        pass
+
+    if not user_id or not guild_id or not stat_name:
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    # Verify Character
+    stats = await load_player_stats()
+    if str(guild_id) not in stats or str(user_id) not in stats[str(guild_id)]:
+        return jsonify({"status": "error", "message": "Character not found"}), 404
+
+    char_data = stats[str(guild_id)][str(user_id)]
+
+    # Verify Stat Value (prevent client-side manipulation if critical)
+    # The client sends 'value', but we should look it up.
+    # stat_name lookup in char_data
+    if char_data.get(stat_name) is None:
+         return jsonify({"status": "error", "message": "Stat not found on character"}), 400
+
+    actual_value = char_data[stat_name]
+
+    # Perform Roll
+    roll_result = DiceUtils.perform_skill_roll(actual_value)
+
+    # Post to Discord
+    if app.bot:
+        try:
+            guild = app.bot.get_guild(int(guild_id))
+            if guild:
+                # Find a suitable channel to post results.
+                # Ideally the channel the activity was launched from.
+                # We don't know that channel here unless passed from frontend (which we didn't).
+                # Fallback: "general", "dice-rolls", "commands" or first text channel.
+
+                # Check for configured roll channel? Maybe reuse Karma channel or just find first writable.
+                # Or use the channel the user is in (voice/text)? We can't know for sure via API.
+
+                # Better approach: Pass channel_id from frontend if possible (SDK needed).
+                # Since we don't have SDK yet, we'll try to find a channel or skip.
+
+                target_channel = None
+
+                # Try finding a channel named 'dice-rolls' or 'commands'
+                for channel in guild.text_channels:
+                    if channel.name in ['dice-rolls', 'commands', 'general', 'chat']:
+                        target_channel = channel
+                        if channel.name == 'dice-rolls': break # Priority
+
+                if not target_channel and guild.text_channels:
+                    target_channel = guild.text_channels[0]
+
+                if target_channel:
+                    user_member = guild.get_member(int(user_id))
+                    user_mention = user_member.mention if user_member else f"<@{user_id}>"
+
+                    # Create Embed
+                    color = discord.Color.green()
+                    rt = roll_result['result_tier']
+                    if rt >= 4: color = 0xF1C40F
+                    elif rt == 3 or rt == 2: color = 0x2ECC71
+                    elif rt == 1: color = 0xE74C3C
+                    elif rt == 0: color = 0x992D22
+
+                    tens_str = ", ".join(str(t) if t != 0 else "00" for t in roll_result['tens_rolls'])
+
+                    description = f"{user_mention} :game_die: **Activity Roll**\n"
+                    description += f"Rolling **{stat_name}** ({actual_value})\n"
+                    description += f"Dice: [{tens_str}] + {roll_result['ones_roll']} -> **{roll_result['final_roll']}**\n\n"
+                    description += f"**{roll_result['result_text']}**"
+
+                    embed = discord.Embed(description=description, color=color)
+                    await target_channel.send(embed=embed)
+
+        except Exception as e:
+            print(f"Error posting roll result: {e}")
+
+    return jsonify({
+        "status": "success",
+        "final_roll": roll_result['final_roll'],
+        "result_tier": roll_result['result_tier'],
+        "result_text": roll_result['result_text'],
+        "detail": f"Rolled against {actual_value}"
+    })
 
 # --- Admin Routes ---
 

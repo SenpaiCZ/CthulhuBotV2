@@ -13,5 +13,9 @@
         "headers": "TestHeaderFont",
         "body": "TestBodyFont",
         "special": "TestSpecialFont"
-    }
+    },
+    "activity_enabled": false,
+    "discord_client_id": "",
+    "discord_client_secret": "",
+    "discord_redirect_uri": ""
 }
