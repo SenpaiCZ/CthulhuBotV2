@@ -502,12 +502,17 @@ class CombatView(View):
         public_msg = await interaction.channel.send(embed=embed, view=view)
         view.message = public_msg
 
-        # 2. Update Dashboard IN PLACE
-        self.update_components()
+        # 2. Replace Old Dashboard with Text
+        action_text = f"**{self.last_action}**"
         if not interaction.response.is_done():
-            await interaction.response.edit_message(embed=self.get_embed(), view=self)
+            await interaction.response.edit_message(content=action_text, embed=None, view=None)
         else:
-            await interaction.edit_original_response(embed=self.get_embed(), view=self)
+            await interaction.edit_original_response(content=action_text, embed=None, view=None)
+
+        # 3. Send New Dashboard (Ephemeral)
+        self.update_components()
+        new_msg = await interaction.followup.send(embed=self.get_embed(), view=self, ephemeral=True)
+        self.message = new_msg
 
 
 class Combat(commands.Cog):
