@@ -430,7 +430,7 @@ class RollResultView(View):
              embed = discord.Embed(title=f"⚔️ Damage Roll: {label}", description=f"**{result}** Damage", color=discord.Color.dark_red())
              embed.add_field(name="Formula", value=f"`{final_formula}`")
              embed.add_field(name="Detail", value=detail, inline=False)
-             embed.set_footer(text="Nexus Combat System")
+             embed.set_footer(text="Combat Log")
 
              if not interaction.response.is_done():
                  await interaction.response.send_message(embed=embed)
