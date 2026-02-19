@@ -69,8 +69,8 @@
             <h5>Loot Items (<span id="itemCount">0</span>)</h5>
             <div class="mb-3">
                 <div class="input-group">
-                    <input type="text" class="form-control" id="newItemInput" placeholder="New Item Name" onkeypress="handleEnter(event)">
-                    <button class="btn btn-outline-success" type="button" onclick="addLootItem()">Add</button>
+                    <input type="text" class="form-control" id="newItemInput" placeholder="New Item Name" aria-label="New Item Name" onkeypress="handleEnter(event)">
+                    <button class="btn btn-outline-success" type="button" onclick="addLootItem()" aria-label="Add loot item">Add</button>
                 </div>
             </div>
 
@@ -148,15 +148,15 @@ async function loadSettings() {
                 <td>${guild.name}</td>
                 <td>${guild.id}</td>
                 <td>
-                    <input type="number" class="form-control" id="luck-${guild.id}" value="${guild.luck_threshold}" min="0" style="max-width: 100px;">
+                    <input type="number" class="form-control" id="luck-${guild.id}" value="${guild.luck_threshold}" min="0" style="max-width: 100px;" aria-label="Luck Threshold for ${escapeHtml(guild.name)}">
                 </td>
                 <td>
-                    <input type="number" class="form-control" id="skill-${guild.id}" value="${guild.max_starting_skill}" min="1" max="99" style="max-width: 100px;">
+                    <input type="number" class="form-control" id="skill-${guild.id}" value="${guild.max_starting_skill}" min="1" max="99" style="max-width: 100px;" aria-label="Max Starting Skill for ${escapeHtml(guild.name)}">
                 </td>
                 <td>
                     <div class="btn-group">
-                        <button class="btn btn-primary btn-sm" onclick="saveSettings('${guild.id}')">Save</button>
-                        <button class="btn btn-secondary btn-sm" onclick="openSoundSettings(this.dataset.guildId, this.dataset.guildName)" data-guild-id="${guild.id}" data-guild-name="${escapeHtml(guild.name)}">Sounds</button>
+                        <button class="btn btn-primary btn-sm" onclick="saveSettings('${guild.id}')" aria-label="Save settings for ${escapeHtml(guild.name)}">Save</button>
+                        <button class="btn btn-secondary btn-sm" onclick="openSoundSettings(this.dataset.guildId, this.dataset.guildName)" data-guild-id="${guild.id}" data-guild-name="${escapeHtml(guild.name)}" aria-label="Manage sound settings for ${escapeHtml(guild.name)}">Sounds</button>
                     </div>
                 </td>
             `;
@@ -214,7 +214,7 @@ function renderLootList() {
         div.className = 'list-group-item d-flex justify-content-between align-items-center';
         div.innerHTML = `
             <span>${escapeHtml(item)}</span>
-            <button class="btn btn-danger btn-sm" onclick="removeLootItem('${escapeHtml(item.replace(/'/g, "\\'"))}')"><i class="bi bi-trash"></i> Remove</button>
+            <button class="btn btn-danger btn-sm" onclick="removeLootItem('${escapeHtml(item.replace(/'/g, "\\'"))}')" aria-label="Remove ${escapeHtml(item)}"><i class="bi bi-trash"></i> Remove</button>
         `;
         list.appendChild(div);
     });
