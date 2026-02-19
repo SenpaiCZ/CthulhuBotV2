@@ -1,10 +1,13 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from discord.ui import View, Select
+from discord.ui import View, Button, Modal, TextInput
 import traceback
+import random
+from rapidfuzz import process, fuzz
 
 # Mapping of Command Names to Categories
+# Dynamic discovery will attempt to place unlisted commands in "Other"
 COMMAND_CATEGORIES = {
     "Player": [
         "newinvestigator", "mycharacter", "stat", "generatebackstory",
@@ -24,135 +27,280 @@ COMMAND_CATEGORIES = {
     "Music": [
         "play", "skip", "stop", "volume", "loop", "queue", "nowplaying"
     ],
-    "Other": [
-        "karma", "leaderboard", "giveaway", "polls", "remind",
-        "reportbug", "uptime"
-    ],
     "Admin": [
         "enroll", "autoroom", "reactionrole", "gameroles", "rss",
-        "autodeleter", "setupkarma", "purge"
+        "autodeleter", "setupkarma", "purge", "sync", "setchannel", "setrole", "forceupdate"
+    ],
+    "Other": [
+        "karma", "leaderboard", "giveaway", "polls", "remind",
+        "reportbug", "uptime", "help"
     ]
 }
 
-class HelpSelect(Select):
-    def __init__(self, help_data):
-        self.help_data = help_data
-        options = []
+CATEGORY_EMOJIS = {
+    "Player": "🎲",
+    "Codex": "📜",
+    "Keeper": "🐙",
+    "Music": "🎵",
+    "Admin": "🛠️",
+    "Other": "📁"
+}
 
-        # Sort categories to ensure consistent order (Player, Codex, Keeper, Music, Other, Admin)
-        # Use keys from COMMAND_CATEGORIES to maintain the desired order
-        sorted_categories = [cat for cat in COMMAND_CATEGORIES if cat in help_data]
+CATEGORY_STYLES = {
+    "Player": discord.ButtonStyle.primary,
+    "Codex": discord.ButtonStyle.secondary,
+    "Keeper": discord.ButtonStyle.danger,
+    "Music": discord.ButtonStyle.secondary,
+    "Admin": discord.ButtonStyle.secondary,
+    "Other": discord.ButtonStyle.secondary
+}
 
-        # Add any categories in help_data that are not in COMMAND_CATEGORIES (fallback)
-        remaining = [cat for cat in help_data if cat not in sorted_categories]
-        sorted_categories.extend(sorted(remaining))
+NEXUS_TIPS = [
+    "Tip: Use /roll sanity to quickly make a Sanity check.",
+    "Tip: You can use /pogo forceupdate to refresh event data.",
+    "Tip: The Codex has info on thousands of monsters and spells.",
+    "Tip: Use /session to track your skill improvements automatically.",
+    "Tip: Keep your inventory updated with /addbackstory.",
+    "Tip: Need to find a rule? Try searching for 'combat' or 'chase'.",
+    "Tip: Check your luck often with /stat.",
+    "Tip: You can print your character sheet to PDF with /printcharacter."
+]
 
-        # Define category emojis
-        coc_emoji = "🐙"
+class NexusSearchModal(Modal, title="Search Commands"):
+    query = TextInput(label="What are you looking for?", placeholder="e.g. roll, madness, sanity...", min_length=2, max_length=50)
 
-        emoji_map = {
-            "Player": coc_emoji,
-            "Codex": coc_emoji,
-            "Keeper": coc_emoji,
-            "Music": "🎵",
-            "Other": "📁",
-            "Admin": "🛠️"
-        }
+    def __init__(self, view):
+        super().__init__()
+        self.view = view
 
-        for category in sorted_categories:
-            description = f"{len(help_data[category])} commands"
-            emoji = emoji_map.get(category, "📁")
-            options.append(discord.SelectOption(
-                label=category,
-                description=description,
-                value=category,
-                emoji=emoji
-            ))
-
-        super().__init__(placeholder="Select a category...", min_values=1, max_values=1, options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        # Defer immediately to prevent timeout on button click processing if needed,
-        # though usually fast enough. But just in case.
-        # Actually, editing a message doesn't need defer if response is fast,
-        # but let's be safe if generating the embed is slow.
-        # For Select callback, we use response.edit_message usually.
-
-        category = self.values[0]
-        commands_list = self.help_data.get(category, [])
-
-        embed = discord.Embed(
-            title=f"Help: {category}",
-            description=f"Here are the commands for **{category}**:",
-            color=discord.Color.blue()
-        )
-
-        # Iterate commands and add fields
-        # If too many commands, we might need to truncate or list simply
-        # Discord Embed Field Value Limit is 1024 chars.
-
-        # Sort commands alphabetically
-        commands_list.sort(key=lambda c: c.name)
-
-        if len(commands_list) > 25:
-             # Just list names if too many
-             command_names = []
-             for cmd in commands_list:
-                 name = cmd.name
-                 if isinstance(cmd, (app_commands.Command, app_commands.Group)):
-                     name = f"/{name}"
-                 else:
-                     # Hybrid or Text
-                     name = f"/{name}" # Assume slash context mostly
-                 command_names.append(f"`{name}`")
-
-             embed.description += "\n" + ", ".join(command_names)
-        else:
-            for cmd in commands_list:
-                name = cmd.name
-                desc = cmd.description or "No description."
-
-                # Check for hybrid commands which have help attribute
-                if hasattr(cmd, 'help') and cmd.help:
-                    desc = cmd.help
-
-                # Truncate desc
-                if len(desc) > 100: desc = desc[:97] + "..."
-
-                prefix = "/"
-                # Check if it's strictly a text command (unlikely given migration)
-                if isinstance(cmd, commands.Command) and not isinstance(cmd, commands.HybridCommand):
-                    prefix = "!"
-
-                embed.add_field(name=f"{prefix}{name}", value=desc, inline=False)
-
+    async def on_submit(self, interaction: discord.Interaction):
+        # Update the dashboard directly
+        query_str = self.query.value
+        embed = self.view.get_search_embed(query_str)
         await interaction.response.edit_message(embed=embed, view=self.view)
 
-class HelpView(View):
-    def __init__(self, help_data, user):
-        super().__init__(timeout=180)
+class NexusHelpView(View):
+    def __init__(self, help_data, user, bot):
+        super().__init__(timeout=300)
+        self.help_data = help_data
         self.user = user
-        self.add_item(HelpSelect(help_data))
+        self.bot = bot
+        self.current_category = None
 
-    @discord.ui.button(label="Home", style=discord.ButtonStyle.secondary, row=1)
-    async def home(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user:
-             return await interaction.response.send_message("This menu is not for you.", ephemeral=True)
+        # Build dynamic buttons based on available categories
+        # Row 0: Navigation / Utilities
+        self.add_item(Button(label="Start Here", style=discord.ButtonStyle.success, emoji="👋", row=0, custom_id="btn_onboarding"))
+        self.add_item(Button(label="Search", style=discord.ButtonStyle.primary, emoji="🔍", row=0, custom_id="btn_search"))
+        self.add_item(Button(label="Home", style=discord.ButtonStyle.secondary, emoji="🏠", row=0, custom_id="btn_home"))
 
-        # Reset to home embed
-        embed = discord.Embed(
-            title="🐙 Cthulhu Bot Help",
-            description="Greetings, Investigator.\nThe stars align for you to seek knowledge. Consult the archives below to uncover the secrets of this bot.",
-            color=discord.Color.teal()
-        )
-        embed.set_footer(text="Only commands available to you are shown.")
-        await interaction.response.edit_message(embed=embed, view=self)
+        # Row 1 & 2: Categories
+        # We want a specific order: Player, Codex, Keeper, Music, Other, Admin
+        order = ["Player", "Codex", "Keeper", "Music", "Other", "Admin"]
+
+        # Calculate available categories
+        available = [cat for cat in order if cat in help_data and help_data[cat]]
+
+        row_idx = 1
+        col_idx = 0
+        for cat in available:
+            btn = Button(
+                label=cat,
+                style=CATEGORY_STYLES.get(cat, discord.ButtonStyle.secondary),
+                emoji=CATEGORY_EMOJIS.get(cat, "📁"),
+                row=row_idx,
+                custom_id=f"btn_cat_{cat}"
+            )
+            # We need to bind the callback properly
+            # Using a loop variable in a lambda or async def can be tricky, so we use a partial-like approach
+            # or just a single callback dispatch.
+            # Let's use a custom callback method that parses custom_id
+            btn.callback = self.category_button_callback
+            self.add_item(btn)
+
+            col_idx += 1
+            if col_idx >= 3: # 3 buttons per row for categories to look nice
+                col_idx = 0
+                row_idx += 1
+
+        # Hook up Row 0 callbacks
+        for child in self.children:
+            if child.custom_id == "btn_onboarding":
+                child.callback = self.onboarding_callback
+            elif child.custom_id == "btn_search":
+                child.callback = self.search_callback
+            elif child.custom_id == "btn_home":
+                child.callback = self.home_callback
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user != self.user:
-            await interaction.response.send_message("This menu is not for you.", ephemeral=True)
+            await interaction.response.send_message("This menu is for the investigator who summoned it.", ephemeral=True)
             return False
         return True
+
+    # --- Callbacks ---
+
+    async def home_callback(self, interaction: discord.Interaction):
+        await interaction.response.edit_message(embed=self.get_home_embed(), view=self)
+
+    async def onboarding_callback(self, interaction: discord.Interaction):
+        await interaction.response.edit_message(embed=self.get_onboarding_embed(), view=self)
+
+    async def search_callback(self, interaction: discord.Interaction):
+        # Modals require response.send_modal, cannot be deferred beforehand
+        await interaction.response.send_modal(NexusSearchModal(self))
+
+    async def category_button_callback(self, interaction: discord.Interaction):
+        # Extract category from custom_id
+        custom_id = interaction.data["custom_id"]
+        category = custom_id.replace("btn_cat_", "")
+        await interaction.response.edit_message(embed=self.get_category_embed(category), view=self)
+
+    # --- Embed Generators ---
+
+    def get_home_embed(self):
+        embed = discord.Embed(
+            title="🐙 CthulhuBot Nexus",
+            description=(
+                "**Greetings, Investigator.**\n"
+                "The stars have aligned. Access the archives, manage your sanity, or consult the Keeper below.\n\n"
+                "ℹ️ **Tip:** Use the `🔍 Search` button to find specific commands instantly."
+            ),
+            color=discord.Color.dark_teal()
+        )
+
+        # Add visual flair
+        embed.add_field(name="🎲 Player Zone", value="Manage character, roll dice, check stats.", inline=True)
+        embed.add_field(name="📜 Codex", value="Browse monsters, spells, and items.", inline=True)
+        embed.add_field(name="🐙 Keeper Tools", value="Loot, madness, and handouts.", inline=True)
+
+        embed.set_thumbnail(url=self.bot.user.avatar.url if self.bot.user.avatar else None)
+        embed.set_footer(text=random.choice(NEXUS_TIPS))
+        return embed
+
+    def get_onboarding_embed(self):
+        embed = discord.Embed(
+            title="👋 New Investigator Guide",
+            description="Welcome to the team! Here is your survival guide:",
+            color=discord.Color.green()
+        )
+
+        embed.add_field(
+            name="1️⃣ Create an Investigator",
+            value="Use `/newinvestigator` to launch the character creation wizard. It will guide you through stats, occupation, and skills.",
+            inline=False
+        )
+        embed.add_field(
+            name="2️⃣ Roll the Dice",
+            value="Use `/roll` (or `/r`) to make checks. Example: `/roll Spot Hidden`. The bot knows your stats!",
+            inline=False
+        )
+        embed.add_field(
+            name="3️⃣ Track your Session",
+            value="Use `/session action:Start Session` to begin tracking skill checks for improvement. At the end, use `/session action:Auto` to roll for upgrades.",
+            inline=False
+        )
+        embed.add_field(
+            name="4️⃣ Consult the Codex",
+            value="Use `/codex` or specific commands like `/monster` or `/spell` to look up rules and lore.",
+            inline=False
+        )
+
+        embed.set_footer(text="Good luck. You'll need it.")
+        return embed
+
+    def get_category_embed(self, category):
+        commands_list = self.help_data.get(category, [])
+        commands_list.sort(key=lambda c: c.name)
+
+        embed = discord.Embed(
+            title=f"{CATEGORY_EMOJIS.get(category, '')} {category} Commands",
+            color=discord.Color.blue()
+        )
+
+        description = ""
+        for cmd in commands_list:
+            name = f"/{cmd.name}"
+            desc = cmd.description or "No description."
+
+            # Hybrid command check
+            if hasattr(cmd, 'help') and cmd.help:
+                desc = cmd.help
+
+            if len(desc) > 60:
+                desc = desc[:57] + "..."
+
+            description += f"**`{name}`** - {desc}\n"
+
+        if not description:
+            description = "No commands found."
+
+        embed.description = description
+        embed.set_footer(text=f"Total: {len(commands_list)} commands")
+        return embed
+
+    def get_search_embed(self, query):
+        # We need to search across all categories
+        all_commands = []
+        for cat_cmds in self.help_data.values():
+            all_commands.extend(cat_cmds)
+
+        # Deduplicate by name
+        seen = set()
+        unique_commands = []
+        for cmd in all_commands:
+            if cmd.name not in seen:
+                seen.add(cmd.name)
+                unique_commands.append(cmd)
+
+        # Prepare for fuzzy search
+        # We search name and description
+        choices = {cmd.name: cmd for cmd in unique_commands}
+        names = list(choices.keys())
+
+        # 1. Exact match
+        exact = [cmd for cmd in unique_commands if query.lower() == cmd.name.lower()]
+
+        # 2. Fuzzy match names
+        fuzzy_results = process.extract(query, names, scorer=fuzz.WRatio, limit=10, score_cutoff=50)
+        fuzzy_names = [res[0] for res in fuzzy_results]
+
+        # 3. Description search (simple contains)
+        desc_matches = [cmd for cmd in unique_commands if query.lower() in (cmd.description or "").lower()]
+
+        # Combine results
+        final_results = []
+        if exact: final_results.extend(exact)
+
+        for name in fuzzy_names:
+            cmd = choices[name]
+            if cmd not in final_results:
+                final_results.append(cmd)
+
+        for cmd in desc_matches:
+            if cmd not in final_results:
+                final_results.append(cmd)
+
+        # Limit to top 10
+        final_results = final_results[:10]
+
+        embed = discord.Embed(
+            title=f"🔍 Search Results: '{query}'",
+            color=discord.Color.gold()
+        )
+
+        if final_results:
+            desc_text = ""
+            for cmd in final_results:
+                name = f"/{cmd.name}"
+                desc = cmd.description or "No description."
+                if len(desc) > 80: desc = desc[:77] + "..."
+                desc_text += f"**`{name}`** - {desc}\n"
+            embed.description = desc_text
+        else:
+            embed.description = "No matching commands found. Try a different term."
+
+        return embed
+
 
 class Help(commands.Cog):
     def __init__(self, bot):
@@ -161,95 +309,85 @@ class Help(commands.Cog):
     async def generate_help_data(self, ctx):
         """
         Generates a dictionary of Category -> List of Commands.
+        Dynamically discovers commands and categories.
         """
-        help_data = {}
+        help_data = {cat: [] for cat in COMMAND_CATEGORIES.keys()}
 
-        # Iterate defined categories
+        # 1. Process Defined Categories
         for category, cmd_names in COMMAND_CATEGORIES.items():
-            category_commands = []
-
             for name in cmd_names:
-                try:
-                    # 1. Check for Slash Command (App Command)
-                    # App commands are in self.bot.tree.get_command(name)
-                    # Note: get_command only gets top-level commands/groups
+                cmd = self._get_command_obj(name)
+                if cmd:
+                     # Check permission using our custom _can_run
+                     if await self._can_run(cmd, ctx):
+                         if cmd not in help_data[category]:
+                             help_data[category].append(cmd)
 
-                    app_cmd = self.bot.tree.get_command(name)
+        # 2. Dynamic Discovery for "Other" or Missing
+        # Get all app commands
+        all_app_commands = self.bot.tree.get_commands()
 
-                    # 2. Check for Text/Hybrid Command
-                    # Hybrid commands are also in bot.commands
-                    text_cmd = self.bot.get_command(name)
+        known_command_names = set()
+        for cat_list in COMMAND_CATEGORIES.values():
+            known_command_names.update(cat_list)
 
-                    cmd_obj = None
+        for cmd in all_app_commands:
+            if cmd.name not in known_command_names:
+                # This is a new command not in our map!
+                if "Other" not in help_data: help_data["Other"] = []
 
-                    if app_cmd:
-                        cmd_obj = app_cmd
-                    elif text_cmd:
-                        # Only if not hidden
-                        if not text_cmd.hidden:
-                            cmd_obj = text_cmd
+                # Check duplication
+                if cmd not in help_data["Other"]:
+                     help_data["Other"].append(cmd)
 
-                    if cmd_obj:
-                        # Check permissions if possible
-                        # For slash commands, checks are async and complex (interaction based)
-                        # For text commands, await cmd.can_run(ctx)
+        # Remove empty categories
+        return {k: v for k, v in help_data.items() if v}
 
-                        can_run = True
-                        if isinstance(cmd_obj, commands.Command):
-                            try:
-                                can_run = await cmd_obj.can_run(ctx)
-                            except:
-                                can_run = False
+    def _get_command_obj(self, name):
+        # Check Tree (Slash)
+        cmd = self.bot.tree.get_command(name)
+        if cmd: return cmd
 
-                        # For app commands, we can't easily check 'can_run' without an interaction
-                        # We'll assume visible unless it's an owner command or guild only in DM
-                        # But listing them is usually fine for help menu
+        # Check Text (Hybrid/Legacy)
+        cmd = self.bot.get_command(name)
+        if cmd and not cmd.hidden: return cmd
 
-                        if can_run:
-                            category_commands.append(cmd_obj)
+        return None
 
-                except Exception as e:
-                    print(f"Error processing command '{name}' for help menu: {e}")
-                    traceback.print_exc()
-                    continue
+    async def _can_run(self, cmd, ctx):
+        # Permission check
+        if isinstance(cmd, commands.Command):
+            try:
+                return await cmd.can_run(ctx)
+            except:
+                return False
+        return True # Assume app commands are visible
 
-            if category_commands:
-                help_data[category] = category_commands
-
-        return help_data
-
-    @app_commands.command(name="help", description="Show the Cthulhu Bot help menu.")
+    @app_commands.command(name="help", description="Show the Nexus help dashboard.")
     async def help_command(self, interaction: discord.Interaction):
         """
-        Shows the interactive help menu.
+        Shows the interactive Nexus help dashboard.
         """
-        # Defer the interaction immediately to prevent timeout
+        # Defer immediately ephemeral
         await interaction.response.defer(ephemeral=True)
 
         try:
-            # Create a Context for permission checking (hybrid commands need it)
             ctx = await self.bot.get_context(interaction)
-
             help_data = await self.generate_help_data(ctx)
 
             if not help_data:
                 await interaction.followup.send("No commands available for you.")
                 return
 
-            embed = discord.Embed(
-                title="🐙 Cthulhu Bot Help",
-                description="Greetings, Investigator.\nThe stars align for you to seek knowledge. Consult the archives below to uncover the secrets of this bot.",
-                color=discord.Color.teal()
-            )
-            embed.set_footer(text="Only commands available to you are shown.")
+            view = NexusHelpView(help_data, interaction.user, self.bot)
+            embed = view.get_home_embed()
 
-            view = HelpView(help_data, interaction.user)
             await interaction.followup.send(embed=embed, view=view)
 
         except Exception as e:
             print(f"Error generating help menu: {e}")
             traceback.print_exc()
-            await interaction.followup.send("An error occurred while generating the help menu.")
+            await interaction.followup.send("An error occurred while accessing the Nexus.")
 
 async def setup(bot):
     await bot.add_cog(Help(bot))
