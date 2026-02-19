@@ -111,9 +111,10 @@ class Karma(commands.Cog):
         """
         Checks and updates roles for a member based on karma thresholds.
         Only applies changes if necessary to avoid API spam.
+        Returns True if an API call was made, False otherwise.
         """
         if "roles" not in settings:
-            return
+            return False
 
         # Parse thresholds: { "10": 12345, "50": 67890 }
         # Sort descending by threshold
@@ -123,7 +124,7 @@ class Karma(commands.Cog):
                 thresholds.append((int(k), int(r_id)))
             thresholds.sort(key=lambda x: x[0], reverse=True)
         except ValueError:
-            return
+            return False
 
         target_role_id = None
 
@@ -171,6 +172,11 @@ class Karma(commands.Cog):
             if roles_to_add:
                 await member.add_roles(*roles_to_add, reason="Karma Threshold Reached")
 
+            # If no roles were added or removed, we didn't hit the API rate limits significantly
+            # (though checking current roles is free/cached mostly)
+            if not roles_to_remove and not roles_to_add:
+                return False
+
             # Check for rank change and notify
             if target_role_id != previous_role_id:
                 # Determine type
@@ -212,6 +218,8 @@ class Karma(commands.Cog):
             print(f"Failed to update roles for {member} in {member.guild}: Missing Permissions")
         except Exception as e:
             print(f"Error updating roles for {member}: {e}")
+
+        return True
 
     async def send_rank_notification(self, channel, member, rank_name, change_type):
         try:
@@ -375,8 +383,9 @@ class Karma(commands.Cog):
         for user_id, karma in guild_stats.items():
             member = guild.get_member(int(user_id))
             if member:
-                await self.update_karma_roles(member, karma, settings)
-                await asyncio.sleep(0.1) # Be gentle with rate limits
+                updated = await self.update_karma_roles(member, karma, settings)
+                if updated:
+                    await asyncio.sleep(0.1) # Be gentle with rate limits
 
     @app_commands.command(name="setupkarma", description="⚙️ Setup the Karma system for this server (Wizard).")
     @app_commands.checks.has_permissions(administrator=True)
