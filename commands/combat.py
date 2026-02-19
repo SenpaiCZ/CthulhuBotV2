@@ -41,7 +41,7 @@ class CombatView(View):
                 self.weapon_states[i] = {
                     "ammo": w_obj['ammo'],
                     "cap": w_obj['cap'],
-                    "jammed": False
+                    "jammed": w_obj.get('is_jammed', False)
                 }
                 # If we had previous state (e.g. preserving jammed status if view reloaded), apply it
                 if initial_weapon_states and i in initial_weapon_states:
@@ -70,7 +70,8 @@ class CombatView(View):
             if not isinstance(item, str): continue
 
             # Regex parse Name [Current/Max] or Name [Capacity]
-            match = re.match(r"^(.*?)\s*\[(\d+)(?:/(\d+))?\]\s*$", item)
+            # Updated to handle emoji prefix and (JAMMED) suffix
+            match = re.match(r"^(?:🔴|🟢)?\s*(.*?)\s*\[(\d+)(?:/(\d+))?\](?:\s*\(JAMMED\))?\s*$", item)
 
             clean_name_candidate = item
             current_ammo = None
@@ -123,7 +124,8 @@ class CombatView(View):
                     "clean_name": clean_name_candidate, # The name part of the string (e.g. "AK-47")
                     "ammo": current_ammo,
                     "cap": max_ammo,
-                    "original": item # Valid for finding and replacing
+                    "original": item, # Valid for finding and replacing
+                    "is_jammed": "(JAMMED)" in item
                 })
 
         return found_weapons
@@ -302,7 +304,13 @@ class CombatView(View):
         original_str = w_obj["original"]
         base_name = w_obj["clean_name"]
 
-        new_str = f"{base_name} [{new_ammo}/{max_ammo}]"
+        is_jammed = self.weapon_states[idx]["jammed"]
+
+        # Format: 🔴 Name [Am/Cap] (JAMMED) or Name [Am/Cap]
+        if is_jammed:
+            new_str = f"🔴 {base_name} [{new_ammo}/{max_ammo}] (JAMMED)"
+        else:
+            new_str = f"{base_name} [{new_ammo}/{max_ammo}]"
 
         # Find and replace in char_data["Backstory"]["Gear and Possessions"] (etc)
         # We search all possible keys again or just iterate
@@ -351,7 +359,23 @@ class CombatView(View):
 
         # Perform Roll
         w_data = self.weapon_db.get(w_obj["key"], {})
-        await self.perform_roll(interaction, skill_name, custom_title=f"Shoot ({w_obj['clean_name']})", check_malfunction=True, malfunction_val=w_data.get("malfunction", "100"))
+
+        async def on_shoot_done(roll, tier, is_malf):
+            if is_malf:
+                self.weapon_states[idx]["jammed"] = True
+                self.last_action += " (JAMMED!)"
+                await self._update_inventory_string(idx, state["ammo"], state["cap"])
+
+                # We need to refresh the view to show the jam state
+                if self.message:
+                    self.update_components()
+                    await self.message.edit(embed=self.get_embed(), view=self)
+
+        await self.perform_roll(interaction, skill_name,
+                                custom_title=f"Shoot ({w_obj['clean_name']})",
+                                check_malfunction=True,
+                                malfunction_val=w_data.get("malfunction", "100"),
+                                on_complete=on_shoot_done)
 
     async def reload_callback(self, interaction: discord.Interaction):
         idx = self.active_weapon_idx
@@ -370,11 +394,20 @@ class CombatView(View):
 
     async def fix_jam_callback(self, interaction: discord.Interaction):
         idx = self.active_weapon_idx
-        state = self.weapon_states[idx]
-        state["jammed"] = False
 
-        self.last_action = f"Cleared jam on {self.available_weapons[idx]['clean_name']}."
-        await self._update_view(interaction)
+        async def on_repair_done(roll, tier, is_malf):
+            if tier >= 2: # Regular success or better
+                self.weapon_states[idx]["jammed"] = False
+                self.last_action = f"Cleared jam on {self.available_weapons[idx]['clean_name']}."
+                await self._update_inventory_string(idx, self.weapon_states[idx]["ammo"], self.weapon_states[idx]["cap"])
+            else:
+                self.last_action = f"Failed to clear jam on {self.available_weapons[idx]['clean_name']}."
+
+            if self.message:
+                self.update_components()
+                await self.message.edit(embed=self.get_embed(), view=self)
+
+        await self.perform_roll(interaction, "Mechanical Repair", custom_title="Fix Jam", on_complete=on_repair_done)
 
     async def exit_callback(self, interaction: discord.Interaction):
         await interaction.response.edit_message(content="Combat ended.", view=None, embed=None)
@@ -412,7 +445,7 @@ class CombatView(View):
         # 3. Fallback (if they have neither, return new name and let fuzzy match fail/default to base chance)
         return target_skill
 
-    async def perform_roll(self, interaction, skill_name, custom_title=None, check_malfunction=False, malfunction_val="100"):
+    async def perform_roll(self, interaction, skill_name, custom_title=None, check_malfunction=False, malfunction_val="100", on_complete=None):
         # Get Roll Cog
         roll_cog = interaction.client.get_cog("Roll")
         if not roll_cog:
@@ -443,22 +476,17 @@ class CombatView(View):
         roll_val = tens + ones
         if roll_val == 0: roll_val = 100
 
-        # Check Malfunction
-        is_malfunction = False
-        malf_limit = 100
-        try:
-            if "-" in str(malfunction_val):
-                parts = str(malfunction_val).split("-")
-                malf_limit = int(parts[0])
-            else:
-                malf_limit = int(malfunction_val)
-        except:
-            malf_limit = 100
-
-        if check_malfunction and roll_val >= malf_limit:
-            is_malfunction = True
-            self.weapon_states[self.active_weapon_idx]["jammed"] = True
-            self.last_action += " (JAMMED!)"
+        # Check Malfunction Limit
+        malf_limit = None
+        if check_malfunction:
+            try:
+                if "-" in str(malfunction_val):
+                    parts = str(malfunction_val).split("-")
+                    malf_limit = int(parts[0])
+                else:
+                    malf_limit = int(malfunction_val)
+            except:
+                malf_limit = 100
 
         # Use RollResultView
         ctx = MockContext(interaction)
@@ -477,7 +505,9 @@ class CombatView(View):
             tens_rolls=[tens],
             net_dice=0,
             result_tier=result_tier,
-            luck_threshold=10
+            luck_threshold=10,
+            malfunction_threshold=malf_limit,
+            on_complete=on_complete
         )
 
         # Create Embed
@@ -487,7 +517,8 @@ class CombatView(View):
         elif result_tier == 1: color = 0xE74C3C
         elif result_tier == 0: color = 0x992D22
 
-        if is_malfunction:
+        # Initial check for display (view will handle dynamic updates)
+        if malf_limit and roll_val >= malf_limit:
             result_text = "🔫 MALFUNCTION! (Weapon Jammed)"
             color = discord.Color.dark_red()
 
