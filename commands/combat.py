@@ -283,15 +283,32 @@ class CombatView(View):
     # Callbacks
     async def brawl_callback(self, interaction: discord.Interaction):
         self.last_action = "Attempted Brawl."
-        await self.perform_roll(interaction, "Fighting (Brawl)", custom_title="Fighting (Brawl)")
+        # Brawl Damage: 1D3 + DB
+        damage_data = [{'label': 'Fighting (Brawl)', 'value': '1D3'}]
+        damage_bonus = self.char_data.get("Damage Bonus", "0")
+
+        await self.perform_roll(interaction, "Fighting (Brawl)",
+                                custom_title="Fighting (Brawl)",
+                                damage_data=damage_data,
+                                damage_bonus=damage_bonus)
 
     async def dodge_callback(self, interaction: discord.Interaction):
         self.last_action = "Attempted Dodge."
+        # Dodge usually doesn't do damage, but maybe counter-attack?
+        # For now, no damage button on dodge.
         await self.perform_roll(interaction, "Dodge", custom_title="Dodge")
 
     async def maneuver_callback(self, interaction: discord.Interaction):
         self.last_action = "Attempted Maneuver."
-        await self.perform_roll(interaction, "Fighting (Brawl)", custom_title="Maneuver")
+        # Maneuvers might do damage or just effects.
+        # We can add damage button as optional (same as Brawl).
+        damage_data = [{'label': 'Maneuver', 'value': '1D3'}] # Base brawl damage if needed?
+        damage_bonus = self.char_data.get("Damage Bonus", "0")
+
+        await self.perform_roll(interaction, "Fighting (Brawl)",
+                                custom_title="Maneuver",
+                                damage_data=damage_data,
+                                damage_bonus=damage_bonus)
 
     async def select_weapon_callback(self, interaction: discord.Interaction):
         self.active_weapon_idx = int(interaction.data["values"][0])
@@ -339,6 +356,33 @@ class CombatView(View):
             self.player_stats[self.server_id][self.user_id] = self.char_data
             await save_player_stats(self.player_stats)
 
+    def _parse_damage_string(self, raw_damage, w_name):
+        """
+        Parses complex damage strings like "1D10+5 (slug) or 4D6 (buckshot)"
+        Returns a list of dicts: [{'label': 'Slug', 'value': '1D10+5'}, ...]
+        """
+        if not raw_damage or raw_damage.lower() == "unknown":
+            return []
+
+        options = []
+        # Split by " or "
+        parts = re.split(r'\s+or\s+', raw_damage, flags=re.IGNORECASE)
+
+        for part in parts:
+            part = part.strip()
+            # Check for parenthetical label: "1D10+5 (slug)"
+            match = re.match(r"^(.*?)\s*\((.*?)\)$", part)
+            if match:
+                formula = match.group(1).strip()
+                label = match.group(2).strip()
+            else:
+                formula = part
+                label = w_name
+
+            options.append({'label': label, 'value': formula})
+
+        return options
+
     async def shoot_callback(self, interaction: discord.Interaction):
         idx = self.active_weapon_idx
         state = self.weapon_states[idx]
@@ -360,6 +404,13 @@ class CombatView(View):
         # Perform Roll
         w_data = self.weapon_db.get(w_obj["key"], {})
 
+        # Parse Damage
+        raw_damage = w_data.get("damage", "1D3")
+        damage_data = self._parse_damage_string(raw_damage, w_obj['clean_name'])
+
+        # Guns usually don't add DB unless thrown, but CoC rules say no DB for guns.
+        damage_bonus = None
+
         async def on_shoot_done(roll, tier, is_malf):
             if is_malf:
                 self.weapon_states[idx]["jammed"] = True
@@ -375,7 +426,9 @@ class CombatView(View):
                                 custom_title=f"Shoot ({w_obj['clean_name']})",
                                 check_malfunction=True,
                                 malfunction_val=w_data.get("malfunction", "100"),
-                                on_complete=on_shoot_done)
+                                on_complete=on_shoot_done,
+                                damage_data=damage_data,
+                                damage_bonus=damage_bonus)
 
     async def reload_callback(self, interaction: discord.Interaction):
         idx = self.active_weapon_idx
@@ -445,7 +498,7 @@ class CombatView(View):
         # 3. Fallback (if they have neither, return new name and let fuzzy match fail/default to base chance)
         return target_skill
 
-    async def perform_roll(self, interaction, skill_name, custom_title=None, check_malfunction=False, malfunction_val="100", on_complete=None):
+    async def perform_roll(self, interaction, skill_name, custom_title=None, check_malfunction=False, malfunction_val="100", on_complete=None, damage_data=None, damage_bonus=None):
         # Get Roll Cog
         roll_cog = interaction.client.get_cog("Roll")
         if not roll_cog:
@@ -507,7 +560,9 @@ class CombatView(View):
             result_tier=result_tier,
             luck_threshold=10,
             malfunction_threshold=malf_limit,
-            on_complete=on_complete
+            on_complete=on_complete,
+            damage_data=damage_data,
+            damage_bonus=damage_bonus
         )
 
         # Create Embed
