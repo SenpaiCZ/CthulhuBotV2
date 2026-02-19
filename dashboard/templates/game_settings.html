@@ -449,10 +449,10 @@ function addSkillSoundRow(skillName = '', values = {}) {
         <div class="card-body p-2">
             <div class="row align-items-center mb-2">
                 <div class="col-md-10">
-                    <input type="text" class="form-control bg-dark text-light border-secondary skill-name-input" placeholder="Skill Name (e.g. Fighting (Brawl))" value="${escapeHtml(skillName)}">
+                    <input type="text" class="form-control bg-dark text-light border-secondary skill-name-input" placeholder="Skill Name (e.g. Fighting (Brawl))" value="${escapeHtml(skillName)}" aria-label="Skill Name">
                 </div>
                 <div class="col-md-2 text-end">
-                    <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()"><i class="bi bi-trash"></i></button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()" aria-label="Remove skill rule"><i class="bi bi-trash"></i></button>
                 </div>
             </div>
             <div class="row g-2">
