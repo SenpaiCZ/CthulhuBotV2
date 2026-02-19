@@ -6,7 +6,7 @@ from discord import app_commands
 from discord.ui import View, Button, Select
 from loadnsave import load_player_stats, load_weapons_data, save_player_stats
 from commands.roll import RollResultView
-from rapidfuzz import process, fuzz
+from rapidfuzz import process, fuzz, utils
 
 class MockContext:
     def __init__(self, interaction):
@@ -462,8 +462,8 @@ class CombatView(View):
         else:
             # Try fuzzy
             keys = list(self.char_data.keys())
-            match = process.extractOne(skill_name, keys, scorer=fuzz.token_set_ratio)
-            if match and match[1] > 80:
+            match = process.extractOne(skill_name, keys, scorer=fuzz.token_set_ratio, processor=utils.default_process)
+            if match and match[1] > 70:
                 real_name = match[0]
                 skill_val = self.char_data[real_name]
             else:
