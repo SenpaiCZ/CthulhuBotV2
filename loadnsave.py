@@ -89,6 +89,15 @@ def load_settings():
     if os.getenv("DISCORD_TOKEN"):
         settings["token"] = os.getenv("DISCORD_TOKEN")
 
+    if os.getenv("DISCORD_CLIENT_ID"):
+        settings["discord_client_id"] = os.getenv("DISCORD_CLIENT_ID")
+    if os.getenv("DISCORD_CLIENT_SECRET"):
+        settings["discord_client_secret"] = os.getenv("DISCORD_CLIENT_SECRET")
+    if os.getenv("DISCORD_REDIRECT_URI"):
+        settings["discord_redirect_uri"] = os.getenv("DISCORD_REDIRECT_URI")
+    if os.getenv("ACTIVITY_ENABLED"):
+        settings["activity_enabled"] = os.getenv("ACTIVITY_ENABLED").lower() in ("true", "1", "yes")
+
     _SETTINGS_CACHE = settings
     return settings.copy()
 

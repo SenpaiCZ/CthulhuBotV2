@@ -18,6 +18,7 @@ from loadnsave import (
 from emojis import get_stat_emoji
 from support_functions import session_success
 from rapidfuzz import process, fuzz
+from .dice_utils import DiceUtils
 
 class DisambiguationSelect(Select):
     def __init__(self, options):
@@ -479,38 +480,12 @@ class Roll(commands.Cog):
         self.bot = bot
 
     def evaluate_dice_expression(self, expression):
-        expression = str(expression).replace('D', 'd').replace(' ', '')
-        detail_parts = []
-
-        def roll_dice(match):
-            num, size = map(int, match.groups())
-            rolls = [random.randint(1, size) for _ in range(num)]
-            detail_parts.append(f":game_die: {num}d{size}: {' + '.join(map(str, rolls))} = {sum(rolls)}")
-            return sum(rolls)
-
-        dice_pattern = re.compile(r'(\d+)d(\d+)')
-        expression = dice_pattern.sub(lambda m: str(roll_dice(m)), expression)
-
-        if not re.match(r'^[\d+\-*/().]+$', expression):
-            raise ValueError("Invalid dice expression")
-
-        result = eval(expression, {"__builtins__": None})
-        detail = "\n".join(detail_parts) + f"\nExpression: {expression}"
-        return result, detail
+        return DiceUtils.evaluate_dice_expression(expression)
 
     def calculate_roll_result(self, roll, skill_value):
-        is_fumble = False
-        if skill_value < 50:
-            if roll >= 96: is_fumble = True
-        else:
-            if roll == 100: is_fumble = True
-
-        if is_fumble: return "Fumble :warning:", 0
-        if roll == 1: return "Critical Success :star2:", 5
-        elif roll <= skill_value // 5: return "Extreme Success :star:", 4
-        elif roll <= skill_value // 2: return "Hard Success :white_check_mark:", 3
-        elif roll <= skill_value: return "Regular Success :heavy_check_mark:", 2
-        return "Fail :x:", 1
+        # Returns (text, tier) but DiceUtils returns (text, tier) too?
+        # DiceUtils returns text, tier.
+        return DiceUtils.calculate_roll_result(roll, skill_value)
 
     @commands.hybrid_command(name="roll", aliases=["newroll", "diceroll", "d", "nd"], guild_only=True, description="Perform a dice roll or skill check.")
     @app_commands.describe(
@@ -619,30 +594,14 @@ class Roll(commands.Cog):
                     return
 
             # ROLL LOGIC
-            net_dice = bonus - penalty
+            roll_data = DiceUtils.perform_skill_roll(current_value, bonus, penalty)
 
-            # Roll Ones (0-9)
-            ones_roll = random.randint(0, 9)
-
-            # Roll Tens (00-90)
-            # Need 1 + abs(net_dice) tens rolls initially
-            num_tens = 1 + abs(net_dice)
-            tens_options = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
-            tens_rolls = [random.choice(tens_options) for _ in range(num_tens)]
-
-            # Calculate Result
-            possible_rolls = []
-            for t in tens_rolls:
-                val = t + ones_roll
-                if val == 0: val = 100
-                possible_rolls.append(val)
-
-            final_roll = 0
-            if net_dice > 0: final_roll = min(possible_rolls)
-            elif net_dice < 0: final_roll = max(possible_rolls)
-            else: final_roll = possible_rolls[0] # Should only be 1
-
-            result_text, result_tier = self.calculate_roll_result(final_roll, current_value)
+            final_roll = roll_data['final_roll']
+            result_tier = roll_data['result_tier']
+            result_text = roll_data['result_text']
+            ones_roll = roll_data['ones_roll']
+            tens_rolls = roll_data['tens_rolls']
+            net_dice = roll_data['net_dice']
 
             # Sound Logic
             try:
