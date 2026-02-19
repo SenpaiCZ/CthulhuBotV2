@@ -365,7 +365,7 @@ class CombatView(View):
             user_id=self.user_id,
             stat_name=real_name,
             current_value=skill_val,
-            ones_roll=ones_roll,
+            ones_roll=ones,
             tens_rolls=[tens],
             net_dice=0,
             result_tier=result_tier,
