@@ -15,7 +15,7 @@ class MockContext:
         self.channel = interaction.channel
 
 class CombatView(View):
-    def __init__(self, interaction, char_data, weapon_db, player_stats, server_id, user_id, initial_weapon_states=None):
+    def __init__(self, interaction, char_data, weapon_db, player_stats, server_id, user_id, initial_weapon_states=None, last_action=None):
         super().__init__(timeout=900) # 15 min timeout
         self.interaction = interaction
         self.char_data = char_data
@@ -23,6 +23,7 @@ class CombatView(View):
         self.player_stats = player_stats
         self.server_id = str(server_id)
         self.user_id = str(user_id)
+        self.last_action = last_action or "Combat started."
 
         # Parse Inventory for Weapons
         self.available_weapons = self._parse_weapons()
@@ -89,6 +90,28 @@ class CombatView(View):
 
         return unique_weapons
 
+    def _generate_health_bar(self, current, max_val, length=8):
+        if max_val <= 0: max_val = 1
+        pct = current / max_val
+        if pct < 0: pct = 0
+        if pct > 1: pct = 1
+
+        filled = int(pct * length)
+        empty = length - filled
+
+        # Color Logic
+        # 🟩 Green for > 50%
+        # 🟨 Yellow for > 20%
+        # 🟥 Red for <= 20%
+
+        fill_char = "🟩"
+        if pct <= 0.2: fill_char = "🟥"
+        elif pct <= 0.5: fill_char = "🟨"
+
+        # Using Black Square for empty
+        bar = (fill_char * filled) + ("⬛" * empty)
+        return bar
+
     def update_components(self):
         self.clear_items()
 
@@ -146,17 +169,31 @@ class CombatView(View):
     def get_embed(self):
         embed = discord.Embed(title="Combat Mode", color=discord.Color.red())
 
-        # Stats Summary
+        # Stats Summary with Bars
         hp = self.char_data.get("HP", 0)
         max_hp = (self.char_data.get("CON", 0) + self.char_data.get("SIZ", 0)) // 10
         if self.char_data.get("Game Mode") == "Pulp of Cthulhu": max_hp = (self.char_data.get("CON", 0) + self.char_data.get("SIZ", 0)) // 5
 
+        hp_bar = self._generate_health_bar(hp, max_hp)
+
         mp = self.char_data.get("MP", 0)
+        max_mp = self.char_data.get("POW", 0) // 5
+        mp_bar = self._generate_health_bar(mp, max_mp)
+
+        san = self.char_data.get("SAN", 0)
+        max_san = 99 - self.char_data.get("Cthulhu Mythos", 0)
+        san_bar = self._generate_health_bar(san, max_san)
+
         mov = self.char_data.get("Move", 0)
         build = self.char_data.get("Build", 0)
         db = self.char_data.get("Damage Bonus", 0)
 
-        stats_line = f"❤️ **HP:** {hp}/{max_hp} | ✨ **MP:** {mp} | 🏃 **MOV:** {mov}\n💪 **Build:** {build} | 💥 **DB:** {db}"
+        stats_line = (
+            f"❤️ **HP:** {hp}/{max_hp} {hp_bar}\n"
+            f"🧠 **SAN:** {san}/{max_san} {san_bar}\n"
+            f"✨ **MP:** {mp}/{max_mp} {mp_bar}\n"
+            f"🏃 **MOV:** {mov} | 💪 **Build:** {build} | 💥 **DB:** {db}"
+        )
         embed.description = stats_line
 
         # Active Weapon Info
@@ -186,24 +223,34 @@ class CombatView(View):
         else:
              embed.add_field(name="Active Weapon", value="None selected.", inline=False)
 
+        # Footer with Last Action
+        embed.set_footer(text=f"Last Action: {self.last_action}")
+
         return embed
 
     async def _update_view(self, interaction):
         self.update_components()
-        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+        if interaction.response.is_done():
+            await interaction.edit_original_response(embed=self.get_embed(), view=self)
+        else:
+            await interaction.response.edit_message(embed=self.get_embed(), view=self)
 
     # Callbacks
     async def brawl_callback(self, interaction: discord.Interaction):
+        self.last_action = "Attempted Brawl."
         await self.perform_roll(interaction, "Fighting (Brawl)", custom_title="Fighting (Brawl)")
 
     async def dodge_callback(self, interaction: discord.Interaction):
+        self.last_action = "Attempted Dodge."
         await self.perform_roll(interaction, "Dodge", custom_title="Dodge")
 
     async def maneuver_callback(self, interaction: discord.Interaction):
+        self.last_action = "Attempted Maneuver."
         await self.perform_roll(interaction, "Fighting (Brawl)", custom_title="Maneuver")
 
     async def select_weapon_callback(self, interaction: discord.Interaction):
         self.active_weapon_idx = int(interaction.data["values"][0])
+        self.last_action = f"Switched weapon."
         await self._update_view(interaction)
 
     async def shoot_callback(self, interaction: discord.Interaction):
@@ -219,6 +266,7 @@ class CombatView(View):
         skill_name = self._get_firearm_skill(w_key)
 
         state["ammo"] -= 1
+        self.last_action = f"Fired {w_key}."
 
         # Perform Roll
         await self.perform_roll(interaction, skill_name, custom_title=f"Shoot ({w_key})", check_malfunction=True, malfunction_val=w_data.get("malfunction", "100"))
@@ -229,15 +277,16 @@ class CombatView(View):
         state["ammo"] = state["cap"]
         state["jammed"] = False
 
+        self.last_action = f"Reloaded {self.available_weapons[idx]}."
         await self._update_view(interaction)
-        await interaction.followup.send(f"Reloaded **{self.available_weapons[idx]}**.", ephemeral=True)
 
     async def fix_jam_callback(self, interaction: discord.Interaction):
         idx = self.active_weapon_idx
         state = self.weapon_states[idx]
         state["jammed"] = False
+
+        self.last_action = f"Cleared jam on {self.available_weapons[idx]}."
         await self._update_view(interaction)
-        await interaction.followup.send(f"Cleared jam on **{self.available_weapons[idx]}**.", ephemeral=True)
 
     async def exit_callback(self, interaction: discord.Interaction):
         await interaction.response.edit_message(content="Combat ended.", view=None, embed=None)
@@ -299,6 +348,7 @@ class CombatView(View):
         if check_malfunction and roll_val >= malf_limit:
             is_malfunction = True
             self.weapon_states[self.active_weapon_idx]["jammed"] = True
+            self.last_action += " (JAMMED!)"
 
         # Use RollResultView
         # We need a Mock Context
@@ -315,7 +365,7 @@ class CombatView(View):
             user_id=self.user_id,
             stat_name=real_name,
             current_value=skill_val,
-            ones_roll=ones,
+            ones_roll=ones_roll,
             tens_rolls=[tens],
             net_dice=0,
             result_tier=result_tier,
@@ -341,39 +391,17 @@ class CombatView(View):
         embed = discord.Embed(description=desc, color=color)
 
         # 1. Send Public Roll Result to Channel
-        # Using interaction.channel.send ensures it is public.
-        # We attach the view (RollResultView) so buttons work (they use ctx.author check).
         public_msg = await interaction.channel.send(embed=embed, view=view)
         view.message = public_msg
 
-        # 2. Update Old Dashboard (Interaction Response)
-        # Replace it with a placeholder message.
-        action_text = f"You chose **{custom_title or skill_name}**."
-        try:
-            await interaction.response.edit_message(content=action_text, embed=None, view=None)
-        except discord.errors.InteractionResponded:
-            # Should not happen if this is the first response to the button click
-            pass
-        except Exception:
-            pass
-
-        # 3. Create New Dashboard (Ephemeral Followup)
-        # Pass the updated weapon_states to preserve ammo/jams.
-        new_view = CombatView(
-            interaction,
-            self.char_data,
-            self.weapon_db,
-            self.player_stats,
-            self.server_id,
-            self.user_id,
-            initial_weapon_states=self.weapon_states
-        )
-        # Set active weapon to match current
-        new_view.active_weapon_idx = self.active_weapon_idx
-        new_view.update_components() # Refresh components to reflect active weapon
-
-        new_msg = await interaction.followup.send(embed=new_view.get_embed(), view=new_view, ephemeral=True)
-        new_view.message = new_msg
+        # 2. Update Dashboard IN PLACE
+        # This fulfills the button interaction (shoot, brawl, etc.)
+        self.update_components()
+        if not interaction.response.is_done():
+            await interaction.response.edit_message(embed=self.get_embed(), view=self)
+        else:
+            # If already responded (unlikely unless defer called), modify original
+            await interaction.edit_original_response(embed=self.get_embed(), view=self)
 
 
 class Combat(commands.Cog):
