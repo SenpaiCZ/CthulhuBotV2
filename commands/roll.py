@@ -54,7 +54,8 @@ class DisambiguationView(View):
 
 class RollResultView(View):
     def __init__(self, ctx, cog, player_stats, server_id, user_id, stat_name, current_value,
-                 ones_roll, tens_rolls, net_dice, result_tier, luck_threshold):
+                 ones_roll, tens_rolls, net_dice, result_tier, luck_threshold,
+                 malfunction_threshold=None, on_complete=None):
         super().__init__(timeout=300)
         self.ctx = ctx
         self.cog = cog
@@ -72,10 +73,24 @@ class RollResultView(View):
         self.result_tier = result_tier
         self.luck_threshold = luck_threshold
 
+        self.malfunction_threshold = malfunction_threshold
+        self.on_complete = on_complete
+        self.is_malfunction = False
+
         self.roll = self._calculate_current_roll() # Initial calculation
         self.success = False
         if self.result_tier >= 2:
             self.success = True
+
+        # Initial Malfunction Check
+        if self.malfunction_threshold is not None:
+            try:
+                limit = int(self.malfunction_threshold)
+                if self.roll >= limit:
+                    self.is_malfunction = True
+                    self.success = False # Malfunction overrides success usually
+            except:
+                pass
 
         self.update_buttons()
 
@@ -153,6 +168,18 @@ class RollResultView(View):
         self.result_tier = result_tier
         self.success = result_tier >= 2
 
+        # Malfunction Check
+        self.is_malfunction = False
+        if self.malfunction_threshold is not None:
+            try:
+                limit = int(self.malfunction_threshold)
+                if self.roll >= limit:
+                    self.is_malfunction = True
+                    self.success = False
+                    result_text = "🔫 MALFUNCTION! (Weapon Jammed)"
+            except:
+                pass
+
         self.update_buttons()
 
         # Rebuild Embed
@@ -164,6 +191,10 @@ class RollResultView(View):
         elif result_tier == 3 or result_tier == 2: color = 0x2ECC71 # Green
         elif result_tier == 1: color = 0xE74C3C # Red
         elif result_tier == 0: color = 0x992D22 # Dark Red
+
+        if self.is_malfunction:
+            color = discord.Color.dark_red()
+
         embed.color = color
 
         # Description
@@ -277,6 +308,17 @@ class RollResultView(View):
     @discord.ui.button(label="Done", style=discord.ButtonStyle.secondary, row=1)
     async def done_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer()
+
+        # Trigger Callback if exists
+        if self.on_complete:
+            try:
+                if asyncio.iscoroutinefunction(self.on_complete):
+                    await self.on_complete(self.roll, self.result_tier, self.is_malfunction)
+                else:
+                    self.on_complete(self.roll, self.result_tier, self.is_malfunction)
+            except Exception as e:
+                print(f"Error in on_complete callback: {e}")
+
         self.stop()
         # Disable
         try:
