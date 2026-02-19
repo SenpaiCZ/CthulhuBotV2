@@ -6,18 +6,27 @@ import datetime
 from loadnsave import load_journal_data, save_journal_data
 
 class JournalEntryModal(ui.Modal, title="New Journal Entry"):
-    def __init__(self, journal_cog, mode, target_user_id=None):
+    def __init__(self, journal_cog, mode, target_user_id=None, entry_index=None, original_entry=None, parent_view=None):
         super().__init__()
         self.journal_cog = journal_cog
         self.mode = mode # 'personal' or 'master'
         self.target_user_id = target_user_id # Only relevant if mode='personal' (user viewing own)
+        self.entry_index = entry_index
+        self.original_entry = original_entry
+        self.parent_view = parent_view
+
+        if self.entry_index is not None:
+            self.title = "Edit Journal Entry"
 
         label = "Date / Title"
         if mode == "master":
             label = "Date (e.g. October 24, 1925)"
 
-        self.entry_title = ui.TextInput(label=label, style=discord.TextStyle.short, placeholder="Enter date or title...", max_length=100)
-        self.entry_content = ui.TextInput(label="Entry Content", style=discord.TextStyle.paragraph, placeholder="Write your notes here...", max_length=2000)
+        default_title = original_entry.get("title", "") if original_entry else ""
+        default_content = original_entry.get("content", "") if original_entry else ""
+
+        self.entry_title = ui.TextInput(label=label, style=discord.TextStyle.short, placeholder="Enter date or title...", max_length=100, default=default_title)
+        self.entry_content = ui.TextInput(label="Entry Content", style=discord.TextStyle.paragraph, placeholder="Write your notes here...", max_length=2000, default=default_content)
 
         self.add_item(self.entry_title)
         self.add_item(self.entry_content)
@@ -32,11 +41,20 @@ class JournalEntryModal(ui.Modal, title="New Journal Entry"):
         if guild_id not in data:
             data[guild_id] = {"master": {"access": [], "entries": []}, "personal": {}}
 
+        # Construct new entry data
+        timestamp = datetime.datetime.now().timestamp()
+        author = user_id
+
+        if self.original_entry:
+            # Preserve original timestamp and author if editing
+            timestamp = self.original_entry.get("timestamp", timestamp)
+            author = self.original_entry.get("author_id", author)
+
         entry = {
             "title": self.entry_title.value,
             "content": self.entry_content.value,
-            "author_id": user_id,
-            "timestamp": datetime.datetime.now().timestamp()
+            "author_id": author,
+            "timestamp": timestamp
         }
 
         if self.mode == "master":
@@ -46,22 +64,96 @@ class JournalEntryModal(ui.Modal, title="New Journal Entry"):
             if "master" not in data[guild_id]:
                  data[guild_id]["master"] = {"access": [], "entries": []}
 
-            data[guild_id]["master"]["entries"].append(entry)
-            message = "✅ Added entry to **Master Journal**."
+            entries_list = data[guild_id]["master"]["entries"]
+            if self.entry_index is not None:
+                if 0 <= self.entry_index < len(entries_list):
+                    entries_list[self.entry_index] = entry
+                    message = "✅ Updated entry in **Master Journal**."
+                else:
+                    return await interaction.followup.send("❌ Error: Entry not found or index out of bounds.", ephemeral=True)
+            else:
+                entries_list.append(entry)
+                message = "✅ Added entry to **Master Journal**."
 
-        elif self.mode == "personal":
+        elif self.mode in ["personal", "inspect"]:
+            # If mode is inspect, target_user_id is the owner. If personal, target_user_id might be None (so use user_id) or set.
+            # In inspect, admin is editing. In personal, user is editing.
+
             target = self.target_user_id or user_id
+
+            # Permission check for Inspect mode (Admin editing other's journal)
+            if self.mode == "inspect" and not interaction.permissions.administrator:
+                 return await interaction.followup.send("❌ Only Game Masters (Admins) can edit player journals.", ephemeral=True)
+
             # Ensure personal structure exists
             if "personal" not in data[guild_id]:
                 data[guild_id]["personal"] = {}
             if target not in data[guild_id]["personal"]:
                 data[guild_id]["personal"][target] = {"entries": []}
 
-            data[guild_id]["personal"][target]["entries"].append(entry)
-            message = "✅ Added entry to **Personal Journal**."
+            entries_list = data[guild_id]["personal"][target]["entries"]
+            if self.entry_index is not None:
+                if 0 <= self.entry_index < len(entries_list):
+                    entries_list[self.entry_index] = entry
+                    message = f"✅ Updated entry in **{target}'s Journal**." if self.mode == "inspect" else "✅ Updated entry in **Personal Journal**."
+                else:
+                    return await interaction.followup.send("❌ Error: Entry not found or index out of bounds.", ephemeral=True)
+            else:
+                entries_list.append(entry)
+                message = "✅ Added entry to **Personal Journal**."
 
         await save_journal_data(data)
         await interaction.followup.send(message, ephemeral=True)
+
+        # Refresh parent view if available
+        if hasattr(self, 'journal_cog') and hasattr(self, 'parent_view') and self.parent_view:
+             await self.parent_view.external_refresh()
+
+class DeleteConfirmationView(ui.View):
+    def __init__(self, mode, target_user_id, entry_index, parent_view):
+        super().__init__(timeout=60)
+        self.mode = mode
+        self.target_user_id = target_user_id
+        self.entry_index = entry_index
+        self.parent_view = parent_view
+
+    @discord.ui.button(label="Confirm Delete", style=discord.ButtonStyle.danger)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+
+        guild_id = str(interaction.guild_id)
+        data = await load_journal_data()
+
+        deleted = False
+        if self.mode == "master":
+             if guild_id in data and "master" in data[guild_id]:
+                  entries = data[guild_id]["master"]["entries"]
+                  if 0 <= self.entry_index < len(entries):
+                      entries.pop(self.entry_index)
+                      deleted = True
+
+        elif self.mode in ["personal", "inspect"]:
+             target = self.target_user_id
+             if guild_id in data and "personal" in data[guild_id] and target in data[guild_id]["personal"]:
+                  entries = data[guild_id]["personal"][target]["entries"]
+                  if 0 <= self.entry_index < len(entries):
+                      entries.pop(self.entry_index)
+                      deleted = True
+
+        if deleted:
+            await save_journal_data(data)
+            await interaction.followup.send("🗑️ Entry deleted.", ephemeral=True)
+            if hasattr(self.parent_view, 'external_refresh'):
+                await self.parent_view.external_refresh()
+        else:
+            await interaction.followup.send("❌ Error: Could not find entry to delete.", ephemeral=True)
+
+        self.stop()
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("❌ Deletion cancelled.", ephemeral=True)
+        self.stop()
 
 class JournalView(ui.View):
     def __init__(self, cog, interaction, mode="personal", target_user_id=None):
@@ -171,21 +263,45 @@ class JournalView(ui.View):
     async def add_entry_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.interaction.user.id: return
 
-        if self.mode == "inspect":
-            return await interaction.response.send_message("You cannot write to another player's journal.", ephemeral=True)
+        # Permission check again, just in case
+        if self.mode == "inspect" and not interaction.user.guild_permissions.administrator:
+             return await interaction.response.send_message("You cannot write to another player's journal.", ephemeral=True)
 
-        modal = JournalEntryModal(self.cog, self.mode, self.target_user_id)
+        modal = JournalEntryModal(self.cog, self.mode, self.target_user_id, parent_view=self)
         await interaction.response.send_modal(modal)
-
-        # We need to refresh after modal submit, but modal submit is separate interaction.
-        # We can't easily wait for it here. The user will have to click prev/next or we can re-send view?
-        # Actually, best UX is user re-opens or we add a "Refresh" button?
-        # Or simpler: The modal sends a confirmation. The user can click "Next" or "Refresh" if I add one.
-        # I'll add a Refresh button.
 
     @discord.ui.button(label="Refresh", style=discord.ButtonStyle.secondary, emoji="🔄", row=0)
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.refresh(interaction)
+
+    @discord.ui.button(label="Edit", style=discord.ButtonStyle.primary, row=1)
+    async def edit_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.interaction.user.id: return
+
+        entries = await self.load_entries()
+        if not entries: return
+
+        reversed_entries = list(reversed(entries))
+        if not (0 <= self.current_page < len(reversed_entries)):
+            return
+
+        entry = reversed_entries[self.current_page]
+        real_index = len(entries) - 1 - self.current_page
+
+        modal = JournalEntryModal(self.cog, self.mode, self.target_user_id, entry_index=real_index, original_entry=entry, parent_view=self)
+        await interaction.response.send_modal(modal)
+
+    @discord.ui.button(label="Delete", style=discord.ButtonStyle.danger, row=1)
+    async def delete_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.interaction.user.id: return
+
+        entries = await self.load_entries()
+        if not entries: return
+
+        real_index = len(entries) - 1 - self.current_page
+
+        view = DeleteConfirmationView(self.mode, self.target_user_id, real_index, self)
+        await interaction.response.send_message("⚠️ Are you sure you want to delete this entry?", view=view, ephemeral=True)
 
     @discord.ui.button(label="Switch Journal", style=discord.ButtonStyle.secondary, row=1)
     async def switch_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -218,10 +334,34 @@ class JournalView(ui.View):
         self.current_page = 0
         await self.refresh(interaction)
 
+    async def external_refresh(self):
+        """Refreshes the view from an external event (e.g. Modal submit or Delete)."""
+        if not self.message:
+            return
+
+        embed = await self.get_embed()
+        entries = await self.load_entries()
+        self._update_buttons(entries)
+
+        try:
+            await self.message.edit(embed=embed, view=self)
+        except discord.NotFound:
+            pass # Message deleted
+        except Exception as e:
+            print(f"Error refreshing journal view: {e}")
+
     async def refresh(self, interaction):
         embed = await self.get_embed()
         entries = await self.load_entries()
 
+        self._update_buttons(entries)
+
+        if interaction.response.is_done():
+            await interaction.edit_original_response(embed=embed, view=self)
+        else:
+            await interaction.response.edit_message(embed=embed, view=self)
+
+    def _update_buttons(self, entries):
         has_entries = len(entries) > 0
         total_pages = len(entries)
 
@@ -234,20 +374,24 @@ class JournalView(ui.View):
         else:
             self.switch_button.label = "Switch to Personal Journal"
 
-        # Permission check for Add Entry
+        # Permission check for Write Access
         can_write = False
+        is_admin = self.interaction.user.guild_permissions.administrator
+
         if self.mode == "personal":
+            can_write = True # User owns their personal journal
+        elif self.mode == "master" and is_admin:
             can_write = True
-        elif self.mode == "master" and interaction.user.guild_permissions.administrator:
+        elif self.mode == "inspect" and is_admin:
             can_write = True
 
         self.add_entry_button.disabled = not can_write
         self.add_entry_button.style = discord.ButtonStyle.success if can_write else discord.ButtonStyle.secondary
 
-        if interaction.response.is_done():
-            await interaction.edit_original_response(embed=embed, view=self)
-        else:
-            await interaction.response.edit_message(embed=embed, view=self)
+        # Edit/Delete Buttons
+        # Only show/enable if there are entries and user has write access
+        self.edit_button.disabled = not (can_write and has_entries)
+        self.delete_button.disabled = not (can_write and has_entries)
 
 class Journal(commands.Cog):
     def __init__(self, bot):
@@ -262,9 +406,7 @@ class Journal(commands.Cog):
 
         # Update buttons initial state
         entries = await view.load_entries()
-        has_entries = len(entries) > 0
-        view.prev_button.disabled = True
-        view.next_button.disabled = (not has_entries) or (len(entries) <= 1)
+        view._update_buttons(entries)
 
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         view.message = await interaction.original_response()
@@ -316,13 +458,7 @@ class Journal(commands.Cog):
 
         # Update buttons initial state
         entries = await view.load_entries()
-        has_entries = len(entries) > 0
-        view.prev_button.disabled = True
-        view.next_button.disabled = (not has_entries) or (len(entries) <= 1)
-
-        # Disable Add Entry/Switch for inspect mode initially
-        view.add_entry_button.disabled = True
-        view.switch_button.label = "Switch to Personal Journal" # Allow admin to switch back to their own
+        view._update_buttons(entries)
 
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         view.message = await interaction.original_response()
