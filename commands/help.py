@@ -220,7 +220,8 @@ class NexusHelpView(View):
         description = ""
         for cmd in commands_list:
             name = f"/{cmd.name}"
-            desc = cmd.description or "No description."
+            # Context Menus (and other types) might not have a description attribute
+            desc = getattr(cmd, "description", "No description.") or "No description."
 
             # Hybrid command check
             if hasattr(cmd, 'help') and cmd.help:
@@ -265,7 +266,11 @@ class NexusHelpView(View):
         fuzzy_names = [res[0] for res in fuzzy_results]
 
         # 3. Description search (simple contains)
-        desc_matches = [cmd for cmd in unique_commands if query.lower() in (cmd.description or "").lower()]
+        desc_matches = []
+        for cmd in unique_commands:
+            desc = getattr(cmd, "description", "") or ""
+            if query.lower() in desc.lower():
+                desc_matches.append(cmd)
 
         # Combine results
         final_results = []
@@ -292,7 +297,7 @@ class NexusHelpView(View):
             desc_text = ""
             for cmd in final_results:
                 name = f"/{cmd.name}"
-                desc = cmd.description or "No description."
+                desc = getattr(cmd, "description", "No description.") or "No description."
                 if len(desc) > 80: desc = desc[:77] + "..."
                 desc_text += f"**`{name}`** - {desc}\n"
             embed.description = desc_text
