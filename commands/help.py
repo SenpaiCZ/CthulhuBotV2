@@ -55,7 +55,7 @@ CATEGORY_STYLES = {
     "Other": discord.ButtonStyle.secondary
 }
 
-NEXUS_TIPS = [
+GRIMOIRE_TIPS = [
     "Tip: Use /roll sanity to quickly make a Sanity check.",
     "Tip: You can use /pogo forceupdate to refresh event data.",
     "Tip: The Codex has info on thousands of monsters and spells.",
@@ -66,7 +66,7 @@ NEXUS_TIPS = [
     "Tip: You can print your character sheet to PDF with /printcharacter."
 ]
 
-class NexusSearchModal(Modal, title="Search Commands"):
+class SearchModal(Modal, title="Search Commands"):
     query = TextInput(label="What are you looking for?", placeholder="e.g. roll, madness, sanity...", min_length=2, max_length=50)
 
     def __init__(self, view):
@@ -79,7 +79,7 @@ class NexusSearchModal(Modal, title="Search Commands"):
         embed = self.view.get_search_embed(query_str)
         await interaction.response.edit_message(embed=embed, view=self.view)
 
-class NexusHelpView(View):
+class HelpView(View):
     def __init__(self, help_data, user, bot):
         super().__init__(timeout=300)
         self.help_data = help_data
@@ -147,7 +147,7 @@ class NexusHelpView(View):
 
     async def search_callback(self, interaction: discord.Interaction):
         # Modals require response.send_modal, cannot be deferred beforehand
-        await interaction.response.send_modal(NexusSearchModal(self))
+        await interaction.response.send_modal(SearchModal(self))
 
     async def category_button_callback(self, interaction: discord.Interaction):
         # Extract category from custom_id
@@ -159,7 +159,7 @@ class NexusHelpView(View):
 
     def get_home_embed(self):
         embed = discord.Embed(
-            title="🐙 CthulhuBot Nexus",
+            title="🐙 CthulhuBot Help",
             description=(
                 "**Greetings, Investigator.**\n"
                 "The stars have aligned. Access the archives, manage your sanity, or consult the Keeper below.\n\n"
@@ -174,7 +174,7 @@ class NexusHelpView(View):
         embed.add_field(name="🐙 Keeper Tools", value="Loot, madness, and handouts.", inline=True)
 
         embed.set_thumbnail(url=self.bot.user.avatar.url if self.bot.user.avatar else None)
-        embed.set_footer(text=random.choice(NEXUS_TIPS))
+        embed.set_footer(text=random.choice(GRIMOIRE_TIPS))
         return embed
 
     def get_onboarding_embed(self):
@@ -368,10 +368,10 @@ class Help(commands.Cog):
                 return False
         return True # Assume app commands are visible
 
-    @app_commands.command(name="help", description="Show the Nexus help dashboard.")
+    @app_commands.command(name="help", description="Show the interactive help dashboard.")
     async def help_command(self, interaction: discord.Interaction):
         """
-        Shows the interactive Nexus help dashboard.
+        Shows the interactive help dashboard.
         """
         # Defer immediately ephemeral
         await interaction.response.defer(ephemeral=True)
@@ -384,7 +384,7 @@ class Help(commands.Cog):
                 await interaction.followup.send("No commands available for you.")
                 return
 
-            view = NexusHelpView(help_data, interaction.user, self.bot)
+            view = HelpView(help_data, interaction.user, self.bot)
             embed = view.get_home_embed()
 
             await interaction.followup.send(embed=embed, view=view)
@@ -392,7 +392,7 @@ class Help(commands.Cog):
         except Exception as e:
             print(f"Error generating help menu: {e}")
             traceback.print_exc()
-            await interaction.followup.send("An error occurred while accessing the Nexus.")
+            await interaction.followup.send("An error occurred while accessing the archives.")
 
 async def setup(bot):
     await bot.add_cog(Help(bot))

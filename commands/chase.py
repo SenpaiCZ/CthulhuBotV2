@@ -539,7 +539,7 @@ class ChaseCog(commands.Cog):
         if log_str:
             embed.add_field(name="📜 Log", value=log_str, inline=False)
 
-        embed.set_footer(text="Nexus Chase System v2.0")
+        embed.set_footer(text="Chase Tracker")
         return embed
 
     async def initialize_chase(self, ctx, environment, mode, interaction=None):
