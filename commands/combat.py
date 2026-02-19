@@ -407,7 +407,7 @@ class CombatView(View):
                 self.update_components()
                 await self.message.edit(embed=self.get_embed(), view=self)
 
-        await self.perform_roll(interaction, "Mechanical Repair", custom_title="Fix Jam", on_complete=on_repair_done)
+        await self.perform_roll(interaction, "Mech. Repair", custom_title="Fix Jam", on_complete=on_repair_done)
 
     async def exit_callback(self, interaction: discord.Interaction):
         await interaction.response.edit_message(content="Combat ended.", view=None, embed=None)
