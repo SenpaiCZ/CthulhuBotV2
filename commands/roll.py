@@ -51,10 +51,35 @@ class DisambiguationView(View):
             return False
         return True
 
+class DamageSelect(Select):
+    def __init__(self, damage_data, parent_view):
+        self.parent_view = parent_view
+        options = []
+        for d in damage_data:
+            lbl = d.get('label', 'Damage')
+            val = d.get('value', '0')
+            # Truncate if needed
+            options.append(discord.SelectOption(label=lbl[:100], value=val, description=f"Rolls {val}"))
+        super().__init__(placeholder="Select damage type...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        chosen_formula = self.values[0]
+        # Find label for display
+        chosen_label = next((d['label'] for d in self.parent_view.damage_data if d['value'] == chosen_formula), "Damage")
+        await self.parent_view.perform_damage_roll(interaction, chosen_formula, chosen_label)
+
+class DamageSelectView(View):
+    def __init__(self, damage_data, parent_view):
+        super().__init__(timeout=60)
+        self.damage_data = damage_data
+        self.parent_view = parent_view
+        self.add_item(DamageSelect(damage_data, parent_view))
+
 class RollResultView(View):
     def __init__(self, ctx, cog, player_stats, server_id, user_id, stat_name, current_value,
                  ones_roll, tens_rolls, net_dice, result_tier, luck_threshold,
-                 malfunction_threshold=None, on_complete=None):
+                 malfunction_threshold=None, on_complete=None,
+                 damage_data=None, damage_bonus=None):
         super().__init__(timeout=300)
         self.ctx = ctx
         self.cog = cog
@@ -76,6 +101,10 @@ class RollResultView(View):
         self.on_complete = on_complete
         self.is_malfunction = False
 
+        self.damage_data = damage_data
+        self.damage_bonus = damage_bonus
+        self.luck_used = False
+
         self.roll = self._calculate_current_roll() # Initial calculation
         self.success = False
         if self.result_tier >= 2:
@@ -90,6 +119,15 @@ class RollResultView(View):
                     self.success = False # Malfunction overrides success usually
             except:
                 pass
+
+        # Cleanup Context: Remove Damage Button if irrelevant
+        if not self.damage_data:
+            to_remove = []
+            for child in self.children:
+                if isinstance(child, Button) and child.label == "Roll Damage":
+                    to_remove.append(child)
+            for child in to_remove:
+                self.remove_item(child)
 
         self.update_buttons()
 
@@ -122,6 +160,38 @@ class RollResultView(View):
             return possible_rolls[0]
 
     def update_buttons(self):
+        # Locate buttons in children
+        bonus_btn = None
+        penalty_btn = None
+        luck_btn = None
+        push_btn = None
+        damage_btn = None
+
+        for child in self.children:
+            if isinstance(child, Button):
+                if child.label == "Bonus Die": bonus_btn = child
+                elif child.label == "Penalty Die": penalty_btn = child
+                elif "Use Luck" in (child.label or ""): luck_btn = child
+                elif child.label == "Push Roll": push_btn = child
+                elif child.label == "Roll Damage": damage_btn = child
+
+        if self.luck_used:
+            # If luck used, dice mods are locked
+            if bonus_btn: bonus_btn.disabled = True
+            if penalty_btn: penalty_btn.disabled = True
+            if push_btn: push_btn.disabled = True
+            if luck_btn: luck_btn.disabled = True
+
+            # Damage is allowed if success
+            if damage_btn:
+                if self.success and not self.is_malfunction:
+                    damage_btn.disabled = False
+                else:
+                    damage_btn.disabled = True
+            return
+
+        # --- Normal Logic (No Luck Used Yet) ---
+
         # LUCK Logic
         can_luck = False
         luck_cost = 0
@@ -143,22 +213,32 @@ class RollResultView(View):
                     can_luck = True
                     luck_cost = cost
 
-        self.luck_button.disabled = not can_luck
-        if can_luck:
-            self.luck_button.label = f"Use Luck (-{luck_cost})"
-        else:
-            self.luck_button.label = "Use Luck"
+        if luck_btn:
+            luck_btn.disabled = not can_luck
+            if can_luck:
+                luck_btn.label = f"Use Luck (-{luck_cost})"
+            else:
+                luck_btn.label = "Use Luck"
 
         # PUSH Logic (Only on Normal Fail)
         can_push = False
         if self.net_dice == 0 and self.stat_name != "LUCK" and self.result_tier == 1:
              can_push = True
-        self.push_button.disabled = not can_push
+
+        if push_btn:
+            push_btn.disabled = not can_push
 
         # Max Dice Limit (CoC doesn't specify hard limit, but UI should)
         # Limit to +/- 2 dice
-        self.add_bonus_btn.disabled = self.net_dice >= 2
-        self.add_penalty_btn.disabled = self.net_dice <= -2
+        if bonus_btn: bonus_btn.disabled = self.net_dice >= 2
+        if penalty_btn: penalty_btn.disabled = self.net_dice <= -2
+
+        # Damage Button Logic
+        if damage_btn:
+            if self.success and self.damage_data and not self.is_malfunction:
+                 damage_btn.disabled = False
+            else:
+                 damage_btn.disabled = True
 
     async def _update_state_and_embed(self, interaction):
         self.roll = self._calculate_current_roll()
@@ -251,6 +331,7 @@ class RollResultView(View):
         self.roll = target_val
         self.result_tier += 1
         self.success = True
+        self.luck_used = True
 
         # Visual Update
         result_text_map = {
@@ -260,11 +341,8 @@ class RollResultView(View):
         }
         result_text = result_text_map.get(self.result_tier, "Success (LUCK Used)")
 
-        # Disable stuff
-        self.add_bonus_btn.disabled = True
-        self.add_penalty_btn.disabled = True
-        self.push_button.disabled = True
-        self.luck_button.disabled = True
+        # Update Buttons (Handles enabling Damage if valid)
+        self.update_buttons()
 
         embed = interaction.message.embeds[0]
         formatted_luck = f":four_leaf_clover: LUCK: {self.player_stats[self.server_id][self.user_id]['LUCK']}"
@@ -272,7 +350,6 @@ class RollResultView(View):
 
         # Reconstruct description with updated Luck
         desc_parts = embed.description.split("\n\n")
-        # Keep roll info (part 0), update result (part 1), keep skill (part 2), update luck (part 3)
         if len(desc_parts) >= 1:
             embed.description = f"{desc_parts[0]}\n\n**{result_text}**\n\n{formatted_skill}\n{formatted_luck}"
 
@@ -325,6 +402,47 @@ class RollResultView(View):
             await interaction.message.edit(view=self)
         except: pass
 
+    @discord.ui.button(label="Roll Damage", style=discord.ButtonStyle.danger, emoji="⚔️", row=2, disabled=True)
+    async def damage_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.damage_data: return
+
+        if len(self.damage_data) == 1:
+            # Direct Roll
+            item = self.damage_data[0]
+            await self.perform_damage_roll(interaction, item['value'], item['label'])
+        else:
+            # Selection
+            view = DamageSelectView(self.damage_data, self)
+            await interaction.response.send_message("Select damage type:", view=view, ephemeral=True)
+
+    async def perform_damage_roll(self, interaction, formula, label):
+        # Add DB if applicable
+        final_formula = formula
+        if self.damage_bonus and str(self.damage_bonus) not in ["0", "+0", "-0"]:
+             final_formula += f" + {self.damage_bonus}"
+             # Clean up " + -" -> " - "
+             final_formula = final_formula.replace("+ -", "- ")
+
+        try:
+             result, detail = self.cog.evaluate_dice_expression(final_formula)
+
+             # Construct Result Embed
+             embed = discord.Embed(title=f"⚔️ Damage Roll: {label}", description=f"**{result}** Damage", color=discord.Color.dark_red())
+             embed.add_field(name="Formula", value=f"`{final_formula}`")
+             embed.add_field(name="Detail", value=detail, inline=False)
+             embed.set_footer(text="Nexus Combat System")
+
+             if not interaction.response.is_done():
+                 await interaction.response.send_message(embed=embed)
+             else:
+                 await interaction.followup.send(embed=embed)
+
+        except Exception as e:
+             if not interaction.response.is_done():
+                 await interaction.response.send_message(f"Error rolling damage: {e}", ephemeral=True)
+             else:
+                 await interaction.followup.send(f"Error rolling damage: {e}", ephemeral=True)
+
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user != self.ctx.author:
             await interaction.response.send_message("Not your session!", ephemeral=True)
@@ -361,7 +479,7 @@ class Roll(commands.Cog):
         self.bot = bot
 
     def evaluate_dice_expression(self, expression):
-        expression = expression.replace('D', 'd').replace(' ', '')
+        expression = str(expression).replace('D', 'd').replace(' ', '')
         detail_parts = []
 
         def roll_dice(match):

@@ -1,12 +1,55 @@
 import discord
 import math
 import re
-from discord.ui import View, Select, Button
+from discord.ui import View, Select, Button, Modal, TextInput
 from emojis import get_stat_emoji, stat_emojis
 from descriptions import get_description
 import occupation_emoji
 from commands._backstory_common import BackstoryCategorySelectView
-from loadnsave import load_player_stats
+from loadnsave import load_player_stats, save_player_stats
+
+class AddItemModal(Modal, title="Add Inventory Item"):
+    item_name = TextInput(label="Item Name", placeholder="e.g. .38 Revolver or Flashlight", max_length=100)
+    details = TextInput(label="Details / Quantity", placeholder="e.g. [30/30] or 1x", required=False, max_length=50)
+
+    def __init__(self, view):
+        super().__init__()
+        self.view = view
+
+    async def on_submit(self, interaction: discord.Interaction):
+        item_str = self.item_name.value.strip()
+        if self.details.value:
+            item_str += f" {self.details.value.strip()}"
+
+        # Default to "Gear and Possessions"
+        target_key = "Gear and Possessions"
+        if "Backstory" not in self.view.char_data:
+            self.view.char_data["Backstory"] = {}
+
+        backstory = self.view.char_data["Backstory"]
+        if target_key not in backstory:
+            backstory[target_key] = []
+
+        # Ensure it's a list
+        if not isinstance(backstory[target_key], list):
+             backstory[target_key] = [str(backstory[target_key])]
+
+        backstory[target_key].append(item_str)
+
+        # Save
+        try:
+            player_stats = await load_player_stats()
+            # Ensure structure exists
+            if self.view.server_id not in player_stats:
+                player_stats[self.view.server_id] = {}
+
+            player_stats[self.view.server_id][str(self.view.user.id)] = self.view.char_data
+            await save_player_stats(player_stats)
+
+            await interaction.response.send_message(f"Added **{item_str}** to inventory.", ephemeral=True)
+            await self.view.refresh_dashboard(interaction)
+        except Exception as e:
+            await interaction.response.send_message(f"Error saving item: {e}", ephemeral=True)
 
 class CharacterDashboardView(View):
     def __init__(self, user, char_data, mode_label, current_mode, server_id):
@@ -59,6 +102,21 @@ class CharacterDashboardView(View):
 
         # Interactive Buttons for Backstory
         if self.current_section == "backstory":
+             # Check for empty inventory logic
+             inventory_keys = ["Gear and Possessions", "Assets", "Equipment", "Weapons"]
+             backstory = self.char_data.get("Backstory", {})
+             is_inventory_empty = True
+             for key in inventory_keys:
+                 if key in backstory and backstory[key]: # exists and not empty
+                     is_inventory_empty = False
+                     break
+
+             if is_inventory_empty:
+                 add_item_btn = Button(label="Add Item", style=discord.ButtonStyle.primary, row=1, emoji="🎒")
+                 add_item_btn.callback = self.add_item_callback
+                 self.add_item(add_item_btn)
+
+             # Standard Buttons
              add_btn = Button(label="Add Entry", style=discord.ButtonStyle.success, row=1, emoji="➕")
              add_btn.callback = self.add_entry_callback
              self.add_item(add_btn)
@@ -136,6 +194,11 @@ class CharacterDashboardView(View):
 
         view = BackstoryCategorySelectView(self.user, self.server_id, str(self.user.id), mode="remove", callback=self.refresh_dashboard)
         await interaction.response.send_message("Select a category to remove from:", view=view, ephemeral=True)
+
+    async def add_item_callback(self, interaction: discord.Interaction):
+        if interaction.user != self.user:
+            return await interaction.response.send_message("Not your dashboard!", ephemeral=True)
+        await interaction.response.send_modal(AddItemModal(self))
 
     def get_embed(self):
         if self.current_section == "stats":
@@ -272,6 +335,8 @@ class CharacterDashboardView(View):
 
         if inventory_text:
             embed.add_field(name="🎒 Inventory & Assets", value=inventory_text, inline=False)
+        else:
+            embed.add_field(name="🎒 Inventory & Assets", value="Empty. Use 'Add Item' to start!", inline=False)
 
         # Other Backstory elements
         for key, value in backstory.items():
