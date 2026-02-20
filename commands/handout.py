@@ -53,11 +53,6 @@ class NewspaperModal(HandoutBaseModal):
         points = []
         for i in range(0, 101, 5): points.append(f"{i}% {random.uniform(0, 1.5):.1f}%") # Top
         for i in range(0, 101, 5): points.append(f"{100 - random.uniform(0, 1.5):.1f}% {i}%") # Right (x, y) ? No, Right is x=100.
-        # Wait, polygon points are x y.
-        # Top: x varies 0->100, y ~0
-        # Right: x ~100, y varies 0->100
-        # Bottom: x varies 100->0, y ~100
-        # Left: x ~0, y varies 100->0
 
         # My previous logic in newspaper.py:
         # Top
@@ -138,6 +133,21 @@ class ScriptModal(HandoutBaseModal):
         query = urllib.parse.urlencode(params)
         await self._render(interaction, f"/render/script?{query}", "Script", "script")
 
+class MorseModal(HandoutBaseModal):
+    def __init__(self, bot, ctx, font_name):
+        super().__init__(bot, ctx, f"Morse Code Generator ({font_name})")
+        self.font_name = font_name
+
+    text = discord.ui.Label(text="Text to Convert", component=discord.ui.TextInput(style=discord.TextStyle.paragraph, max_length=1000))
+
+    async def on_submit(self, interaction: discord.Interaction):
+        params = {
+            "text": self.text.component.value,
+            "font": self.font_name
+        }
+        query = urllib.parse.urlencode(params)
+        await self._render(interaction, f"/render/morse?{query}", "Morse Code", "morse")
+
 class ScriptFontSelectView(discord.ui.View):
     def __init__(self, bot, ctx, fonts):
         super().__init__(timeout=60)
@@ -165,6 +175,35 @@ class ScriptFontSelectView(discord.ui.View):
 
         selected_font = interaction.data['values'][0]
         modal = ScriptModal(self.bot, self.ctx, selected_font)
+        await interaction.response.send_modal(modal)
+
+class MorseFontSelectView(discord.ui.View):
+    def __init__(self, bot, ctx, fonts):
+        super().__init__(timeout=60)
+        self.bot = bot
+        self.ctx = ctx
+
+        # Paginate or limit to 25
+        options = []
+        for f in fonts[:25]:
+            # Use filename as value, label without extension
+            label = os.path.splitext(f)[0]
+            options.append(discord.SelectOption(label=label, value=f))
+
+        if not options:
+             select = discord.ui.Select(placeholder="No decorative fonts available", options=[discord.SelectOption(label="Default", value="default")])
+        else:
+             select = discord.ui.Select(placeholder="Select a Decorative Font", options=options)
+
+        select.callback = self.select_callback
+        self.add_item(select)
+
+    async def select_callback(self, interaction: discord.Interaction):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("This isn't for you!", ephemeral=True)
+
+        selected_font = interaction.data['values'][0]
+        modal = MorseModal(self.bot, self.ctx, selected_font)
         await interaction.response.send_modal(modal)
 
 class ScriptCategorySelectView(discord.ui.View):
@@ -243,17 +282,36 @@ class HandoutTypeSelectView(discord.ui.View):
         view = ScriptCategorySelectView(self.bot, self.ctx)
         await interaction.response.send_message("Select a font category:", view=view, ephemeral=True)
 
+    @discord.ui.button(label="Morse Code", style=discord.ButtonStyle.success, emoji="➖")
+    async def morse_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("This isn't for you!", ephemeral=True)
+
+        await interaction.response.defer(ephemeral=True)
+
+        fonts = get_available_fonts()
+        config = await load_fonts_config()
+
+        decorative_fonts = []
+        for f in fonts:
+            if config.get(f, "Decorative") == "Decorative":
+                decorative_fonts.append(f)
+
+        view = MorseFontSelectView(self.bot, self.ctx, decorative_fonts)
+        await interaction.followup.send("Select a font for Morse Code:", view=view, ephemeral=True)
+
 class Handout(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command(description="Create a prop/handout (Newspaper, Telegram, Letter, Script).")
+    @commands.hybrid_command(description="Create a prop/handout (Newspaper, Telegram, Letter, Script, Morse).")
     @app_commands.describe(type="The type of handout to create")
     @app_commands.choices(type=[
         app_commands.Choice(name="Newspaper", value="newspaper"),
         app_commands.Choice(name="Telegram", value="telegram"),
         app_commands.Choice(name="Letter", value="letter"),
-        app_commands.Choice(name="Occult Script", value="script")
+        app_commands.Choice(name="Occult Script", value="script"),
+        app_commands.Choice(name="Morse Code", value="morse")
     ])
     async def handout(self, ctx, type: app_commands.Choice[str] = None):
         """Starts the Handout Wizard."""
@@ -288,6 +346,19 @@ class Handout(commands.Cog):
             else:
                 view = ScriptCategorySelectView(self.bot, ctx)
                 await ctx.send("Select a font category:", view=view, ephemeral=True)
+
+        elif selected_value == "morse":
+            fonts = get_available_fonts()
+            if not fonts:
+                if ctx.interaction:
+                    await ctx.interaction.response.send_modal(MorseModal(self.bot, ctx, "default"))
+                else:
+                    await ctx.send("Use slash command.")
+            else:
+                config = await load_fonts_config()
+                decorative_fonts = [f for f in fonts if config.get(f, "Decorative") == "Decorative"]
+                view = MorseFontSelectView(self.bot, ctx, decorative_fonts)
+                await ctx.send("Select a font for Morse Code:", view=view, ephemeral=True)
 
         else:
             # No argument provided, show selection view
