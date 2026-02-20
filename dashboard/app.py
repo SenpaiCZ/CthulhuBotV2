@@ -897,6 +897,68 @@ async def render_occupation_view():
     image_url = get_image_url("occupation", target_key)
     return await render_template('render_occupation.html', occupation=data[target_key], name=target_key, image_url=image_url)
 
+MORSE_CODE_MAP = {
+    'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+    'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+    'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+    'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+    'Y': '-.--', 'Z': '--..',
+    '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....',
+    '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----',
+    ',': '--..--', "'": '.----.',
+    '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...',
+    ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '_': '..--.-',
+    '"': '.-..-.', '$': '...-..-', '@': '.--.-.'
+}
+
+def text_to_morse(text):
+    if not text: return ""
+    text = text.upper()
+    morse_output = []
+
+    for char in text:
+        if char in ['.', '!', '?', '\n']: # Sentence Terminator
+             # If previous token was // (word break), replace with ///
+             if morse_output and morse_output[-1] == '//':
+                 morse_output[-1] = '///'
+             elif not morse_output or morse_output[-1] != '///':
+                 morse_output.append('///')
+        elif char.isspace(): # Word Terminator
+             # Only add word break if previous token wasn't a break
+             if morse_output and morse_output[-1] not in ['//', '///']:
+                 morse_output.append('//')
+        elif char in MORSE_CODE_MAP: # Letter
+             # If previous token was a letter (not a break), add letter separator /
+             if morse_output and morse_output[-1] not in ['//', '///']:
+                 morse_output.append('/')
+             morse_output.append(MORSE_CODE_MAP[char])
+
+    return "".join(morse_output)
+
+@app.route('/render/morse')
+async def render_morse_view():
+    text = request.args.get('text', 'SOS')
+    font = request.args.get('font', 'default')
+
+    font_filename = None
+    if font and font != 'default':
+        safe_font = sanitize_filename(font)
+        for ext in ['.ttf', '.otf', '.woff', '.woff2']:
+             if os.path.exists(os.path.join(FONTS_FOLDER, safe_font + ext)):
+                 font_filename = safe_font + ext
+                 break
+             if os.path.exists(os.path.join(FONTS_FOLDER, safe_font)):
+                 font_filename = safe_font
+                 break
+
+    morse_text = text_to_morse(text)
+
+    return await render_template(
+        'render_morse.html',
+        text=morse_text,
+        font_filename=font_filename
+    )
+
 @app.route('/render/newspaper')
 async def render_newspaper_view():
     headline = request.args.get('headline', 'Extra! Extra!')

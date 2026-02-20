@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morse Code</title>
+    <style>
+        {% if font_filename %}
+        @font-face {
+            font-family: 'CustomScript';
+            src: url("{{ url_for('serve_fonts', filename=font_filename) }}");
+        }
+        {% endif %}
+
+        body {
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .morse-container {
+            padding: 40px;
+            max-width: 800px;
+            text-align: left;
+            background-color: white;
+        }
+
+        .morse-text {
+            {% if font_filename %}
+            font-family: 'CustomScript', serif;
+            {% else %}
+            font-family: serif;
+            {% endif %}
+            font-size: 2.5em;
+            color: black;
+            line-height: 1.6;
+            word-wrap: break-word;
+            white-space: pre-wrap; /* Preserve newlines */
+        }
+    </style>
+</head>
+<body>
+    <div class="morse-container">
+        <div class="morse-text">{{ text }}</div>
+    </div>
+</body>
+</html>
