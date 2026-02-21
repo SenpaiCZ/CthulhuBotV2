@@ -93,6 +93,19 @@ async def app_startup():
         except Exception as e:
             print(f"Error migrating fonts: {e}")
 
+@app.after_request
+async def add_security_headers(response):
+    """
+    Sentinel: Add security headers to prevent Clickjacking, MIME sniffing, and information leakage.
+    - X-Frame-Options: SAMEORIGIN
+    - X-Content-Type-Options: nosniff
+    - Referrer-Policy: strict-origin-when-cross-origin
+    """
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    return response
+
 # Helper to check login
 def is_admin():
     return session.get('logged_in', False)
