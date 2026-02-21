@@ -3,10 +3,11 @@ from discord import app_commands
 from discord.ext import commands
 from discord import ui
 import datetime
+import os
 from loadnsave import load_journal_data, save_journal_data
 
 class JournalEntryModal(ui.Modal, title="New Journal Entry"):
-    def __init__(self, journal_cog, mode, target_user_id=None, entry_index=None, original_entry=None, parent_view=None, title=None):
+    def __init__(self, journal_cog, mode, target_user_id=None, entry_index=None, original_entry=None, parent_view=None, title=None, image_attachments=None):
         super().__init__(title=title or "New Journal Entry")
         self.journal_cog = journal_cog
         self.mode = mode # 'personal' or 'master'
@@ -14,6 +15,7 @@ class JournalEntryModal(ui.Modal, title="New Journal Entry"):
         self.entry_index = entry_index
         self.original_entry = original_entry
         self.parent_view = parent_view
+        self.image_attachments = image_attachments or []
 
         if self.entry_index is not None:
             self.title = "Edit Journal Entry"
@@ -26,7 +28,13 @@ class JournalEntryModal(ui.Modal, title="New Journal Entry"):
         default_content = original_entry.get("content", "") if original_entry else ""
 
         self.entry_title = ui.TextInput(label=label, style=discord.TextStyle.short, placeholder="Enter date or title...", max_length=100, default=default_title)
-        self.entry_content = ui.TextInput(label="Entry Content", style=discord.TextStyle.paragraph, placeholder="Write your notes here...", max_length=2000, default=default_content)
+
+        # Make content optional if we have images
+        content_required = True
+        if self.image_attachments:
+            content_required = False
+
+        self.entry_content = ui.TextInput(label="Entry Content", style=discord.TextStyle.paragraph, placeholder="Write your notes here...", max_length=2000, default=default_content, required=content_required)
 
         self.add_item(self.entry_title)
         self.add_item(self.entry_content)
@@ -45,16 +53,45 @@ class JournalEntryModal(ui.Modal, title="New Journal Entry"):
         timestamp = datetime.datetime.now().timestamp()
         author = user_id
 
+        saved_images = []
+
+        # Preserve existing images if editing
         if self.original_entry:
+            saved_images = self.original_entry.get("images", []).copy()
             # Preserve original timestamp and author if editing
             timestamp = self.original_entry.get("timestamp", timestamp)
             author = self.original_entry.get("author_id", author)
+
+        # Process new image attachments
+        if self.image_attachments:
+            # Create directory if needed
+            folder_path = os.path.join("data", "journal_images")
+            os.makedirs(folder_path, exist_ok=True)
+
+            for i, attachment in enumerate(self.image_attachments):
+                # Generate unique filename
+                # extension
+                filename = attachment.filename
+                ext = os.path.splitext(filename)[1]
+                if not ext:
+                    ext = ".png" # default fallback
+
+                unique_name = f"{guild_id}_{int(timestamp)}_{i}{ext}"
+                file_path = os.path.join(folder_path, unique_name)
+
+                try:
+                    await attachment.save(file_path)
+                    saved_images.append(unique_name)
+                except Exception as e:
+                    print(f"Error saving journal image {filename}: {e}")
+                    await interaction.followup.send(f"⚠️ Failed to save image: {filename}", ephemeral=True)
 
         entry = {
             "title": self.entry_title.value,
             "content": self.entry_content.value,
             "author_id": author,
-            "timestamp": timestamp
+            "timestamp": timestamp,
+            "images": saved_images
         }
 
         if self.mode == "master":
@@ -155,6 +192,119 @@ class DeleteConfirmationView(ui.View):
         await interaction.response.send_message("❌ Deletion cancelled.", ephemeral=True)
         self.stop()
 
+class ImageManageView(ui.View):
+    def __init__(self, mode, target_user_id, entry_index, images, parent_view):
+        super().__init__(timeout=60)
+        self.mode = mode
+        self.target_user_id = target_user_id
+        self.entry_index = entry_index
+        self.images = images
+        self.parent_view = parent_view
+
+        options = []
+        for i, img in enumerate(self.images):
+            options.append(discord.SelectOption(label=f"Image {i+1}", value=str(i), description=img))
+
+        if options:
+            self.select_menu = ui.Select(placeholder="Select an image to delete...", options=options, min_values=1, max_values=1)
+            self.select_menu.callback = self.select_callback
+            self.add_item(self.select_menu)
+
+    async def select_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        selected_index = int(self.select_menu.values[0])
+
+        guild_id = str(interaction.guild_id)
+        data = await load_journal_data()
+
+        entries_list = None
+        if self.mode == "master":
+             if guild_id in data and "master" in data[guild_id]:
+                  entries_list = data[guild_id]["master"]["entries"]
+        elif self.mode in ["personal", "inspect"]:
+             target = self.target_user_id
+             if guild_id in data and "personal" in data[guild_id] and target in data[guild_id]["personal"]:
+                  entries_list = data[guild_id]["personal"][target]["entries"]
+
+        if entries_list and 0 <= self.entry_index < len(entries_list):
+            entry = entries_list[self.entry_index]
+            if "images" in entry and 0 <= selected_index < len(entry["images"]):
+                filename = entry["images"].pop(selected_index)
+
+                # Delete file
+                try:
+                    path = os.path.join("data", "journal_images", filename)
+                    if os.path.exists(path):
+                        os.remove(path)
+                except Exception as e:
+                    print(f"Failed to delete file {filename}: {e}")
+
+                await save_journal_data(data)
+                await interaction.followup.send("🗑️ Image deleted.", ephemeral=True)
+
+                if hasattr(self.parent_view, 'external_refresh'):
+                    await self.parent_view.external_refresh()
+            else:
+                 await interaction.followup.send("❌ Image not found.", ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Entry not found.", ephemeral=True)
+
+        self.stop()
+
+class DeleteImageConfirmationView(ui.View):
+    def __init__(self, mode, target_user_id, entry_index, image_filename, parent_view):
+        super().__init__(timeout=60)
+        self.mode = mode
+        self.target_user_id = target_user_id
+        self.entry_index = entry_index
+        self.image_filename = image_filename
+        self.parent_view = parent_view
+
+    @discord.ui.button(label="Confirm Delete", style=discord.ButtonStyle.danger)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+
+        guild_id = str(interaction.guild_id)
+        data = await load_journal_data()
+
+        entries_list = None
+        if self.mode == "master":
+             if guild_id in data and "master" in data[guild_id]:
+                  entries_list = data[guild_id]["master"]["entries"]
+        elif self.mode in ["personal", "inspect"]:
+             target = self.target_user_id
+             if guild_id in data and "personal" in data[guild_id] and target in data[guild_id]["personal"]:
+                  entries_list = data[guild_id]["personal"][target]["entries"]
+
+        if entries_list and 0 <= self.entry_index < len(entries_list):
+            entry = entries_list[self.entry_index]
+            if "images" in entry and self.image_filename in entry["images"]:
+                entry["images"].remove(self.image_filename)
+
+                try:
+                    path = os.path.join("data", "journal_images", self.image_filename)
+                    if os.path.exists(path):
+                        os.remove(path)
+                except Exception as e:
+                    print(f"Failed to delete file {self.image_filename}: {e}")
+
+                await save_journal_data(data)
+                await interaction.followup.send("🗑️ Image deleted.", ephemeral=True)
+
+                if hasattr(self.parent_view, 'external_refresh'):
+                    await self.parent_view.external_refresh()
+            else:
+                 await interaction.followup.send("❌ Image not found in entry.", ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Entry not found.", ephemeral=True)
+
+        self.stop()
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("❌ Deletion cancelled.", ephemeral=True)
+        self.stop()
+
 class JournalView(ui.View):
     def __init__(self, cog, interaction, mode="personal", target_user_id=None):
         super().__init__(timeout=300)
@@ -218,6 +368,11 @@ class JournalView(ui.View):
 
         embed.title = f"{title} - {entry['title']}"
         embed.description = entry['content']
+
+        if entry.get("images"):
+            # Set the first image as the main image
+            first_image = entry["images"][0]
+            embed.set_image(url=f"attachment://{first_image}")
 
         timestamp = entry.get('timestamp')
         date_str = ""
@@ -303,6 +458,31 @@ class JournalView(ui.View):
         view = DeleteConfirmationView(self.mode, self.target_user_id, real_index, self)
         await interaction.response.send_message("⚠️ Are you sure you want to delete this entry?", view=view, ephemeral=True)
 
+    @discord.ui.button(label="Delete Image", style=discord.ButtonStyle.danger, row=1)
+    async def delete_image_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.interaction.user.id: return
+
+        entries = await self.load_entries()
+        if not entries: return
+
+        reversed_entries = list(reversed(entries))
+        if not (0 <= self.current_page < len(reversed_entries)):
+            return
+
+        entry = reversed_entries[self.current_page]
+        real_index = len(entries) - 1 - self.current_page
+
+        images = entry.get("images", [])
+        if not images:
+            return await interaction.response.send_message("❌ No images to delete.", ephemeral=True)
+
+        if len(images) == 1:
+            view = DeleteImageConfirmationView(self.mode, self.target_user_id, real_index, images[0], self)
+            await interaction.response.send_message("⚠️ Delete this image?", view=view, ephemeral=True)
+        else:
+            view = ImageManageView(self.mode, self.target_user_id, real_index, images, self)
+            await interaction.response.send_message("Select an image to delete:", view=view, ephemeral=True)
+
     @discord.ui.button(label="Switch Journal", style=discord.ButtonStyle.secondary, row=1)
     async def switch_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.interaction.user.id: return
@@ -334,6 +514,18 @@ class JournalView(ui.View):
         self.current_page = 0
         await self.refresh(interaction)
 
+    def get_files_for_current_page(self, entries):
+        files = []
+        reversed_entries = list(reversed(entries))
+        if 0 <= self.current_page < len(reversed_entries):
+            entry = reversed_entries[self.current_page]
+            if entry.get("images"):
+                for img_filename in entry["images"]:
+                     path = os.path.join("data", "journal_images", img_filename)
+                     if os.path.exists(path):
+                         files.append(discord.File(path, filename=img_filename))
+        return files
+
     async def external_refresh(self):
         """Refreshes the view from an external event (e.g. Modal submit or Delete)."""
         if not self.message:
@@ -343,8 +535,10 @@ class JournalView(ui.View):
         entries = await self.load_entries()
         self._update_buttons(entries)
 
+        files = self.get_files_for_current_page(entries)
+
         try:
-            await self.message.edit(embed=embed, view=self)
+            await self.message.edit(embed=embed, view=self, attachments=[], files=files)
         except discord.NotFound:
             pass # Message deleted
         except Exception as e:
@@ -356,10 +550,12 @@ class JournalView(ui.View):
 
         self._update_buttons(entries)
 
+        files = self.get_files_for_current_page(entries)
+
         if interaction.response.is_done():
-            await interaction.edit_original_response(embed=embed, view=self)
+            await interaction.edit_original_response(embed=embed, view=self, attachments=[], files=files)
         else:
-            await interaction.response.edit_message(embed=embed, view=self)
+            await interaction.response.edit_message(embed=embed, view=self, attachments=[], files=files)
 
     def _update_buttons(self, entries):
         has_entries = len(entries) > 0
@@ -393,6 +589,22 @@ class JournalView(ui.View):
         self.edit_button.disabled = not (can_write and has_entries)
         self.delete_button.disabled = not (can_write and has_entries)
 
+        # Delete Image Button
+        # Check if current entry has images
+        has_images = False
+        reversed_entries = list(reversed(entries))
+        if 0 <= self.current_page < len(reversed_entries):
+            entry = reversed_entries[self.current_page]
+            if entry.get("images"):
+                has_images = True
+
+        if can_write and has_images:
+            self.delete_image_button.disabled = False
+            self.delete_image_button.style = discord.ButtonStyle.danger
+        else:
+            self.delete_image_button.disabled = True
+            self.delete_image_button.style = discord.ButtonStyle.secondary
+
 class Journal(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -411,6 +623,13 @@ class Journal(commands.Cog):
         if len(content) > 2000:
             content = content[:1997] + "..."
 
+        # Check for image attachments
+        image_attachments = []
+        if message.attachments:
+            for attachment in message.attachments:
+                if attachment.content_type and attachment.content_type.startswith('image/'):
+                    image_attachments.append(attachment)
+
         # We use a trick here: passing 'original_entry' populates the fields,
         # but since it lacks 'timestamp' and 'author_id', on_submit will treat it as a NEW entry.
         pre_filled_data = {
@@ -422,7 +641,7 @@ class Journal(commands.Cog):
         mode = "personal"
 
         # Launch Modal
-        modal = JournalEntryModal(self, mode, target_user_id=None, original_entry=pre_filled_data, title="Save Clue")
+        modal = JournalEntryModal(self, mode, target_user_id=None, original_entry=pre_filled_data, title="Save Clue", image_attachments=image_attachments)
         await interaction.response.send_modal(modal)
 
     @journal_group.command(name="open", description="Open your journal (Personal or Master).")
@@ -434,7 +653,9 @@ class Journal(commands.Cog):
         entries = await view.load_entries()
         view._update_buttons(entries)
 
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        files = view.get_files_for_current_page(entries)
+
+        await interaction.response.send_message(embed=embed, view=view, files=files, ephemeral=True)
         view.message = await interaction.original_response()
 
     @journal_group.command(name="grant", description="Grant a user access to the Master Journal (Admin only).")
@@ -486,7 +707,9 @@ class Journal(commands.Cog):
         entries = await view.load_entries()
         view._update_buttons(entries)
 
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        files = view.get_files_for_current_page(entries)
+
+        await interaction.response.send_message(embed=embed, view=view, files=files, ephemeral=True)
         view.message = await interaction.original_response()
 
 async def setup(bot):
