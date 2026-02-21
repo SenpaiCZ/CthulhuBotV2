@@ -266,3 +266,32 @@ def get_stat_emoji(stat_name):
            return stat_emojis[base]
 
   return ":question:"
+
+def get_emoji_for_item(item_name):
+    """Returns a relevant emoji based on item name keywords."""
+    name_lower = item_name.lower()
+    if any(x in name_lower for x in ["gun", "rifle", "pistol", "shotgun", "revolver", "carbine", "smg", "machine gun", "handgun"]):
+        return "🔫"
+    if any(x in name_lower for x in ["knife", "dagger", "sword", "blade", "machete", "axe", "hatchet", "razor", "kukri", "spear"]):
+        return "🗡️"
+    if any(x in name_lower for x in ["potion", "vial", "bottle", "flask", "elixir", "medicine", "pill", "syringe", "drug"]):
+        return "🧪"
+    if any(x in name_lower for x in ["book", "journal", "diary", "note", "paper", "map", "scroll", "letter", "document", "tome"]):
+        return "📖"
+    if any(x in name_lower for x in ["key", "lockpick", "pass", "card"]):
+        return "🗝️"
+    if any(x in name_lower for x in ["money", "cash", "wallet", "coin", "gold", "silver", "bill", "gem", "jewel", "diamond", "ruby", "emerald", "sapphire", "ring", "necklace"]):
+        return "💰"
+    if any(x in name_lower for x in ["food", "ration", "canned", "meat", "bread", "water", "drink", "alcohol", "wine", "beer"]):
+        return "🥫"
+    if any(x in name_lower for x in ["clothes", "coat", "hat", "gloves", "boots", "shoes", "suit", "dress", "armor", "helmet", "vest"]):
+        return "🧥"
+    if any(x in name_lower for x in ["tool", "wrench", "hammer", "screwdriver", "pliers", "saw", "crowbar", "kit"]):
+        return "🛠️"
+    if any(x in name_lower for x in ["light", "torch", "lantern", "lamp", "candle", "match", "lighter"]):
+        return "🔦"
+    if any(x in name_lower for x in ["ammo", "bullet", "shell", "clip", "magazine"]):
+        return "🎒"
+    if any(x in name_lower for x in ["phone", "radio", "camera"]):
+        return "📷"
+    return "📦"
