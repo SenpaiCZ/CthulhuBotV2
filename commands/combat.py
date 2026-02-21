@@ -7,13 +7,9 @@ from discord.ui import View, Button, Select
 from loadnsave import load_player_stats, load_weapons_data, save_player_stats
 from commands.roll import RollResultView
 from rapidfuzz import process, fuzz, utils
+from emojis import get_health_bar
+from support_functions import MockContext
 
-class MockContext:
-    def __init__(self, interaction):
-        self.interaction = interaction
-        self.author = interaction.user
-        self.guild = interaction.guild
-        self.channel = interaction.channel
 
 class CombatView(View):
     def __init__(self, interaction, char_data, weapon_db, player_stats, server_id, user_id, initial_weapon_states=None, last_action=None):
@@ -130,23 +126,6 @@ class CombatView(View):
 
         return found_weapons
 
-    def _generate_health_bar(self, current, max_val, length=8):
-        if max_val <= 0: max_val = 1
-        pct = current / max_val
-        if pct < 0: pct = 0
-        if pct > 1: pct = 1
-
-        filled = int(pct * length)
-        empty = length - filled
-
-        # Color Logic
-        fill_char = "🟩"
-        if pct <= 0.2: fill_char = "🟥"
-        elif pct <= 0.5: fill_char = "🟨"
-
-        bar = (fill_char * filled) + ("⬛" * empty)
-        return bar
-
     def update_components(self):
         self.clear_items()
 
@@ -217,15 +196,15 @@ class CombatView(View):
         hp = self.char_data.get("HP", 0)
         max_hp = (self.char_data.get("CON", 0) + self.char_data.get("SIZ", 0)) // 10
         if self.char_data.get("Game Mode") == "Pulp of Cthulhu": max_hp = (self.char_data.get("CON", 0) + self.char_data.get("SIZ", 0)) // 5
-        hp_bar = self._generate_health_bar(hp, max_hp)
+        hp_bar = get_health_bar(hp, max_hp)
 
         mp = self.char_data.get("MP", 0)
         max_mp = self.char_data.get("POW", 0) // 5
-        mp_bar = self._generate_health_bar(mp, max_mp)
+        mp_bar = get_health_bar(mp, max_mp)
 
         san = self.char_data.get("SAN", 0)
         max_san = 99 - self.char_data.get("Cthulhu Mythos", 0)
-        san_bar = self._generate_health_bar(san, max_san)
+        san_bar = get_health_bar(san, max_san)
 
         mov = self.char_data.get("Move", 0)
         build = self.char_data.get("Build", 0)

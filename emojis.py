@@ -295,3 +295,20 @@ def get_emoji_for_item(item_name):
     if any(x in name_lower for x in ["phone", "radio", "camera"]):
         return "📷"
     return "📦"
+
+def get_health_bar(current, max_val, length=8):
+    if max_val <= 0: max_val = 1
+    pct = current / max_val
+    if pct < 0: pct = 0
+    if pct > 1: pct = 1
+
+    filled = int(pct * length)
+    empty = length - filled
+
+    # Color Logic
+    fill_char = "🟩"
+    if pct <= 0.2: fill_char = "🟥"
+    elif pct <= 0.5: fill_char = "🟨"
+
+    bar = (fill_char * filled) + ("⬛" * empty)
+    return bar

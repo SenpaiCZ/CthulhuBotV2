@@ -15,8 +15,8 @@ from loadnsave import (
     load_skill_sound_settings,
     load_server_volumes
 )
-from emojis import get_stat_emoji
-from support_functions import session_success
+from emojis import get_stat_emoji, get_health_bar
+from support_functions import session_success, MockContext
 from rapidfuzz import process, fuzz
 
 class DisambiguationSelect(Select):
@@ -449,10 +449,121 @@ class RollResultView(View):
             return False
         return True
 
+class QuickSkillSelect(Select):
+    def __init__(self, char_data, server_id, user_id):
+        self.char_data = char_data
+        self.server_id = server_id
+        self.user_id = user_id
+
+        # Get Skills and Sort
+        ignored = [
+            "Residence", "Game Mode", "Archetype", "NAME", "Occupation",
+            "Age", "HP", "MP", "SAN", "LUCK", "Build", "Damage Bonus", "Move",
+            "STR", "DEX", "INT", "CON", "APP", "POW", "SIZ", "EDU", "Dodge",
+            "Backstory"
+        ]
+        skills = []
+        for key, val in char_data.items():
+            if key in ignored: continue
+            if isinstance(val, (int, float)):
+                skills.append((key, val))
+
+        skills.sort(key=lambda x: x[1], reverse=True)
+        top_skills = skills[:25]
+
+        options = []
+        for name, val in top_skills:
+            emoji = get_stat_emoji(name)
+            options.append(discord.SelectOption(label=f"{name} ({val}%)", value=name, emoji=emoji))
+
+        super().__init__(placeholder="🎲 Quick Roll...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        skill_name = self.values[0]
+        current_val = self.char_data.get(skill_name, 0)
+
+        roll_cog = interaction.client.get_cog("Roll")
+        if not roll_cog: return
+
+        # Roll
+        import random
+        ones = random.randint(0, 9)
+        tens = random.choice([0, 10, 20, 30, 40, 50, 60, 70, 80, 90])
+        roll_val = tens + ones
+        if roll_val == 0: roll_val = 100
+
+        result_text, result_tier = roll_cog.calculate_roll_result(roll_val, current_val)
+        luck_threshold = (await load_luck_stats()).get(self.server_id, 10)
+
+        ctx = MockContext(interaction)
+        view = RollResultView(
+            ctx=ctx,
+            cog=roll_cog,
+            player_stats={self.server_id: {self.user_id: self.char_data}},
+            server_id=self.server_id,
+            user_id=self.user_id,
+            stat_name=skill_name,
+            current_value=current_val,
+            ones_roll=ones,
+            tens_rolls=[tens],
+            net_dice=0,
+            result_tier=result_tier,
+            luck_threshold=luck_threshold
+        )
+
+        color = discord.Color.green()
+        if result_tier <= 1: color = discord.Color.red()
+        elif result_tier >= 4: color = discord.Color.gold()
+
+        desc = f"{interaction.user.mention} rolled **{skill_name}**!\n"
+        desc += f"Dice: [{tens if tens!=0 else '00'}] + {ones} -> **{roll_val}**\n\n"
+        desc += f"**{result_text}**\n\n"
+        desc += f"**{skill_name}**: {current_val} - {current_val//2} - {current_val//5}\n"
+
+        embed = discord.Embed(description=desc, color=color)
+
+        # Public
+        msg = await interaction.channel.send(embed=embed, view=view)
+        view.message = msg
+
+        await interaction.response.send_message(f"✅ Rolled **{skill_name}** in channel.", ephemeral=True)
+
+
 class Roll(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.ctx_menu = app_commands.ContextMenu(
+            name='Quick Roll',
+            callback=self.quick_roll_context,
+        )
+        self.bot.tree.add_command(self.ctx_menu)
+
+    def cog_unload(self):
+        self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
+
+    async def quick_roll_context(self, interaction: discord.Interaction, member: discord.Member):
+        await interaction.response.defer(ephemeral=True)
+
+        server_id = str(interaction.guild_id)
+        target_id = str(member.id)
+
+        player_stats = await load_player_stats()
+
+        if server_id not in player_stats or target_id not in player_stats[server_id]:
+            return await interaction.followup.send(f"{member.display_name} has no investigator.", ephemeral=True)
+
+        char_data = player_stats[server_id][target_id]
+
+        view = View(timeout=60)
+        view.add_item(QuickSkillSelect(char_data, server_id, target_id))
+
+        embed = discord.Embed(
+            title=f"🎲 Quick Roll: {char_data.get('NAME', 'Unknown')}",
+            description="Select a skill to roll immediately.",
+            color=discord.Color.blue()
+        )
+        await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
     def evaluate_dice_expression(self, expression):
         expression = str(expression).replace('D', 'd').replace(' ', '')
