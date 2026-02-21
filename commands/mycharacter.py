@@ -9,7 +9,7 @@ class mycharacter(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
     self.ctx_menu = app_commands.ContextMenu(
-        name='View Investigator',
+        name='Check Stats',
         callback=self.view_investigator_menu,
     )
     self.bot.tree.add_command(self.ctx_menu)
