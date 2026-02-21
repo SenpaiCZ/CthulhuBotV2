@@ -2,28 +2,138 @@ import discord
 import math
 import re
 from discord.ui import View, Select, Button, Modal, TextInput, UserSelect
-from emojis import get_stat_emoji, stat_emojis, get_emoji_for_item
+from emojis import get_stat_emoji, stat_emojis, get_emoji_for_item, get_health_bar
 from descriptions import get_description
 import occupation_emoji
 from commands._backstory_common import BackstoryCategorySelectView
 from loadnsave import load_player_stats, save_player_stats
+from commands.roll import RollResultView
+from support_functions import MockContext
 
-def _generate_health_bar(current, max_val, length=8):
-    if max_val <= 0: max_val = 1
-    pct = current / max_val
-    if pct < 0: pct = 0
-    if pct > 1: pct = 1
 
-    filled = int(pct * length)
-    empty = length - filled
+class SkillSearchModal(Modal, title="Search Skill"):
+    skill_name = TextInput(label="Skill Name", placeholder="e.g. Spot Hidden", min_length=2)
 
-    # Color Logic
-    fill_char = "🟩"
-    if pct <= 0.2: fill_char = "🟥"
-    elif pct <= 0.5: fill_char = "🟨"
+    def __init__(self, view):
+        super().__init__()
+        self.dashboard_view = view
 
-    bar = (fill_char * filled) + ("⬛" * empty)
-    return bar
+    async def on_submit(self, interaction: discord.Interaction):
+        term = self.skill_name.value.lower()
+        all_skills = self.dashboard_view._get_skill_list() # list of (name, val)
+
+        matches = []
+        for name, val in all_skills:
+            if term in name.lower():
+                matches.append((name, val))
+
+        if not matches:
+            return await interaction.response.send_message("No skills found matching that name.", ephemeral=True)
+
+        # Re-render with matches
+        # We can reuse SkillRollSelect with filtered options
+        view = View(timeout=60)
+        view.add_item(SkillRollSelect(self.dashboard_view, matches[:25]))
+
+        # Add Back Button
+        back_btn = Button(label="Back", style=discord.ButtonStyle.secondary, row=1)
+        async def back_callback(interaction: discord.Interaction):
+            await self.dashboard_view.refresh_dashboard(interaction)
+        back_btn.callback = back_callback
+        view.add_item(back_btn)
+
+        await interaction.response.edit_message(content=f"Found {len(matches)} matches:", embed=None, view=view)
+
+
+class SkillRollSelect(Select):
+    def __init__(self, view, skills_list):
+        self.dashboard_view = view
+        options = []
+        for name, val in skills_list:
+            emoji = view._get_skill_emoji(name)
+            label = f"{name} ({val}%)"
+            options.append(discord.SelectOption(label=label, value=name, emoji=emoji))
+
+        super().__init__(placeholder="🎲 Choose a skill to roll...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        skill_name = self.values[0]
+        char_data = self.dashboard_view.char_data
+
+        # Determine value (handle specializations if needed, though they should be keys in char_data)
+        current_val = char_data.get(skill_name, 0)
+
+        # Get Roll Cog
+        roll_cog = interaction.client.get_cog("Roll")
+        if not roll_cog:
+            return await interaction.response.send_message("Roll system unavailable.", ephemeral=True)
+
+        # Perform Roll logic
+        # We want to use RollResultView to show the result
+        # Calculate Roll
+        import random
+        ones = random.randint(0, 9)
+        tens = random.choice([0, 10, 20, 30, 40, 50, 60, 70, 80, 90])
+        roll_val = tens + ones
+        if roll_val == 0: roll_val = 100
+
+        result_text, result_tier = roll_cog.calculate_roll_result(roll_val, current_val)
+
+        # Check Malfunction (not applicable for generic skill rolls usually, unless firearm)
+        # We'll skip complex malfunction checks here for simplicity, or default to 100
+
+        ctx = MockContext(interaction)
+
+        # Luck Threshold
+        from loadnsave import load_luck_stats
+        luck_threshold = (await load_luck_stats()).get(self.dashboard_view.server_id, 10)
+
+        # Create View
+        view = RollResultView(
+            ctx=ctx,
+            cog=roll_cog,
+            player_stats={self.dashboard_view.server_id: {str(self.dashboard_view.user.id): char_data}}, # Mock full stats structure
+            server_id=self.dashboard_view.server_id,
+            user_id=str(self.dashboard_view.user.id),
+            stat_name=skill_name,
+            current_value=current_val,
+            ones_roll=ones,
+            tens_rolls=[tens],
+            net_dice=0,
+            result_tier=result_tier,
+            luck_threshold=luck_threshold
+        )
+
+        # Create Embed
+        color = discord.Color.green()
+        if result_tier == 5 or result_tier == 4: color = 0xF1C40F
+        elif result_tier == 3 or result_tier == 2: color = 0x2ECC71
+        elif result_tier == 1: color = 0xE74C3C
+        elif result_tier == 0: color = 0x992D22
+
+        desc = f"{interaction.user.mention} :game_die: **{skill_name}** Check\n"
+        desc += f"Dice: [{tens if tens!=0 else '00'}] + {ones} -> **{roll_val}**\n\n"
+        desc += f"**{result_text}**\n\n"
+        desc += f"**{skill_name}**: {current_val} - {current_val//2} - {current_val//5}\n"
+        desc += f":four_leaf_clover: LUCK: {char_data.get('LUCK', 0)}"
+
+        embed = discord.Embed(description=desc, color=color)
+
+        # Send Publicly (so group sees result)
+        msg = await interaction.channel.send(embed=embed, view=view)
+        view.message = msg
+
+        # Update Ephemeral Dashboard to say "Rolled!" and provide Back button
+        back_view = View()
+        async def back_callback(inter: discord.Interaction):
+            await self.dashboard_view.refresh_dashboard(inter)
+
+        btn = Button(label="Back to Sheet", style=discord.ButtonStyle.secondary)
+        btn.callback = back_callback
+        back_view.add_item(btn)
+
+        await interaction.response.edit_message(content=f"🎲 Rolled **{skill_name}**! Check the channel.", embed=None, view=back_view)
+
 
 class QuickUpdateModal(Modal):
     def __init__(self, view, stat_key, current_val, max_val=None):
@@ -439,9 +549,14 @@ class CharacterDashboardView(View):
         select.callback = self.select_callback
         self.add_item(select)
 
-        # Quick Update (Only for Stats)
+        # Quick Update & Roll (Only for Stats)
         if self.current_section == "stats":
              self.add_item(QuickUpdateSelect(self))
+
+             # Roll Button
+             roll_btn = Button(label="Roll Skill", style=discord.ButtonStyle.success, row=2, emoji="🎲")
+             roll_btn.callback = self.roll_button_callback
+             self.add_item(roll_btn)
 
         # Pagination Buttons (Only for Skills/Backstory if needed)
         if self.current_section == "skills":
@@ -504,6 +619,38 @@ class CharacterDashboardView(View):
         await interaction.response.edit_message(embed=self.get_embed(), view=self)
         self.message = interaction.message
 
+    async def roll_button_callback(self, interaction: discord.Interaction):
+        if interaction.user != self.user:
+            return await interaction.response.send_message("Not your dashboard!", ephemeral=True)
+
+        # Switch view to Skill Roll Mode
+        view = View(timeout=60)
+
+        # 1. Skill Select (Top 25 descending)
+        all_skills = self._get_skill_list() # sorted alpha
+        # Sort by value descending
+        all_skills.sort(key=lambda x: x[1], reverse=True)
+        top_skills = all_skills[:25]
+
+        view.add_item(SkillRollSelect(self, top_skills))
+
+        # 2. Search Button
+        search_btn = Button(label="Search Skill", style=discord.ButtonStyle.primary, row=1, emoji="🔍")
+        async def search_callback(inter: discord.Interaction):
+            await inter.response.send_modal(SkillSearchModal(self))
+        search_btn.callback = search_callback
+        view.add_item(search_btn)
+
+        # 3. Back Button
+        back_btn = Button(label="Back", style=discord.ButtonStyle.secondary, row=1)
+        async def back_callback(inter: discord.Interaction):
+             await self.refresh_dashboard(inter)
+        back_btn.callback = back_callback
+        view.add_item(back_btn)
+
+        embed = discord.Embed(title="🎲 Quick Roll", description="Select a skill to roll or search for one.", color=discord.Color.blue())
+        await interaction.response.edit_message(embed=embed, view=view)
+
     async def prev_page_callback(self, interaction: discord.Interaction):
         if interaction.user != self.user: return
         if self.page > 0:
@@ -539,6 +686,11 @@ class CharacterDashboardView(View):
 
             self.update_components()
             await self.message.edit(embed=self.get_embed(), view=self)
+
+            # If called from a callback that needs response interaction, we can try to respond or ignore
+            if not interaction.response.is_done():
+                await interaction.response.defer()
+
         except discord.NotFound:
             pass
         except Exception as e:
@@ -629,14 +781,14 @@ class CharacterDashboardView(View):
         con = self.char_data.get("CON", 0)
         siz = self.char_data.get("SIZ", 0)
         max_hp = (con + siz) // 10 if self.current_mode == "Call of Cthulhu" else (con + siz) // 5
-        hp_bar = _generate_health_bar(hp, max_hp)
+        hp_bar = get_health_bar(hp, max_hp)
         derived_text += f"❤️ **HP:** {hp}/{max_hp} {hp_bar}\n"
 
         # MP
         mp = self.char_data.get("MP", 0)
         pow_stat = self.char_data.get("POW", 0)
         max_mp = pow_stat // 5
-        mp_bar = _generate_health_bar(mp, max_mp)
+        mp_bar = get_health_bar(mp, max_mp)
         derived_text += f"✨ **MP:** {mp}/{max_mp} {mp_bar}\n"
 
         # SAN
@@ -644,7 +796,7 @@ class CharacterDashboardView(View):
         start_san = pow_stat
         mythos = self.char_data.get("Cthulhu Mythos", 0)
         max_san = 99 - mythos
-        san_bar = _generate_health_bar(san, max_san)
+        san_bar = get_health_bar(san, max_san)
         derived_text += f"🧠 **SAN:** {san}/{max_san} {san_bar}\n"
 
         # Move

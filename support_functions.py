@@ -8,3 +8,11 @@ async def session_success(user_id, name_of_skill):
     if name_of_skill not in session_data[user_id]:
       session_data[user_id].append(name_of_skill)
       await save_session_data(session_data)
+
+
+class MockContext:
+    def __init__(self, interaction):
+        self.interaction = interaction
+        self.author = interaction.user
+        self.guild = interaction.guild
+        self.channel = interaction.channel
