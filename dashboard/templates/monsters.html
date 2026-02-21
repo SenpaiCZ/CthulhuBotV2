@@ -9,13 +9,13 @@
             <h5 class="m-0 text-success">Grimoire</h5>
         </div>
         <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
-            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search...">
+            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search..." aria-label="Search monsters">
         </div>
-        <div class="list-group list-group-flush sidebar-list" id="monsterList">
+        <div class="list-group list-group-flush sidebar-list" id="monsterList" role="tablist">
             {% if data and data.monsters %}
                 {% for item in data.monsters %}
                     {% set m = item.monster_entry %}
-                    <button type="button" class="list-group-item list-group-item-action monster-list-item" onclick="showMonster({{ loop.index0 }})">
+                    <button type="button" class="list-group-item list-group-item-action monster-list-item" onclick="showMonster({{ loop.index0 }})" role="tab" aria-selected="false" aria-controls="monster-content">
                         {{ m.name }}
                     </button>
                 {% endfor %}
@@ -31,7 +31,7 @@
             <p class="text-secondary">View detailed statistics from the archives.</p>
         </div>
 
-        <div id="monster-content" class="hidden">
+        <div id="monster-content" class="hidden" role="tabpanel" aria-live="polite">
             <!-- Template content populated by JS -->
         </div>
     </div>
@@ -64,8 +64,13 @@
 
             // Highlight active item
             document.querySelectorAll('.monster-list-item').forEach((el, i) => {
-                if(i === index) el.classList.add('active');
-                else el.classList.remove('active');
+                if(i === index) {
+                    el.classList.add('active');
+                    el.setAttribute('aria-selected', 'true');
+                } else {
+                    el.classList.remove('active');
+                    el.setAttribute('aria-selected', 'false');
+                }
             });
 
             let html = `
