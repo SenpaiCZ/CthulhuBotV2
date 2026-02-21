@@ -8,6 +8,116 @@ import occupation_emoji
 from commands._backstory_common import BackstoryCategorySelectView
 from loadnsave import load_player_stats, save_player_stats
 
+def _generate_health_bar(current, max_val, length=8):
+    if max_val <= 0: max_val = 1
+    pct = current / max_val
+    if pct < 0: pct = 0
+    if pct > 1: pct = 1
+
+    filled = int(pct * length)
+    empty = length - filled
+
+    # Color Logic
+    fill_char = "🟩"
+    if pct <= 0.2: fill_char = "🟥"
+    elif pct <= 0.5: fill_char = "🟨"
+
+    bar = (fill_char * filled) + ("⬛" * empty)
+    return bar
+
+class QuickUpdateModal(Modal):
+    def __init__(self, view, stat_key, current_val, max_val=None):
+        title = f"Update {stat_key}"
+        super().__init__(title=title)
+        self.dashboard_view = view
+        self.stat_key = stat_key
+        self.current_val = current_val
+        self.max_val = max_val
+
+        label = f"New Value or Change (Current: {current_val})"
+        if max_val:
+            label += f" [Max: {max_val}]"
+
+        self.value_input = TextInput(
+            label=label,
+            placeholder="e.g. 15, +5, -3",
+            min_length=1,
+            max_length=10
+        )
+        self.add_item(self.value_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        input_str = self.value_input.value.strip()
+
+        # Parse Input
+        match = re.match(r'^([+\-]?)(\d+)$', input_str)
+        if not match:
+            return await interaction.response.send_message("❌ Invalid format. Use numbers (e.g. 50) or relative changes (e.g. +5, -5).", ephemeral=True)
+
+        sign = match.group(1)
+        number = int(match.group(2))
+
+        new_val = self.current_val
+        if sign == '+':
+            new_val += number
+        elif sign == '-':
+            new_val -= number
+        else:
+            new_val = number
+
+        # Enforce Max Limit if applicable
+        if self.max_val and new_val > self.max_val:
+            pass # Allow override for now, or clamp?
+
+        # Update Data
+        self.dashboard_view.char_data[self.stat_key] = new_val
+
+        # Save
+        player_stats = await load_player_stats()
+        if self.dashboard_view.server_id in player_stats:
+            player_stats[self.dashboard_view.server_id][str(self.dashboard_view.user.id)] = self.dashboard_view.char_data
+            await save_player_stats(player_stats)
+
+        await interaction.response.send_message(f"✅ Updated **{self.stat_key}** to **{new_val}**.", ephemeral=True)
+        await self.dashboard_view.refresh_dashboard(interaction)
+
+class QuickUpdateSelect(Select):
+    def __init__(self, view):
+        self.dashboard_view = view
+        options = [
+            discord.SelectOption(label="HP (Health)", value="HP", emoji="❤️", description="Update Hit Points"),
+            discord.SelectOption(label="MP (Magic)", value="MP", emoji="✨", description="Update Magic Points"),
+            discord.SelectOption(label="SAN (Sanity)", value="SAN", emoji="🧠", description="Update Sanity"),
+            discord.SelectOption(label="LUCK", value="LUCK", emoji="🍀", description="Update Luck"),
+        ]
+        super().__init__(placeholder="⚡ Quick Update Stat...", min_values=1, max_values=1, options=options, row=1)
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user != self.dashboard_view.user:
+            return await interaction.response.send_message("Not your dashboard!", ephemeral=True)
+
+        stat_key = self.values[0]
+        char_data = self.dashboard_view.char_data
+
+        current_val = char_data.get(stat_key, 0)
+        max_val = None
+
+        # Calculate Max
+        if stat_key == "HP":
+            con = char_data.get("CON", 0)
+            siz = char_data.get("SIZ", 0)
+            divisor = 5 if self.dashboard_view.current_mode == "Pulp of Cthulhu" else 10
+            max_val = (con + siz) // divisor
+        elif stat_key == "MP":
+            pow_stat = char_data.get("POW", 0)
+            max_val = pow_stat // 5
+        elif stat_key == "SAN":
+            mythos = char_data.get("Cthulhu Mythos", 0)
+            max_val = 99 - mythos
+
+        modal = QuickUpdateModal(self.dashboard_view, stat_key, current_val, max_val)
+        await interaction.response.send_modal(modal)
+
 class AddItemModal(Modal, title="Add Inventory Item"):
     item_name = TextInput(label="Item Name", placeholder="e.g. .38 Revolver or Flashlight", max_length=100)
     details = TextInput(label="Details / Quantity", placeholder="e.g. [30/30] or 1x", required=False, max_length=50)
@@ -329,6 +439,10 @@ class CharacterDashboardView(View):
         select.callback = self.select_callback
         self.add_item(select)
 
+        # Quick Update (Only for Stats)
+        if self.current_section == "stats":
+             self.add_item(QuickUpdateSelect(self))
+
         # Pagination Buttons (Only for Skills/Backstory if needed)
         if self.current_section == "skills":
             skill_list = self._get_skill_list()
@@ -515,20 +629,23 @@ class CharacterDashboardView(View):
         con = self.char_data.get("CON", 0)
         siz = self.char_data.get("SIZ", 0)
         max_hp = (con + siz) // 10 if self.current_mode == "Call of Cthulhu" else (con + siz) // 5
-        derived_text += f"❤️ **HP:** {hp}/{max_hp}\n"
+        hp_bar = _generate_health_bar(hp, max_hp)
+        derived_text += f"❤️ **HP:** {hp}/{max_hp} {hp_bar}\n"
 
         # MP
         mp = self.char_data.get("MP", 0)
         pow_stat = self.char_data.get("POW", 0)
         max_mp = pow_stat // 5
-        derived_text += f"✨ **MP:** {mp}/{max_mp}\n"
+        mp_bar = _generate_health_bar(mp, max_mp)
+        derived_text += f"✨ **MP:** {mp}/{max_mp} {mp_bar}\n"
 
         # SAN
         san = self.char_data.get("SAN", 0)
         start_san = pow_stat
         mythos = self.char_data.get("Cthulhu Mythos", 0)
         max_san = 99 - mythos
-        derived_text += f"🧠 **SAN:** {san}/{max_san}\n"
+        san_bar = _generate_health_bar(san, max_san)
+        derived_text += f"🧠 **SAN:** {san}/{max_san} {san_bar}\n"
 
         # Move
         move = self._calculate_move()
