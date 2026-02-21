@@ -449,30 +449,6 @@ class RollResultView(View):
             return False
         return True
 
-class SessionView(View):
-    def __init__(self, ctx):
-        super().__init__(timeout=60)
-        self.ctx = ctx
-        self.create_session = False
-
-    @discord.ui.button(label="Record Session", style=discord.ButtonStyle.success, emoji="✅")
-    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.create_session = True
-        await interaction.response.defer()
-        self.stop()
-
-    @discord.ui.button(label="No", style=discord.ButtonStyle.secondary, emoji="❌")
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.create_session = False
-        await interaction.response.defer()
-        self.stop()
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user != self.ctx.author:
-            await interaction.response.send_message("Not your session!", ephemeral=True)
-            return False
-        return True
-
 class Roll(commands.Cog):
 
     def __init__(self, bot):
@@ -512,25 +488,53 @@ class Roll(commands.Cog):
         elif roll <= skill_value: return "Regular Success :heavy_check_mark:", 2
         return "Fail :x:", 1
 
+    def _resolve_skill(self, stats, skill_name_input):
+        match = re.match(r"^(.*?)\s*\(\d+\)$", skill_name_input)
+        clean_expression = match.group(1) if match else skill_name_input
+
+        normalized_input = clean_expression.lower()
+        matching_stats = []
+
+        for k in stats.keys():
+            if k.lower() == normalized_input:
+                matching_stats.append(k)
+                break
+
+        if not matching_stats:
+            for k in stats.keys():
+                if any(word.lower() == k.lower() for word in normalized_input.split()):
+                    matching_stats.append(k)
+                    break
+
+        if not matching_stats:
+            for k in stats.keys():
+                if any(word.lower() in k.lower() for word in normalized_input.split()):
+                    matching_stats.append(k)
+
+        if matching_stats:
+            best_match = matching_stats[0]
+            return best_match, stats[best_match]
+
+        return None, None
+
     @commands.hybrid_command(name="roll", aliases=["newroll", "diceroll", "d", "nd"], guild_only=True, description="Perform a dice roll or skill check.")
     @app_commands.describe(
         dice_expression="The dice expression (e.g. 3d6) or skill name (e.g. Spot Hidden)",
         bonus="Number of Bonus Dice (0-2)",
         penalty="Number of Penalty Dice (0-2)",
-        secret="Make the result ephemeral (hidden)"
+        secret="Make the result ephemeral (hidden)",
+        difficulty="The difficulty level required."
     )
     @app_commands.choices(
         bonus=[app_commands.Choice(name="0", value=0), app_commands.Choice(name="1", value=1), app_commands.Choice(name="2", value=2)],
-        penalty=[app_commands.Choice(name="0", value=0), app_commands.Choice(name="1", value=1), app_commands.Choice(name="2", value=2)]
+        penalty=[app_commands.Choice(name="0", value=0), app_commands.Choice(name="1", value=1), app_commands.Choice(name="2", value=2)],
+        difficulty=[app_commands.Choice(name="Regular", value="Regular"), app_commands.Choice(name="Hard", value="Hard"), app_commands.Choice(name="Extreme", value="Extreme")]
     )
-    async def roll(self, ctx, *, dice_expression: str, bonus: int = 0, penalty: int = 0, secret: bool = False):
+    async def roll(self, ctx, *, dice_expression: str, bonus: int = 0, penalty: int = 0, secret: bool = False, difficulty: str = "Regular"):
         """
         🎲 Perform a dice roll or skill check.
         """
         if not ctx.interaction:
-             # Prevent legacy use if possible, or just fail gracefully.
-             # The user asked to remove legacy prefix commands, so we can just return or send a message.
-             # Hybrid command might still trigger on !roll.
              await ctx.send("Please use the slash command `/roll`.")
              return
 
@@ -568,7 +572,7 @@ class Roll(commands.Cog):
             return
 
         try:
-            # Skill Matching Logic
+            # Use logic similar to helper, but keep Disambiguation View support for /roll
             clean_expression = dice_expression
             match = re.match(r"^(.*?)\s*\(\d+\)$", dice_expression)
             if match: clean_expression = match.group(1)
@@ -578,20 +582,15 @@ class Roll(commands.Cog):
 
             stats = player_stats[server_id][user_id]
 
-            # 1. Exact Key Match
             for k in stats.keys():
                 if k.lower() == normalized_input:
                     matching_stats.append(k)
                     break
-
-            # 2. Word Match
             if not matching_stats:
                 for k in stats.keys():
                     if any(word.lower() == k.lower() for word in normalized_input.split()):
                         matching_stats.append(k)
                         break
-
-            # 3. Partial Match
             if not matching_stats:
                 for k in stats.keys():
                     if any(word.lower() in k.lower() for word in normalized_input.split()):
@@ -620,17 +619,10 @@ class Roll(commands.Cog):
 
             # ROLL LOGIC
             net_dice = bonus - penalty
-
-            # Roll Ones (0-9)
             ones_roll = random.randint(0, 9)
-
-            # Roll Tens (00-90)
-            # Need 1 + abs(net_dice) tens rolls initially
             num_tens = 1 + abs(net_dice)
             tens_options = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
             tens_rolls = [random.choice(tens_options) for _ in range(num_tens)]
-
-            # Calculate Result
             possible_rolls = []
             for t in tens_rolls:
                 val = t + ones_roll
@@ -640,87 +632,68 @@ class Roll(commands.Cog):
             final_roll = 0
             if net_dice > 0: final_roll = min(possible_rolls)
             elif net_dice < 0: final_roll = max(possible_rolls)
-            else: final_roll = possible_rolls[0] # Should only be 1
+            else: final_roll = possible_rolls[0]
 
             result_text, result_tier = self.calculate_roll_result(final_roll, current_value)
 
-            # Sound Logic
+            # Difficulty Check Logic
+            target_tier = 2
+            if difficulty == "Hard": target_tier = 3
+            elif difficulty == "Extreme": target_tier = 4
+
+            color = discord.Color.green()
+            if result_tier == 5 or result_tier == 4: color = 0xF1C40F
+            elif result_tier == 3 or result_tier == 2: color = 0x2ECC71
+            elif result_tier == 1: color = 0xE74C3C
+            elif result_tier == 0: color = 0x992D22
+
+            if difficulty != "Regular":
+                if result_tier >= target_tier:
+                    result_text += f"\n✅ **Passed {difficulty} Difficulty**"
+                elif result_tier > 1: # Passed Regular but not High enough
+                    result_text += f"\n❌ **Failed {difficulty} Difficulty**"
+                    color = 0xE74C3C
+
+            # Sound Logic (Preserved from original)
             try:
                 if ctx.guild and ctx.guild.voice_client and ctx.guild.voice_client.is_connected():
-                    # Check settings
                     sound_settings = await load_skill_sound_settings()
                     guild_settings = sound_settings.get(server_id, {})
-
-                    tier_map = {
-                        5: 'critical',
-                        4: 'extreme',
-                        3: 'hard',
-                        2: 'regular',
-                        1: 'fail',
-                        0: 'fumble'
-                    }
+                    tier_map = {5: 'critical', 4: 'extreme', 3: 'hard', 2: 'regular', 1: 'fail', 0: 'fumble'}
                     result_key = tier_map.get(result_tier)
-
                     if result_key:
                         sound_file = None
-                        # 1. Check Specific Skill
                         if 'skills' in guild_settings and stat_name in guild_settings['skills']:
                              sound_file = guild_settings['skills'][stat_name].get(result_key)
-
-                        # 2. Check Default
                         if not sound_file and 'default' in guild_settings:
                              sound_file = guild_settings['default'].get(result_key)
-
                         if sound_file:
-                             # Import inside function to avoid potential circular dependency issues at top level if any
-                             # though we already established it might be safe, being cautious.
                              from dashboard.app import guild_mixers, SOUNDBOARD_FOLDER
                              import os
-
                              mixer = guild_mixers.get(server_id)
-                             # If no mixer exists for this guild yet, we should create one?
-                             # Usually created by Music cog or Soundboard join.
-                             # If user manually joined bot but didn't play anything, mixer might not exist.
                              if not mixer:
                                  from dashboard.audio_mixer import MixingAudioSource
                                  mixer = MixingAudioSource()
                                  guild_mixers[server_id] = mixer
-
                              full_path = os.path.join(SOUNDBOARD_FOLDER, sound_file)
                              if os.path.exists(full_path):
-                                 # Check if voice_client is playing mixer
                                  vc = ctx.guild.voice_client
                                  is_playing_mixer = False
                                  if vc.is_playing() and isinstance(vc.source, discord.PCMVolumeTransformer):
-                                     if vc.source.original == mixer:
-                                         is_playing_mixer = True
-
+                                     if vc.source.original == mixer: is_playing_mixer = True
                                  if not is_playing_mixer:
-                                     # If not playing mixer, we should play it.
-                                     # Stop whatever is playing (if anything)
-                                     if vc.is_playing():
-                                         vc.stop()
-
+                                     if vc.is_playing(): vc.stop()
                                      source = discord.PCMVolumeTransformer(mixer, volume=1.0)
                                      vc.play(source)
-
-                                 # Get Volume
                                  volumes = await load_server_volumes()
                                  vol_data = volumes.get(server_id, {'music': 1.0, 'soundboard': 0.5})
                                  sb_vol = vol_data.get('soundboard', 0.5)
-
-                                 mixer.add_track(
-                                     full_path,
-                                     volume=sb_vol,
-                                     loop=False,
-                                     metadata={'type': 'soundboard', 'trigger': 'roll'}
-                                 )
+                                 mixer.add_track(full_path, volume=sb_vol, loop=False, metadata={'type': 'soundboard', 'trigger': 'roll'})
             except Exception as e:
                 print(f"Error playing roll sound: {e}")
 
             luck_threshold = (await load_luck_stats()).get(server_id, 10)
 
-            # View
             view = RollResultView(
                 ctx=ctx,
                 cog=self,
@@ -736,13 +709,6 @@ class Roll(commands.Cog):
                 luck_threshold=luck_threshold
             )
 
-            # Embed
-            color = discord.Color.green()
-            if result_tier == 5 or result_tier == 4: color = 0xF1C40F
-            elif result_tier == 3 or result_tier == 2: color = 0x2ECC71
-            elif result_tier == 1: color = 0xE74C3C
-            elif result_tier == 0: color = 0x992D22
-
             tens_str = ", ".join(str(t) if t != 0 else "00" for t in tens_rolls)
             dice_text = "Normal"
             if net_dice > 0: dice_text = f"Bonus ({net_dice})"
@@ -757,14 +723,11 @@ class Roll(commands.Cog):
             embed = discord.Embed(description=description, color=color)
             view.message = await send_msg(embed=embed, view=view)
             await view.wait()
-
             await save_player_stats(player_stats)
 
-            # Session Check
             if view.success:
                  session_data = await load_session_data()
                  if user_id not in session_data:
-                     # Ask
                      sess_view = SessionView(ctx)
                      msg = await send_msg(content="**Start a gaming session to record this success?**", view=sess_view)
                      await sess_view.wait()
@@ -782,6 +745,122 @@ class Roll(commands.Cog):
             import traceback
             traceback.print_exc()
             await send_msg(content=f"An error occurred: {e}")
+
+    @app_commands.command(name="versus", description="Perform an opposed roll against another investigator.")
+    @app_commands.describe(
+        opponent="The investigator to oppose.",
+        my_skill="Your skill to roll.",
+        opponent_skill="The opponent's skill to roll (defaults to same as yours if omitted).",
+        bonus="Your bonus dice.",
+        penalty="Your penalty dice.",
+        opponent_bonus="Opponent's bonus dice.",
+        opponent_penalty="Opponent's penalty dice.",
+        secret="Hide result from channel."
+    )
+    @app_commands.choices(
+        bonus=[app_commands.Choice(name="0", value=0), app_commands.Choice(name="1", value=1), app_commands.Choice(name="2", value=2)],
+        penalty=[app_commands.Choice(name="0", value=0), app_commands.Choice(name="1", value=1), app_commands.Choice(name="2", value=2)],
+        opponent_bonus=[app_commands.Choice(name="0", value=0), app_commands.Choice(name="1", value=1), app_commands.Choice(name="2", value=2)],
+        opponent_penalty=[app_commands.Choice(name="0", value=0), app_commands.Choice(name="1", value=1), app_commands.Choice(name="2", value=2)]
+    )
+    async def versus(self, interaction: discord.Interaction, opponent: discord.User, my_skill: str, opponent_skill: str = None,
+                     bonus: int = 0, penalty: int = 0, opponent_bonus: int = 0, opponent_penalty: int = 0, secret: bool = False):
+        await interaction.response.defer(ephemeral=secret)
+        server_id = str(interaction.guild_id)
+
+        player_stats = await load_player_stats()
+
+        # Check Author Sheet
+        if str(interaction.user.id) not in player_stats.get(server_id, {}):
+            await interaction.followup.send("You don't have an investigator sheet! Use `/newinvestigator`.", ephemeral=True)
+            return
+
+        # Check Opponent Sheet
+        if str(opponent.id) not in player_stats.get(server_id, {}):
+             await interaction.followup.send(f"{opponent.display_name} doesn't have an investigator sheet!", ephemeral=True)
+             return
+
+        author_stats = player_stats[server_id][str(interaction.user.id)]
+        opponent_stats = player_stats[server_id][str(opponent.id)]
+
+        # Resolve Skills
+        my_skill_name, my_skill_val = self._resolve_skill(author_stats, my_skill)
+        if not my_skill_name:
+            await interaction.followup.send(f"Could not find skill **{my_skill}** on your sheet.", ephemeral=True)
+            return
+
+        target_skill_input = opponent_skill if opponent_skill else my_skill
+        opp_skill_name, opp_skill_val = self._resolve_skill(opponent_stats, target_skill_input)
+
+        if not opp_skill_name:
+             await interaction.followup.send(f"Could not find skill **{target_skill_input}** on {opponent.display_name}'s sheet.", ephemeral=True)
+             return
+
+        # Perform Rolls
+        def perform_roll(skill_val, b, p):
+            net = b - p
+            ones = random.randint(0, 9)
+            num_tens = 1 + abs(net)
+            tens_opts = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
+            tens_rolls = [random.choice(tens_opts) for _ in range(num_tens)]
+
+            possible = []
+            for t in tens_rolls:
+                v = t + ones
+                if v == 0: v = 100
+                possible.append(v)
+
+            final = possible[0]
+            if net > 0: final = min(possible)
+            elif net < 0: final = max(possible)
+
+            txt, tier = self.calculate_roll_result(final, skill_val)
+            return final, tier, txt
+
+        my_roll, my_tier, my_txt = perform_roll(my_skill_val, bonus, penalty)
+        opp_roll, opp_tier, opp_txt = perform_roll(opp_skill_val, opponent_bonus, opponent_penalty)
+
+        # Determine Winner
+        # Tiers: 5=Crit, 4=Extr, 3=Hard, 2=Reg, 1=Fail, 0=Fumble
+        result_title = "Draw!"
+        result_color = discord.Color.gold()
+
+        if my_tier > opp_tier:
+            result_title = f"{interaction.user.display_name} Wins!"
+            result_color = discord.Color.green()
+        elif opp_tier > my_tier:
+            result_title = f"{opponent.display_name} Wins!"
+            result_color = discord.Color.red()
+        else:
+            # Tie breaker: Higher Skill Value
+            if my_skill_val > opp_skill_val:
+                result_title = f"{interaction.user.display_name} Wins! (Higher Skill)"
+                result_color = discord.Color.green()
+            elif opp_skill_val > my_skill_val:
+                result_title = f"{opponent.display_name} Wins! (Higher Skill)"
+                result_color = discord.Color.red()
+            else:
+                 result_title = "Draw! (Equal Skill)"
+                 result_color = discord.Color.light_grey()
+
+        # Build Embed
+        embed = discord.Embed(title=f"⚔️ Opposed Roll: {interaction.user.display_name} vs {opponent.display_name}", color=result_color)
+
+        def format_field(user, skill, val, roll, txt, tier):
+             emoji = "⚪"
+             if tier >= 2: emoji = "🟢"
+             if tier == 1: emoji = "🔴"
+             if tier == 0: emoji = "💀"
+             if tier >= 4: emoji = "🌟"
+             return f"**{skill}** ({val}%)\n🎲 Roll: **{roll}**\n{emoji} {txt}"
+
+        embed.add_field(name=f"👤 {interaction.user.display_name}", value=format_field(interaction.user, my_skill_name, my_skill_val, my_roll, my_txt, my_tier), inline=True)
+        embed.add_field(name="VS", value="⚡", inline=True)
+        embed.add_field(name=f"👤 {opponent.display_name}", value=format_field(opponent, opp_skill_name, opp_skill_val, opp_roll, opp_txt, opp_tier), inline=True)
+
+        embed.add_field(name="🏆 Result", value=f"### {result_title}", inline=False)
+
+        await interaction.followup.send(embed=embed)
 
     @roll.autocomplete('dice_expression')
     async def roll_autocomplete(self, interaction: discord.Interaction, current: str):
@@ -818,6 +897,26 @@ class Roll(commands.Cog):
         if not current:
             # Already sorted by value if we had stats
             return [app_commands.Choice(name=c[:100], value=c[:100]) for c in choices[:25]]
+
+        matches = process.extract(current, choices, scorer=fuzz.WRatio, limit=25)
+        results = []
+        for m in matches:
+            results.append(app_commands.Choice(name=m[0][:100], value=m[0][:100]))
+        return results
+
+    @versus.autocomplete('my_skill')
+    async def versus_myskill_autocomplete(self, interaction: discord.Interaction, current: str):
+        return await self.roll_autocomplete(interaction, current)
+
+    @versus.autocomplete('opponent_skill')
+    async def versus_oppskill_autocomplete(self, interaction: discord.Interaction, current: str):
+        # We can't access opponent sheet easily here without context (argument not parsed yet in autocomplete)
+        # So we return generic skill list
+        skills_data = await load_skills_data()
+        choices = sorted(list(skills_data.keys()))
+
+        if not current:
+             return [app_commands.Choice(name=c[:100], value=c[:100]) for c in choices[:25]]
 
         matches = process.extract(current, choices, scorer=fuzz.WRatio, limit=25)
         results = []
