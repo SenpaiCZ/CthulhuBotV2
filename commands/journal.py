@@ -6,8 +6,8 @@ import datetime
 from loadnsave import load_journal_data, save_journal_data
 
 class JournalEntryModal(ui.Modal, title="New Journal Entry"):
-    def __init__(self, journal_cog, mode, target_user_id=None, entry_index=None, original_entry=None, parent_view=None):
-        super().__init__()
+    def __init__(self, journal_cog, mode, target_user_id=None, entry_index=None, original_entry=None, parent_view=None, title=None):
+        super().__init__(title=title or "New Journal Entry")
         self.journal_cog = journal_cog
         self.mode = mode # 'personal' or 'master'
         self.target_user_id = target_user_id # Only relevant if mode='personal' (user viewing own)
@@ -398,6 +398,32 @@ class Journal(commands.Cog):
         self.bot = bot
 
     journal_group = app_commands.Group(name="journal", description="Manage and view journals")
+
+    @app_commands.context_menu(name="Save as Clue")
+    async def save_clue_context(self, interaction: discord.Interaction, message: discord.Message):
+        """
+        Context Menu: Right-click a message -> Apps -> Save as Clue.
+        Opens a modal to save the message content as a journal entry.
+        """
+        # Prepare pre-filled data
+        # Truncate content if too long for modal (4000 char limit usually, but field is 2000)
+        content = message.content
+        if len(content) > 2000:
+            content = content[:1997] + "..."
+
+        # We use a trick here: passing 'original_entry' populates the fields,
+        # but since it lacks 'timestamp' and 'author_id', on_submit will treat it as a NEW entry.
+        pre_filled_data = {
+            "title": f"Clue from {message.author.display_name}",
+            "content": content
+        }
+
+        # Determine mode - default to Personal for clues
+        mode = "personal"
+
+        # Launch Modal
+        modal = JournalEntryModal(self, mode, target_user_id=None, original_entry=pre_filled_data, title="Save Clue")
+        await interaction.response.send_modal(modal)
 
     @journal_group.command(name="open", description="Open your journal (Personal or Master).")
     async def open_journal(self, interaction: discord.Interaction):
