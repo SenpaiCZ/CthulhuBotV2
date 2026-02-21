@@ -5,31 +5,7 @@ from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, Button, Modal, TextInput
 from loadnsave import load_loot_settings, load_player_stats, save_player_stats, load_weapons_data
-
-def get_emoji_for_item(item_name):
-    """Returns a relevant emoji based on item name keywords."""
-    name_lower = item_name.lower()
-    if any(x in name_lower for x in ["gun", "rifle", "pistol", "shotgun", "revolver", "carbine", "smg", "machine gun"]):
-        return "🔫"
-    if any(x in name_lower for x in ["knife", "dagger", "sword", "blade", "machete", "axe", "hatchet", "razor"]):
-        return "🗡️"
-    if any(x in name_lower for x in ["potion", "vial", "bottle", "flask", "elixir", "medicine", "pill", "syringe"]):
-        return "🧪"
-    if any(x in name_lower for x in ["book", "journal", "diary", "note", "paper", "map", "scroll", "letter", "document"]):
-        return "📖"
-    if any(x in name_lower for x in ["key", "lockpick", "pass"]):
-        return "🗝️"
-    if any(x in name_lower for x in ["money", "cash", "wallet", "coin", "gold", "silver", "bill"]):
-        return "💰"
-    if any(x in name_lower for x in ["gem", "jewel", "diamond", "ruby", "emerald", "sapphire", "ring", "necklace"]):
-        return "💎"
-    if any(x in name_lower for x in ["food", "ration", "canned", "meat", "bread", "water", "drink"]):
-        return "🥫"
-    if any(x in name_lower for x in ["clothes", "coat", "hat", "gloves", "boots", "shoes", "suit", "dress"]):
-        return "🧥"
-    if any(x in name_lower for x in ["tool", "wrench", "hammer", "screwdriver", "pliers", "saw"]):
-        return "🛠️"
-    return "📦"
+from emojis import get_emoji_for_item
 
 async def generate_random_loot():
     settings = await load_loot_settings()
