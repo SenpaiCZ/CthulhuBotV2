@@ -9,3 +9,7 @@
 ## 2026-02-21 - [ARIA for List-Detail Views]
 **Learning:** Transforming list-detail views into accessible tab interfaces requires consistent role application (tablist/tab/tabpanel) and dynamic state management (aria-selected, aria-controls) to be meaningful for screen reader users.
 **Action:** When refactoring list-detail components, prioritize `role="tab"` patterns over generic button lists to communicate relationship and state effectively.
+
+## 2024-10-31 - Security and Accessibility in Template Literals
+**Learning:** When injecting dynamic content (like song titles) into HTML via template literals, it is crucial to sanitize the input to prevent XSS and to use that sanitized content in `aria-label` and `alt` attributes to ensure screen readers receive meaningful context.
+**Action:** Always include an `escapeHtml` utility when working with client-side rendering and use it for both visual text and accessibility attributes.
