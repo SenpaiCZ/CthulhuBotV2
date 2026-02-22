@@ -9,6 +9,7 @@ from commands._backstory_common import BackstoryCategorySelectView
 from loadnsave import load_player_stats, save_player_stats
 from commands.roll import RollResultView
 from support_functions import MockContext
+from rapidfuzz import process, fuzz
 
 
 class SkillSearchModal(Modal, title="Search Skill"):
@@ -19,21 +20,35 @@ class SkillSearchModal(Modal, title="Search Skill"):
         self.dashboard_view = view
 
     async def on_submit(self, interaction: discord.Interaction):
-        term = self.skill_name.value.lower()
+        term = self.skill_name.value
         all_skills = self.dashboard_view._get_skill_list() # list of (name, val)
+        skill_names = [s[0] for s in all_skills]
 
-        matches = []
+        # Use rapidfuzz for matching
+        # 1. Exact/Substring check first (fast)
+        exact_matches = []
+        term_lower = term.lower()
         for name, val in all_skills:
-            if term in name.lower():
-                matches.append((name, val))
+            if term_lower in name.lower():
+                exact_matches.append((name, val))
 
-        if not matches:
-            return await interaction.response.send_message("No skills found matching that name.", ephemeral=True)
+        if exact_matches:
+             final_matches = exact_matches
+        else:
+             # 2. Fuzzy Match
+             results = process.extract(term, skill_names, scorer=fuzz.WRatio, limit=25, score_cutoff=50)
+             final_matches = []
+             for _, _, idx in results:
+                 final_matches.append(all_skills[idx])
+
+        if not final_matches:
+            # Suggestion logic? Or just fail gracefully.
+            return await interaction.response.send_message(f"No skills found similar to '{term}'.", ephemeral=True)
 
         # Re-render with matches
         # We can reuse SkillRollSelect with filtered options
         view = View(timeout=60)
-        view.add_item(SkillRollSelect(self.dashboard_view, matches[:25]))
+        view.add_item(SkillRollSelect(self.dashboard_view, final_matches[:25]))
 
         # Add Back Button
         back_btn = Button(label="Back", style=discord.ButtonStyle.secondary, row=1)
@@ -42,7 +57,7 @@ class SkillSearchModal(Modal, title="Search Skill"):
         back_btn.callback = back_callback
         view.add_item(back_btn)
 
-        await interaction.response.edit_message(content=f"Found {len(matches)} matches:", embed=None, view=view)
+        await interaction.response.edit_message(content=f"Found {len(final_matches)} matches for '{term}':", embed=None, view=view)
 
 
 class SkillRollSelect(Select):
@@ -160,7 +175,7 @@ class QuickUpdateModal(Modal):
         input_str = self.value_input.value.strip()
 
         # Parse Input
-        match = re.match(r'^([+\-]?)(\d+)$', input_str)
+        match = re.match(r'^\s*([+\-]?)\s*(\d+)\s*$', input_str)
         if not match:
             return await interaction.response.send_message("❌ Invalid format. Use numbers (e.g. 50) or relative changes (e.g. +5, -5).", ephemeral=True)
 
