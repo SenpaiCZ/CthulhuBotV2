@@ -775,21 +775,28 @@ class CharacterDashboardView(View):
 
         embed.add_field(name="📜 Biography", value=bio_desc, inline=False)
 
-        # --- 2. Attributes (STR, DEX, etc.) ---
-        # We want a nice grid.
+        # --- 2. Characteristics (Grid Layout) ---
         attributes = ["STR", "DEX", "INT", "CON", "APP", "POW", "SIZ", "EDU", "LUCK"]
 
         attr_text = ""
+        row_count = 0
         for attr in attributes:
             val = self.char_data.get(attr, 0)
             emoji = get_stat_emoji(attr)
-            # Format: **STR** 50 (25/10)
-            attr_text += f"{emoji} **{attr}:** {val} ({val//2}/{val//5})\n"
+            attr_text += f"{emoji} **{attr}:** {val} "
 
-        embed.add_field(name="📊 Characteristics", value=attr_text, inline=True)
+            row_count += 1
+            if row_count >= 3:
+                attr_text += "\n"
+                row_count = 0
+            else:
+                 attr_text += " | "
 
-        # --- 3. Derived Stats (HP, MP, SAN, Move, Build, DB) ---
-        derived_text = ""
+        attr_text = attr_text.strip().rstrip("|").strip()
+        embed.add_field(name="📊 Characteristics", value=attr_text, inline=False)
+
+        # --- 3. Vitals (HP, MP, SAN) ---
+        vitals_text = ""
 
         # HP
         hp = self.char_data.get("HP", 0)
@@ -797,36 +804,40 @@ class CharacterDashboardView(View):
         siz = self.char_data.get("SIZ", 0)
         max_hp = (con + siz) // 10 if self.current_mode == "Call of Cthulhu" else (con + siz) // 5
         hp_bar = get_health_bar(hp, max_hp)
-        derived_text += f"❤️ **HP:** {hp}/{max_hp} {hp_bar}\n"
+        vitals_text += f"❤️ **HP:** {hp}/{max_hp} {hp_bar}\n"
 
         # MP
         mp = self.char_data.get("MP", 0)
         pow_stat = self.char_data.get("POW", 0)
         max_mp = pow_stat // 5
         mp_bar = get_health_bar(mp, max_mp)
-        derived_text += f"✨ **MP:** {mp}/{max_mp} {mp_bar}\n"
+        vitals_text += f"✨ **MP:** {mp}/{max_mp} {mp_bar}\n"
 
         # SAN
         san = self.char_data.get("SAN", 0)
-        start_san = pow_stat
         mythos = self.char_data.get("Cthulhu Mythos", 0)
         max_san = 99 - mythos
         san_bar = get_health_bar(san, max_san)
-        derived_text += f"🧠 **SAN:** {san}/{max_san} {san_bar}\n"
+        vitals_text += f"🧠 **SAN:** {san}/{max_san} {san_bar}\n"
+
+        embed.add_field(name="❤️ Vitals", value=vitals_text, inline=True)
+
+        # --- 4. Combat Stats (Move, Build, DB, Dodge) ---
+        combat_text = ""
 
         # Move
         move = self._calculate_move()
-        derived_text += f"🏃 **Move:** {move}\n"
+        combat_text += f"🏃 **Move:** {move}\n"
 
         # Build & DB
         build, db = self._calculate_build_db()
-        derived_text += f"💪 **Build:** {build}\n💥 **DB:** {db}\n"
+        combat_text += f"💪 **Build:** {build}\n💥 **DB:** {db}\n"
 
-        # Dodge (Often considered a core combat stat)
+        # Dodge
         dodge = self.char_data.get("Dodge", 0)
-        derived_text += f"💨 **Dodge:** {dodge} ({dodge//2}/{dodge//5})\n"
+        combat_text += f"💨 **Dodge:** {dodge} ({dodge//2}/{dodge//5})\n"
 
-        embed.add_field(name="⚖️ Derived Stats", value=derived_text, inline=True)
+        embed.add_field(name="⚔️ Combat", value=combat_text, inline=True)
 
         return embed
 
