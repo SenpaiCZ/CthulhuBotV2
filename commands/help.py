@@ -6,35 +6,58 @@ import traceback
 import random
 from rapidfuzz import process, fuzz
 
-# Mapping of Command Names to Categories
-# Dynamic discovery will attempt to place unlisted commands in "Other"
-COMMAND_CATEGORIES = {
-    "Player": [
-        "newinvestigator", "mycharacter", "stat", "generatebackstory",
-        "addbackstory", "removebackstory", "updatebackstory", "roll",
-        "rename", "renameskill", "addskill", "printcharacter", "session",
-        "retire", "unretire", "deleteinvestigator"
-    ],
-    "Codex": [
-        "codex", "monster", "deity", "spell", "archetype", "talent",
-        "insane", "poison", "skill", "occupation", "invention", "year",
-        "weapon"
-    ],
-    "Keeper": [
-        "loot", "mania", "phobia", "madness", "madnessalone", "handout",
-        "macguffin", "randomname", "randomnpc", "chase"
-    ],
-    "Music": [
-        "play", "skip", "stop", "volume", "loop", "queue", "nowplaying"
-    ],
-    "Admin": [
-        "enroll", "autoroom", "reactionrole", "gameroles", "rss",
-        "autodeleter", "setupkarma", "purge", "sync", "setchannel", "setrole", "forceupdate"
-    ],
-    "Other": [
-        "karma", "leaderboard", "giveaway", "polls", "remind",
-        "reportbug", "uptime", "help"
-    ]
+# Mapping of Cog Names to Categories
+# Keys are the class name of the Cog (or the name passed to bot.add_cog)
+COG_CATEGORY_MAP = {
+    # Player
+    "newinvestigator": "Player",
+    "mycharacter": "Player",
+    "Roll": "Player",
+    "stat": "Player",
+    "Backstory": "Player",
+    "Session": "Player",
+    "Retire": "Player",
+    "DeleteInvestigator": "Player",
+    "PrintCharacter": "Player",
+    "Versus": "Player",
+    "AddSkill": "Player",
+    "Rename": "Player",
+    "RenameSkill": "Player",
+
+    # Codex
+    "Codex": "Codex",
+
+    # Keeper
+    "Loot": "Keeper",
+    "Madness": "Keeper",
+    "Handout": "Keeper",
+    "MacGuffin": "Keeper",
+    "RandomNPC": "Keeper",
+    "RandomName": "Keeper",
+    "Chase": "Keeper",
+
+    # Music
+    "Music": "Music",
+
+    # Admin
+    "Admin": "Admin",
+    "Enroll": "Admin",
+    "AutoRoom": "Admin",
+    "ReactionRole": "Admin",
+    "GameRoles": "Admin",
+    "RSS": "Admin",
+    "Karma": "Admin",
+    "Ping": "Admin",
+    "Restart": "Admin",
+    "UpdateBot": "Admin",
+
+    # Other
+    "Help": "Other",
+    "Polls": "Other",
+    "Reminders": "Other",
+    "ReportBug": "Other",
+    "Uptime": "Other",
+    "Giveaway": "Other"
 }
 
 CATEGORY_EMOJIS = {
@@ -111,9 +134,6 @@ class HelpView(View):
                 custom_id=f"btn_cat_{cat}"
             )
             # We need to bind the callback properly
-            # Using a loop variable in a lambda or async def can be tricky, so we use a partial-like approach
-            # or just a single callback dispatch.
-            # Let's use a custom callback method that parses custom_id
             btn.callback = self.category_button_callback
             self.add_item(btn)
 
@@ -314,50 +334,56 @@ class Help(commands.Cog):
     async def generate_help_data(self, ctx):
         """
         Generates a dictionary of Category -> List of Commands.
-        Dynamically discovers commands and categories.
+        Dynamically discovers commands based on Cog membership.
         """
-        help_data = {cat: [] for cat in COMMAND_CATEGORIES.keys()}
+        help_data = {cat: [] for cat in set(COG_CATEGORY_MAP.values())}
+        help_data["Other"] = [] # Ensure Other exists
 
-        # 1. Process Defined Categories
-        for category, cmd_names in COMMAND_CATEGORIES.items():
-            for name in cmd_names:
-                cmd = self._get_command_obj(name)
-                if cmd:
-                     # Check permission using our custom _can_run
-                     if await self._can_run(cmd, ctx):
-                         if cmd not in help_data[category]:
-                             help_data[category].append(cmd)
+        # Track seen commands to avoid duplicates (e.g. Slash vs Text)
+        seen_commands = set()
 
-        # 2. Dynamic Discovery for "Other" or Missing
-        # Get all app commands
-        all_app_commands = self.bot.tree.get_commands()
+        for cog_name, cog in self.bot.cogs.items():
+            # Determine Category
+            category = COG_CATEGORY_MAP.get(cog_name, "Other")
+            if category not in help_data:
+                help_data[category] = []
 
-        known_command_names = set()
-        for cat_list in COMMAND_CATEGORIES.values():
-            known_command_names.update(cat_list)
+            # Get Commands (Slash/App Commands)
+            app_cmds = cog.get_app_commands()
+            for cmd in app_cmds:
+                if cmd.name not in seen_commands:
+                    help_data[category].append(cmd)
+                    seen_commands.add(cmd.name)
 
-        for cmd in all_app_commands:
-            if cmd.name not in known_command_names:
-                # This is a new command not in our map!
-                if "Other" not in help_data: help_data["Other"] = []
+            # Get Commands (Text/Hybrid)
+            # Only add if not already added via app_commands (hybrid commands show up in both?)
+            # Actually hybrid commands appear in get_commands() as HybridCommand objects
+            text_cmds = cog.get_commands()
+            for cmd in text_cmds:
+                if cmd.hidden: continue
 
-                # Check duplication
-                if cmd not in help_data["Other"]:
-                     help_data["Other"].append(cmd)
+                # Check permission using our custom _can_run
+                if not await self._can_run(cmd, ctx):
+                    continue
+
+                if cmd.name not in seen_commands:
+                    help_data[category].append(cmd)
+                    seen_commands.add(cmd.name)
+
+        # Handle Orphaned Commands (No Cog)
+        # Usually these are text commands added directly to bot
+        # Or app commands added to tree without cog
+
+        # We can inspect bot.commands for text commands without cog
+        for cmd in self.bot.commands:
+            if not cmd.cog and not cmd.hidden:
+                 if await self._can_run(cmd, ctx):
+                     if cmd.name not in seen_commands:
+                         help_data["Other"].append(cmd)
+                         seen_commands.add(cmd.name)
 
         # Remove empty categories
         return {k: v for k, v in help_data.items() if v}
-
-    def _get_command_obj(self, name):
-        # Check Tree (Slash)
-        cmd = self.bot.tree.get_command(name)
-        if cmd: return cmd
-
-        # Check Text (Hybrid/Legacy)
-        cmd = self.bot.get_command(name)
-        if cmd and not cmd.hidden: return cmd
-
-        return None
 
     async def _can_run(self, cmd, ctx):
         # Permission check
@@ -366,7 +392,7 @@ class Help(commands.Cog):
                 return await cmd.can_run(ctx)
             except:
                 return False
-        return True # Assume app commands are visible
+        return True # Assume app commands are visible unless filtered elsewhere
 
     @app_commands.command(name="help", description="Show the interactive help dashboard.")
     async def help_command(self, interaction: discord.Interaction):
