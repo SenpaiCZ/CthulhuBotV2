@@ -270,6 +270,21 @@ def get_stat_emoji(stat_name):
 def get_emoji_for_item(item_name):
     """Returns a relevant emoji based on item name keywords."""
     name_lower = item_name.lower()
+
+    # Specific items (High Priority)
+    if any(x in name_lower for x in ["amulet", "artifact", "relic", "idol", "crystal", "orb"]):
+        return "🧿"
+    if any(x in name_lower for x in ["watch", "clock", "time"]):
+        return "⌚"
+    if any(x in name_lower for x in ["cigarette", "cigar", "tobacco", "pipe", "smoke"]):
+        return "🚬"
+    if any(x in name_lower for x in ["glasses", "spectacles", "monocle"]):
+        return "👓"
+    if any(x in name_lower for x in ["mask", "disguise"]):
+        return "🎭"
+    if any(x in name_lower for x in ["umbrella"]):
+        return "☂️"
+
     if any(x in name_lower for x in ["gun", "rifle", "pistol", "shotgun", "revolver", "carbine", "smg", "machine gun", "handgun"]):
         return "🔫"
     if any(x in name_lower for x in ["knife", "dagger", "sword", "blade", "machete", "axe", "hatchet", "razor", "kukri", "spear"]):
@@ -294,6 +309,10 @@ def get_emoji_for_item(item_name):
         return "🎒"
     if any(x in name_lower for x in ["phone", "radio", "camera"]):
         return "📷"
+    if any(x in name_lower for x in ["bag", "backpack", "suitcase", "briefcase", "purse"]):
+        return "👜"
+    if any(x in name_lower for x in ["ticket", "pass", "permit"]):
+        return "🎫"
     return "📦"
 
 def get_health_bar(current, max_val, length=8):

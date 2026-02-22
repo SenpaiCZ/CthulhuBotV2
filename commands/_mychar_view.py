@@ -867,6 +867,27 @@ class CharacterDashboardView(View):
         embed.set_footer(text=f"Page {self.page + 1}/{math.ceil(len(all_skills)/self.items_per_page)}")
         return embed
 
+    def _format_inventory_list(self, entries, limit=5, is_cash=False):
+        if not entries or not isinstance(entries, list):
+            return "None"
+
+        formatted = []
+        count = 0
+        for entry in entries:
+            if count >= limit:
+                remaining = len(entries) - limit
+                formatted.append(f"*...and {remaining} more.*")
+                break
+
+            if is_cash:
+                formatted.append(f"💰 **{entry}**")
+            else:
+                emoji = get_emoji_for_item(str(entry))
+                formatted.append(f"{emoji} {entry}")
+            count += 1
+
+        return "\n".join(formatted)
+
     def _get_backstory_embed(self):
         embed = discord.Embed(
             title=f"📜 Backstory & Inventory - {self.char_data.get('NAME', 'Unknown')}",
@@ -883,18 +904,27 @@ class CharacterDashboardView(View):
             return str(entries)
 
         # Inventory / Assets specific handling
-        # Usually keys like "Assets", "Gear", "Possessions", "Cash"
-        # We will try to group them or highlight them.
-
         inventory_keys = ["Assets", "Gear", "Possessions", "Cash", "Equipment", "Weapons"]
         inventory_text = ""
 
-        for key, value in backstory.items():
-            if key in inventory_keys:
-                inventory_text += f"**{key}:**\n{format_entries(value)}\n\n"
+        for key in inventory_keys:
+            if key in backstory:
+                value = backstory[key]
+                if not value: continue
+
+                is_cash = (key == "Cash")
+                # Assets might be long text, so let's check
+                # If it's a list of strings, format nicely.
+                # If key is Assets, maybe show fewer items but full text?
+                # For now, treat all lists similarly but with different emojis.
+
+                formatted_list = self._format_inventory_list(value, limit=5, is_cash=is_cash)
+                inventory_text += f"**{key}:**\n{formatted_list}\n\n"
 
         if inventory_text:
             embed.add_field(name="🎒 Inventory & Assets", value=inventory_text, inline=False)
+            if len(inventory_text) > 500: # Heuristic for "long inventory"
+                 embed.set_footer(text="Tip: Use the dropdown menu below to manage all items.")
         else:
             embed.add_field(name="🎒 Inventory & Assets", value="Empty. Use 'Add Item' to start!", inline=False)
 
