@@ -608,10 +608,17 @@ class JournalView(ui.View):
 class Journal(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.ctx_menu = app_commands.ContextMenu(
+            name='Save as Clue',
+            callback=self.save_clue_context,
+        )
+        self.bot.tree.add_command(self.ctx_menu)
+
+    def cog_unload(self):
+        self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
 
     journal_group = app_commands.Group(name="journal", description="Manage and view journals")
 
-    @app_commands.context_menu(name="Save as Clue")
     async def save_clue_context(self, interaction: discord.Interaction, message: discord.Message):
         """
         Context Menu: Right-click a message -> Apps -> Save as Clue.
