@@ -603,30 +603,21 @@ class Roll(commands.Cog):
         match = re.match(r"^(.*?)\s*\(\d+\)$", skill_name_input)
         clean_expression = match.group(1) if match else skill_name_input
 
-        normalized_input = clean_expression.lower()
-        matching_stats = []
+        choices = list(stats.keys())
 
-        for k in stats.keys():
-            if k.lower() == normalized_input:
-                matching_stats.append(k)
-                break
+        # 1. Exact Match (Case Insensitive)
+        exact_matches = []
+        clean_lower = clean_expression.lower()
+        for k in choices:
+            if k.lower() == clean_lower:
+                exact_matches.append(k)
 
-        if not matching_stats:
-            for k in stats.keys():
-                if any(word.lower() == k.lower() for word in normalized_input.split()):
-                    matching_stats.append(k)
-                    break
+        if exact_matches:
+            return exact_matches
 
-        if not matching_stats:
-            for k in stats.keys():
-                if any(word.lower() in k.lower() for word in normalized_input.split()):
-                    matching_stats.append(k)
-
-        if matching_stats:
-            best_match = matching_stats[0]
-            return best_match, stats[best_match]
-
-        return None, None
+        # 2. Fuzzy Match
+        results = process.extract(clean_expression, choices, scorer=fuzz.WRatio, limit=5, score_cutoff=60)
+        return [res[0] for res in results]
 
     @commands.hybrid_command(name="roll", aliases=["newroll", "diceroll", "d", "nd"], guild_only=True, description="Perform a dice roll or skill check.")
     @app_commands.describe(
@@ -683,29 +674,8 @@ class Roll(commands.Cog):
             return
 
         try:
-            # Use logic similar to helper, but keep Disambiguation View support for /roll
-            clean_expression = dice_expression
-            match = re.match(r"^(.*?)\s*\(\d+\)$", dice_expression)
-            if match: clean_expression = match.group(1)
-
-            normalized_input = clean_expression.lower()
-            matching_stats = []
-
             stats = player_stats[server_id][user_id]
-
-            for k in stats.keys():
-                if k.lower() == normalized_input:
-                    matching_stats.append(k)
-                    break
-            if not matching_stats:
-                for k in stats.keys():
-                    if any(word.lower() == k.lower() for word in normalized_input.split()):
-                        matching_stats.append(k)
-                        break
-            if not matching_stats:
-                for k in stats.keys():
-                    if any(word.lower() in k.lower() for word in normalized_input.split()):
-                        matching_stats.append(k)
+            matching_stats = self._resolve_skill(stats, dice_expression)
 
             if not matching_stats:
                 await send_msg(content="No matching skill found.")
