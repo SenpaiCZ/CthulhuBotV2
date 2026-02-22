@@ -100,6 +100,7 @@ class SearchModal(Modal, title="Search Commands"):
         # Update the dashboard directly
         query_str = self.query.value
         embed = self.view.get_search_embed(query_str)
+        # We edit the message that the button was attached to
         await interaction.response.edit_message(embed=embed, view=self.view)
 
 class HelpView(View):
@@ -239,7 +240,14 @@ class HelpView(View):
 
         description = ""
         for cmd in commands_list:
-            name = f"/{cmd.name}"
+            # Handle slash commands vs context menus vs text commands
+            prefix = "/"
+            if isinstance(cmd, commands.Command):
+                prefix = "!" # Assuming prefix commands
+            elif isinstance(cmd, app_commands.ContextMenu):
+                prefix = "🖱️ " # Right click
+
+            name = f"{prefix}{cmd.name}"
             # Context Menus (and other types) might not have a description attribute
             desc = getattr(cmd, "description", "No description.") or "No description."
 
@@ -316,7 +324,12 @@ class HelpView(View):
         if final_results:
             desc_text = ""
             for cmd in final_results:
-                name = f"/{cmd.name}"
+                # Handle prefixes for display
+                prefix = "/"
+                if isinstance(cmd, commands.Command): prefix = "!"
+                elif isinstance(cmd, app_commands.ContextMenu): prefix = "🖱️ "
+
+                name = f"{prefix}{cmd.name}"
                 desc = getattr(cmd, "description", "No description.") or "No description."
                 if len(desc) > 80: desc = desc[:77] + "..."
                 desc_text += f"**`{name}`** - {desc}\n"
@@ -334,53 +347,56 @@ class Help(commands.Cog):
     async def generate_help_data(self, ctx):
         """
         Generates a dictionary of Category -> List of Commands.
-        Dynamically discovers commands based on Cog membership.
+        Dynamically discovers commands based on bot.tree and binding.
         """
         help_data = {cat: [] for cat in set(COG_CATEGORY_MAP.values())}
         help_data["Other"] = [] # Ensure Other exists
 
-        # Track seen commands to avoid duplicates (e.g. Slash vs Text)
+        # Track seen commands to avoid duplicates
         seen_commands = set()
 
-        for cog_name, cog in self.bot.cogs.items():
+        # 1. Iterate App Commands (Slash + Context Menus) from Tree
+        # This is the Source of Truth for slash commands
+        app_cmds = self.bot.tree.get_commands()
+
+        for cmd in app_cmds:
             # Determine Category
-            category = COG_CATEGORY_MAP.get(cog_name, "Other")
-            if category not in help_data:
-                help_data[category] = []
+            category = "Other"
 
-            # Get Commands (Slash/App Commands)
-            app_cmds = cog.get_app_commands()
-            for cmd in app_cmds:
-                if cmd.name not in seen_commands:
-                    help_data[category].append(cmd)
-                    seen_commands.add(cmd.name)
+            # Check Binding (The Cog)
+            if cmd.binding:
+                cog_name = type(cmd.binding).__name__
+                category = COG_CATEGORY_MAP.get(cog_name, "Other")
 
-            # Get Commands (Text/Hybrid)
-            # Only add if not already added via app_commands (hybrid commands show up in both?)
-            # Actually hybrid commands appear in get_commands() as HybridCommand objects
-            text_cmds = cog.get_commands()
-            for cmd in text_cmds:
-                if cmd.hidden: continue
+            if cmd.name not in seen_commands:
+                if category not in help_data: help_data[category] = []
+                help_data[category].append(cmd)
+                seen_commands.add(cmd.name)
 
-                # Check permission using our custom _can_run
-                if not await self._can_run(cmd, ctx):
-                    continue
-
-                if cmd.name not in seen_commands:
-                    help_data[category].append(cmd)
-                    seen_commands.add(cmd.name)
-
-        # Handle Orphaned Commands (No Cog)
-        # Usually these are text commands added directly to bot
-        # Or app commands added to tree without cog
-
-        # We can inspect bot.commands for text commands without cog
+        # 2. Iterate Text Commands (Legacy)
+        # Some commands might still be text-only (e.g. !sync)
         for cmd in self.bot.commands:
-            if not cmd.cog and not cmd.hidden:
-                 if await self._can_run(cmd, ctx):
-                     if cmd.name not in seen_commands:
-                         help_data["Other"].append(cmd)
-                         seen_commands.add(cmd.name)
+            if cmd.hidden: continue
+
+            # Permission check
+            if not await self._can_run(cmd, ctx):
+                continue
+
+            if cmd.name not in seen_commands:
+                # Determine Category
+                category = "Other"
+                if cmd.cog:
+                    cog_name = cmd.cog.qualified_name
+                    # Try to map cog name, or use class name if needed
+                    # qualified_name is usually the class name
+                    category = COG_CATEGORY_MAP.get(cog_name, "Other")
+                    # Also try class name if qualified name fails
+                    if category == "Other":
+                         category = COG_CATEGORY_MAP.get(type(cmd.cog).__name__, "Other")
+
+                if category not in help_data: help_data[category] = []
+                help_data[category].append(cmd)
+                seen_commands.add(cmd.name)
 
         # Remove empty categories
         return {k: v for k, v in help_data.items() if v}
