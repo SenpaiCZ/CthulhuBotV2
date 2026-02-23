@@ -775,27 +775,24 @@ class CharacterDashboardView(View):
 
         embed.add_field(name="📜 Biography", value=bio_desc, inline=False)
 
-        # --- 2. Characteristics (Grid Layout) ---
-        attributes = ["STR", "DEX", "INT", "CON", "APP", "POW", "SIZ", "EDU", "LUCK"]
+        # --- 2. Characteristics (Columnar Layout) ---
+        def format_attr(attr_list):
+            lines = []
+            for attr in attr_list:
+                val = self.char_data.get(attr, 0)
+                emoji = get_stat_emoji(attr)
+                lines.append(f"{emoji} **{attr}:** {val}")
+            return "\n".join(lines)
 
-        attr_text = ""
-        row_count = 0
-        for attr in attributes:
-            val = self.char_data.get(attr, 0)
-            emoji = get_stat_emoji(attr)
-            attr_text += f"{emoji} **{attr}:** {val} "
+        col1_attrs = ["STR", "CON", "SIZ"]
+        col2_attrs = ["DEX", "APP", "EDU"]
+        col3_attrs = ["INT", "POW", "LUCK"]
 
-            row_count += 1
-            if row_count >= 3:
-                attr_text += "\n"
-                row_count = 0
-            else:
-                 attr_text += " | "
+        embed.add_field(name="💪 Physical", value=format_attr(col1_attrs), inline=True)
+        embed.add_field(name="🏃 Agile/Social", value=format_attr(col2_attrs), inline=True)
+        embed.add_field(name="🧠 Mental/Power", value=format_attr(col3_attrs), inline=True)
 
-        attr_text = attr_text.strip().rstrip("|").strip()
-        embed.add_field(name="📊 Characteristics", value=attr_text, inline=False)
-
-        # --- 3. Vitals (HP, MP, SAN) ---
+        # --- 3. Vitals (HP, MP, SAN) with Status ---
         vitals_text = ""
 
         # HP
@@ -804,21 +801,34 @@ class CharacterDashboardView(View):
         siz = self.char_data.get("SIZ", 0)
         max_hp = (con + siz) // 10 if self.current_mode == "Call of Cthulhu" else (con + siz) // 5
         hp_bar = get_health_bar(hp, max_hp)
-        vitals_text += f"❤️ **HP:** {hp}/{max_hp} {hp_bar}\n"
+        hp_status = ""
+        if hp <= 2: hp_status = " **💀 DYING**"
+        elif hp < (max_hp / 2): hp_status = " **🤕 MAJOR WOUND**"
+
+        vitals_text += f"❤️ **HP:** {hp}/{max_hp} {hp_bar}{hp_status}\n"
 
         # MP
         mp = self.char_data.get("MP", 0)
         pow_stat = self.char_data.get("POW", 0)
         max_mp = pow_stat // 5
         mp_bar = get_health_bar(mp, max_mp)
-        vitals_text += f"✨ **MP:** {mp}/{max_mp} {mp_bar}\n"
+        mp_status = ""
+        if mp <= 0: mp_status = " **💤 UNCONSCIOUS**"
+        elif mp < 2: mp_status = " **🌑 DRAINED**"
+
+        vitals_text += f"✨ **MP:** {mp}/{max_mp} {mp_bar}{mp_status}\n"
 
         # SAN
         san = self.char_data.get("SAN", 0)
         mythos = self.char_data.get("Cthulhu Mythos", 0)
         max_san = 99 - mythos
         san_bar = get_health_bar(san, max_san)
-        vitals_text += f"🧠 **SAN:** {san}/{max_san} {san_bar}\n"
+        san_status = ""
+        pow_val = self.char_data.get("POW", 0)
+        if san <= pow_val // 5: san_status = " **🤪 INDEFINITE INSANITY?**"
+        elif san < pow_val: san_status = " **📉 LOW SANITY**"
+
+        vitals_text += f"🧠 **SAN:** {san}/{max_san} {san_bar}{san_status}\n"
 
         embed.add_field(name="❤️ Vitals", value=vitals_text, inline=True)
 
@@ -926,7 +936,7 @@ class CharacterDashboardView(View):
             if len(inventory_text) > 500: # Heuristic for "long inventory"
                  embed.set_footer(text="Tip: Use the dropdown menu below to manage all items.")
         else:
-            embed.add_field(name="🎒 Inventory & Assets", value="Empty. Use 'Add Item' to start!", inline=False)
+            embed.add_field(name="🎒 Inventory & Assets", value="🎒 **Inventory is empty.**\nUse the 'Add Item' button below to get started!", inline=False)
 
         # Other Backstory elements
         for key, value in backstory.items():
