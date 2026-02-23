@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import json
+import secrets
 import re
 import zipfile
 import shutil
@@ -372,7 +373,12 @@ async def login():
         form = await request.form
         password = form.get('password')
         settings = load_settings()
-        if password == settings.get('admin_password', 'changeme'):
+
+        # Sentinel: Prevent timing attacks
+        input_password = password or ""
+        expected_password = settings.get('admin_password', 'changeme') or ""
+
+        if secrets.compare_digest(input_password, expected_password):
             session['logged_in'] = True
             return redirect(url_for('admin_dashboard'))
         else:
