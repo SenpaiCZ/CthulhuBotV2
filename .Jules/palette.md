@@ -13,3 +13,7 @@
 ## 2024-10-31 - Security and Accessibility in Template Literals
 **Learning:** When injecting dynamic content (like song titles) into HTML via template literals, it is crucial to sanitize the input to prevent XSS and to use that sanitized content in `aria-label` and `alt` attributes to ensure screen readers receive meaningful context.
 **Action:** Always include an `escapeHtml` utility when working with client-side rendering and use it for both visual text and accessibility attributes.
+
+## 2026-02-23 - Accessibility in Dynamic Forms
+**Learning:** Dynamic form generation via JavaScript in `dashboard/templates/game_settings.html` often misses accessibility attributes like `for` on labels and `id` on inputs, making them inaccessible to screen readers.
+**Action:** When generating form controls dynamically, always generate unique IDs (e.g., using `Date.now()` or iterators) and explicitly link labels to inputs using `for` and `id` attributes.
