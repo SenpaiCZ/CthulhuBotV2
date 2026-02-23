@@ -8,7 +8,7 @@ from rapidfuzz import process, fuzz
 
 # Mapping of Cog Names to Categories
 # Keys are the class name of the Cog (or the name passed to bot.add_cog)
-COG_CATEGORY_MAP = {
+LEGACY_CATEGORY_MAP = {
     # Player
     "newinvestigator": "Player",
     "mycharacter": "Player",
@@ -182,9 +182,9 @@ class HelpView(View):
         embed = discord.Embed(
             title="🐙 CthulhuBot Help",
             description=(
-                "**Greetings, Investigator.**\n"
-                "The stars have aligned. Access the archives, manage your sanity, or consult the Keeper below.\n\n"
-                "ℹ️ **Tip:** Use the `🔍 Search` button to find specific commands instantly."
+                "**The stars are right...**\n"
+                "Welcome to the Nexus. Consult the forbidden texts, manage your investigator, or invoke the Keeper's will below.\n\n"
+                "ℹ️ **Tip:** Use the `🔍 Search` button to uncover hidden knowledge."
             ),
             color=discord.Color.dark_teal()
         )
@@ -281,40 +281,26 @@ class HelpView(View):
                 seen.add(cmd.name)
                 unique_commands.append(cmd)
 
-        # Prepare for fuzzy search
-        # We search name and description
-        choices = {cmd.name: cmd for cmd in unique_commands}
-        names = list(choices.keys())
-
-        # 1. Exact match
-        exact = [cmd for cmd in unique_commands if query.lower() == cmd.name.lower()]
-
-        # 2. Fuzzy match names
-        fuzzy_results = process.extract(query, names, scorer=fuzz.WRatio, limit=10, score_cutoff=50)
-        fuzzy_names = [res[0] for res in fuzzy_results]
-
-        # 3. Description search (simple contains)
-        desc_matches = []
+        # Prepare for fuzzy search: search name and description
+        search_candidates = []
         for cmd in unique_commands:
-            desc = getattr(cmd, "description", "") or ""
-            if query.lower() in desc.lower():
-                desc_matches.append(cmd)
+            desc = getattr(cmd, "description", "") or "No description."
+            # Create a searchable string: "name description"
+            search_candidates.append(f"{cmd.name} {desc}")
 
-        # Combine results
+        # Use rapidfuzz to find best matches
+        # scorer=fuzz.partial_ratio is good for finding substring matches in descriptions
+        results = process.extract(
+            query,
+            search_candidates,
+            scorer=fuzz.WRatio,
+            limit=10,
+            score_cutoff=50
+        )
+
         final_results = []
-        if exact: final_results.extend(exact)
-
-        for name in fuzzy_names:
-            cmd = choices[name]
-            if cmd not in final_results:
-                final_results.append(cmd)
-
-        for cmd in desc_matches:
-            if cmd not in final_results:
-                final_results.append(cmd)
-
-        # Limit to top 10
-        final_results = final_results[:10]
+        for _, score, idx in results:
+            final_results.append(unique_commands[idx])
 
         embed = discord.Embed(
             title=f"🔍 Search Results: '{query}'",
@@ -326,13 +312,21 @@ class HelpView(View):
             for cmd in final_results:
                 # Handle prefixes for display
                 prefix = "/"
-                if isinstance(cmd, commands.Command): prefix = "!"
-                elif isinstance(cmd, app_commands.ContextMenu): prefix = "🖱️ "
+                type_label = "Slash"
+                if isinstance(cmd, commands.Command):
+                    prefix = "!"
+                    type_label = "Text"
+                elif isinstance(cmd, app_commands.ContextMenu):
+                    prefix = "🖱️ "
+                    type_label = "Context"
 
                 name = f"{prefix}{cmd.name}"
                 desc = getattr(cmd, "description", "No description.") or "No description."
+                if hasattr(cmd, 'help') and cmd.help:
+                     desc = cmd.help
+
                 if len(desc) > 80: desc = desc[:77] + "..."
-                desc_text += f"**`{name}`** - {desc}\n"
+                desc_text += f"**`{name}`** ({type_label}) - {desc}\n"
             embed.description = desc_text
         else:
             embed.description = "No matching commands found. Try a different term."
@@ -349,25 +343,35 @@ class Help(commands.Cog):
         Generates a dictionary of Category -> List of Commands.
         Dynamically discovers commands based on bot.cogs and bot.tree.
         """
-        help_data = {cat: [] for cat in set(COG_CATEGORY_MAP.values())}
-        help_data["Other"] = [] # Ensure Other exists
+        # Initialize Categories based on LEGACY_CATEGORY_MAP values + "Other"
+        # We use a set to avoid duplicates, then build the dict
+        known_categories = set(LEGACY_CATEGORY_MAP.values())
+        known_categories.add("Other")
+        help_data = {cat: [] for cat in known_categories}
 
         # Track seen commands to avoid duplicates (by name)
         seen_commands = set()
 
         # 1. Iterate over Cogs to get categorized commands
         for cog_name, cog in self.bot.cogs.items():
-            category = COG_CATEGORY_MAP.get(cog_name, "Other")
-            if category == "Other":
-                 # Try class name if cog name didn't match
-                 category = COG_CATEGORY_MAP.get(type(cog).__name__, "Other")
+            # Determine Category
+            # Priority: self.help_category > LEGACY_CATEGORY_MAP > "Other"
+            if hasattr(cog, "help_category"):
+                category = cog.help_category
+            else:
+                category = LEGACY_CATEGORY_MAP.get(cog_name, "Other")
+                if category == "Other":
+                     # Try class name if cog name didn't match
+                     category = LEGACY_CATEGORY_MAP.get(type(cog).__name__, "Other")
 
-            # Get App Commands from Cog
-            # Note: get_app_commands() returns the commands defined in the cog
+            # Ensure category exists in dict
+            if category not in help_data:
+                help_data[category] = []
+
+            # Get App Commands from Cog (Slash + Context)
             if hasattr(cog, "get_app_commands"):
                 for cmd in cog.get_app_commands():
                     if cmd.name not in seen_commands:
-                        if category not in help_data: help_data[category] = []
                         help_data[category].append(cmd)
                         seen_commands.add(cmd.name)
 
@@ -378,7 +382,6 @@ class Help(commands.Cog):
                     if not await self._can_run(cmd, ctx): continue
 
                     if cmd.name not in seen_commands:
-                        if category not in help_data: help_data[category] = []
                         help_data[category].append(cmd)
                         seen_commands.add(cmd.name)
 
@@ -390,8 +393,12 @@ class Help(commands.Cog):
                 # Try to determine category from binding if present
                 category = "Other"
                 if cmd.binding:
-                    cog_name = type(cmd.binding).__name__
-                    category = COG_CATEGORY_MAP.get(cog_name, "Other")
+                    # Check if binding has help_category (it's likely the cog instance)
+                    if hasattr(cmd.binding, "help_category"):
+                        category = cmd.binding.help_category
+                    else:
+                        cog_name = type(cmd.binding).__name__
+                        category = LEGACY_CATEGORY_MAP.get(cog_name, "Other")
 
                 if category not in help_data: help_data[category] = []
                 help_data[category].append(cmd)
