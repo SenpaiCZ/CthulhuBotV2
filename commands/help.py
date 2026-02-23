@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from discord.ui import View, Button, Modal, TextInput
+from discord.ui import View, Button, Modal, TextInput, Select
 import traceback
 import random
 from rapidfuzz import process, fuzz
@@ -89,6 +89,133 @@ GRIMOIRE_TIPS = [
     "Tip: You can print your character sheet to PDF with /printcharacter."
 ]
 
+class OnboardingView(View):
+    def __init__(self, user, help_view):
+        super().__init__(timeout=300)
+        self.user = user
+        self.help_view = help_view # Return to main help
+        self.current_step = 0
+        self.steps = [
+            self.step_welcome,
+            self.step_character,
+            self.step_rolling,
+            self.step_codex,
+            self.step_tips
+        ]
+        self.update_buttons()
+
+    def update_buttons(self):
+        self.prev_btn.disabled = (self.current_step == 0)
+        self.next_btn.disabled = (self.current_step == len(self.steps) - 1)
+        self.page_indicator.label = f"{self.current_step + 1}/{len(self.steps)}"
+
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.secondary, row=1)
+    async def prev_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.user: return
+        self.current_step = max(0, self.current_step - 1)
+        self.update_buttons()
+        await interaction.response.edit_message(embed=self.steps[self.current_step](), view=self)
+
+    @discord.ui.button(label="1/5", style=discord.ButtonStyle.secondary, disabled=True, row=1)
+    async def page_indicator(self, interaction: discord.Interaction, button: discord.ui.Button):
+        pass
+
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.primary, row=1)
+    async def next_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.user: return
+        self.current_step = min(len(self.steps) - 1, self.current_step + 1)
+        self.update_buttons()
+        await interaction.response.edit_message(embed=self.steps[self.current_step](), view=self)
+
+    @discord.ui.button(label="🏠 Home", style=discord.ButtonStyle.success, row=0)
+    async def home_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.user: return
+        await interaction.response.edit_message(embed=self.help_view.get_home_embed(), view=self.help_view)
+
+    # --- Step Embeds ---
+
+    def step_welcome(self):
+        embed = discord.Embed(title="👋 Welcome to CthulhuBot", color=discord.Color.gold())
+        embed.description = (
+            "You have entered a world of cosmic horror and investigation.\n"
+            "This bot is your companion for managing characters, rolling dice, and looking up rules."
+        )
+        embed.add_field(name="🚀 Getting Started", value="Click **Next** to learn the basics.", inline=False)
+        return embed
+
+    def step_character(self):
+        embed = discord.Embed(title="🕵️ Character Management", color=discord.Color.blue())
+        embed.description = "Your investigator is your lifeline."
+        embed.add_field(name="`/newinvestigator`", value="Launch the character creation wizard.", inline=False)
+        embed.add_field(name="`/mycharacter`", value="View your interactive character sheet.", inline=False)
+        embed.add_field(name="`/stat`", value="Quickly view or edit specific stats like HP or SAN.", inline=False)
+        return embed
+
+    def step_rolling(self):
+        embed = discord.Embed(title="🎲 Dice Rolling", color=discord.Color.green())
+        embed.description = "The dice decide your fate."
+        embed.add_field(name="`/roll [skill]`", value="Roll a skill check. Example: `/roll Spot Hidden`.", inline=False)
+        embed.add_field(name="Bonus/Penalty", value="The roll menu allows you to add Bonus/Penalty dice interactively.", inline=False)
+        embed.add_field(name="Luck & Pushing", value="You can Spend Luck or Push the roll directly from the result card.", inline=False)
+        return embed
+
+    def step_codex(self):
+        embed = discord.Embed(title="📜 The Codex", color=discord.Color.purple())
+        embed.description = "Knowledge is power (and madness)."
+        embed.add_field(name="`/codex`", value="Browse the entire library of monsters, spells, and items.", inline=False)
+        embed.add_field(name="`/monster [name]`", value="Look up a monster stat block.", inline=False)
+        embed.add_field(name="`/weapon [name]`", value="Check weapon stats.", inline=False)
+        return embed
+
+    def step_tips(self):
+        embed = discord.Embed(title="💡 Pro Tips", color=discord.Color.teal())
+        embed.add_field(name="Quick Search", value="Use the **Search** button on the main menu to find commands fast.", inline=False)
+        embed.add_field(name="Combat", value="Use `/combat` to open a dedicated combat dashboard.", inline=False)
+        embed.add_field(name="Session Tracking", value="Use `/session` to log skill checks for improvement rolls later.", inline=False)
+        embed.set_footer(text="You are ready. Good luck.")
+        return embed
+
+
+class HelpSearchSelect(Select):
+    def __init__(self, commands_list, help_view):
+        self.help_view = help_view
+        options = []
+        for cmd in commands_list[:25]:
+            prefix = "/"
+            if isinstance(cmd, commands.Command): prefix = "!"
+            elif isinstance(cmd, app_commands.ContextMenu): prefix = "🖱️ "
+
+            label = f"{prefix}{cmd.name}"[:100]
+            desc = getattr(cmd, "description", "No description.") or "No description."
+            if len(desc) > 100: desc = desc[:97] + "..."
+
+            options.append(discord.SelectOption(label=label, value=cmd.name, description=desc))
+
+        super().__init__(placeholder="Select a command...", min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        cmd_name = self.values[0]
+        # Find the command object again
+        cmd_obj = None
+        for cat_cmds in self.help_view.help_data.values():
+            for cmd in cat_cmds:
+                if cmd.name == cmd_name:
+                    cmd_obj = cmd
+                    break
+            if cmd_obj: break
+
+        if cmd_obj:
+            embed = self.help_view.get_command_embed(cmd_obj)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        else:
+            await interaction.response.send_message("Command not found.", ephemeral=True)
+
+class HelpSearchSelectView(View):
+    def __init__(self, commands_list, help_view):
+        super().__init__(timeout=60)
+        self.add_item(HelpSearchSelect(commands_list, help_view))
+
+
 class SearchModal(Modal, title="Search Commands"):
     query = TextInput(label="What are you looking for?", placeholder="e.g. roll, madness, sanity...", min_length=2, max_length=50)
 
@@ -97,11 +224,49 @@ class SearchModal(Modal, title="Search Commands"):
         self.view = view
 
     async def on_submit(self, interaction: discord.Interaction):
-        # Update the dashboard directly
-        query_str = self.query.value
-        embed = self.view.get_search_embed(query_str)
-        # We edit the message that the button was attached to
-        await interaction.response.edit_message(embed=embed, view=self.view)
+        query = self.query.value.strip()
+
+        # Collect all commands
+        all_commands = []
+        for cat_cmds in self.view.help_data.values():
+            all_commands.extend(cat_cmds)
+
+        unique_commands = {cmd.name: cmd for cmd in all_commands}
+        names = list(unique_commands.keys())
+
+        # 1. Exact Match
+        exact = [cmd for cmd in all_commands if query.lower() == cmd.name.lower()]
+        if exact:
+            # Show detail directly
+            embed = self.view.get_command_embed(exact[0])
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        # 2. Fuzzy Match
+        results = process.extract(query, names, scorer=fuzz.WRatio, limit=25, score_cutoff=60)
+        matches = [unique_commands[res[0]] for res in results]
+
+        if not matches:
+             # Try description search
+             desc_matches = []
+             for cmd in all_commands:
+                 desc = getattr(cmd, "description", "") or ""
+                 if query.lower() in desc.lower():
+                     desc_matches.append(cmd)
+
+             matches = desc_matches[:25]
+
+        if not matches:
+            await interaction.response.send_message(f"❌ No commands found for '{query}'. Try 'roll', 'monster', or 'loot'.", ephemeral=True)
+            return
+
+        if len(matches) == 1:
+             embed = self.view.get_command_embed(matches[0])
+             await interaction.response.send_message(embed=embed, ephemeral=True)
+        else:
+             # Multiple matches -> Dropdown
+             select_view = HelpSearchSelectView(matches, self.view)
+             await interaction.response.send_message(f"🔍 Found {len(matches)} matches for '{query}':", view=select_view, ephemeral=True)
 
 class HelpView(View):
     def __init__(self, help_data, user, bot):
@@ -164,7 +329,9 @@ class HelpView(View):
         await interaction.response.edit_message(embed=self.get_home_embed(), view=self)
 
     async def onboarding_callback(self, interaction: discord.Interaction):
-        await interaction.response.edit_message(embed=self.get_onboarding_embed(), view=self)
+        # Switch to Onboarding View
+        view = OnboardingView(self.user, self)
+        await interaction.response.edit_message(embed=view.steps[0](), view=view)
 
     async def search_callback(self, interaction: discord.Interaction):
         # Modals require response.send_modal, cannot be deferred beforehand
@@ -177,6 +344,28 @@ class HelpView(View):
         await interaction.response.edit_message(embed=self.get_category_embed(category), view=self)
 
     # --- Embed Generators ---
+
+    def get_command_embed(self, cmd):
+        prefix = "/"
+        if isinstance(cmd, commands.Command): prefix = "!"
+        elif isinstance(cmd, app_commands.ContextMenu): prefix = "🖱️ "
+
+        name = f"{prefix}{cmd.name}"
+        desc = getattr(cmd, "description", "No description.") or "No description."
+
+        embed = discord.Embed(title=f"📖 Command: {name}", description=desc, color=discord.Color.gold())
+
+        # Add usage/params if possible
+        if isinstance(cmd, app_commands.Command):
+             params = []
+             for param in cmd.parameters:
+                 req = "Required" if param.required else "Optional"
+                 params.append(f"`{param.name}` ({req}): {param.description}")
+
+             if params:
+                 embed.add_field(name="Parameters", value="\n".join(params), inline=False)
+
+        return embed
 
     def get_home_embed(self):
         embed = discord.Embed(
@@ -198,36 +387,12 @@ class HelpView(View):
         embed.set_footer(text=random.choice(GRIMOIRE_TIPS))
         return embed
 
+    # get_onboarding_embed is no longer used but kept for compatibility if needed (or can be removed)
     def get_onboarding_embed(self):
-        embed = discord.Embed(
-            title="👋 New Investigator Guide",
-            description="Welcome to the team! Here is your survival guide:",
-            color=discord.Color.green()
-        )
-
-        embed.add_field(
-            name="1️⃣ Create an Investigator",
-            value="Use `/newinvestigator` to launch the character creation wizard. It will guide you through stats, occupation, and skills.",
-            inline=False
-        )
-        embed.add_field(
-            name="2️⃣ Roll the Dice",
-            value="Use `/roll` (or `/r`) to make checks. Example: `/roll Spot Hidden`. The bot knows your stats!",
-            inline=False
-        )
-        embed.add_field(
-            name="3️⃣ Track your Session",
-            value="Use `/session action:Start Session` to begin tracking skill checks for improvement. At the end, use `/session action:Auto` to roll for upgrades.",
-            inline=False
-        )
-        embed.add_field(
-            name="4️⃣ Consult the Codex",
-            value="Use `/codex` or specific commands like `/monster` or `/spell` to look up rules and lore.",
-            inline=False
-        )
-
-        embed.set_footer(text="Good luck. You'll need it.")
-        return embed
+         # This is replaced by OnboardingView, but we can keep it as a fallback or remove it.
+         # For safety, I'll leave it returning the first step of the view.
+         view = OnboardingView(self.user, self)
+         return view.steps[0]()
 
     def get_category_embed(self, category):
         commands_list = self.help_data.get(category, [])
@@ -267,78 +432,6 @@ class HelpView(View):
         embed.set_footer(text=f"Total: {len(commands_list)} commands")
         return embed
 
-    def get_search_embed(self, query):
-        # We need to search across all categories
-        all_commands = []
-        for cat_cmds in self.help_data.values():
-            all_commands.extend(cat_cmds)
-
-        # Deduplicate by name
-        seen = set()
-        unique_commands = []
-        for cmd in all_commands:
-            if cmd.name not in seen:
-                seen.add(cmd.name)
-                unique_commands.append(cmd)
-
-        # Prepare for fuzzy search
-        # We search name and description
-        choices = {cmd.name: cmd for cmd in unique_commands}
-        names = list(choices.keys())
-
-        # 1. Exact match
-        exact = [cmd for cmd in unique_commands if query.lower() == cmd.name.lower()]
-
-        # 2. Fuzzy match names
-        fuzzy_results = process.extract(query, names, scorer=fuzz.WRatio, limit=10, score_cutoff=50)
-        fuzzy_names = [res[0] for res in fuzzy_results]
-
-        # 3. Description search (simple contains)
-        desc_matches = []
-        for cmd in unique_commands:
-            desc = getattr(cmd, "description", "") or ""
-            if query.lower() in desc.lower():
-                desc_matches.append(cmd)
-
-        # Combine results
-        final_results = []
-        if exact: final_results.extend(exact)
-
-        for name in fuzzy_names:
-            cmd = choices[name]
-            if cmd not in final_results:
-                final_results.append(cmd)
-
-        for cmd in desc_matches:
-            if cmd not in final_results:
-                final_results.append(cmd)
-
-        # Limit to top 10
-        final_results = final_results[:10]
-
-        embed = discord.Embed(
-            title=f"🔍 Search Results: '{query}'",
-            color=discord.Color.gold()
-        )
-
-        if final_results:
-            desc_text = ""
-            for cmd in final_results:
-                # Handle prefixes for display
-                prefix = "/"
-                if isinstance(cmd, commands.Command): prefix = "!"
-                elif isinstance(cmd, app_commands.ContextMenu): prefix = "🖱️ "
-
-                name = f"{prefix}{cmd.name}"
-                desc = getattr(cmd, "description", "No description.") or "No description."
-                if len(desc) > 80: desc = desc[:77] + "..."
-                desc_text += f"**`{name}`** - {desc}\n"
-            embed.description = desc_text
-        else:
-            embed.description = "No matching commands found. Try a different term."
-
-        return embed
-
 
 class Help(commands.Cog):
     def __init__(self, bot):
@@ -351,6 +444,15 @@ class Help(commands.Cog):
         """
         help_data = {cat: [] for cat in set(COG_CATEGORY_MAP.values())}
         help_data["Other"] = [] # Ensure Other exists
+
+        # Build Cog Category Cache
+        # Check if Cogs have a 'category' attribute
+        cog_categories = {}
+        for cog_name, cog in self.bot.cogs.items():
+            if hasattr(cog, 'category'):
+                cog_categories[cog_name] = cog.category
+            else:
+                cog_categories[cog_name] = COG_CATEGORY_MAP.get(cog_name, "Other")
 
         # Track seen commands to avoid duplicates
         seen_commands = set()
@@ -365,8 +467,12 @@ class Help(commands.Cog):
 
             # Check Binding (The Cog)
             if cmd.binding:
-                cog_name = type(cmd.binding).__name__
-                category = COG_CATEGORY_MAP.get(cog_name, "Other")
+                # Try getting category from the instance directly if possible
+                if hasattr(cmd.binding, 'category'):
+                    category = cmd.binding.category
+                else:
+                    cog_name = type(cmd.binding).__name__
+                    category = cog_categories.get(cog_name, COG_CATEGORY_MAP.get(cog_name, "Other"))
 
             if cmd.name not in seen_commands:
                 if category not in help_data: help_data[category] = []
@@ -386,13 +492,13 @@ class Help(commands.Cog):
                 # Determine Category
                 category = "Other"
                 if cmd.cog:
-                    cog_name = cmd.cog.qualified_name
-                    # Try to map cog name, or use class name if needed
-                    # qualified_name is usually the class name
-                    category = COG_CATEGORY_MAP.get(cog_name, "Other")
-                    # Also try class name if qualified name fails
-                    if category == "Other":
-                         category = COG_CATEGORY_MAP.get(type(cmd.cog).__name__, "Other")
+                    if hasattr(cmd.cog, 'category'):
+                        category = cmd.cog.category
+                    else:
+                        cog_name = cmd.cog.qualified_name
+                        category = cog_categories.get(cog_name, COG_CATEGORY_MAP.get(cog_name, "Other"))
+                        if category == "Other":
+                             category = COG_CATEGORY_MAP.get(type(cmd.cog).__name__, "Other")
 
                 if category not in help_data: help_data[category] = []
                 help_data[category].append(cmd)
