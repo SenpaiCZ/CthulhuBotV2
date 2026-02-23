@@ -347,52 +347,51 @@ class Help(commands.Cog):
     async def generate_help_data(self, ctx):
         """
         Generates a dictionary of Category -> List of Commands.
-        Dynamically discovers commands based on bot.tree and binding.
+        Dynamically discovers commands based on bot.cogs and bot.tree.
         """
         help_data = {cat: [] for cat in set(COG_CATEGORY_MAP.values())}
         help_data["Other"] = [] # Ensure Other exists
 
-        # Track seen commands to avoid duplicates
+        # Track seen commands to avoid duplicates (by name)
         seen_commands = set()
 
-        # 1. Iterate App Commands (Slash + Context Menus) from Tree
-        # This is the Source of Truth for slash commands
+        # 1. Iterate over Cogs to get categorized commands
+        for cog_name, cog in self.bot.cogs.items():
+            category = COG_CATEGORY_MAP.get(cog_name, "Other")
+            if category == "Other":
+                 # Try class name if cog name didn't match
+                 category = COG_CATEGORY_MAP.get(type(cog).__name__, "Other")
+
+            # Get App Commands from Cog
+            # Note: get_app_commands() returns the commands defined in the cog
+            if hasattr(cog, "get_app_commands"):
+                for cmd in cog.get_app_commands():
+                    if cmd.name not in seen_commands:
+                        if category not in help_data: help_data[category] = []
+                        help_data[category].append(cmd)
+                        seen_commands.add(cmd.name)
+
+            # Get Text Commands (Legacy)
+            if hasattr(cog, "get_commands"):
+                for cmd in cog.get_commands():
+                    if cmd.hidden: continue
+                    if not await self._can_run(cmd, ctx): continue
+
+                    if cmd.name not in seen_commands:
+                        if category not in help_data: help_data[category] = []
+                        help_data[category].append(cmd)
+                        seen_commands.add(cmd.name)
+
+        # 2. Iterate remaining App Commands (Slash + Context Menus) from Tree
+        # This catches top-level commands or those not properly linked to Cogs
         app_cmds = self.bot.tree.get_commands()
-
         for cmd in app_cmds:
-            # Determine Category
-            category = "Other"
-
-            # Check Binding (The Cog)
-            if cmd.binding:
-                cog_name = type(cmd.binding).__name__
-                category = COG_CATEGORY_MAP.get(cog_name, "Other")
-
             if cmd.name not in seen_commands:
-                if category not in help_data: help_data[category] = []
-                help_data[category].append(cmd)
-                seen_commands.add(cmd.name)
-
-        # 2. Iterate Text Commands (Legacy)
-        # Some commands might still be text-only (e.g. !sync)
-        for cmd in self.bot.commands:
-            if cmd.hidden: continue
-
-            # Permission check
-            if not await self._can_run(cmd, ctx):
-                continue
-
-            if cmd.name not in seen_commands:
-                # Determine Category
+                # Try to determine category from binding if present
                 category = "Other"
-                if cmd.cog:
-                    cog_name = cmd.cog.qualified_name
-                    # Try to map cog name, or use class name if needed
-                    # qualified_name is usually the class name
+                if cmd.binding:
+                    cog_name = type(cmd.binding).__name__
                     category = COG_CATEGORY_MAP.get(cog_name, "Other")
-                    # Also try class name if qualified name fails
-                    if category == "Other":
-                         category = COG_CATEGORY_MAP.get(type(cmd.cog).__name__, "Other")
 
                 if category not in help_data: help_data[category] = []
                 help_data[category].append(cmd)

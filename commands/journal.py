@@ -605,6 +605,64 @@ class JournalView(ui.View):
             self.delete_image_button.disabled = True
             self.delete_image_button.style = discord.ButtonStyle.secondary
 
+class ClueTargetSelect(ui.UserSelect):
+    def __init__(self, cog, original_entry, image_attachments):
+        super().__init__(placeholder="Select a player...", min_values=1, max_values=1)
+        self.cog = cog
+        self.original_entry = original_entry
+        self.image_attachments = image_attachments
+
+    async def callback(self, interaction: discord.Interaction):
+        target_user = self.values[0]
+        # Open modal for that user (using 'personal' mode but targeting them, effectively 'inspect' mode logic but for writing new entry)
+        # Wait, JournalEntryModal mode="personal" uses target_user_id or self.user.id
+        # If I am Admin giving to Player, I should use mode="personal" (it goes to their personal) and target_user_id = their ID.
+        # But JournalEntryModal logic says:
+        # if mode in ["personal", "inspect"]:
+        #    target = self.target_user_id or user_id
+        #    if self.mode == "inspect" and not admin: fail
+        # So I should use "inspect" mode to allow Admin to write to their journal?
+        # Or "personal" if I am the user.
+        # If I am Admin writing to THEIR journal, I need to pass permissions check.
+        # If I use "inspect", it requires Admin.
+        # So let's use "inspect" mode, which semantically means "Admin viewing/editing another's journal".
+
+        modal = JournalEntryModal(
+            self.cog,
+            mode="inspect",
+            target_user_id=str(target_user.id),
+            original_entry=self.original_entry,
+            title="Give Clue",
+            image_attachments=self.image_attachments
+        )
+        await interaction.response.send_modal(modal)
+
+class ClueDestinationView(ui.View):
+    def __init__(self, cog, original_entry, image_attachments):
+        super().__init__(timeout=60)
+        self.cog = cog
+        self.original_entry = original_entry
+        self.image_attachments = image_attachments
+
+    @discord.ui.button(label="Personal Journal", style=discord.ButtonStyle.primary, emoji="📓")
+    async def personal(self, interaction: discord.Interaction, button: discord.ui.Button):
+        modal = JournalEntryModal(self.cog, "personal", original_entry=self.original_entry, title="Save Clue", image_attachments=self.image_attachments)
+        await interaction.response.send_modal(modal)
+        self.stop()
+
+    @discord.ui.button(label="Master Journal", style=discord.ButtonStyle.gold, emoji="📜")
+    async def master(self, interaction: discord.Interaction, button: discord.ui.Button):
+        modal = JournalEntryModal(self.cog, "master", original_entry=self.original_entry, title="Save Clue", image_attachments=self.image_attachments)
+        await interaction.response.send_modal(modal)
+        self.stop()
+
+    @discord.ui.button(label="Give to Player", style=discord.ButtonStyle.success, emoji="🎁")
+    async def give(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # Replace view with user select
+        view = ui.View()
+        view.add_item(ClueTargetSelect(self.cog, self.original_entry, self.image_attachments))
+        await interaction.response.edit_message(content="Select a player to receive this clue:", view=view)
+
 class Journal(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -644,12 +702,16 @@ class Journal(commands.Cog):
             "content": content
         }
 
-        # Determine mode - default to Personal for clues
-        mode = "personal"
+        # Check for Admin permissions to offer advanced options
+        is_admin = interaction.user.guild_permissions.administrator
 
-        # Launch Modal
-        modal = JournalEntryModal(self, mode, target_user_id=None, original_entry=pre_filled_data, title="Save Clue", image_attachments=image_attachments)
-        await interaction.response.send_modal(modal)
+        if is_admin:
+             view = ClueDestinationView(self, pre_filled_data, image_attachments)
+             await interaction.response.send_message("Where should this clue be saved?", view=view, ephemeral=True)
+        else:
+             # Default to Personal
+             modal = JournalEntryModal(self, "personal", target_user_id=None, original_entry=pre_filled_data, title="Save Clue", image_attachments=image_attachments)
+             await interaction.response.send_modal(modal)
 
     @journal_group.command(name="open", description="Open your journal (Personal or Master).")
     async def open_journal(self, interaction: discord.Interaction):

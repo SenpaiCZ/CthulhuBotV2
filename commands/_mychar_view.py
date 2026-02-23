@@ -800,37 +800,37 @@ class CharacterDashboardView(View):
         con = self.char_data.get("CON", 0)
         siz = self.char_data.get("SIZ", 0)
         max_hp = (con + siz) // 10 if self.current_mode == "Call of Cthulhu" else (con + siz) // 5
-        hp_bar = get_health_bar(hp, max_hp)
+        hp_bar = get_health_bar(hp, max_hp, length=12)
         hp_status = ""
         if hp <= 2: hp_status = " **💀 DYING**"
         elif hp < (max_hp / 2): hp_status = " **🤕 MAJOR WOUND**"
 
-        vitals_text += f"❤️ **HP:** {hp}/{max_hp} {hp_bar}{hp_status}\n"
+        vitals_text += f"❤️ **HP:** {hp_bar} **{hp}/{max_hp}**{hp_status}\n"
 
         # MP
         mp = self.char_data.get("MP", 0)
         pow_stat = self.char_data.get("POW", 0)
         max_mp = pow_stat // 5
-        mp_bar = get_health_bar(mp, max_mp)
+        mp_bar = get_health_bar(mp, max_mp, length=12)
         mp_status = ""
         if mp <= 0: mp_status = " **💤 UNCONSCIOUS**"
         elif mp < 2: mp_status = " **🌑 DRAINED**"
 
-        vitals_text += f"✨ **MP:** {mp}/{max_mp} {mp_bar}{mp_status}\n"
+        vitals_text += f"✨ **MP:** {mp_bar} **{mp}/{max_mp}**{mp_status}\n"
 
         # SAN
         san = self.char_data.get("SAN", 0)
         mythos = self.char_data.get("Cthulhu Mythos", 0)
         max_san = 99 - mythos
-        san_bar = get_health_bar(san, max_san)
+        san_bar = get_health_bar(san, max_san, length=12)
         san_status = ""
         pow_val = self.char_data.get("POW", 0)
         if san <= pow_val // 5: san_status = " **🤪 INDEFINITE INSANITY?**"
         elif san < pow_val: san_status = " **📉 LOW SANITY**"
 
-        vitals_text += f"🧠 **SAN:** {san}/{max_san} {san_bar}{san_status}\n"
+        vitals_text += f"🧠 **SAN:** {san_bar} **{san}/{max_san}**{san_status}\n"
 
-        embed.add_field(name="❤️ Vitals", value=vitals_text, inline=True)
+        embed.add_field(name="❤️ Vitals", value=vitals_text, inline=False)
 
         # --- 4. Combat Stats (Move, Build, DB, Dodge) ---
         combat_text = ""
