@@ -405,7 +405,7 @@ function renderSoundUI() {
         const value = defaultSettings[key] || '';
 
         col.innerHTML = `
-            <label class="form-label text-info">${label}</label>
+            <label class="form-label text-info" for="default-${key}">${label}</label>
             <select class="form-select bg-secondary text-light border-secondary" id="default-${key}">
                 <option value="">(None)</option>
                 ${soundFiles.map(f => `<option value="${escapeHtml(f)}" ${f === value ? 'selected' : ''}>${escapeHtml(f)}</option>`).join('')}
@@ -434,10 +434,11 @@ function addSkillSoundRow(skillName = '', values = {}) {
     let dropdownsHtml = '';
     tierKeys.forEach((key, index) => {
         const val = values[key] || '';
+        const selectId = `${rowId}-${key}`;
         dropdownsHtml += `
             <div class="col-md-2 mb-2">
-                <label class="form-label small text-light">${tiers[index]}</label>
-                <select class="form-select form-select-sm bg-dark text-light border-secondary skill-tier-select" data-tier="${key}">
+                <label class="form-label small text-light" for="${selectId}">${tiers[index]}</label>
+                <select class="form-select form-select-sm bg-dark text-light border-secondary skill-tier-select" data-tier="${key}" id="${selectId}">
                     <option value="">(Default)</option>
                     ${soundFiles.map(f => `<option value="${escapeHtml(f)}" ${f === val ? 'selected' : ''}>${escapeHtml(f)}</option>`).join('')}
                 </select>
