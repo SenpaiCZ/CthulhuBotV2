@@ -107,6 +107,32 @@ async def add_security_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     return response
 
+@app.before_request
+async def check_csrf():
+    """
+    Sentinel: Mitigate CSRF by checking Origin and Referer headers for state-changing requests.
+    """
+    if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
+        if not session.get('logged_in'):
+            return
+
+        origin = request.headers.get('Origin')
+        referrer = request.headers.get('Referer')
+
+        # Construct trusted origin (scheme://host:port)
+        trusted_origin = f"{request.scheme}://{request.host}"
+
+        if origin:
+            if origin != trusted_origin:
+                abort(403, description="CSRF: Origin Mismatch")
+        elif referrer:
+            # Prevent prefix match vulnerability (e.g. trusted.com.evil.com)
+            if referrer != trusted_origin and not referrer.startswith(trusted_origin + "/"):
+                abort(403, description="CSRF: Referrer Mismatch")
+        else:
+            # Block requests with neither header
+            abort(403, description="CSRF: No Origin/Referer")
+
 # Helper to check login
 def is_admin():
     return session.get('logged_in', False)
