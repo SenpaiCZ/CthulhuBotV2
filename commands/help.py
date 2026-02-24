@@ -6,9 +6,8 @@ import traceback
 import random
 from rapidfuzz import process, fuzz
 
-# Mapping of Cog Names to Categories
-# Keys are the class name of the Cog (or the name passed to bot.add_cog)
-COG_CATEGORY_MAP = {
+# Mapping of Cog Names to Categories (Fallback)
+LEGACY_CATEGORY_MAP = {
     # Player
     "newinvestigator": "Player",
     "mycharacter": "Player",
@@ -180,7 +179,7 @@ class HelpView(View):
 
     def get_home_embed(self):
         embed = discord.Embed(
-            title="🐙 CthulhuBot Help",
+            title="🐙 CthulhuBot V2",
             description=(
                 "**Greetings, Investigator.**\n"
                 "The stars have aligned. Access the archives, manage your sanity, or consult the Keeper below.\n\n"
@@ -194,7 +193,8 @@ class HelpView(View):
         embed.add_field(name="📜 Codex", value="Browse monsters, spells, and items.", inline=True)
         embed.add_field(name="🐙 Keeper Tools", value="Loot, madness, and handouts.", inline=True)
 
-        embed.set_thumbnail(url=self.bot.user.avatar.url if self.bot.user.avatar else None)
+        if self.bot.user.avatar:
+             embed.set_thumbnail(url=self.bot.user.avatar.url)
         embed.set_footer(text=random.choice(GRIMOIRE_TIPS))
         return embed
 
@@ -235,7 +235,7 @@ class HelpView(View):
 
         embed = discord.Embed(
             title=f"{CATEGORY_EMOJIS.get(category, '')} {category} Commands",
-            color=discord.Color.blue()
+            color=discord.Color.dark_gold()
         )
 
         description = ""
@@ -332,6 +332,9 @@ class HelpView(View):
                 name = f"{prefix}{cmd.name}"
                 desc = getattr(cmd, "description", "No description.") or "No description."
                 if len(desc) > 80: desc = desc[:77] + "..."
+
+                # Make it clickable if it's a slash command (and we have an ID... wait, we don't have IDs easily)
+                # So plain text is safer.
                 desc_text += f"**`{name}`** - {desc}\n"
             embed.description = desc_text
         else:
@@ -343,27 +346,33 @@ class HelpView(View):
 class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Other"
 
     async def generate_help_data(self, ctx):
         """
         Generates a dictionary of Category -> List of Commands.
         Dynamically discovers commands based on bot.cogs and bot.tree.
         """
-        help_data = {cat: [] for cat in set(COG_CATEGORY_MAP.values())}
-        help_data["Other"] = [] # Ensure Other exists
+        help_data = {cat: [] for cat in set(LEGACY_CATEGORY_MAP.values())}
+        # Ensure categories exist
+        for cat in ["Player", "Codex", "Keeper", "Music", "Admin", "Other"]:
+             if cat not in help_data: help_data[cat] = []
 
         # Track seen commands to avoid duplicates (by name)
         seen_commands = set()
 
         # 1. Iterate over Cogs to get categorized commands
         for cog_name, cog in self.bot.cogs.items():
-            category = COG_CATEGORY_MAP.get(cog_name, "Other")
-            if category == "Other":
-                 # Try class name if cog name didn't match
-                 category = COG_CATEGORY_MAP.get(type(cog).__name__, "Other")
+            # Priority: Attribute -> Legacy Map -> Other
+            category = getattr(cog, "help_category", None)
+
+            if not category:
+                category = LEGACY_CATEGORY_MAP.get(cog_name, "Other")
+                if category == "Other":
+                     # Try class name if cog name didn't match
+                     category = LEGACY_CATEGORY_MAP.get(type(cog).__name__, "Other")
 
             # Get App Commands from Cog
-            # Note: get_app_commands() returns the commands defined in the cog
             if hasattr(cog, "get_app_commands"):
                 for cmd in cog.get_app_commands():
                     if cmd.name not in seen_commands:
@@ -383,15 +392,19 @@ class Help(commands.Cog):
                         seen_commands.add(cmd.name)
 
         # 2. Iterate remaining App Commands (Slash + Context Menus) from Tree
-        # This catches top-level commands or those not properly linked to Cogs
         app_cmds = self.bot.tree.get_commands()
         for cmd in app_cmds:
             if cmd.name not in seen_commands:
                 # Try to determine category from binding if present
                 category = "Other"
                 if cmd.binding:
-                    cog_name = type(cmd.binding).__name__
-                    category = COG_CATEGORY_MAP.get(cog_name, "Other")
+                    # Check if binding is a Cog instance
+                    if isinstance(cmd.binding, commands.Cog):
+                         cog = cmd.binding
+                         category = getattr(cog, "help_category", None) or LEGACY_CATEGORY_MAP.get(type(cog).__name__, "Other")
+                    else:
+                        cog_name = type(cmd.binding).__name__
+                        category = LEGACY_CATEGORY_MAP.get(cog_name, "Other")
 
                 if category not in help_data: help_data[category] = []
                 help_data[category].append(cmd)

@@ -9,6 +9,7 @@ from loadnsave import load_player_stats, load_settings
 class PrintCharacter(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Player"
         self.ctx_menu = app_commands.ContextMenu(
             name='Print Character',
             callback=self.print_character_menu,

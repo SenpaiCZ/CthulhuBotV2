@@ -9,6 +9,7 @@ class madness(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Keeper"
 
     @commands.hybrid_command(name="madness", description="Roll for a random madness effect.")
     @app_commands.describe(category="Choose a specific madness category or list options.")

@@ -101,6 +101,7 @@ class NPCActionView(View):
 class RandomNPC(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Keeper"
 
     def get_stat_emoji(self, stat_name):
         stat_emojis = {

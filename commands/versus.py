@@ -281,6 +281,7 @@ class VersusWizardView(View):
 class Versus(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Player"
 
     @app_commands.command(name="versus", description="Start an interactive opposed roll against another player.")
     @app_commands.describe(opponent="The player to challenge.")

@@ -573,6 +573,13 @@ class CharacterDashboardView(View):
              roll_btn.callback = self.roll_button_callback
              self.add_item(roll_btn)
 
+             # Quick Roll Button
+             quick_roll_btn = Button(label="Quick Roll", style=discord.ButtonStyle.primary, row=2, emoji="⚡")
+             async def quick_roll_callback(inter: discord.Interaction):
+                 await inter.response.send_modal(SkillSearchModal(self))
+             quick_roll_btn.callback = quick_roll_callback
+             self.add_item(quick_roll_btn)
+
         # Pagination Buttons (Only for Skills/Backstory if needed)
         if self.current_section == "skills":
             skill_list = self._get_skill_list()
@@ -784,53 +791,50 @@ class CharacterDashboardView(View):
                 lines.append(f"{emoji} **{attr}:** {val}")
             return "\n".join(lines)
 
-        col1_attrs = ["STR", "CON", "SIZ"]
-        col2_attrs = ["DEX", "APP", "EDU"]
-        col3_attrs = ["INT", "POW", "LUCK"]
+        # 2 Column Layout for Characteristics
+        col1_attrs = ["STR", "CON", "SIZ", "DEX"]
+        col2_attrs = ["APP", "EDU", "INT", "POW", "LUCK"]
 
-        embed.add_field(name="💪 Physical", value=format_attr(col1_attrs), inline=True)
-        embed.add_field(name="🏃 Agile/Social", value=format_attr(col2_attrs), inline=True)
-        embed.add_field(name="🧠 Mental/Power", value=format_attr(col3_attrs), inline=True)
+        embed.add_field(name="💪 Physical & Agility", value=format_attr(col1_attrs), inline=True)
+        embed.add_field(name="🧠 Mental & Social", value=format_attr(col2_attrs), inline=True)
 
         # --- 3. Vitals (HP, MP, SAN) with Status ---
-        vitals_text = ""
-
         # HP
         hp = self.char_data.get("HP", 0)
         con = self.char_data.get("CON", 0)
         siz = self.char_data.get("SIZ", 0)
         max_hp = (con + siz) // 10 if self.current_mode == "Call of Cthulhu" else (con + siz) // 5
-        hp_bar = get_health_bar(hp, max_hp, length=12)
+        hp_bar = get_health_bar(hp, max_hp, length=10)
         hp_status = ""
         if hp <= 2: hp_status = " **💀 DYING**"
-        elif hp < (max_hp / 2): hp_status = " **🤕 MAJOR WOUND**"
-
-        vitals_text += f"❤️ **HP:** {hp_bar} **{hp}/{max_hp}**{hp_status}\n"
+        elif hp < (max_hp / 2): hp_status = " **🤕 WOUND**"
 
         # MP
         mp = self.char_data.get("MP", 0)
         pow_stat = self.char_data.get("POW", 0)
         max_mp = pow_stat // 5
-        mp_bar = get_health_bar(mp, max_mp, length=12)
+        mp_bar = get_health_bar(mp, max_mp, length=10)
         mp_status = ""
-        if mp <= 0: mp_status = " **💤 UNCONSCIOUS**"
-        elif mp < 2: mp_status = " **🌑 DRAINED**"
-
-        vitals_text += f"✨ **MP:** {mp_bar} **{mp}/{max_mp}**{mp_status}\n"
+        if mp <= 0: mp_status = " **💤 SLEEP**"
+        elif mp < 2: mp_status = " **🌑 LOW**"
 
         # SAN
         san = self.char_data.get("SAN", 0)
         mythos = self.char_data.get("Cthulhu Mythos", 0)
         max_san = 99 - mythos
-        san_bar = get_health_bar(san, max_san, length=12)
+        san_bar = get_health_bar(san, max_san, length=10)
         san_status = ""
         pow_val = self.char_data.get("POW", 0)
-        if san <= pow_val // 5: san_status = " **🤪 INDEFINITE INSANITY?**"
-        elif san < pow_val: san_status = " **📉 LOW SANITY**"
+        if san <= pow_val // 5: san_status = " **🤪 INSANE**"
+        elif san < pow_val: san_status = " **📉 LOW**"
 
-        vitals_text += f"🧠 **SAN:** {san_bar} **{san}/{max_san}**{san_status}\n"
+        vitals_desc = (
+            f"❤️ **HP:**  {hp_bar} `{hp}/{max_hp}`{hp_status}\n"
+            f"✨ **MP:**  {mp_bar} `{mp}/{max_mp}`{mp_status}\n"
+            f"🧠 **SAN:** {san_bar} `{san}/{max_san}`{san_status}"
+        )
 
-        embed.add_field(name="❤️ Vitals", value=vitals_text, inline=False)
+        embed.add_field(name="📊 Vitals", value=vitals_desc, inline=False)
 
         # --- 4. Combat Stats (Move, Build, DB, Dodge) ---
         combat_text = ""

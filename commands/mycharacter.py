@@ -8,6 +8,7 @@ class mycharacter(commands.Cog):
 
   def __init__(self, bot):
     self.bot = bot
+    self.help_category = "Player"
     self.ctx_menu = app_commands.ContextMenu(
         name='Check Stats',
         callback=self.view_investigator_menu,
