@@ -69,6 +69,20 @@ app.bot = None  # Placeholder for the Discord bot instance
 
 @app.before_serving
 async def app_startup():
+    # Sentinel: Secure Default Password Check
+    settings = load_settings()
+    admin_password = settings.get('admin_password')
+
+    if not admin_password or admin_password == "changeme":
+        new_password = secrets.token_urlsafe(16)
+        settings['admin_password'] = new_password
+        await save_settings(settings)
+        print("\n" + "="*60)
+        print("🛡️  SECURITY ALERT: Default or weak admin password detected.")
+        print(f"🔑  A new secure password has been generated: {new_password}")
+        print("📝  This password has been updated in config.json.")
+        print("="*60 + "\n")
+
     global server_volumes
     loaded = await load_server_volumes()
     server_volumes.update(loaded)
