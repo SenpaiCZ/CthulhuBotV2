@@ -1,9 +1,10 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-from discord.ui import View, Select, Button
+from discord.ui import View, Select, Button, Modal, TextInput
 from loadnsave import load_player_stats
 import random
+from rapidfuzz import process, fuzz
 
 # --- Helper Logic ---
 
@@ -51,6 +52,73 @@ def get_roll_dice(mod):
 
 # --- Components ---
 
+class VersusSearchModal(Modal):
+    def __init__(self, view, target):
+        title = "Search Skill"
+        if target == "self": title = "Search Your Skill"
+        elif target == "opponent": title = "Search Opponent Skill"
+
+        super().__init__(title=title)
+        self.view = view
+        self.target = target # 'self' or 'opponent'
+
+        self.query = TextInput(
+            label="Skill Name",
+            placeholder="e.g. Spot Hidden, Brawl...",
+            min_length=2,
+            max_length=50
+        )
+        self.add_item(self.query)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        query = self.query.value
+
+        # Determine which stats to search
+        if self.target == "self":
+            stats = self.view.author_stats
+        else:
+            stats = self.view.opponent_stats
+
+        # Filter valid numeric stats
+        valid_keys = []
+        ignored_keys = [
+            "NAME", "Name", "Residence", "Occupation", "Game Mode",
+            "Archetype", "Archetype Info", "Backstory", "Custom Emojis",
+            "Age", "Move", "Build", "Damage Bonus", "Bonus Damage",
+            "CustomSkill", "CustomSkills", "CustomSkillss", "Occupation Info",
+            "HP", "MP", "SAN" # LUCK is handled
+        ]
+
+        for k, v in stats.items():
+            if k in ignored_keys: continue
+            if isinstance(v, (int, float)):
+                valid_keys.append(k)
+
+        # Ensure LUCK is explicitly allowed
+        if "LUCK" in stats and "LUCK" not in valid_keys:
+             valid_keys.append("LUCK")
+
+        choices = valid_keys
+
+        # Fuzzy search
+        extract = process.extractOne(query, choices, scorer=fuzz.WRatio)
+
+        if extract:
+            match_key, score, _ = extract
+            if score > 60:
+                # Update View
+                if self.target == "self":
+                    self.view.my_skill_name = match_key
+                    self.view.my_skill_val = stats[match_key]
+                else:
+                    self.view.opp_skill_name = match_key
+                    self.view.opp_skill_val = stats[match_key]
+
+                await self.view.update_view(interaction)
+                return
+
+        await interaction.response.send_message(f"❌ No matching skill found for '{query}'.", ephemeral=True)
+
 class SkillSelect(Select):
     def __init__(self, stats, placeholder, callback_func, row=0):
         # Filter stats for numeric values (skills)
@@ -60,12 +128,9 @@ class SkillSelect(Select):
             "Archetype", "Archetype Info", "Backstory", "Custom Emojis",
             "Age", "Move", "Build", "Damage Bonus", "Bonus Damage",
             "CustomSkill", "CustomSkills", "CustomSkillss", "Occupation Info",
-            "HP", "MP", "SAN", "LUCK" # Maybe handle luck separately? For now exclude derived.
-            # Actually LUCK is often rolled, so keep it? No, keep it out of main skill list usually, or put it at top.
-            # Let's include LUCK if present.
+            "HP", "MP", "SAN", "LUCK"
         ]
 
-        # Explicitly include LUCK if present
         if "LUCK" in stats:
             valid_stats.append(("LUCK", stats["LUCK"]))
 
@@ -112,23 +177,26 @@ class VersusWizardView(View):
     def setup_components(self):
         self.clear_items()
 
-        # Row 0: My Skill
+        # Row 0: My Skill Select
         self.add_item(SkillSelect(self.author_stats, "Select Your Skill...", self.on_my_skill_select, row=0))
 
-        # Row 1: Opponent Skill
+        # Row 1: Opponent Skill Select
         self.add_item(SkillSelect(self.opponent_stats, "Select Opponent's Skill...", self.on_opp_skill_select, row=1))
 
-        # Row 2: Modifiers (My Bonus/Penalty)
-        self.add_item(Button(label="My Bonus (+)", style=discord.ButtonStyle.success, custom_id="my_bonus", row=2))
-        self.add_item(Button(label="My Penalty (-)", style=discord.ButtonStyle.danger, custom_id="my_penalty", row=2))
+        # Row 2: Search Buttons
+        search_my = Button(label="Search My Skill", style=discord.ButtonStyle.secondary, emoji="🔍", custom_id="search_my", row=2)
+        search_opp = Button(label="Search Opponent Skill", style=discord.ButtonStyle.secondary, emoji="🔍", custom_id="search_opp", row=2)
+        self.add_item(search_my)
+        self.add_item(search_opp)
 
-        # Row 3: Modifiers (Opp Bonus/Penalty)
-        self.add_item(Button(label="Opp Bonus (+)", style=discord.ButtonStyle.success, custom_id="opp_bonus", row=3))
-        self.add_item(Button(label="Opp Penalty (-)", style=discord.ButtonStyle.danger, custom_id="opp_penalty", row=3))
+        # Row 3: Modifiers (Compact)
+        self.add_item(Button(label="My Bonus", style=discord.ButtonStyle.success, emoji="➕", custom_id="my_bonus", row=3))
+        self.add_item(Button(label="My Penalty", style=discord.ButtonStyle.danger, emoji="➖", custom_id="my_penalty", row=3))
+        self.add_item(Button(label="Opp Bonus", style=discord.ButtonStyle.success, emoji="➕", custom_id="opp_bonus", row=3))
+        self.add_item(Button(label="Opp Penalty", style=discord.ButtonStyle.danger, emoji="➖", custom_id="opp_penalty", row=3))
 
         # Row 4: Action
         roll_btn = Button(label="ROLL VERSUS", style=discord.ButtonStyle.primary, custom_id="roll", row=4, emoji="🎲")
-        # Disable roll until skills selected
         if not self.my_skill_name or not self.opp_skill_name:
             roll_btn.disabled = True
         self.add_item(roll_btn)
@@ -155,6 +223,13 @@ class VersusWizardView(View):
             await self.perform_roll(interaction)
             return
 
+        elif custom_id == "search_my":
+            await interaction.response.send_modal(VersusSearchModal(self, "self"))
+            return
+        elif custom_id == "search_opp":
+            await interaction.response.send_modal(VersusSearchModal(self, "opponent"))
+            return
+
         elif custom_id == "my_bonus":
             self.my_mod = min(2, self.my_mod + 1)
         elif custom_id == "my_penalty":
@@ -169,7 +244,12 @@ class VersusWizardView(View):
     async def update_view(self, interaction):
         self.setup_components()
         embed = self.get_embed()
-        await interaction.response.edit_message(embed=embed, view=self)
+
+        # If called from modal, we might need to edit original response differently
+        if interaction.response.is_done():
+             await interaction.edit_original_response(embed=embed, view=self)
+        else:
+             await interaction.response.edit_message(embed=embed, view=self)
 
     def get_embed(self):
         embed = discord.Embed(
@@ -205,7 +285,7 @@ class VersusWizardView(View):
         )
 
         if not self.my_skill_name or not self.opp_skill_name:
-            embed.set_footer(text="Select skills to proceed.")
+            embed.set_footer(text="Select or Search skills to proceed.")
         else:
             embed.set_footer(text="Ready to roll!")
 
@@ -246,7 +326,6 @@ class VersusWizardView(View):
         embed = discord.Embed(title=f"⚔️ Versus Result", color=result_color)
 
         def format_roll(user, skill, val, roll, label, tens, ones, mod):
-            dice_text = f"[{', '.join(map(str, tens))}] + {ones}"
             mod_text = ""
             if mod > 0: mod_text = f"(Bonus {mod})"
             elif mod < 0: mod_text = f"(Penalty {abs(mod)})"
@@ -283,23 +362,49 @@ class Versus(commands.Cog):
         self.bot = bot
         self.help_category = "Player"
 
+        # Context Menu
+        self.ctx_menu = app_commands.ContextMenu(
+            name='Challenge to Versus',
+            callback=self.challenge_context_menu,
+        )
+        self.bot.tree.add_command(self.ctx_menu)
+
+    def cog_unload(self):
+        self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
+
+    async def challenge_context_menu(self, interaction: discord.Interaction, member: discord.Member):
+        await self._start_versus(interaction, member)
+
     @app_commands.command(name="versus", description="Start an interactive opposed roll against another player.")
     @app_commands.describe(opponent="The player to challenge.")
     async def versus(self, interaction: discord.Interaction, opponent: discord.User):
         """
         Start an interactive opposed roll against another player.
         """
+        await self._start_versus(interaction, opponent)
+
+    async def _start_versus(self, interaction: discord.Interaction, opponent):
         # 1. Load Data
         server_id = str(interaction.guild_id)
         player_stats = await load_player_stats()
 
         # 2. Check Author
         if server_id not in player_stats or str(interaction.user.id) not in player_stats[server_id]:
-            return await interaction.response.send_message("❌ You don't have an investigator sheet! Use `/newinvestigator`.", ephemeral=True)
+            msg = "❌ You don't have an investigator sheet! Use `/newinvestigator`."
+            if interaction.response.is_done():
+                 await interaction.followup.send(msg, ephemeral=True)
+            else:
+                 await interaction.response.send_message(msg, ephemeral=True)
+            return
 
         # 3. Check Opponent
         if str(opponent.id) not in player_stats[server_id]:
-            return await interaction.response.send_message(f"❌ {opponent.display_name} doesn't have an investigator sheet!", ephemeral=True)
+            msg = f"❌ {opponent.display_name} doesn't have an investigator sheet!"
+            if interaction.response.is_done():
+                 await interaction.followup.send(msg, ephemeral=True)
+            else:
+                 await interaction.response.send_message(msg, ephemeral=True)
+            return
 
         author_stats = player_stats[server_id][str(interaction.user.id)]
         opponent_stats = player_stats[server_id][str(opponent.id)]
@@ -308,7 +413,10 @@ class Versus(commands.Cog):
         view = VersusWizardView(interaction.user, opponent, author_stats, opponent_stats)
         embed = view.get_embed()
 
-        await interaction.response.send_message(embed=embed, view=view)
+        if interaction.response.is_done():
+             await interaction.followup.send(embed=embed, view=view)
+        else:
+             await interaction.response.send_message(embed=embed, view=view)
 
 async def setup(bot):
     await bot.add_cog(Versus(bot))
