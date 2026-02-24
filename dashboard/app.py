@@ -1529,7 +1529,8 @@ async def save_prefix():
 @app.route('/admin/game_settings')
 async def admin_game_settings():
     if not is_admin(): return redirect(url_for('login'))
-    return await render_template('game_settings.html')
+    skills_data = await load_skills_data()
+    return await render_template('game_settings.html', skills=sorted(list(skills_data.keys())))
 
 @app.route('/api/game/settings/data')
 async def game_settings_data():
