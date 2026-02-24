@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
-from discord.ui import View, Button
+from discord.ui import View, Button, Modal, TextInput
 import random
 import asyncio
 import re
@@ -28,6 +28,69 @@ def calculate_tickets(karma):
     verification_percentage = k_val / (KARMA_VERIFICATION_HALF_THRESHOLD + k_val)
     tickets = math.ceil(PERCENTAGE_TO_TICKETS_MULTIPLIER * verification_percentage)
     return tickets
+
+class GiveawayCreationModal(Modal, title="Create Giveaway"):
+    giveaway_title = TextInput(label="Title", placeholder="e.g. Monthly Steam Key", max_length=100)
+    description = TextInput(label="Description", style=discord.TextStyle.paragraph, placeholder="Details about the prize...", required=False, max_length=1000)
+    duration = TextInput(label="Duration", placeholder="e.g. 10m, 1h, 2d", max_length=20)
+    prize_secret = TextInput(label="Prize Secret (Hidden)", style=discord.TextStyle.paragraph, placeholder="The key/code sent to winner...", required=True, max_length=1000)
+
+    def __init__(self, cog, ctx, default_title=None):
+        super().__init__()
+        self.cog = cog
+        self.ctx = ctx
+        if default_title:
+            self.giveaway_title.default = default_title
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # Parse duration
+        duration_str = self.duration.value
+        duration_seconds = self.cog.parse_duration(duration_str)
+
+        if not duration_seconds:
+            await interaction.response.send_message("❌ Invalid duration format. Use 10m, 1h, 2d etc.", ephemeral=True)
+            return
+
+        end_time = datetime.now(timezone.utc).timestamp() + duration_seconds
+        title = self.giveaway_title.value
+        desc = self.description.value
+        secret = self.prize_secret.value
+
+        # Create Embed
+        embed = discord.Embed(title=f"🎉 GIVEAWAY: {title}", description=desc, color=discord.Color.gold())
+        embed.add_field(name="Ends", value=f"<t:{int(end_time)}:R>", inline=False)
+        embed.add_field(name="How to win?", value="React with 🎉 to enter!\nKarma increases your chance to win!", inline=False)
+        embed.set_footer(text=f"Hosted by {interaction.user.display_name}")
+
+        try:
+            # Post to Channel
+            view = GiveawayView()
+            message = await interaction.channel.send(embed=embed, view=view)
+
+            # Save Data
+            data = await load_giveaway_data()
+            guild_id = str(interaction.guild_id)
+            if guild_id not in data:
+                data[guild_id] = {}
+
+            data[guild_id][str(message.id)] = {
+                "creator_id": interaction.user.id,
+                "channel_id": interaction.channel.id,
+                "title": title,
+                "description": desc,
+                "prize_secret": secret,
+                "status": "active",
+                "participants": [],
+                "end_time": end_time
+            }
+
+            await save_giveaway_data(data)
+
+            # Confirm to user
+            await interaction.response.send_message(f"✅ Giveaway created! [Jump to message]({message.jump_url})", ephemeral=True)
+
+        except Exception as e:
+            await interaction.response.send_message(f"Error creating giveaway: {e}", ephemeral=True)
 
 class GiveawayView(View):
     def __init__(self):
@@ -141,18 +204,19 @@ class Giveaway(commands.Cog):
     @commands.guild_only()
     async def create_giveaway(self, ctx, *, title: str = None):
         """
-        Create a new giveaway. The bot will DM you for details.
+        Create a new giveaway.
         Usage: !giveaway create [Title]
         """
-        # Handle interaction response
         if ctx.interaction:
-             await ctx.send("Check your DMs to set up the giveaway!", ephemeral=True)
-        else:
-             # Delete command message to clean up
-             try:
-                 await ctx.message.delete()
-             except:
-                 pass
+            modal = GiveawayCreationModal(self, ctx, default_title=title)
+            await ctx.interaction.response.send_modal(modal)
+            return
+
+        # Delete command message to clean up
+        try:
+            await ctx.message.delete()
+        except:
+            pass
 
         # Send DM
         try:
