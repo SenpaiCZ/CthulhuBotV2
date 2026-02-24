@@ -1,26 +1,104 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+from discord import ui
+
+
+class ReportBugModal(ui.Modal, title="Report a Bug"):
+    def __init__(self, bot, author, guild, context_message=None):
+        super().__init__()
+        self.bot = bot
+        self.author = author
+        self.guild = guild
+        self.context_message = context_message
+
+        # Add fields
+        self.bug_title = ui.TextInput(label="Bug Title", placeholder="Short summary...", max_length=100)
+        self.bug_desc = ui.TextInput(label="Description", style=discord.TextStyle.paragraph, placeholder="Detailed description...", max_length=1000)
+        self.bug_steps = ui.TextInput(label="Steps to Reproduce", style=discord.TextStyle.paragraph, placeholder="1. Do X\n2. See Y...", required=False, max_length=1000)
+
+        # Pre-fill context if any (e.g. from context menu)
+        if context_message:
+             content_preview = context_message.content
+             if len(content_preview) > 900:
+                 content_preview = content_preview[:900] + "..."
+             self.bug_desc.default = f"Context: {content_preview}"
+
+        self.add_item(self.bug_title)
+        self.add_item(self.bug_desc)
+        self.add_item(self.bug_steps)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        # Construct the report message
+        report_msg = (
+            f"**Bug Report** from {self.author} (ID: {self.author.id})\n"
+            f"**Server**: {self.guild} (ID: {self.guild.id})\n"
+            f"**Title**: {self.bug_title.value}\n"
+            f"**Description**: {self.bug_desc.value}\n"
+        )
+        if self.bug_steps.value:
+            report_msg += f"**Steps**: {self.bug_steps.value}"
+
+        if self.context_message:
+            report_msg += f"\n**Context Message ID**: {self.context_message.id}"
+            report_msg += f"\n**Context Channel**: {self.context_message.channel.mention}"
+
+        # Send to developer
+        dev_user = self.bot.get_user(214351769243877376)
+        if dev_user:
+            try:
+                await dev_user.send(report_msg)
+                await interaction.response.send_message("✅ Bug report sent successfully. Thank you!", ephemeral=True)
+            except discord.Forbidden:
+                await interaction.response.send_message("❌ Failed to send report: Developer DMs are closed.", ephemeral=True)
+            except Exception as e:
+                await interaction.response.send_message(f"❌ Error sending report: {e}", ephemeral=True)
+        else:
+            await interaction.response.send_message("❌ Developer not found. Please contact the bot owner directly.", ephemeral=True)
 
 
 class reportbug(commands.Cog):
 
   def __init__(self, bot):
     self.bot = bot
+    # Register Context Menu
+    self.ctx_menu = app_commands.ContextMenu(
+        name='Report Message',
+        callback=self.report_message_context,
+    )
+    self.bot.tree.add_command(self.ctx_menu)
+
+  def cog_unload(self):
+    self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
+
+  async def report_message_context(self, interaction: discord.Interaction, message: discord.Message):
+      modal = ReportBugModal(self.bot, interaction.user, interaction.guild, context_message=message)
+      await interaction.response.send_modal(modal)
 
   @commands.hybrid_command(description="Send a bug report to the bot creator.")
-  @app_commands.describe(message="The bug details")
-  async def reportbug(self, ctx, *, message: str):
+  @app_commands.describe(message="The bug details (optional - if omitted, opens a form)")
+  async def reportbug(self, ctx, *, message: str = None):
       """
-      `[p]reportbug message` - This sends a bug report message to the bot creator.
+      `[p]reportbug [message]` - This sends a bug report message to the bot creator.
+      If no message is provided, a form will open (Slash Command only).
       Please write as many details about the bug as possible for easier replication and fixing.
       """
-      user = self.bot.get_user(214351769243877376)  # Replace with your actual user ID
-      if user:
-          await user.send(f"Bug Report from {ctx.author} (Server: {ctx.guild}): {message}")
-          await ctx.send("Bug report sent. Thank you!")
+      if message:
+          # Legacy behavior
+          user = self.bot.get_user(214351769243877376)  # Replace with your actual user ID
+          if user:
+              report_content = f"Bug Report from {ctx.author} (Server: {ctx.guild}): {message}"
+              await user.send(report_content)
+              await ctx.send("Bug report sent. Thank you!", ephemeral=True)
+          else:
+              await ctx.send("Bug report couldn't be sent. Please make sure the bot's creator's user ID is correct.", ephemeral=True)
       else:
-          await ctx.send("Bug report couldn't be sent. Please make sure the bot's creator's user ID is correct.")
+          # Check if interaction
+          if ctx.interaction:
+              modal = ReportBugModal(self.bot, ctx.author, ctx.guild)
+              await ctx.interaction.response.send_modal(modal)
+          else:
+              await ctx.send("Please provide a message for the bug report: `!reportbug <your message>`")
 
 
 async def setup(bot):
