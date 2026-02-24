@@ -384,6 +384,7 @@ class LootCustomModal(Modal, title="Create Custom Loot"):
 class loot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Keeper"
 
     loot_group = app_commands.Group(name="loot", description="Loot related commands")
 

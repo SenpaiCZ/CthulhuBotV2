@@ -107,6 +107,7 @@ class RemoveSkillView(ui.View):
 class skills(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Player"
 
     @app_commands.command(name="addskill", description="Add a new custom skill to your character sheet.")
     async def addskill(self, interaction: discord.Interaction):

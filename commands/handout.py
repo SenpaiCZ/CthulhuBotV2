@@ -303,6 +303,7 @@ class HandoutTypeSelectView(discord.ui.View):
 class Handout(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Keeper"
 
     @commands.hybrid_command(description="Create a prop/handout (Newspaper, Telegram, Letter, Script, Morse).")
     @app_commands.describe(type="The type of handout to create")

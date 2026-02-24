@@ -533,6 +533,7 @@ class Roll(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Player"
         self.ctx_menu = app_commands.ContextMenu(
             name='Quick Roll',
             callback=self.quick_roll_context,

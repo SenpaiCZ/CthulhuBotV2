@@ -450,6 +450,7 @@ class ChaseActionsView(View):
 class ChaseCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Keeper"
         self.sessions = {} # guild_id -> channel_id -> ChaseSession
 
     async def cog_load(self):

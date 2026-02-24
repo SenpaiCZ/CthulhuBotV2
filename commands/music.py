@@ -34,6 +34,7 @@ FFMPEG_OPTIONS = {
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Music"
         # guild_id -> list of dicts {title, url, thumbnail, ...}
         self.queue = {}
         # guild_id -> current Track object

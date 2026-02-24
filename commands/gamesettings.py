@@ -6,6 +6,7 @@ from loadnsave import load_skill_settings, save_skill_settings
 class GameSettings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Admin"
 
     gamesettings_group = app_commands.Group(name="gamesettings", description="Manage game settings")
 

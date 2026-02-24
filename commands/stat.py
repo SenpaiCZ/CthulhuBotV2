@@ -71,6 +71,7 @@ class stat(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Player"
 
     async def check_limit(self, interaction, stat_key, new_value, limit, emoji_key):
         view = LimitCheckView(interaction.user, limit)

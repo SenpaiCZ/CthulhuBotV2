@@ -999,6 +999,7 @@ class FinishConfirmationView(View):
 class newinvestigator(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Player"
 
     @app_commands.command(name="newinvestigator", description="Starts the character creation wizard.")
     async def newinvestigator(self, interaction: discord.Interaction):

@@ -27,6 +27,7 @@ from dashboard.file_utils import sanitize_filename
 class Codex(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Codex"
         self.playwright = None
         self.browser = None
 
