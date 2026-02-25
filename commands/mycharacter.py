@@ -10,10 +10,10 @@ class mycharacter(commands.Cog):
     self.bot = bot
     self.help_category = "Player"
     self.ctx_menu = app_commands.ContextMenu(
-        name='Check Stats',
+        name='Manage Character',
         callback=self.view_investigator_menu,
     )
-    self.ctx_menu.description = "📊 View this investigator's stats and bio."
+    self.ctx_menu.description = "📊 View or manage this investigator's stats and bio."
     self.ctx_menu.binding = self
     self.bot.tree.add_command(self.ctx_menu)
 
@@ -68,8 +68,8 @@ class mycharacter(commands.Cog):
         mode_label = "Call of Cthulhu character"
 
     # Instantiate View
-    # Pass interaction.user so the dashboard is interactive for the caller
-    view = CharacterDashboardView(interaction.user, char_data, mode_label, current_mode, server_id)
+    # Pass interaction.user (viewer) AND user_id (owner)
+    view = CharacterDashboardView(interaction.user, user_id, char_data, mode_label, current_mode, server_id)
     
     # Send message with the initial Embed (Stats)
     await interaction.response.send_message(embed=view.get_embed(), view=view, ephemeral=True)
