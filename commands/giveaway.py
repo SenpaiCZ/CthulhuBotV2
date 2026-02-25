@@ -35,12 +35,9 @@ class GiveawayCreationModal(Modal, title="Create Giveaway"):
     duration = TextInput(label="Duration", placeholder="e.g. 10m, 1h, 2d", max_length=20)
     prize_secret = TextInput(label="Prize Secret (Hidden)", style=discord.TextStyle.paragraph, placeholder="The key/code sent to winner...", required=True, max_length=1000)
 
-    def __init__(self, cog, ctx, default_title=None):
+    def __init__(self, cog):
         super().__init__()
         self.cog = cog
-        self.ctx = ctx
-        if default_title:
-            self.giveaway_title.default = default_title
 
     async def on_submit(self, interaction: discord.Interaction):
         # Parse duration
@@ -64,7 +61,21 @@ class GiveawayCreationModal(Modal, title="Create Giveaway"):
 
         try:
             # Post to Channel
+            # We need to send the message to the channel where the command was invoked.
+            # interaction.channel should work if the command was invoked in a guild channel.
+
+            if not interaction.channel:
+                 await interaction.response.send_message("❌ Cannot post giveaway in DM.", ephemeral=True)
+                 return
+
             view = GiveawayView()
+
+            # We respond to the interaction first, then send the public message?
+            # Or just send the public message as a new message?
+            # User expects a public post.
+
+            await interaction.response.send_message(f"✅ Giveaway creating...", ephemeral=True)
+
             message = await interaction.channel.send(embed=embed, view=view)
 
             # Save Data
@@ -86,11 +97,14 @@ class GiveawayCreationModal(Modal, title="Create Giveaway"):
 
             await save_giveaway_data(data)
 
-            # Confirm to user
-            await interaction.response.send_message(f"✅ Giveaway created! [Jump to message]({message.jump_url})", ephemeral=True)
+            # Confirm to user (edit original response)
+            await interaction.edit_original_response(content=f"✅ Giveaway created! [Jump to message]({message.jump_url})")
 
         except Exception as e:
-            await interaction.response.send_message(f"Error creating giveaway: {e}", ephemeral=True)
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"Error creating giveaway: {e}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"Error creating giveaway: {e}", ephemeral=True)
 
 class GiveawayView(View):
     def __init__(self):
@@ -192,158 +206,22 @@ class Giveaway(commands.Cog):
 
         return total_seconds if total_seconds > 0 else None
 
-    @commands.hybrid_group(invoke_without_command=True, description="Manage Giveaways.")
-    async def giveaway(self, ctx):
+    # Define the command group
+    giveaway_group = app_commands.Group(name="giveaway", description="Manage Giveaways.")
+
+    @giveaway_group.command(name="create", description="Create a new giveaway.")
+    async def create_giveaway(self, interaction: discord.Interaction):
         """
-        🎉 Manage Giveaways.
+        Create a new giveaway via a popup form.
         """
-        await ctx.send_help(ctx.command)
+        modal = GiveawayCreationModal(self)
+        await interaction.response.send_modal(modal)
 
-    @giveaway.command(name="create", description="Create a new giveaway. The bot will DM you for details.")
-    @app_commands.describe(title="Title of the giveaway")
-    @commands.guild_only()
-    async def create_giveaway(self, ctx, *, title: str = None):
-        """
-        Create a new giveaway.
-        Usage: !giveaway create [Title]
-        """
-        if ctx.interaction:
-            modal = GiveawayCreationModal(self, ctx, default_title=title)
-            await ctx.interaction.response.send_modal(modal)
-            return
-
-        # Delete command message to clean up
-        try:
-            await ctx.message.delete()
-        except:
-            pass
-
-        # Send DM
-        try:
-            dm_channel = await ctx.author.create_dm()
-            await dm_channel.send(f"Let's set up your giveaway for **{ctx.guild.name}**!")
-        except discord.Forbidden:
-            # If we couldn't DM, we might have already responded via interaction or deleted msg.
-            # If interaction, we already sent "Check your DMs".
-            # If prefix, we deleted command.
-            # We should probably notify in channel if DM fails.
-            if not ctx.interaction:
-                await ctx.send("I can't DM you! Please enable DMs from server members.")
-            # If interaction, user got "Check your DMs" but nothing happened.
-            # We can't edit the ephemeral message easily here without storing it.
-            # Just return.
-            return
-
-        def check(m):
-            return m.author == ctx.author and m.channel == dm_channel
-
-        # 1. Title (if not provided)
-        if not title:
-            await dm_channel.send("What is the **Title** of the giveaway?")
-            try:
-                msg = await self.bot.wait_for('message', check=check, timeout=120)
-                title = msg.content
-            except asyncio.TimeoutError:
-                await dm_channel.send("Timeout. Giveaway creation cancelled.")
-                return
-
-        # 2. Description
-        description = ""
-        await dm_channel.send("Enter a **Description** (or type 'none' to skip):")
-        try:
-            msg = await self.bot.wait_for('message', check=check, timeout=120)
-            if msg.content.lower() != 'none':
-                description = msg.content
-        except asyncio.TimeoutError:
-            await dm_channel.send("Timeout. Giveaway creation cancelled.")
-            return
-
-        # 2.5 Duration
-        duration_seconds = None
-        end_time = None
-        await dm_channel.send("How long should the giveaway last? (e.g., 10m, 1h, 2d, or 'forever' for no limit)")
-        try:
-            msg = await self.bot.wait_for('message', check=check, timeout=120)
-            duration_str = msg.content
-            duration_seconds = self.parse_duration(duration_str)
-            if duration_seconds:
-                end_time = datetime.now(timezone.utc).timestamp() + duration_seconds
-        except asyncio.TimeoutError:
-            await dm_channel.send("Timeout. Giveaway creation cancelled.")
-            return
-
-        # 3. Prize Secret
-        prize_secret = ""
-        await dm_channel.send("Enter the **Prize Secret** (e.g., Steam Key, Code). This will be sent to the winner in DM.")
-        try:
-            msg = await self.bot.wait_for('message', check=check, timeout=120)
-            prize_secret = msg.content
-        except asyncio.TimeoutError:
-            await dm_channel.send("Timeout. Giveaway creation cancelled.")
-            return
-
-        # Confirmation
-        embed = discord.Embed(title=title, description=description, color=discord.Color.gold())
-        if end_time:
-            embed.add_field(name="Ends", value=f"<t:{int(end_time)}:R>", inline=False)
-        embed.set_footer(text=f"Hosted by {ctx.author.display_name}")
-
-        await dm_channel.send("Here is a preview. Type **yes** to post it to the channel where you started this command.", embed=embed)
-
-        try:
-            msg = await self.bot.wait_for('message', check=check, timeout=60)
-            if msg.content.lower() not in ['yes', 'y']:
-                await dm_channel.send("Cancelled.")
-                return
-        except asyncio.TimeoutError:
-            await dm_channel.send("Timeout. Cancelled.")
-            return
-
-        # Post to Guild Channel
-        try:
-            # Create Embed
-            embed = discord.Embed(title=f"🎉 GIVEAWAY: {title}", description=description, color=discord.Color.gold())
-            if description:
-                embed.description = description
-
-            if end_time:
-                embed.add_field(name="Ends", value=f"<t:{int(end_time)}:R>", inline=False)
-
-            embed.add_field(name="How to win?", value="React with 🎉 to enter!\nKarma increases your chance to win!", inline=False)
-            embed.set_footer(text=f"Hosted by {ctx.author.display_name}")
-
-            view = GiveawayView()
-            message = await ctx.channel.send(embed=embed, view=view)
-
-            # Save Data
-            data = await load_giveaway_data()
-            guild_id = str(ctx.guild.id)
-            if guild_id not in data:
-                data[guild_id] = {}
-
-            data[guild_id][str(message.id)] = {
-                "creator_id": ctx.author.id,
-                "channel_id": ctx.channel.id,
-                "title": title,
-                "description": description,
-                "prize_secret": prize_secret,
-                "status": "active",
-                "participants": [],
-                "end_time": end_time
-            }
-
-            await save_giveaway_data(data)
-            await dm_channel.send(f"Giveaway posted! [Jump to message]({message.jump_url})")
-
-        except Exception as e:
-            await dm_channel.send(f"Error posting giveaway: {e}")
-
-    @giveaway.command(name="end", description="End a giveaway and pick a winner.")
+    @giveaway_group.command(name="end", description="End a giveaway and pick a winner.")
     @app_commands.describe(message_link_or_id="The message link or ID of the giveaway")
-    async def end_giveaway(self, ctx, message_link_or_id: str):
+    async def end_giveaway(self, interaction: discord.Interaction, message_link_or_id: str):
         """
         End a giveaway and pick a winner.
-        Usage: !giveaway end <message_id_or_link>
         """
         # Extract ID
         message_id = message_link_or_id
@@ -352,17 +230,16 @@ class Giveaway(commands.Cog):
 
         # Call API method
         try:
-            success, msg = await self.api_end_giveaway(str(ctx.guild.id), message_id, requester=ctx.author)
-            await ctx.send(msg)
+            success, msg = await self.api_end_giveaway(str(interaction.guild.id), message_id, requester=interaction.user)
+            await interaction.response.send_message(msg)
         except Exception as e:
-             await ctx.send(f"Error: {e}")
+             await interaction.response.send_message(f"Error: {e}", ephemeral=True)
 
-    @giveaway.command(name="reroll", description="Reroll a winner for an ended giveaway.")
+    @giveaway_group.command(name="reroll", description="Reroll a winner for an ended giveaway.")
     @app_commands.describe(message_link_or_id="The message link or ID of the giveaway")
-    async def reroll_giveaway(self, ctx, message_link_or_id: str):
+    async def reroll_giveaway(self, interaction: discord.Interaction, message_link_or_id: str):
         """
         Reroll a winner for an ended giveaway.
-        Usage: !giveaway reroll <message_id_or_link>
         """
         # Extract ID
         message_id = message_link_or_id
@@ -371,23 +248,25 @@ class Giveaway(commands.Cog):
 
         # Call API method
         try:
-             success, msg = await self.api_reroll_giveaway(str(ctx.guild.id), message_id, requester=ctx.author)
+             success, msg = await self.api_reroll_giveaway(str(interaction.guild.id), message_id, requester=interaction.user)
              if not success:
-                 await ctx.send(msg)
+                 await interaction.response.send_message(msg, ephemeral=True)
+             else:
+                 await interaction.response.send_message(msg)
         except Exception as e:
-             await ctx.send(f"Error: {e}")
+             await interaction.response.send_message(f"Error: {e}", ephemeral=True)
 
-    @giveaway.command(name="list", description="List all active giveaways.")
-    @commands.has_permissions(administrator=True)
-    async def list_giveaways(self, ctx):
+    @giveaway_group.command(name="list", description="List all active giveaways.")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def list_giveaways(self, interaction: discord.Interaction):
         """
         List all active giveaways.
         """
         data = await load_giveaway_data()
-        guild_id = str(ctx.guild.id)
+        guild_id = str(interaction.guild.id)
 
         if guild_id not in data or not data[guild_id]:
-            await ctx.send("No giveaways found.")
+            await interaction.response.send_message("No giveaways found.", ephemeral=True)
             return
 
         embed = discord.Embed(title="Active Giveaways", color=discord.Color.blue())
@@ -400,9 +279,9 @@ class Giveaway(commands.Cog):
                 embed.add_field(name=gw["title"], value=f"[Link]({link}) - {len(gw['participants'])} entries", inline=False)
 
         if not found:
-            await ctx.send("No active giveaways.")
+            await interaction.response.send_message("No active giveaways.", ephemeral=True)
         else:
-            await ctx.send(embed=embed)
+            await interaction.response.send_message(embed=embed)
 
     async def pick_winner(self, guild_id, participants):
         """

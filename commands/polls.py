@@ -33,10 +33,9 @@ class PollModal(ui.Modal, title="Create New Poll"):
     question = ui.Label(text="Question", component=ui.TextInput(placeholder="What do you want to ask?", max_length=256))
     options = ui.Label(text="Options (one per line)", component=ui.TextInput(style=discord.TextStyle.paragraph, placeholder="Option 1\nOption 2\nOption 3", max_length=2000, required=True))
 
-    def __init__(self, cog, ctx):
+    def __init__(self, cog):
         super().__init__()
         self.cog = cog
-        self.ctx = ctx
 
     async def on_submit(self, interaction: discord.Interaction):
         # Parse options
@@ -51,7 +50,7 @@ class PollModal(ui.Modal, title="Create New Poll"):
             return
 
         # Proceed
-        await self.cog._create_poll_internal(self.ctx, self.question.component.value, parsed_options, interaction)
+        await self.cog._create_poll_internal(interaction, self.question.component.value, parsed_options)
 
 class Polls(commands.Cog):
     def __init__(self, bot):
@@ -110,7 +109,6 @@ class Polls(commands.Cog):
         question = poll_data.get('question', 'Poll')
         options = poll_data.get('options', [])
         votes = poll_data.get('votes', {})
-        creator_id = poll_data.get('creator_id')
 
         # Calculate results
         results = [0] * len(options)
@@ -139,31 +137,29 @@ class Polls(commands.Cog):
         embed.set_footer(text=f"Total Votes: {total_votes}")
         return embed
 
-    async def _create_poll_internal(self, ctx, question: str, option_list: list, interaction=None):
+    async def _create_poll_internal(self, interaction: discord.Interaction, question: str, option_list: list):
         """Internal helper to create poll from parsed data."""
-        # Check interaction status
-        # If called from Modal, interaction is provided and response needs to happen
-        # If called from command (hybrid), ctx handles sending message
 
         # Create initial embed
         embed = discord.Embed(title=f"📊 {question}", description="Setting up poll...", color=discord.Color.blurple())
 
-        msg = None
-        if interaction:
-             # If from Modal, interaction is the response object
+        # Check if interaction has been responded to (e.g. from modal submit which requires response)
+        # If from command with args, we haven't responded yet.
+        # If from Modal on_submit, we haven't responded yet unless we deferred.
+
+        if not interaction.response.is_done():
              await interaction.response.send_message(embed=embed)
              msg = await interaction.original_response()
         else:
-             # From Command
-             msg = await ctx.send(embed=embed)
+             msg = await interaction.followup.send(embed=embed, wait=True)
 
         poll_id = str(msg.id)
 
         # Initialize data
         poll_data = {
-            "channel_id": ctx.channel.id,
-            "guild_id": ctx.guild.id,
-            "creator_id": ctx.author.id,
+            "channel_id": interaction.channel.id,
+            "guild_id": interaction.guild.id,
+            "creator_id": interaction.user.id,
             "question": question,
             "options": option_list,
             "votes": {}
@@ -177,34 +173,31 @@ class Polls(commands.Cog):
         final_embed = self.create_poll_embed(poll_data)
         await msg.edit(embed=final_embed, view=view)
 
-    @commands.hybrid_command(description="Create a poll with multiple options.")
+    @app_commands.command(description="Create a poll with multiple options.")
     @app_commands.describe(question="The question to ask (leave blank for Modal)", options="Comma-separated options (leave blank for Modal)")
-    async def poll(self, ctx, question: str = None, *, options: str = None):
-        """📊 Create a poll. Usage: !poll "Question" Option1, Option2... OR just /poll for Modal."""
-
-        # Scenario 1: Slash Command with no arguments -> Launch Modal
-        if question is None and ctx.interaction:
-             await ctx.interaction.response.send_modal(PollModal(self, ctx))
+    async def poll(self, interaction: discord.Interaction, question: str = None, options: str = None):
+        """
+        📊 Create a poll.
+        """
+        # Scenario 1: Modal Trigger
+        if question is None:
+             await interaction.response.send_modal(PollModal(self))
              return
 
-        # Scenario 2: Arguments provided (Slash or Text)
+        # Scenario 2: Direct arguments
         if question:
              # Use default if options missing
              opt_str = options if options else "Yes, No"
              parsed_options = [opt.strip() for opt in opt_str.split(',') if opt.strip()]
 
              if len(parsed_options) < 2:
-                 await ctx.send("You need at least two options for a poll.", ephemeral=True)
+                 await interaction.response.send_message("You need at least two options for a poll.", ephemeral=True)
                  return
              if len(parsed_options) > 25:
-                 await ctx.send("Too many options (max 25).", ephemeral=True)
+                 await interaction.response.send_message("Too many options (max 25).", ephemeral=True)
                  return
 
-             await self._create_poll_internal(ctx, question, parsed_options)
-             return
-
-        # Scenario 3: Text Command with no arguments -> Show Usage
-        await ctx.send("Usage: `!poll \"Question\" Option1, Option2...` or use `/poll` for interactive mode.", ephemeral=True)
+             await self._create_poll_internal(interaction, question, parsed_options)
 
     # API Method for Dashboard
     async def create_poll_api(self, guild_id, channel_id, question, options):
