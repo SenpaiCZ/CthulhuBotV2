@@ -407,9 +407,36 @@ async def check_image():
 async def index():
     return await render_template('index.html')
 
+# Sentinel: Rate Limiting Storage
+_failed_login_attempts = {}
+
+def check_rate_limit(ip):
+    """Checks if an IP has exceeded the login rate limit (5 attempts per minute)."""
+    now = datetime.datetime.now().timestamp()
+    if ip in _failed_login_attempts:
+        # Clean up timestamps older than 60 seconds
+        _failed_login_attempts[ip] = [t for t in _failed_login_attempts[ip] if now - t < 60]
+        # Clean up empty entries to prevent memory leak
+        if not _failed_login_attempts[ip]:
+            del _failed_login_attempts[ip]
+        elif len(_failed_login_attempts[ip]) >= 5:
+            return False
+    return True
+
+def record_failed_attempt(ip):
+    """Records a failed login attempt for an IP."""
+    now = datetime.datetime.now().timestamp()
+    if ip not in _failed_login_attempts:
+        _failed_login_attempts[ip] = []
+    _failed_login_attempts[ip].append(now)
+
 @app.route('/login', methods=['GET', 'POST'])
 async def login():
     if request.method == 'POST':
+        # Sentinel: Rate Limiting Check
+        if not check_rate_limit(request.remote_addr):
+            return await render_template('login.html', error="Too many failed attempts. Please wait 1 minute.")
+
         form = await request.form
         password = form.get('password')
         settings = await load_settings_async()
@@ -420,8 +447,12 @@ async def login():
 
         if secrets.compare_digest(input_password, expected_password):
             session['logged_in'] = True
+            # Clear attempts on successful login
+            if request.remote_addr in _failed_login_attempts:
+                del _failed_login_attempts[request.remote_addr]
             return redirect(url_for('admin_dashboard'))
         else:
+            record_failed_attempt(request.remote_addr)
             return await render_template('login.html', error="Invalid Password")
     return await render_template('login.html')
 
