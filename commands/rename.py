@@ -9,7 +9,7 @@ class rename(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @app_commands.command(description="Change the name of your character.")
+  @app_commands.command(description="🏷️ Change the name of your character.")
   @app_commands.describe(new_name="The new name for your character")
   async def rename(self, interaction: discord.Interaction, new_name: str):
       """

@@ -584,7 +584,7 @@ class Combat(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="combat", description="Opens the combat dashboard.")
+    @app_commands.command(name="combat", description="⚔️ Opens the combat dashboard.")
     async def combat(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 

@@ -32,7 +32,7 @@ class ChangeLuck(commands.Cog):
         else:
             await interaction.response.send_message(f"❌ An error occurred: {str(error)}", ephemeral=True)
 
-    @app_commands.command(name="showluck", description="Show the luck threshold for the server.", extras={'help_category': 'Player'})
+    @app_commands.command(name="showluck", description="🍀 Show the luck threshold for the server.", extras={'help_category': 'Player'})
     @app_commands.guild_only()
     async def showluck(self, interaction: discord.Interaction):
         """

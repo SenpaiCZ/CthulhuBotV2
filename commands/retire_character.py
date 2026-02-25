@@ -45,7 +45,7 @@ class CharacterManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="retire", description="Retire your current character.")
+    @app_commands.command(name="retire", description="👋 Retire your current character.")
     async def retire(self, interaction: discord.Interaction):
         """Retire your current character."""
         server_id = str(interaction.guild_id)
@@ -75,7 +75,7 @@ class CharacterManagement(commands.Cog):
         else:
             await interaction.followup.send("Retirement cancelled.", ephemeral=True)
 
-    @app_commands.command(name="unretire", description="Unretire a character.")
+    @app_commands.command(name="unretire", description="🔙 Unretire a character.")
     async def unretire(self, interaction: discord.Interaction):
         """Unretire a character."""
         server_id = str(interaction.guild_id)

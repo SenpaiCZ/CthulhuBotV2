@@ -54,7 +54,7 @@ class generatebackstory(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @app_commands.command(name="generatebackstory", description="Generate random backstory for your investigator.")
+  @app_commands.command(name="generatebackstory", description="🎲 Generate random backstory for your investigator.")
   async def generatebackstory(self, interaction: discord.Interaction):
       """
       Generate random backstory for your investigator. This will not be saved.

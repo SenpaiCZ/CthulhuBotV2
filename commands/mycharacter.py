@@ -13,7 +13,7 @@ class mycharacter(commands.Cog):
         name='Check Stats',
         callback=self.view_investigator_menu,
     )
-    self.ctx_menu.description = "View this investigator's stats and bio."
+    self.ctx_menu.description = "📊 View this investigator's stats and bio."
     self.ctx_menu.binding = self
     self.bot.tree.add_command(self.ctx_menu)
 
@@ -23,7 +23,7 @@ class mycharacter(commands.Cog):
   async def view_investigator_menu(self, interaction: discord.Interaction, member: discord.Member):
       await self._show_character(interaction, member)
 
-  @app_commands.command(name="mycharacter", description="Show your investigator's stats, skills, backstory and inventory.")
+  @app_commands.command(name="mycharacter", description="🕵️ Show your investigator's stats, skills, backstory and inventory.")
   @app_commands.describe(member="The member whose character you want to see")
   async def mycharacter(self, interaction: discord.Interaction, member: discord.Member = None):
       await self._show_character(interaction, member)

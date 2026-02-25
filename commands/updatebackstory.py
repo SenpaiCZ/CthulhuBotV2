@@ -105,7 +105,7 @@ class updatebackstory(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="updatebackstory", description="Interactive wizard to update your character's backstory elements.")
+    @app_commands.command(name="updatebackstory", description="✍️ Interactive wizard to update your character's backstory elements.")
     async def updatebackstory(self, interaction: discord.Interaction):
         """
         Interactive wizard to update your character's backstory elements.

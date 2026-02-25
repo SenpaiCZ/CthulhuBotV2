@@ -107,7 +107,7 @@ class stat(commands.Cog):
             else: # Timeout
                 await msg.edit(content=f"Timed out. Calculation for **{stat_name}** skipped.", view=None)
 
-    @app_commands.command(description="Change the value of a skill or stat for your character.")
+    @app_commands.command(description="📈 Change the value of a skill or stat for your character.")
     @app_commands.describe(stat_name="The name of the stat/skill (e.g. HP, STR, Spot Hidden)", value="The new value (e.g. 50) or change (e.g. +5, -5)")
     async def stat(self, interaction: discord.Interaction, stat_name: str, value: str):
         """

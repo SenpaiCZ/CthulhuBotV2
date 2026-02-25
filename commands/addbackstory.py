@@ -87,7 +87,7 @@ class addbackstory(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="addbackstory", description="Add a record to your backstory or inventory interactively.")
+    @app_commands.command(name="addbackstory", description="📝 Add a record to your backstory or inventory interactively.")
     async def addbackstory(self, interaction: discord.Interaction):
         """
         Add a record to your backstory or inventory interactively.

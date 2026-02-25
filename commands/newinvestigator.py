@@ -1001,7 +1001,7 @@ class newinvestigator(commands.Cog):
         self.bot = bot
         self.help_category = "Player"
 
-    @app_commands.command(name="newinvestigator", description="Starts the character creation wizard.")
+    @app_commands.command(name="newinvestigator", description="🆕 Starts the character creation wizard.")
     async def newinvestigator(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         player_stats = await load_player_stats()

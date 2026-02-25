@@ -109,14 +109,14 @@ class skills(commands.Cog):
         self.bot = bot
         self.help_category = "Player"
 
-    @app_commands.command(name="addskill", description="Add a new custom skill to your character sheet.")
+    @app_commands.command(name="addskill", description="✨ Add a new custom skill to your character sheet.")
     async def addskill(self, interaction: discord.Interaction):
         if interaction.guild is None:
             await interaction.response.send_message("This command is not allowed in DMs.", ephemeral=True)
             return
         await interaction.response.send_modal(AddSkillModal(self.bot))
 
-    @app_commands.command(name="removeskill", description="Remove a skill from your character sheet.")
+    @app_commands.command(name="removeskill", description="❌ Remove a skill from your character sheet.")
     @app_commands.describe(skill_name="The name of the skill to remove")
     async def removeskill(self, interaction: discord.Interaction, skill_name: str):
         if interaction.guild is None:

@@ -367,7 +367,7 @@ class Versus(commands.Cog):
             name='Challenge to Versus',
             callback=self.challenge_context_menu,
         )
-        self.ctx_menu.description = "Start an opposed roll against this player."
+        self.ctx_menu.description = "⚔️ Start an opposed roll against this player."
         self.ctx_menu.binding = self
         self.bot.tree.add_command(self.ctx_menu)
 
@@ -377,7 +377,7 @@ class Versus(commands.Cog):
     async def challenge_context_menu(self, interaction: discord.Interaction, member: discord.Member):
         await self._start_versus(interaction, member)
 
-    @app_commands.command(name="versus", description="Start an interactive opposed roll against another player.")
+    @app_commands.command(name="versus", description="⚔️ Start an interactive opposed roll against another player.")
     @app_commands.describe(opponent="The player to challenge.")
     async def versus(self, interaction: discord.Interaction, opponent: discord.User):
         """

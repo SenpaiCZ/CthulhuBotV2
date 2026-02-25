@@ -571,7 +571,7 @@ class Roll(commands.Cog):
             name='Quick Roll',
             callback=self.quick_roll_context,
         )
-        self.ctx_menu.description = "Quickly roll a skill for this character."
+        self.ctx_menu.description = "🎲 Quickly roll a skill for this character."
         self.ctx_menu.binding = self
         self.bot.tree.add_command(self.ctx_menu)
 
@@ -655,7 +655,7 @@ class Roll(commands.Cog):
         results = process.extract(clean_expression, choices, scorer=fuzz.WRatio, limit=5, score_cutoff=60)
         return [res[0] for res in results]
 
-    @app_commands.command(name="roll", description="Perform a dice roll or skill check.")
+    @app_commands.command(name="roll", description="🎲 Perform a dice roll or skill check.")
     @app_commands.describe(
         dice_expression="The dice expression (e.g. 3d6) or skill name (e.g. Spot Hidden)",
         bonus="Number of Bonus Dice (0-2)",
