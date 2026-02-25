@@ -5,16 +5,16 @@ from loadnsave import load_names_data
 
 
 class RandomNameView(discord.ui.View):
-    def __init__(self, ctx, cog, region="english"):
+    def __init__(self, user, cog, region="english"):
         super().__init__(timeout=60)
-        self.ctx = ctx
+        self.user = user
         self.cog = cog
         self.region = region
         self.message = None
 
     async def _generate_name(self, interaction, gender):
         # Allow only the author to select
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
             await interaction.response.send_message("This isn't for you!", ephemeral=True)
             return
 
@@ -82,8 +82,9 @@ class randomname(commands.Cog):
 
   def __init__(self, bot):
     self.bot = bot
+    self.help_category = "Keeper"
 
-  @commands.hybrid_command(name="randomname", aliases=["rname"], description="Generate a random name from the 1920s era.")
+  @app_commands.command(name="randomname", description="Generate a random name from the 1920s era.")
   @app_commands.describe(region="Choose a region for the name origin")
   @app_commands.choices(region=[
       app_commands.Choice(name="English & American", value="english"),
@@ -96,21 +97,18 @@ class randomname(commands.Cog):
       app_commands.Choice(name="Chinese", value="chinese"),
       app_commands.Choice(name="Japanese", value="japanese")
   ])
-  async def randomname(self, ctx, region: str = "english"):
+  async def randomname(self, interaction: discord.Interaction, region: str = "english"):
     """
     Generate a random name from the 1920s era.
     """
-    view = RandomNameView(ctx, self, region)
-    ephemeral = False
-    if ctx.interaction:
-        ephemeral = True
+    view = RandomNameView(interaction.user, self, region)
     
     region_display = region.capitalize()
     if region == "english":
         region_display = "English & American"
 
-    msg = await ctx.send(f"Select gender for random {region_display} name:", view=view, ephemeral=ephemeral)
-    view.message = msg
+    await interaction.response.send_message(f"Select gender for random {region_display} name:", view=view, ephemeral=True)
+    view.message = await interaction.original_response()
 
 
 async def setup(bot):

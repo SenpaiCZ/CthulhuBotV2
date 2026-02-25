@@ -7,6 +7,7 @@ from commands._backstory_common import BackstoryView
 class removebackstory(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Player"
 
     @app_commands.command(name="removebackstory", description="Interactive wizard to remove items from your character's backstory.")
     async def removebackstory(self, interaction: discord.Interaction):
