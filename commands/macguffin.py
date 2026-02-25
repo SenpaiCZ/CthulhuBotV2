@@ -1,17 +1,17 @@
 import discord, random
+from discord import app_commands
 from discord.ext import commands
 from loadnsave import load_macguffin_data
 
 
 class MacGuffinView(discord.ui.View):
-    def __init__(self, ctx):
+    def __init__(self, user):
         super().__init__(timeout=60)
-        self.ctx = ctx
-        self.message = None
+        self.user = user
 
     @discord.ui.button(label="Random MacGuffin", style=discord.ButtonStyle.success)
     async def random_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
             await interaction.response.send_message("This isn't for you!", ephemeral=True)
             return
 
@@ -29,7 +29,7 @@ class MacGuffinView(discord.ui.View):
 
     @discord.ui.button(label="List All", style=discord.ButtonStyle.secondary)
     async def list_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
             await interaction.response.send_message("This isn't for you!", ephemeral=True)
             return
 
@@ -46,11 +46,6 @@ class MacGuffinView(discord.ui.View):
         self.stop()
 
     async def on_timeout(self):
-        if self.message:
-            try:
-                await self.message.edit(content="Timed out.", view=None)
-            except:
-                pass
         self.stop()
 
 
@@ -59,18 +54,13 @@ class macguffin(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @commands.hybrid_command(description="Outputs a random MacGuffin or lists options.")
-  async def macguffin(self, ctx):
+  @app_commands.command(name="macguffin", description="Outputs a random MacGuffin or lists options.")
+  async def macguffin(self, interaction: discord.Interaction):
     """
-    `[p]macguffin` - outputs random macguffin.
+    Outputs a random MacGuffin or lists options.
     """
-    view = MacGuffinView(ctx)
-    ephemeral = False
-    if ctx.interaction:
-        ephemeral = True
-
-    msg = await ctx.send("Choose an option:", view=view, ephemeral=ephemeral)
-    view.message = msg
+    view = MacGuffinView(interaction.user)
+    await interaction.response.send_message("Choose an option:", view=view, ephemeral=True)
 
 
 async def setup(bot):
