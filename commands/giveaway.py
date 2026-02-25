@@ -207,9 +207,9 @@ class Giveaway(commands.Cog):
         return total_seconds if total_seconds > 0 else None
 
     # Define the command group
-    giveaway_group = app_commands.Group(name="giveaway", description="Manage Giveaways.")
+    giveaway_group = app_commands.Group(name="giveaway", description="🎉 Manage Giveaways.")
 
-    @giveaway_group.command(name="create", description="Create a new giveaway.")
+    @giveaway_group.command(name="create", description="➕ Create a new giveaway.")
     async def create_giveaway(self, interaction: discord.Interaction):
         """
         Create a new giveaway via a popup form.
@@ -217,7 +217,7 @@ class Giveaway(commands.Cog):
         modal = GiveawayCreationModal(self)
         await interaction.response.send_modal(modal)
 
-    @giveaway_group.command(name="end", description="End a giveaway and pick a winner.")
+    @giveaway_group.command(name="end", description="🛑 End a giveaway and pick a winner.")
     @app_commands.describe(message_link_or_id="The message link or ID of the giveaway")
     async def end_giveaway(self, interaction: discord.Interaction, message_link_or_id: str):
         """
@@ -235,7 +235,7 @@ class Giveaway(commands.Cog):
         except Exception as e:
              await interaction.response.send_message(f"Error: {e}", ephemeral=True)
 
-    @giveaway_group.command(name="reroll", description="Reroll a winner for an ended giveaway.")
+    @giveaway_group.command(name="reroll", description="🔄 Reroll a winner for an ended giveaway.")
     @app_commands.describe(message_link_or_id="The message link or ID of the giveaway")
     async def reroll_giveaway(self, interaction: discord.Interaction, message_link_or_id: str):
         """
@@ -256,7 +256,7 @@ class Giveaway(commands.Cog):
         except Exception as e:
              await interaction.response.send_message(f"Error: {e}", ephemeral=True)
 
-    @giveaway_group.command(name="list", description="List all active giveaways.")
+    @giveaway_group.command(name="list", description="📃 List all active giveaways.")
     @app_commands.checks.has_permissions(administrator=True)
     async def list_giveaways(self, interaction: discord.Interaction):
         """

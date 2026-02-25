@@ -8,7 +8,7 @@ class Ping(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="ping", description="Check bot latency and API response time.")
+    @app_commands.command(name="ping", description="🏓 Check bot latency and API response time.")
     async def ping(self, interaction: discord.Interaction):
         """
         Check bot latency and API response time.

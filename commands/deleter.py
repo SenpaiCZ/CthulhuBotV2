@@ -13,7 +13,7 @@ class Deleter(commands.Cog, name="deleter"):
     def cog_unload(self):
         self.autodelete_task.cancel()
 
-    autodeleter_group = app_commands.Group(name="autodeleter", description="Manage auto-deletion")
+    autodeleter_group = app_commands.Group(name="autodeleter", description="🗑️ Manage auto-deletion")
 
     def parse_time_limit(self, time_limit):
         try:
@@ -31,7 +31,7 @@ class Deleter(commands.Cog, name="deleter"):
         except ValueError:
             return None
 
-    @autodeleter_group.command(name="set", description="Enable auto-deletion for a channel.")
+    @autodeleter_group.command(name="set", description="✅ Enable auto-deletion for a channel.")
     @app_commands.describe(time_limit="Time limit (e.g., '1d', '2h', '30m')", channel="Channel to set (defaults to current)")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def set_deleter(self, interaction: discord.Interaction, time_limit: str, channel: discord.TextChannel = None):
@@ -58,7 +58,7 @@ class Deleter(commands.Cog, name="deleter"):
         time_str = str(timedelta(seconds=seconds))
         await interaction.response.send_message(f"Auto-deleter active for {target_channel.mention}. Messages older than {time_str} will be deleted.")
 
-    @autodeleter_group.command(name="stop", description="Stop auto-deletion for a channel.")
+    @autodeleter_group.command(name="stop", description="🛑 Stop auto-deletion for a channel.")
     @app_commands.describe(channel="Channel to stop (defaults to current)")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def stop_deleter(self, interaction: discord.Interaction, channel: discord.TextChannel = None):
@@ -75,7 +75,7 @@ class Deleter(commands.Cog, name="deleter"):
         else:
             await interaction.response.send_message(f"Auto-deleter is not active in {target_channel.mention}.", ephemeral=True)
 
-    @app_commands.command(name="purge", description="Delete the last X messages in the channel.")
+    @app_commands.command(name="purge", description="🧹 Delete the last X messages in the channel.")
     @app_commands.describe(amount="Number of messages to delete")
     @app_commands.checks.has_permissions(manage_messages=True)
     async def purge(self, interaction: discord.Interaction, amount: int):

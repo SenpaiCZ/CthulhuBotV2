@@ -8,7 +8,7 @@ class ChangeLuck(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="changeluck", description="Change how much luck players can spend to make a successful roll.")
+    @app_commands.command(name="changeluck", description="🍀 Change how much luck players can spend to make a successful roll.")
     @app_commands.describe(luck="The maximum luck points players can spend (0 to disable).")
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.guild_only()

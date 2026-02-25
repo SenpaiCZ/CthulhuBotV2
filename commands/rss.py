@@ -277,7 +277,7 @@ class rss(commands.Cog):
 
       return embed
 
-  @app_commands.command(description="Add an RSS subscription or YouTube channel to the current channel.")
+  @app_commands.command(description="📰 Add an RSS subscription or YouTube channel to the current channel.")
   @app_commands.describe(link="The URL of the RSS feed or YouTube channel/video")
   @app_commands.checks.has_permissions(administrator=True)
   async def rss(self, interaction: discord.Interaction, link: str):
@@ -350,7 +350,7 @@ class rss(commands.Cog):
       except Exception as e:
           await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
 
-  @app_commands.command(description="Wizard to setup a new RSS feed or YouTube subscription.")
+  @app_commands.command(description="🧙‍♂️ Wizard to setup a new RSS feed or YouTube subscription.")
   @app_commands.checks.has_permissions(administrator=True)
   async def rsssetup(self, interaction: discord.Interaction):
       """
