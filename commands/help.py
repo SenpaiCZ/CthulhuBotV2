@@ -15,13 +15,23 @@ LEGACY_CATEGORY_MAP = {
     "stat": "Player",
     "Backstory": "Player",
     "Session": "Player",
-    "Retire": "Player",
-    "DeleteInvestigator": "Player",
+    "Retire": "Player", # Legacy text command
+    "DeleteInvestigator": "Player", # Legacy text command
     "PrintCharacter": "Player",
     "Versus": "Player",
     "AddSkill": "Player",
-    "Rename": "Player",
-    "RenameSkill": "Player",
+    "Rename": "Player", # Legacy
+    "RenameSkill": "Player", # Legacy
+
+    # New Player Mappings
+    "addbackstory": "Player",
+    "Combat": "Player",
+    "deleteinvestigator": "Player",
+    "rename": "Player",
+    "renameskill": "Player",
+    "CharacterManagement": "Player", # retire, unretire
+    "updatebackstory": "Player",
+    "generatebackstory": "Player",
 
     # Codex
     "Codex": "Codex",
@@ -34,6 +44,7 @@ LEGACY_CATEGORY_MAP = {
     "RandomNPC": "Keeper",
     "RandomName": "Keeper",
     "Chase": "Keeper",
+    "macguffin": "Keeper", # New mapping for Keeper command
 
     # Music
     "Music": "Music",
@@ -41,14 +52,25 @@ LEGACY_CATEGORY_MAP = {
     # Admin
     "Admin": "Admin",
     "Enroll": "Admin",
-    "AutoRoom": "Admin",
-    "ReactionRole": "Admin",
-    "GameRoles": "Admin",
-    "RSS": "Admin",
+    "AutoRoom": "Admin", # Legacy
+    "ReactionRole": "Admin", # Legacy
+    "GameRoles": "Admin", # Legacy
+    "RSS": "Admin", # Legacy
     "Karma": "Admin",
     "Ping": "Admin",
     "Restart": "Admin",
     "UpdateBot": "Admin",
+
+    # New Admin Mappings
+    "Deleter": "Admin",
+    "Autoroom": "Admin",
+    "backup": "Admin",
+    "GamerRoles": "Admin",
+    "ReactionRoles": "Admin",
+    "rss": "Admin",
+    "smartreaction": "Admin",
+    "BotStatus": "Admin",
+    "ChangeLuck": "Admin", # Command override for showluck handles Player cat
 
     # Other
     "Help": "Other",
@@ -369,20 +391,25 @@ class Help(commands.Cog):
         # 1. Iterate over Cogs to get categorized commands
         for cog_name, cog in self.bot.cogs.items():
             # Priority: Attribute -> Legacy Map -> Other
-            category = getattr(cog, "help_category", None)
+            cog_category = getattr(cog, "help_category", None)
 
-            if not category:
-                category = LEGACY_CATEGORY_MAP.get(cog_name, "Other")
-                if category == "Other":
+            if not cog_category:
+                cog_category = LEGACY_CATEGORY_MAP.get(cog_name, "Other")
+                if cog_category == "Other":
                      # Try class name if cog name didn't match
-                     category = LEGACY_CATEGORY_MAP.get(type(cog).__name__, "Other")
+                     cog_category = LEGACY_CATEGORY_MAP.get(type(cog).__name__, "Other")
 
             # Get App Commands from Cog
             if hasattr(cog, "get_app_commands"):
                 for cmd in cog.get_app_commands():
+                    # Determine command category: Check for override via extras, else use cog category
+                    cmd_category = cog_category
+                    if hasattr(cmd, "extras") and "help_category" in cmd.extras:
+                         cmd_category = cmd.extras["help_category"]
+
                     if cmd.name not in seen_commands:
-                        if category not in help_data: help_data[category] = []
-                        help_data[category].append(cmd)
+                        if cmd_category not in help_data: help_data[cmd_category] = []
+                        help_data[cmd_category].append(cmd)
                         seen_commands.add(cmd.name)
 
             # Get Text Commands (Legacy)
@@ -391,9 +418,12 @@ class Help(commands.Cog):
                     if cmd.hidden: continue
                     if not await self._can_run(cmd, ctx): continue
 
+                    # Text commands usually don't have extras in the same way, but check anyway if needed
+                    # For now, stick to cog category
+
                     if cmd.name not in seen_commands:
-                        if category not in help_data: help_data[category] = []
-                        help_data[category].append(cmd)
+                        if cog_category not in help_data: help_data[cog_category] = []
+                        help_data[cog_category].append(cmd)
                         seen_commands.add(cmd.name)
 
         # 2. Iterate remaining App Commands (Slash + Context Menus) from Tree
@@ -402,15 +432,20 @@ class Help(commands.Cog):
             if cmd.name not in seen_commands:
                 # Try to determine category from binding if present
                 category = "Other"
-                binding = getattr(cmd, "binding", None)
-                if binding:
-                    # Check if binding is a Cog instance
-                    if isinstance(binding, commands.Cog):
-                         cog = binding
-                         category = getattr(cog, "help_category", None) or LEGACY_CATEGORY_MAP.get(type(cog).__name__, "Other")
-                    else:
-                        cog_name = type(binding).__name__
-                        category = LEGACY_CATEGORY_MAP.get(cog_name, "Other")
+
+                # Check extras first for tree commands
+                if hasattr(cmd, "extras") and "help_category" in cmd.extras:
+                     category = cmd.extras["help_category"]
+                else:
+                    binding = getattr(cmd, "binding", None)
+                    if binding:
+                        # Check if binding is a Cog instance
+                        if isinstance(binding, commands.Cog):
+                             cog = binding
+                             category = getattr(cog, "help_category", None) or LEGACY_CATEGORY_MAP.get(type(cog).__name__, "Other")
+                        else:
+                            cog_name = type(binding).__name__
+                            category = LEGACY_CATEGORY_MAP.get(cog_name, "Other")
 
                 if category not in help_data: help_data[category] = []
                 help_data[category].append(cmd)
