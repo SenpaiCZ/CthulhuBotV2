@@ -411,6 +411,15 @@ class ItemActionsView(View):
         self.index = index
         self.add_item(GiveUserSelect(self, category, item_str, index))
 
+    @discord.ui.button(label="Show", style=discord.ButtonStyle.secondary, emoji="👁️", row=1)
+    async def show_item(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            description=f"🕵️ {interaction.user.mention} reveals an item:\n\n**{get_emoji_for_item(self.item_str)} {self.item_str}**\n*({self.category})*",
+            color=discord.Color.gold()
+        )
+        await interaction.channel.send(embed=embed)
+        await interaction.response.send_message("✅ Item shown to chat.", ephemeral=True)
+
     @discord.ui.button(label="Edit", style=discord.ButtonStyle.primary, emoji="✏️", row=1)
     async def edit(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = EditItemModal(self.dashboard_view, self.category, self.index, self.item_str)
@@ -551,7 +560,7 @@ class CharacterDashboardView(View):
     def update_components(self):
         self.clear_items()
 
-        # Section Selector
+        # Row 0: Navigation
         select = Select(
             placeholder="Navigate Character Sheet",
             options=[
@@ -564,24 +573,11 @@ class CharacterDashboardView(View):
         select.callback = self.select_callback
         self.add_item(select)
 
-        # Quick Update & Roll (Only for Stats)
+        # Row 1: Context Specific
         if self.current_section == "stats":
              self.add_item(QuickUpdateSelect(self))
 
-             # Roll Button
-             roll_btn = Button(label="Roll Skill", style=discord.ButtonStyle.success, row=2, emoji="🎲")
-             roll_btn.callback = self.roll_button_callback
-             self.add_item(roll_btn)
-
-             # Quick Roll Button
-             quick_roll_btn = Button(label="Quick Roll", style=discord.ButtonStyle.primary, row=2, emoji="⚡")
-             async def quick_roll_callback(inter: discord.Interaction):
-                 await inter.response.send_modal(SkillSearchModal(self))
-             quick_roll_btn.callback = quick_roll_callback
-             self.add_item(quick_roll_btn)
-
-        # Pagination Buttons (Only for Skills/Backstory if needed)
-        if self.current_section == "skills":
+        elif self.current_section == "skills":
             skill_list = self._get_skill_list()
             max_pages = math.ceil(len(skill_list) / self.items_per_page)
 
@@ -590,42 +586,49 @@ class CharacterDashboardView(View):
                 prev_btn.callback = self.prev_page_callback
                 self.add_item(prev_btn)
 
-                indicator = Button(label=f"Page {self.page + 1}/{max_pages}", style=discord.ButtonStyle.secondary, disabled=True, row=1)
+                indicator = Button(label=f"{self.page + 1}/{max_pages}", style=discord.ButtonStyle.secondary, disabled=True, row=1)
                 self.add_item(indicator)
 
                 next_btn = Button(label="Next", style=discord.ButtonStyle.secondary, row=1, disabled=(self.page >= max_pages - 1))
                 next_btn.callback = self.next_page_callback
                 self.add_item(next_btn)
 
-        # Interactive Buttons for Backstory
-        if self.current_section == "backstory":
-             # 1. Inventory Select Menu
+        elif self.current_section == "backstory":
              inventory_items = self._get_inventory_items()
              if inventory_items:
                  self.add_item(InventorySelect(self, inventory_items, self.inventory_page))
 
-             # Check for empty inventory logic
-             if not inventory_items:
-                 add_item_btn = Button(label="Add Item", style=discord.ButtonStyle.primary, row=2, emoji="🎒")
-                 add_item_btn.callback = self.add_item_callback
-                 self.add_item(add_item_btn)
-             else:
-                  # If we have items, we still want add item button, but maybe in row 2
-                  add_item_btn = Button(label="Add Item", style=discord.ButtonStyle.primary, row=2, emoji="🎒")
-                  add_item_btn.callback = self.add_item_callback
-                  self.add_item(add_item_btn)
+        # Row 2: Persistent Actions
+        # Roll
+        roll_btn = Button(label="Roll", style=discord.ButtonStyle.success, row=2, emoji="🎲")
+        roll_btn.callback = self.roll_button_callback
+        self.add_item(roll_btn)
 
-             # Standard Buttons
-             add_btn = Button(label="Add Entry", style=discord.ButtonStyle.success, row=2, emoji="➕")
-             add_btn.callback = self.add_entry_callback
-             self.add_item(add_btn)
+        # Quick Roll (Search)
+        search_btn = Button(label="Search", style=discord.ButtonStyle.primary, row=2, emoji="🔍")
+        async def search_callback(inter: discord.Interaction):
+             await inter.response.send_modal(SkillSearchModal(self))
+        search_btn.callback = search_callback
+        self.add_item(search_btn)
 
-             remove_btn = Button(label="Remove Entry", style=discord.ButtonStyle.danger, row=2, emoji="➖")
+        # Add Item
+        add_item_btn = Button(label="Add Item", style=discord.ButtonStyle.secondary, row=2, emoji="🎒")
+        add_item_btn.callback = self.add_item_callback
+        self.add_item(add_item_btn)
+
+        # Row 3: Context Actions & Close
+        # Backstory Actions (Conditional)
+        if self.current_section == "backstory":
+             add_entry_btn = Button(label="Add Note", style=discord.ButtonStyle.secondary, row=3, emoji="➕")
+             add_entry_btn.callback = self.add_entry_callback
+             self.add_item(add_entry_btn)
+
+             remove_btn = Button(label="Remove", style=discord.ButtonStyle.secondary, row=3, emoji="➖")
              remove_btn.callback = self.remove_entry_callback
              self.add_item(remove_btn)
 
-        # Dismiss Button (Always available)
-        dismiss_btn = Button(label="Dismiss", style=discord.ButtonStyle.danger, row=3)
+        # Dismiss (Last)
+        dismiss_btn = Button(label="Close", style=discord.ButtonStyle.danger, row=3)
         dismiss_btn.callback = self.dismiss_callback
         self.add_item(dismiss_btn)
 
@@ -769,20 +772,47 @@ class CharacterDashboardView(View):
             color=discord.Color.dark_teal()
         )
 
-        # --- 1. Bio Section ---
+        # --- 1. Bio (Top Block) ---
         occupation = self.char_data.get("Occupation", "Unknown")
         occ_emoji = occupation_emoji.get_occupation_emoji(occupation)
         residence = self.char_data.get("Residence", "Unknown")
         age = self.char_data.get("Age", "Unknown")
         archetype = self.char_data.get("Archetype", None)
 
-        bio_desc = f"**Occupation:** {occupation} {occ_emoji}\n**Age:** {age}\n**Residence:** {residence}"
+        bio_desc = f"**{occ_emoji} {occupation}** | 🎂 **{age}** | 🏠 **{residence}**"
         if archetype:
-            bio_desc += f"\n**Archetype:** {archetype}"
+            bio_desc += f" | **{archetype}**"
 
         embed.add_field(name="📜 Biography", value=bio_desc, inline=False)
 
-        # --- 2. Characteristics (Columnar Layout) ---
+        # --- 2. Vitals (Row of 3) ---
+        # HP
+        hp = self.char_data.get("HP", 0)
+        con = self.char_data.get("CON", 0)
+        siz = self.char_data.get("SIZ", 0)
+        max_hp = (con + siz) // 10 if self.current_mode == "Call of Cthulhu" else (con + siz) // 5
+        hp_bar = get_health_bar(hp, max_hp, length=6)
+
+        # MP
+        mp = self.char_data.get("MP", 0)
+        pow_stat = self.char_data.get("POW", 0)
+        max_mp = pow_stat // 5
+        mp_bar = get_health_bar(mp, max_mp, length=6)
+
+        # SAN
+        san = self.char_data.get("SAN", 0)
+        mythos = self.char_data.get("Cthulhu Mythos", 0)
+        max_san = 99 - mythos
+        san_bar = get_health_bar(san, max_san, length=6)
+
+        embed.add_field(name=f"❤️ HP {hp}/{max_hp}", value=hp_bar, inline=True)
+        embed.add_field(name=f"✨ MP {mp}/{max_mp}", value=mp_bar, inline=True)
+        embed.add_field(name=f"🧠 SAN {san}/{max_san}", value=san_bar, inline=True)
+
+        # --- 3. Characteristics (2 Columns) ---
+        col1_attrs = ["STR", "CON", "SIZ", "DEX", "APP"]
+        col2_attrs = ["POW", "INT", "EDU", "LUCK"]
+
         def format_attr(attr_list):
             lines = []
             for attr in attr_list:
@@ -791,67 +821,16 @@ class CharacterDashboardView(View):
                 lines.append(f"{emoji} **{attr}:** {val}")
             return "\n".join(lines)
 
-        # 2 Column Layout for Characteristics
-        col1_attrs = ["STR", "CON", "SIZ", "DEX"]
-        col2_attrs = ["APP", "EDU", "INT", "POW", "LUCK"]
+        embed.add_field(name="💪 Physical", value=format_attr(col1_attrs), inline=True)
+        embed.add_field(name="🧠 Mental", value=format_attr(col2_attrs), inline=True)
 
-        embed.add_field(name="💪 Physical & Agility", value=format_attr(col1_attrs), inline=True)
-        embed.add_field(name="🧠 Mental & Social", value=format_attr(col2_attrs), inline=True)
-
-        # --- 3. Vitals (HP, MP, SAN) with Status ---
-        # HP
-        hp = self.char_data.get("HP", 0)
-        con = self.char_data.get("CON", 0)
-        siz = self.char_data.get("SIZ", 0)
-        max_hp = (con + siz) // 10 if self.current_mode == "Call of Cthulhu" else (con + siz) // 5
-        hp_bar = get_health_bar(hp, max_hp, length=10)
-        hp_status = ""
-        if hp <= 2: hp_status = " **💀 DYING**"
-        elif hp < (max_hp / 2): hp_status = " **🤕 WOUND**"
-
-        # MP
-        mp = self.char_data.get("MP", 0)
-        pow_stat = self.char_data.get("POW", 0)
-        max_mp = pow_stat // 5
-        mp_bar = get_health_bar(mp, max_mp, length=10)
-        mp_status = ""
-        if mp <= 0: mp_status = " **💤 SLEEP**"
-        elif mp < 2: mp_status = " **🌑 LOW**"
-
-        # SAN
-        san = self.char_data.get("SAN", 0)
-        mythos = self.char_data.get("Cthulhu Mythos", 0)
-        max_san = 99 - mythos
-        san_bar = get_health_bar(san, max_san, length=10)
-        san_status = ""
-        pow_val = self.char_data.get("POW", 0)
-        if san <= pow_val // 5: san_status = " **🤪 INSANE**"
-        elif san < pow_val: san_status = " **📉 LOW**"
-
-        vitals_desc = (
-            f"❤️ **HP:**  {hp_bar} `{hp}/{max_hp}`{hp_status}\n"
-            f"✨ **MP:**  {mp_bar} `{mp}/{max_mp}`{mp_status}\n"
-            f"🧠 **SAN:** {san_bar} `{san}/{max_san}`{san_status}"
-        )
-
-        embed.add_field(name="📊 Vitals", value=vitals_desc, inline=False)
-
-        # --- 4. Combat Stats (Move, Build, DB, Dodge) ---
-        combat_text = ""
-
-        # Move
+        # --- 4. Combat (Inline Block) ---
         move = self._calculate_move()
-        combat_text += f"🏃 **Move:** {move}\n"
-
-        # Build & DB
         build, db = self._calculate_build_db()
-        combat_text += f"💪 **Build:** {build}\n💥 **DB:** {db}\n"
-
-        # Dodge
         dodge = self.char_data.get("Dodge", 0)
-        combat_text += f"💨 **Dodge:** {dodge} ({dodge//2}/{dodge//5})\n"
 
-        embed.add_field(name="⚔️ Combat", value=combat_text, inline=True)
+        combat_text = f"🏃 **Move:** {move} | 💪 **Build:** {build} | 💥 **DB:** {db}\n💨 **Dodge:** {dodge} ({dodge//2}/{dodge//5})"
+        embed.add_field(name="⚔️ Combat", value=combat_text, inline=False)
 
         return embed
 
