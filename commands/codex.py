@@ -367,7 +367,7 @@ class Codex(commands.Cog):
             else:
                  await interaction.followup.send(response + match_list, **kwargs)
 
-    @app_commands.command(description="Displays a monster sheet.")
+    @app_commands.command(description="👹 Displays a monster sheet.")
     async def monster(self, interaction: discord.Interaction, name: str = None):
         """Displays a monster sheet."""
         if name:
@@ -379,7 +379,7 @@ class Codex(commands.Cog):
     async def monster_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_monsters_data, data_key="monsters")
 
-    @app_commands.command(description="Displays a spell.")
+    @app_commands.command(description="✨ Displays a spell.")
     async def spell(self, interaction: discord.Interaction, name: str = None):
         """Displays a spell."""
         if name:
@@ -391,7 +391,7 @@ class Codex(commands.Cog):
     async def spell_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_spells_data, data_key="spells")
 
-    @app_commands.command(description="Displays a deity sheet.")
+    @app_commands.command(description="⚡ Displays a deity sheet.")
     async def deity(self, interaction: discord.Interaction, name: str = None):
         """Displays a deity sheet."""
         if name:
@@ -403,14 +403,14 @@ class Codex(commands.Cog):
     async def deity_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_deities_data, data_key="deities")
 
-    @app_commands.command(description="Opens the Codex to view lists of all entries.")
+    @app_commands.command(description="📔 Opens the Codex to view lists of all entries.")
     async def codex(self, interaction: discord.Interaction):
         """Opens the Codex to view lists of all entries."""
         view = CodexView(interaction.user, self)
         await interaction.response.send_message("What list would you like to see?", view=view, ephemeral=True)
         view.message = await interaction.original_response()
 
-    @app_commands.command(name="archetype", description="Displays a Pulp Cthulhu Archetype.")
+    @app_commands.command(name="archetype", description="🎭 Displays a Pulp Cthulhu Archetype.")
     async def archetype(self, interaction: discord.Interaction, name: str = None):
         """Displays a Pulp Cthulhu Archetype."""
         if name:
@@ -422,7 +422,7 @@ class Codex(commands.Cog):
     async def archetype_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_archetype_data, keys_only=True)
 
-    @app_commands.command(name="talent", description="Displays a Pulp Talent.")
+    @app_commands.command(name="talent", description="🌟 Displays a Pulp Talent.")
     async def talent(self, interaction: discord.Interaction, name: str = None):
         """Displays a Pulp Talent."""
         if name:
@@ -434,7 +434,7 @@ class Codex(commands.Cog):
     async def talent_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_pulp_talents_data, flatten_pulp=True)
 
-    @app_commands.command(name="insane", description="Displays an Insane Talent.")
+    @app_commands.command(name="insane", description="👁️ Displays an Insane Talent.")
     async def insane(self, interaction: discord.Interaction, name: str = None):
         """Displays an Insane Talent."""
         if name:
@@ -446,7 +446,7 @@ class Codex(commands.Cog):
     async def insane_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_madness_insane_talent_data, keys_only=True)
 
-    @app_commands.command(description="Displays a Mania.")
+    @app_commands.command(description="🌪️ Displays a Mania.")
     async def mania(self, interaction: discord.Interaction, name: str = None):
         """Displays a Mania."""
         if name:
@@ -458,7 +458,7 @@ class Codex(commands.Cog):
     async def mania_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_manias_data, keys_only=True)
 
-    @app_commands.command(description="Displays a Phobia.")
+    @app_commands.command(description="😱 Displays a Phobia.")
     async def phobia(self, interaction: discord.Interaction, name: str = None):
         """Displays a Phobia."""
         if name:
@@ -470,7 +470,7 @@ class Codex(commands.Cog):
     async def phobia_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_phobias_data, keys_only=True)
 
-    @app_commands.command(name="poison", description="Displays a Poison.")
+    @app_commands.command(name="poison", description="🧪 Displays a Poison.")
     async def poison(self, interaction: discord.Interaction, name: str = None):
         """Displays a Poison."""
         if name:
@@ -482,7 +482,7 @@ class Codex(commands.Cog):
     async def poison_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_poisons_data, keys_only=True)
 
-    @app_commands.command(name="skill", description="Displays a Skill description.")
+    @app_commands.command(name="skill", description="📚 Displays a Skill description.")
     async def skill(self, interaction: discord.Interaction, name: str = None):
         """Displays a Skill description."""
         if name:
@@ -494,7 +494,7 @@ class Codex(commands.Cog):
     async def skill_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_skills_data, keys_only=True)
 
-    @app_commands.command(name="invention", description="Displays Inventions for a specific decade (e.g., 1920s).")
+    @app_commands.command(name="invention", description="💡 Displays Inventions for a specific decade (e.g., 1920s).")
     async def invention(self, interaction: discord.Interaction, decade: str = None):
         """Displays Inventions for a specific decade (e.g., 1920s)."""
         if decade:
@@ -517,7 +517,7 @@ class Codex(commands.Cog):
     async def invention_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_inventions_data, is_invention=True)
 
-    @app_commands.command(name="year", description="Displays events for a specific year (e.g., 1920).")
+    @app_commands.command(name="year", description="📅 Displays events for a specific year (e.g., 1920).")
     async def year(self, interaction: discord.Interaction, year: str = None):
         """Displays events for a specific year (e.g., 1920)."""
         if year:
@@ -529,7 +529,7 @@ class Codex(commands.Cog):
     async def year_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_years_data, keys_only=True)
 
-    @app_commands.command(name="weapon", description="Displays a weapon.")
+    @app_commands.command(name="weapon", description="🔫 Displays a weapon.")
     async def weapon(self, interaction: discord.Interaction, name: str = None):
         """Displays a weapon."""
         if name:
@@ -541,7 +541,7 @@ class Codex(commands.Cog):
     async def weapon_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_weapons_data, keys_only=True)
 
-    @app_commands.command(name="occupation", description="Displays an occupation.")
+    @app_commands.command(name="occupation", description="🕵️ Displays an occupation.")
     async def occupation(self, interaction: discord.Interaction, name: str = None):
         """Displays an occupation."""
         if name:
