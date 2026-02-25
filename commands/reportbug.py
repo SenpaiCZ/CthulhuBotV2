@@ -75,30 +75,13 @@ class reportbug(commands.Cog):
       modal = ReportBugModal(self.bot, interaction.user, interaction.guild, context_message=message)
       await interaction.response.send_modal(modal)
 
-  @commands.hybrid_command(description="Send a bug report to the bot creator.")
-  @app_commands.describe(message="The bug details (optional - if omitted, opens a form)")
-  async def reportbug(self, ctx, *, message: str = None):
+  @app_commands.command(description="Send a bug report to the bot creator.")
+  async def reportbug(self, interaction: discord.Interaction):
       """
-      `[p]reportbug [message]` - This sends a bug report message to the bot creator.
-      If no message is provided, a form will open (Slash Command only).
-      Please write as many details about the bug as possible for easier replication and fixing.
+      Send a bug report to the bot creator.
       """
-      if message:
-          # Legacy behavior
-          user = self.bot.get_user(214351769243877376)  # Replace with your actual user ID
-          if user:
-              report_content = f"Bug Report from {ctx.author} (Server: {ctx.guild}): {message}"
-              await user.send(report_content)
-              await ctx.send("Bug report sent. Thank you!", ephemeral=True)
-          else:
-              await ctx.send("Bug report couldn't be sent. Please make sure the bot's creator's user ID is correct.", ephemeral=True)
-      else:
-          # Check if interaction
-          if ctx.interaction:
-              modal = ReportBugModal(self.bot, ctx.author, ctx.guild)
-              await ctx.interaction.response.send_modal(modal)
-          else:
-              await ctx.send("Please provide a message for the bug report: `!reportbug <your message>`")
+      modal = ReportBugModal(self.bot, interaction.user, interaction.guild)
+      await interaction.response.send_modal(modal)
 
 
 async def setup(bot):
