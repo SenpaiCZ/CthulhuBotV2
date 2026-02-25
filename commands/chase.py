@@ -215,10 +215,10 @@ class ChaseSession:
 # --- VIEWS ---
 
 class ChaseSetupView(View):
-    def __init__(self, cog, ctx):
+    def __init__(self, cog, user):
         super().__init__(timeout=120)
         self.cog = cog
-        self.ctx = ctx
+        self.user = user
         self.environment = "Urban"
         self.mode = "Foot"
 
@@ -237,11 +237,11 @@ class ChaseSetupView(View):
 
     @discord.ui.button(label="Start Chase", style=discord.ButtonStyle.green)
     async def start_button(self, interaction: discord.Interaction, button: Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
              await interaction.response.send_message("Only the Keeper can start the chase.", ephemeral=True)
              return
 
-        await self.cog.initialize_chase(self.ctx, self.environment, self.mode, interaction)
+        await self.cog.initialize_chase(interaction, self.environment, self.mode)
 
 class AddNPCModal(Modal, title="Add NPC Threat"):
     name = discord.ui.Label(text="Name", component=TextInput(placeholder="Cultist Leader"))
@@ -543,30 +543,33 @@ class ChaseCog(commands.Cog):
         embed.set_footer(text="Chase Tracker")
         return embed
 
-    async def initialize_chase(self, ctx, environment, mode, interaction=None):
-        session = ChaseSession(ctx.guild.id, ctx.channel.id, environment, mode)
+    async def initialize_chase(self, interaction: discord.Interaction, environment, mode):
+        session = ChaseSession(interaction.guild_id, interaction.channel_id, environment, mode)
 
-        if str(ctx.guild.id) not in self.sessions:
-            self.sessions[str(ctx.guild.id)] = {}
-        self.sessions[str(ctx.guild.id)][str(ctx.channel.id)] = session
+        if str(interaction.guild_id) not in self.sessions:
+            self.sessions[str(interaction.guild_id)] = {}
+        self.sessions[str(interaction.guild_id)][str(interaction.channel_id)] = session
 
         embed = await self.create_dashboard_embed(session)
         view = ChaseDashboardView(self, session)
 
-        # Send new dashboard message
-        if interaction:
-             # Edit the setup message to become the dashboard
-             await interaction.response.edit_message(content=None, embed=embed, view=view)
-             msg = await interaction.original_response()
-             session.message_id = msg.id
-        else:
-             msg = await ctx.send(embed=embed, view=view)
-             session.message_id = msg.id
+        # Send new dashboard message PUBLICLY
+        # Since interaction (from start button) is ephemeral if Setup Wizard was ephemeral
+        # We use interaction.channel.send
+        try:
+            msg = await interaction.channel.send(embed=embed, view=view)
+            session.message_id = msg.id
 
-        # Make persistent
-        self.bot.add_view(view, message_id=session.message_id)
+            # Make persistent
+            self.bot.add_view(view, message_id=session.message_id)
 
-        await self.save_session(session)
+            await self.save_session(session)
+
+            # Dismiss the setup wizard
+            await interaction.response.edit_message(content="✅ Chase started!", embed=None, view=None)
+        except Exception as e:
+            await interaction.response.send_message(f"Error starting chase: {e}", ephemeral=True)
+
 
     async def save_and_update(self, session, interaction, update_only=False):
         await self.save_session(session)
@@ -596,24 +599,21 @@ class ChaseCog(commands.Cog):
                 session.message_id = interaction.message.id
                 # Save again to ensure message_id is correct? It shouldn't change.
             else:
-                # Fallback
+                # Fallback if somehow interaction is from ephemeral message but we expect public
                 await interaction.response.send_message(embed=embed, view=view)
 
-    @commands.hybrid_command(name="chase", description="Manage a Chase scene.")
-    async def chase_command(self, ctx):
+    @app_commands.command(name="chase", description="Manage a Chase scene.")
+    async def chase_command(self, interaction: discord.Interaction):
         """
         Opens the Chase Wizard.
         """
-        view = ChaseSetupView(self, ctx)
+        view = ChaseSetupView(self, interaction.user)
         embed = discord.Embed(
             title="🏃 Chase Setup Wizard",
             description="Configure the parameters for the chase sequence.",
             color=discord.Color.blue()
         )
-        if ctx.interaction:
-            await ctx.interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-        else:
-            await ctx.send(embed=embed, view=view)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(ChaseCog(bot))

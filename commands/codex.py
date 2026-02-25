@@ -156,7 +156,6 @@ class Codex(commands.Cog):
                     return entry
         elif keys_only:
              # keys_only implies the data is Dict[Name, Info] or List[Name]
-             # If it's a dict, return the value. If list, return name as string?
              if isinstance(data, dict):
                  return data.get(name)
         elif type_slug == "invention": # Inventions are Dict[decade, list]
@@ -166,7 +165,7 @@ class Codex(commands.Cog):
              return data.get(name)
         return None
 
-    async def _display_entry(self, ctx, name, type_slug, data, interaction=None, ephemeral=False):
+    async def _display_entry(self, interaction: discord.Interaction, name, type_slug, data, ephemeral=False):
         """Generates an Embed and sends it with a view to show the poster."""
 
         # 1. Get Image File
@@ -192,51 +191,28 @@ class Codex(commands.Cog):
             embed = create_generic_embed(data, name, type_slug, file)
 
         # 3. Create View
-        view = RenderView(ctx, self, name, type_slug)
+        view = RenderView(interaction.user, self, name, type_slug)
 
         # 4. Send
-        kwargs = {"embed": embed, "view": view}
+        kwargs = {"embed": embed, "view": view, "ephemeral": ephemeral}
         if file:
             kwargs["file"] = file
 
-        if interaction:
-             # If this is a followup to a selection, we need to handle it carefully.
-             # Interaction might be deferred or not.
-             if ephemeral:
-                 kwargs['ephemeral'] = True
-
-             if interaction.response.is_done():
-                 msg = await interaction.followup.send(**kwargs)
-                 view.message = msg
-             else:
-                 await interaction.response.send_message(**kwargs)
-                 view.message = await interaction.original_response()
-        elif ctx.interaction:
-             # Slash command initial response
-             if ctx.interaction.response.is_done():
-                  msg = await ctx.interaction.followup.send(**kwargs)
-                  view.message = msg
-             else:
-                  await ctx.send(**kwargs)
-                  # Can't easily get message obj from ctx.send for slash command immediately unless we fetch it
-                  # but View usually handles interaction.message for buttons
-                  pass
+        if not interaction.response.is_done():
+            await interaction.response.send_message(**kwargs)
+            view.message = await interaction.original_response()
         else:
-             # Prefix command
-             msg = await ctx.send(**kwargs)
-             view.message = msg
+            # remove ephemeral if it's a kwarg to send_message but not followup?
+            # followup.send supports ephemeral
+            msg = await interaction.followup.send(**kwargs)
+            view.message = msg
 
-    async def _render_poster(self, ctx, url, name, type_name, interaction=None, ephemeral=True):
-        msg = None
-        if interaction:
-             # Usually triggered by button, so we use followup (ephemeral)
-             pass
-        elif ctx.interaction:
-             # Should not happen if called via button, but for direct calls
-             if not ctx.interaction.response.is_done():
-                 await ctx.defer()
-        else:
-             msg = await ctx.send(f"Consulting the archives for **{name}**... 📜")
+    async def _render_poster(self, interaction: discord.Interaction, url, name, type_name, ephemeral=True):
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=ephemeral)
+
+        # Send a placeholder if using followup, but deferred implies loading state on client side usually.
+        # But if we are called from a button that deferred, we are good.
 
         page = None
         try:
@@ -251,18 +227,14 @@ class Codex(commands.Cog):
                 response = await page.goto(full_url, timeout=10000)
             except Exception as e:
                 error_text = f"Error: Failed to load internal dashboard URL. Is the dashboard running?"
-                if interaction: await interaction.followup.send(error_text, ephemeral=True)
-                elif ctx.interaction: await ctx.send(error_text, ephemeral=True)
-                elif msg: await msg.edit(content=error_text)
+                await interaction.followup.send(error_text, ephemeral=True)
                 print(f"Codex Navigation Error: {e}")
                 return
 
             if not response or not response.ok:
                 status = response.status if response else "Unknown"
                 error_text = f"Error: Failed to find {type_name} '{name}' (Status: {status})."
-                if interaction: await interaction.followup.send(error_text, ephemeral=True)
-                elif ctx.interaction: await ctx.send(error_text, ephemeral=True)
-                elif msg: await msg.edit(content=error_text)
+                await interaction.followup.send(error_text, ephemeral=True)
                 return
 
             try:
@@ -277,19 +249,11 @@ class Codex(commands.Cog):
 
             file = discord.File(io.BytesIO(screenshot_bytes), filename=f"{name.replace(' ', '_')}_{type_name}.png")
 
-            if interaction:
-                await interaction.followup.send(content=f"Here is the poster for **{name}**:", file=file, ephemeral=ephemeral)
-            elif ctx.interaction:
-                await ctx.send(content=f"Here is the poster for **{name}**:", file=file)
-            elif msg:
-                await msg.delete()
-                await ctx.send(content=f"Here is the poster for **{name}**:", file=file)
+            await interaction.followup.send(content=f"Here is the poster for **{name}**:", file=file, ephemeral=ephemeral)
 
         except Exception as e:
             error_msg = f"An error occurred while generating the image: {e}"
-            if interaction: await interaction.followup.send(error_msg, ephemeral=True)
-            elif ctx.interaction: await ctx.send(error_msg, ephemeral=True)
-            elif msg: await msg.edit(content=error_msg)
+            await interaction.followup.send(error_msg, ephemeral=True)
             print(f"Codex Error: {e}")
         finally:
             if page:
@@ -316,19 +280,22 @@ class Codex(commands.Cog):
         matches = process.extract(query, choices, scorer=fuzz.WRatio, limit=5, score_cutoff=60)
         return [m[0] for m in matches]
 
-    async def _handle_no_arg_lookup(self, ctx, loader_func, type_slug, data_key=None, flatten_pulp=False, keys_only=False, title=None):
+    async def _handle_no_arg_lookup(self, interaction: discord.Interaction, loader_func, type_slug, data_key=None, flatten_pulp=False, keys_only=False, title=None):
         if not title:
             title = f"{type_slug.replace('_', ' ').capitalize()} List"
 
-        view = OptionsView(ctx, loader_func, type_slug, data_key, flatten_pulp, self, title, keys_only=keys_only)
-        ephemeral = False
-        if ctx.interaction:
-            ephemeral = True
+        view = OptionsView(interaction.user, loader_func, type_slug, data_key, flatten_pulp, self, title, keys_only=keys_only)
 
-        msg = await ctx.send(f"What would you like to do with {type_slug.replace('_', ' ')}s?", view=view, ephemeral=ephemeral)
-        view.message = msg
+        if not interaction.response.is_done():
+             await interaction.response.send_message(f"What would you like to do with {type_slug.replace('_', ' ')}s?", view=view, ephemeral=True)
+             view.message = await interaction.original_response()
+        else:
+             msg = await interaction.followup.send(f"What would you like to do with {type_slug.replace('_', ' ')}s?", view=view, ephemeral=True)
+             view.message = msg
 
-    async def _handle_lookup(self, ctx, name, loader_func, type_slug, data_key=None, keys_only=False, flatten_pulp=False):
+    async def _handle_lookup(self, interaction: discord.Interaction, name, loader_func, type_slug, data_key=None, keys_only=False, flatten_pulp=False):
+        # We assume command handler deferred already if needed, or we use response.send_message
+
         data = await loader_func()
 
         choices = []
@@ -359,12 +326,13 @@ class Codex(commands.Cog):
 
         matches = self._find_matches(name, choices)
 
-        kwargs = {}
-        if ctx.interaction:
-            kwargs['ephemeral'] = True
+        kwargs = {"ephemeral": True}
 
         if not matches:
-            await ctx.send(f"No {type_slug.replace('_', ' ')} found matching '{name}'.", **kwargs)
+            if not interaction.response.is_done():
+                 await interaction.response.send_message(f"No {type_slug.replace('_', ' ')} found matching '{name}'.", **kwargs)
+            else:
+                 await interaction.followup.send(f"No {type_slug.replace('_', ' ')} found matching '{name}'.", **kwargs)
             return
 
         if len(matches) == 1:
@@ -372,156 +340,162 @@ class Codex(commands.Cog):
             entry_data = self._get_entry_data(data, target_name, type_slug, data_key, flatten_pulp, keys_only)
 
             if entry_data:
-                await self._display_entry(ctx, target_name, type_slug, entry_data)
+                await self._display_entry(interaction, target_name, type_slug, entry_data, ephemeral=True)
             else:
                 # Fallback if extraction failed (shouldn't happen if match exists)
                 quoted_name = urllib.parse.quote(target_name)
                 url = f"/render/{type_slug}?name={quoted_name}"
-                await self._render_poster(ctx, url, target_name, type_slug)
+                await self._render_poster(interaction, url, target_name, type_slug, ephemeral=True)
 
         elif len(matches) < 25:
-             view = SelectionView(ctx, matches, type_slug, loader_func, self, data_key=data_key, flatten_pulp=flatten_pulp, keys_only=keys_only)
-             msg = await ctx.send(f"Multiple {type_slug.replace('_', ' ')}s found for '{name}'. Please select one:", view=view)
+             view = SelectionView(interaction.user, matches, type_slug, loader_func, self, data_key=data_key, flatten_pulp=flatten_pulp, keys_only=keys_only)
+             msg = None
+             if not interaction.response.is_done():
+                 await interaction.response.send_message(f"Multiple {type_slug.replace('_', ' ')}s found for '{name}'. Please select one:", view=view, ephemeral=True)
+                 msg = await interaction.original_response()
+             else:
+                 msg = await interaction.followup.send(f"Multiple {type_slug.replace('_', ' ')}s found for '{name}'. Please select one:", view=view, ephemeral=True)
              view.message = msg
         else:
             response = f"Found {len(matches)} matches for '{name}'. Please be more specific:\n"
             match_list = ", ".join(matches)
             if len(match_list) > 1900:
                 match_list = match_list[:1900] + "..."
-            await ctx.send(response + match_list, **kwargs)
 
-    @commands.hybrid_command(description="Displays a monster sheet.")
-    async def monster(self, ctx, *, name: str = None):
+            if not interaction.response.is_done():
+                 await interaction.response.send_message(response + match_list, **kwargs)
+            else:
+                 await interaction.followup.send(response + match_list, **kwargs)
+
+    @app_commands.command(description="Displays a monster sheet.")
+    async def monster(self, interaction: discord.Interaction, name: str = None):
         """Displays a monster sheet."""
         if name:
-            await self._handle_lookup(ctx, name, load_monsters_data, "monster", data_key="monsters")
+            await self._handle_lookup(interaction, name, load_monsters_data, "monster", data_key="monsters")
         else:
-            await self._handle_no_arg_lookup(ctx, load_monsters_data, "monster", data_key="monsters")
+            await self._handle_no_arg_lookup(interaction, load_monsters_data, "monster", data_key="monsters")
 
     @monster.autocomplete('name')
     async def monster_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_monsters_data, data_key="monsters")
 
-    @commands.hybrid_command(description="Displays a spell.")
-    async def spell(self, ctx, *, name: str = None):
+    @app_commands.command(description="Displays a spell.")
+    async def spell(self, interaction: discord.Interaction, name: str = None):
         """Displays a spell."""
         if name:
-            await self._handle_lookup(ctx, name, load_spells_data, "spell", data_key="spells")
+            await self._handle_lookup(interaction, name, load_spells_data, "spell", data_key="spells")
         else:
-            await self._handle_no_arg_lookup(ctx, load_spells_data, "spell", data_key="spells")
+            await self._handle_no_arg_lookup(interaction, load_spells_data, "spell", data_key="spells")
 
     @spell.autocomplete('name')
     async def spell_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_spells_data, data_key="spells")
 
-    @commands.hybrid_command(description="Displays a deity sheet.")
-    async def deity(self, ctx, *, name: str = None):
+    @app_commands.command(description="Displays a deity sheet.")
+    async def deity(self, interaction: discord.Interaction, name: str = None):
         """Displays a deity sheet."""
         if name:
-            await self._handle_lookup(ctx, name, load_deities_data, "deity", data_key="deities")
+            await self._handle_lookup(interaction, name, load_deities_data, "deity", data_key="deities")
         else:
-            await self._handle_no_arg_lookup(ctx, load_deities_data, "deity", data_key="deities")
+            await self._handle_no_arg_lookup(interaction, load_deities_data, "deity", data_key="deities")
 
     @deity.autocomplete('name')
     async def deity_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_deities_data, data_key="deities")
 
-    @commands.hybrid_command(description="Opens the Codex to view lists of all entries.")
-    async def codex(self, ctx):
+    @app_commands.command(description="Opens the Codex to view lists of all entries.")
+    async def codex(self, interaction: discord.Interaction):
         """Opens the Codex to view lists of all entries."""
-        view = CodexView(ctx, self)
-        ephemeral = False
-        if ctx.interaction:
-            ephemeral = True
-        msg = await ctx.send("What list would you like to see?", view=view, ephemeral=ephemeral)
-        view.message = msg
+        view = CodexView(interaction.user, self)
+        await interaction.response.send_message("What list would you like to see?", view=view, ephemeral=True)
+        view.message = await interaction.original_response()
 
-    @commands.hybrid_command(aliases=['cArchetype', 'ainfo', 'archetypeinfo'], description="Displays a Pulp Cthulhu Archetype.")
-    async def archetype(self, ctx, *, name: str = None):
+    @app_commands.command(name="archetype", description="Displays a Pulp Cthulhu Archetype.")
+    async def archetype(self, interaction: discord.Interaction, name: str = None):
         """Displays a Pulp Cthulhu Archetype."""
         if name:
-            await self._handle_lookup(ctx, name, load_archetype_data, "archetype", keys_only=True)
+            await self._handle_lookup(interaction, name, load_archetype_data, "archetype", keys_only=True)
         else:
-            await self._handle_no_arg_lookup(ctx, load_archetype_data, "archetype")
+            await self._handle_no_arg_lookup(interaction, load_archetype_data, "archetype")
 
     @archetype.autocomplete('name')
     async def archetype_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_archetype_data, keys_only=True)
 
-    @commands.hybrid_command(aliases=['cTalents', 'tinfo', 'talents'], description="Displays a Pulp Talent.")
-    async def talent(self, ctx, *, name: str = None):
+    @app_commands.command(name="talent", description="Displays a Pulp Talent.")
+    async def talent(self, interaction: discord.Interaction, name: str = None):
         """Displays a Pulp Talent."""
         if name:
-            await self._handle_lookup(ctx, name, load_pulp_talents_data, "pulp_talent", flatten_pulp=True)
+            await self._handle_lookup(interaction, name, load_pulp_talents_data, "pulp_talent", flatten_pulp=True)
         else:
-            await self._handle_no_arg_lookup(ctx, load_pulp_talents_data, "pulp_talent", flatten_pulp=True)
+            await self._handle_no_arg_lookup(interaction, load_pulp_talents_data, "pulp_talent", flatten_pulp=True)
 
     @talent.autocomplete('name')
     async def talent_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_pulp_talents_data, flatten_pulp=True)
 
-    @commands.hybrid_command(aliases=['italent', 'insanetalent'], description="Displays an Insane Talent.")
-    async def insane(self, ctx, *, name: str = None):
+    @app_commands.command(name="insane", description="Displays an Insane Talent.")
+    async def insane(self, interaction: discord.Interaction, name: str = None):
         """Displays an Insane Talent."""
         if name:
-            await self._handle_lookup(ctx, name, load_madness_insane_talent_data, "insane_talent", keys_only=True)
+            await self._handle_lookup(interaction, name, load_madness_insane_talent_data, "insane_talent", keys_only=True)
         else:
-            await self._handle_no_arg_lookup(ctx, load_madness_insane_talent_data, "insane_talent")
+            await self._handle_no_arg_lookup(interaction, load_madness_insane_talent_data, "insane_talent")
 
     @insane.autocomplete('name')
     async def insane_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_madness_insane_talent_data, keys_only=True)
 
-    @commands.hybrid_command(description="Displays a Mania.")
-    async def mania(self, ctx, *, name: str = None):
+    @app_commands.command(description="Displays a Mania.")
+    async def mania(self, interaction: discord.Interaction, name: str = None):
         """Displays a Mania."""
         if name:
-            await self._handle_lookup(ctx, name, load_manias_data, "mania", keys_only=True)
+            await self._handle_lookup(interaction, name, load_manias_data, "mania", keys_only=True)
         else:
-            await self._handle_no_arg_lookup(ctx, load_manias_data, "mania")
+            await self._handle_no_arg_lookup(interaction, load_manias_data, "mania")
 
     @mania.autocomplete('name')
     async def mania_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_manias_data, keys_only=True)
 
-    @commands.hybrid_command(description="Displays a Phobia.")
-    async def phobia(self, ctx, *, name: str = None):
+    @app_commands.command(description="Displays a Phobia.")
+    async def phobia(self, interaction: discord.Interaction, name: str = None):
         """Displays a Phobia."""
         if name:
-            await self._handle_lookup(ctx, name, load_phobias_data, "phobia", keys_only=True)
+            await self._handle_lookup(interaction, name, load_phobias_data, "phobia", keys_only=True)
         else:
-            await self._handle_no_arg_lookup(ctx, load_phobias_data, "phobia")
+            await self._handle_no_arg_lookup(interaction, load_phobias_data, "phobia")
 
     @phobia.autocomplete('name')
     async def phobia_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_phobias_data, keys_only=True)
 
-    @commands.hybrid_command(aliases=['poisons'], description="Displays a Poison.")
-    async def poison(self, ctx, *, name: str = None):
+    @app_commands.command(name="poison", description="Displays a Poison.")
+    async def poison(self, interaction: discord.Interaction, name: str = None):
         """Displays a Poison."""
         if name:
-            await self._handle_lookup(ctx, name, load_poisons_data, "poison", keys_only=True)
+            await self._handle_lookup(interaction, name, load_poisons_data, "poison", keys_only=True)
         else:
-            await self._handle_no_arg_lookup(ctx, load_poisons_data, "poison")
+            await self._handle_no_arg_lookup(interaction, load_poisons_data, "poison")
 
     @poison.autocomplete('name')
     async def poison_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_poisons_data, keys_only=True)
 
-    @commands.hybrid_command(aliases=['skillinfo'], description="Displays a Skill description.")
-    async def skill(self, ctx, *, name: str = None):
+    @app_commands.command(name="skill", description="Displays a Skill description.")
+    async def skill(self, interaction: discord.Interaction, name: str = None):
         """Displays a Skill description."""
         if name:
-            await self._handle_lookup(ctx, name, load_skills_data, "skill", keys_only=True)
+            await self._handle_lookup(interaction, name, load_skills_data, "skill", keys_only=True)
         else:
-            await self._handle_no_arg_lookup(ctx, load_skills_data, "skill")
+            await self._handle_no_arg_lookup(interaction, load_skills_data, "skill")
 
     @skill.autocomplete('name')
     async def skill_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_skills_data, keys_only=True)
 
-    @commands.hybrid_command(aliases=['inventions'], description="Displays Inventions for a specific decade (e.g., 1920s).")
-    async def invention(self, ctx, *, decade: str = None):
+    @app_commands.command(name="invention", description="Displays Inventions for a specific decade (e.g., 1920s).")
+    async def invention(self, interaction: discord.Interaction, decade: str = None):
         """Displays Inventions for a specific decade (e.g., 1920s)."""
         if decade:
             # Handle "1925" -> "1920s" logic
@@ -535,54 +509,54 @@ class Codex(commands.Cog):
                 except ValueError:
                     pass
 
-            await self._handle_lookup(ctx, decade, load_inventions_data, "invention", keys_only=True)
+            await self._handle_lookup(interaction, decade, load_inventions_data, "invention", keys_only=True)
         else:
-            await self._handle_no_arg_lookup(ctx, load_inventions_data, "invention")
+            await self._handle_no_arg_lookup(interaction, load_inventions_data, "invention")
 
     @invention.autocomplete('decade')
     async def invention_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_inventions_data, is_invention=True)
 
-    @commands.hybrid_command(aliases=['years'], description="Displays events for a specific year (e.g., 1920).")
-    async def year(self, ctx, *, year: str = None):
+    @app_commands.command(name="year", description="Displays events for a specific year (e.g., 1920).")
+    async def year(self, interaction: discord.Interaction, year: str = None):
         """Displays events for a specific year (e.g., 1920)."""
         if year:
-            await self._handle_lookup(ctx, year, load_years_data, "year", keys_only=True)
+            await self._handle_lookup(interaction, year, load_years_data, "year", keys_only=True)
         else:
-            await self._handle_no_arg_lookup(ctx, load_years_data, "year")
+            await self._handle_no_arg_lookup(interaction, load_years_data, "year")
 
     @year.autocomplete('year')
     async def year_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_years_data, keys_only=True)
 
-    @commands.hybrid_command(aliases=["firearm", "firearms", "weapons"], description="Displays a weapon.")
-    async def weapon(self, ctx, *, name: str = None):
+    @app_commands.command(name="weapon", description="Displays a weapon.")
+    async def weapon(self, interaction: discord.Interaction, name: str = None):
         """Displays a weapon."""
         if name:
-            await self._handle_lookup(ctx, name, load_weapons_data, "weapon", keys_only=True)
+            await self._handle_lookup(interaction, name, load_weapons_data, "weapon", keys_only=True)
         else:
-             await self._handle_no_arg_lookup(ctx, load_weapons_data, "weapon")
+             await self._handle_no_arg_lookup(interaction, load_weapons_data, "weapon")
 
     @weapon.autocomplete('name')
     async def weapon_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_weapons_data, keys_only=True)
 
-    @commands.hybrid_command(aliases=["cocc","oinfo", "occupations"], description="Displays an occupation.")
-    async def occupation(self, ctx, *, name: str = None):
+    @app_commands.command(name="occupation", description="Displays an occupation.")
+    async def occupation(self, interaction: discord.Interaction, name: str = None):
         """Displays an occupation."""
         if name:
-            await self._handle_lookup(ctx, name, load_occupations_data, "occupation", keys_only=True)
+            await self._handle_lookup(interaction, name, load_occupations_data, "occupation", keys_only=True)
         else:
-            await self._handle_no_arg_lookup(ctx, load_occupations_data, "occupation")
+            await self._handle_no_arg_lookup(interaction, load_occupations_data, "occupation")
 
     @occupation.autocomplete('name')
     async def occupation_autocomplete(self, interaction: discord.Interaction, current: str):
         return await self._get_autocomplete_choices(current, load_occupations_data, keys_only=True)
 
 class PaginatedListView(discord.ui.View):
-    def __init__(self, ctx, items, title, per_page=20, data=None, cog=None, type_slug=None, data_key=None, flatten_pulp=False, keys_only=False):
+    def __init__(self, user, items, title, per_page=20, data=None, cog=None, type_slug=None, data_key=None, flatten_pulp=False, keys_only=False):
         super().__init__(timeout=60)
-        self.ctx = ctx
+        self.user = user
         self.items = items
         self.title = title
         self.per_page = per_page
@@ -627,7 +601,7 @@ class PaginatedListView(discord.ui.View):
             self.select_menu.add_option(label=label, value=value)
 
     async def select_callback(self, interaction: discord.Interaction):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
 
         selected_name = interaction.data['values'][0]
@@ -636,12 +610,12 @@ class PaginatedListView(discord.ui.View):
         entry_data = self.cog._get_entry_data(self.data, selected_name, self.type_slug, self.data_key, self.flatten_pulp, self.keys_only)
 
         if entry_data:
-            await self.cog._display_entry(self.ctx, selected_name, self.type_slug, entry_data, interaction=interaction, ephemeral=True)
+            await self.cog._display_entry(interaction, selected_name, self.type_slug, entry_data, ephemeral=True)
         else:
              # Fallback
              quoted_name = urllib.parse.quote(selected_name)
              url = f"/render/{self.type_slug}?name={quoted_name}"
-             await self.cog._render_poster(self.ctx, url, selected_name, self.type_slug, interaction=interaction, ephemeral=True)
+             await self.cog._render_poster(interaction, url, selected_name, self.type_slug, ephemeral=True)
 
     def update_buttons(self):
         self.prev_button.disabled = self.current_page == 0
@@ -662,7 +636,7 @@ class PaginatedListView(discord.ui.View):
 
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.primary)
     async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
         self.current_page -= 1
         self.update_buttons()
@@ -674,7 +648,7 @@ class PaginatedListView(discord.ui.View):
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.primary)
     async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
         self.current_page += 1
         self.update_buttons()
@@ -682,17 +656,10 @@ class PaginatedListView(discord.ui.View):
 
     @discord.ui.button(label="Close", style=discord.ButtonStyle.danger)
     async def close_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
 
-        if self.ctx.interaction:
-            # Ephemeral messages cannot be deleted by bots, so we edit them to "close" the view.
-            await interaction.response.edit_message(content="List closed.", embed=None, view=None)
-        else:
-            try:
-                await interaction.message.delete()
-            except:
-                pass
+        await interaction.response.edit_message(content="List closed.", embed=None, view=None)
         self.stop()
 
     async def on_timeout(self):
@@ -704,9 +671,9 @@ class PaginatedListView(discord.ui.View):
         self.stop()
 
 class OptionsView(discord.ui.View):
-    def __init__(self, ctx, loader_func, type_slug, data_key, flatten_pulp, cog, title, keys_only=False):
+    def __init__(self, user, loader_func, type_slug, data_key, flatten_pulp, cog, title, keys_only=False):
         super().__init__(timeout=60)
-        self.ctx = ctx
+        self.user = user
         self.loader_func = loader_func
         self.type_slug = type_slug
         self.data_key = data_key
@@ -718,7 +685,7 @@ class OptionsView(discord.ui.View):
 
     @discord.ui.button(label="List all", style=discord.ButtonStyle.success)
     async def list_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
 
         data = await self.loader_func()
@@ -750,7 +717,7 @@ class OptionsView(discord.ui.View):
 
         choices.sort()
         view = PaginatedListView(
-            self.ctx, choices, self.title,
+            self.user, choices, self.title,
             data=data, cog=self.cog, type_slug=self.type_slug,
             data_key=self.data_key, flatten_pulp=self.flatten_pulp, keys_only=self.keys_only
         )
@@ -761,7 +728,7 @@ class OptionsView(discord.ui.View):
 
     @discord.ui.button(label="Random one", style=discord.ButtonStyle.primary)
     async def random_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
 
         data = await self.loader_func()
@@ -797,68 +764,19 @@ class OptionsView(discord.ui.View):
         entry_data = self.cog._get_entry_data(data, target_name, self.type_slug, self.data_key, self.flatten_pulp, self.keys_only)
 
         if entry_data:
-            await self.cog._display_entry(self.ctx, target_name, self.type_slug, entry_data, interaction=interaction)
+            await self.cog._display_entry(interaction, target_name, self.type_slug, entry_data, ephemeral=True)
         else:
              # Fallback
              quoted_name = urllib.parse.quote(target_name)
              url = f"/render/{self.type_slug}?name={quoted_name}"
-             await self.cog._render_poster(self.ctx, url, target_name, self.type_slug, interaction=interaction)
+             await self.cog._render_poster(interaction, url, target_name, self.type_slug, ephemeral=True)
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.danger)
     async def cancel_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
 
-        if self.ctx.interaction:
-            await interaction.response.edit_message(content="Dismissed.", embed=None, view=None)
-        else:
-            try:
-                await interaction.message.delete()
-            except:
-                pass
-        self.stop()
-
-    async def on_timeout(self):
-        if self.message:
-            try:
-                await self.message.delete()
-            except:
-                pass
-        self.stop()
-
-class ConfirmationView(discord.ui.View):
-    def __init__(self, ctx, items, title):
-        super().__init__(timeout=60)
-        self.ctx = ctx
-        self.items = items
-        self.title = title
-        self.message = None
-
-    @discord.ui.button(label="Yes", style=discord.ButtonStyle.success)
-    async def yes_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
-             return await interaction.response.send_message("This isn't for you!", ephemeral=True)
-
-        view = PaginatedListView(self.ctx, self.items, self.title)
-        view.update_buttons()
-        embed = view.get_embed()
-        await interaction.response.edit_message(content=None, embed=embed, view=view)
-        # Store message for timeout handling
-        view.message = interaction.message
-
-    @discord.ui.button(label="No", style=discord.ButtonStyle.danger)
-    async def no_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
-             return await interaction.response.send_message("This isn't for you!", ephemeral=True)
-
-        if self.ctx.interaction:
-            # Ephemeral messages cannot be deleted by bots, so we edit them to "close" the view.
-            await interaction.response.edit_message(content="Dismissed.", embed=None, view=None)
-        else:
-            try:
-                await interaction.message.delete()
-            except:
-                pass
+        await interaction.response.edit_message(content="Dismissed.", embed=None, view=None)
         self.stop()
 
     async def on_timeout(self):
@@ -870,9 +788,9 @@ class ConfirmationView(discord.ui.View):
         self.stop()
 
 class RenderView(discord.ui.View):
-    def __init__(self, ctx, cog, name, type_slug):
+    def __init__(self, user, cog, name, type_slug):
         super().__init__(timeout=60)
-        self.ctx = ctx
+        self.user = user
         self.cog = cog
         self.name = name
         self.type_slug = type_slug
@@ -890,28 +808,26 @@ class RenderView(discord.ui.View):
 
     @discord.ui.button(label="📜 View Poster", style=discord.ButtonStyle.secondary)
     async def poster_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Allow anyone to view poster? Or just author? Let's check ctx.author.
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
 
         # Defer ephemeral to prevent timeout while rendering
-        await interaction.response.defer(ephemeral=True)
+        # Interaction might already be deferred? No, new interaction.
+        # _render_poster handles defer.
 
         quoted_name = urllib.parse.quote(self.name)
         url = f"/render/{self.type_slug}?name={quoted_name}"
 
-        await self.cog._render_poster(self.ctx, url, self.name, self.type_slug, interaction=interaction)
+        await self.cog._render_poster(interaction, url, self.name, self.type_slug, ephemeral=True)
 
     async def origin_poster_button(self, interaction: discord.Interaction):
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
-
-        await interaction.response.defer(ephemeral=True)
 
         quoted_name = urllib.parse.quote(self.name)
         url = f"/render/{self.type_slug}?name={quoted_name}&style=origin"
 
-        await self.cog._render_poster(self.ctx, url, self.name, f"{self.type_slug}_origin", interaction=interaction)
+        await self.cog._render_poster(interaction, url, self.name, f"{self.type_slug}_origin", ephemeral=True)
 
     async def add_to_inventory_button(self, interaction: discord.Interaction):
         if not interaction.guild:
@@ -951,9 +867,9 @@ class RenderView(discord.ui.View):
         self.stop()
 
 class CodexView(discord.ui.View):
-    def __init__(self, ctx, cog):
+    def __init__(self, user, cog):
         super().__init__(timeout=60)
-        self.ctx = ctx
+        self.user = user
         self.cog = cog
         self.message = None
 
@@ -995,7 +911,7 @@ class CodexView(discord.ui.View):
 
         choices.sort()
         view = PaginatedListView(
-            self.ctx, choices, title,
+            self.user, choices, title,
             data=data, cog=self.cog, type_slug=type_slug,
             data_key=data_key, flatten_pulp=flatten_pulp, keys_only=keys_only
         )
@@ -1007,75 +923,75 @@ class CodexView(discord.ui.View):
     # Row 0
     @discord.ui.button(label="Monsters", style=discord.ButtonStyle.danger, row=0)
     async def monsters_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_monsters_data, "Monsters List", data_key="monsters", type_slug="monster")
 
     @discord.ui.button(label="Deities", style=discord.ButtonStyle.danger, row=0)
     async def deities_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_deities_data, "Deities List", data_key="deities", type_slug="deity")
 
     @discord.ui.button(label="Archetypes", style=discord.ButtonStyle.danger, row=0)
     async def archetypes_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_archetype_data, "Archetypes List", type_slug="archetype", keys_only=True)
 
     @discord.ui.button(label="Occupations", style=discord.ButtonStyle.danger, row=0)
     async def occupations_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_occupations_data, "Occupations List", type_slug="occupation", keys_only=True)
 
     # Row 1
     @discord.ui.button(label="Spells", style=discord.ButtonStyle.danger, row=1)
     async def spells_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_spells_data, "Spells List", data_key="spells", type_slug="spell")
 
     @discord.ui.button(label="Talents", style=discord.ButtonStyle.danger, row=1)
     async def talents_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_pulp_talents_data, "Pulp Talents List", flatten_pulp=True, type_slug="pulp_talent")
 
     @discord.ui.button(label="Insane Talents", style=discord.ButtonStyle.danger, row=1)
     async def insane_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_madness_insane_talent_data, "Insane Talents List", type_slug="insane_talent", keys_only=True)
 
     @discord.ui.button(label="Skills", style=discord.ButtonStyle.danger, row=1)
     async def skills_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_skills_data, "Skills List", type_slug="skill", keys_only=True)
 
     # Row 2
     @discord.ui.button(label="Weapons", style=discord.ButtonStyle.danger, row=2)
     async def weapons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_weapons_data, "Weapons List", type_slug="weapon", keys_only=True)
 
     @discord.ui.button(label="Poisons", style=discord.ButtonStyle.danger, row=2)
     async def poisons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_poisons_data, "Poisons List", type_slug="poison", keys_only=True)
 
     @discord.ui.button(label="Inventions", style=discord.ButtonStyle.danger, row=2)
     async def inventions_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_inventions_data, "Inventions List", type_slug="invention")
 
     # Row 3
     @discord.ui.button(label="Manias", style=discord.ButtonStyle.danger, row=3)
     async def manias_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_manias_data, "Manias List", type_slug="mania", keys_only=True)
 
     @discord.ui.button(label="Phobias", style=discord.ButtonStyle.danger, row=3)
     async def phobias_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_phobias_data, "Phobias List", type_slug="phobia", keys_only=True)
 
     @discord.ui.button(label="Years", style=discord.ButtonStyle.danger, row=3)
     async def years_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author: return
+        if interaction.user != self.user: return
         await self._launch_list(interaction, load_years_data, "Years List", type_slug="year", keys_only=True)
 
     async def on_timeout(self):
@@ -1088,9 +1004,9 @@ class CodexView(discord.ui.View):
 
 
 class SelectionView(discord.ui.View):
-    def __init__(self, ctx, options, type_name, loader_func, cog, data_key=None, flatten_pulp=False, keys_only=False):
+    def __init__(self, user, options, type_name, loader_func, cog, data_key=None, flatten_pulp=False, keys_only=False):
         super().__init__(timeout=60)
-        self.ctx = ctx
+        self.user = user
         self.cog = cog
         self.type_name = type_name
         self.loader_func = loader_func
@@ -1112,7 +1028,7 @@ class SelectionView(discord.ui.View):
 
     async def select_callback(self, interaction: discord.Interaction):
         # Allow only the author to select
-        if interaction.user != self.ctx.author:
+        if interaction.user != self.user:
             await interaction.response.send_message("This selection is not for you.", ephemeral=True)
             return
 
@@ -1128,12 +1044,12 @@ class SelectionView(discord.ui.View):
         entry_data = self.cog._get_entry_data(data, selected_name, self.type_name, self.data_key, self.flatten_pulp, self.keys_only)
 
         if entry_data:
-            await self.cog._display_entry(self.ctx, selected_name, self.type_name, entry_data, interaction=interaction)
+            await self.cog._display_entry(interaction, selected_name, self.type_name, entry_data, ephemeral=True)
         else:
             # Fallback
             quoted_name = urllib.parse.quote(selected_name)
             url = f"/render/{self.type_name}?name={quoted_name}"
-            await self.cog._render_poster(self.ctx, url, selected_name, self.type_name, interaction=interaction)
+            await self.cog._render_poster(interaction, url, selected_name, self.type_name, ephemeral=True)
 
     async def on_timeout(self):
         if self.message:

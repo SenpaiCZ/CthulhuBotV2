@@ -19,6 +19,39 @@ from emojis import get_stat_emoji, get_health_bar
 from support_functions import session_success, MockContext
 from rapidfuzz import process, fuzz
 
+class SessionView(View):
+    def __init__(self, ctx):
+        super().__init__(timeout=60)
+        self.ctx = ctx
+        self.create_session = False
+        self.message = None
+
+    @discord.ui.button(label="Yes", style=discord.ButtonStyle.success)
+    async def yes_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("Not for you!", ephemeral=True)
+        self.create_session = True
+        self.stop()
+        # Disable buttons
+        for child in self.children: child.disabled = True
+        try:
+            await interaction.response.edit_message(view=self)
+        except:
+            pass
+
+    @discord.ui.button(label="No", style=discord.ButtonStyle.secondary)
+    async def no_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("Not for you!", ephemeral=True)
+        self.create_session = False
+        self.stop()
+        # Disable buttons
+        for child in self.children: child.disabled = True
+        try:
+            await interaction.response.edit_message(view=self)
+        except:
+            pass
+
 class DisambiguationSelect(Select):
     def __init__(self, options):
         super().__init__(placeholder="Select a skill...", min_values=1, max_values=1, options=options)
@@ -620,7 +653,7 @@ class Roll(commands.Cog):
         results = process.extract(clean_expression, choices, scorer=fuzz.WRatio, limit=5, score_cutoff=60)
         return [res[0] for res in results]
 
-    @commands.hybrid_command(name="roll", aliases=["newroll", "diceroll", "d", "nd"], guild_only=True, description="Perform a dice roll or skill check.")
+    @app_commands.command(name="roll", description="Perform a dice roll or skill check.")
     @app_commands.describe(
         dice_expression="The dice expression (e.g. 3d6) or skill name (e.g. Spot Hidden)",
         bonus="Number of Bonus Dice (0-2)",
@@ -633,30 +666,27 @@ class Roll(commands.Cog):
         penalty=[app_commands.Choice(name="0", value=0), app_commands.Choice(name="1", value=1), app_commands.Choice(name="2", value=2)],
         difficulty=[app_commands.Choice(name="Regular", value="Regular"), app_commands.Choice(name="Hard", value="Hard"), app_commands.Choice(name="Extreme", value="Extreme")]
     )
-    async def roll(self, ctx, *, dice_expression: str, bonus: int = 0, penalty: int = 0, secret: bool = False, difficulty: str = "Regular"):
+    async def roll(self, interaction: discord.Interaction, dice_expression: str, bonus: int = 0, penalty: int = 0, secret: bool = False, difficulty: str = "Regular"):
         """
         🎲 Perform a dice roll or skill check.
         """
-        if not ctx.interaction:
-             await ctx.send("Please use the slash command `/roll`.")
-             return
-
+        # Defer
         ephemeral = secret
+        await interaction.response.defer(ephemeral=ephemeral)
 
         async def send_msg(content=None, embed=None, view=None):
-            if not ctx.interaction.response.is_done():
-                await ctx.interaction.response.send_message(content=content, embed=embed, view=view, ephemeral=ephemeral)
-                return await ctx.interaction.original_response()
-            else:
-                return await ctx.interaction.followup.send(content=content, embed=embed, view=view, ephemeral=ephemeral, wait=True)
+             return await interaction.followup.send(content=content, embed=embed, view=view, ephemeral=ephemeral, wait=True)
 
-        server_id = str(ctx.guild.id)
+        # Create Mock Context for Compatibility
+        ctx = MockContext(interaction)
+
+        server_id = str(interaction.guild_id)
         # 1. Dice Expression (e.g. 3d6)
         try:
             result, detail = self.evaluate_dice_expression(dice_expression)
             embed = discord.Embed(
                 title=f":game_die: Dice Roll Result",
-                description=f"{ctx.author.mention} :game_die: Rolling: `{dice_expression}`",
+                description=f"{interaction.user.mention} :game_die: Rolling: `{dice_expression}`",
                 color=discord.Color.blue()
             )
             embed.add_field(name="Detail", value=detail, inline=False)
@@ -667,11 +697,11 @@ class Roll(commands.Cog):
             pass
 
         # 2. Skill Check Logic
-        user_id = str(ctx.author.id)
+        user_id = str(interaction.user.id)
         player_stats = await load_player_stats()
 
         if user_id not in player_stats.get(server_id, {}):
-            await send_msg(content=f"{ctx.author.display_name} doesn't have an investigator. Use `/newinvestigator`.")
+            await send_msg(content=f"{interaction.user.display_name} doesn't have an investigator. Use `/newinvestigator`.")
             return
 
         try:
@@ -738,7 +768,7 @@ class Roll(commands.Cog):
 
             # Sound Logic (Preserved from original)
             try:
-                if ctx.guild and ctx.guild.voice_client and ctx.guild.voice_client.is_connected():
+                if interaction.guild and interaction.guild.voice_client and interaction.guild.voice_client.is_connected():
                     sound_settings = await load_skill_sound_settings()
                     guild_settings = sound_settings.get(server_id, {})
                     tier_map = {5: 'critical', 4: 'extreme', 3: 'hard', 2: 'regular', 1: 'fail', 0: 'fumble'}
@@ -759,7 +789,7 @@ class Roll(commands.Cog):
                                  guild_mixers[server_id] = mixer
                              full_path = os.path.join(SOUNDBOARD_FOLDER, sound_file)
                              if os.path.exists(full_path):
-                                 vc = ctx.guild.voice_client
+                                 vc = interaction.guild.voice_client
                                  is_playing_mixer = False
                                  if vc.is_playing() and isinstance(vc.source, discord.PCMVolumeTransformer):
                                      if vc.source.original == mixer: is_playing_mixer = True
@@ -796,7 +826,7 @@ class Roll(commands.Cog):
             if net_dice > 0: dice_text = f"Bonus ({net_dice})"
             elif net_dice < 0: dice_text = f"Penalty ({abs(net_dice)})"
 
-            description = f"{ctx.author.mention} :game_die: **{dice_text}** Check\n"
+            description = f"{interaction.user.mention} :game_die: **{dice_text}** Check\n"
             description += f"Dice: [{tens_str}] + {ones_roll} -> **{final_roll}**\n\n"
             description += f"**{result_text}**\n\n"
             description += f"**{stat_name}**: {current_value} - {current_value // 2} - {current_value // 5}\n"
