@@ -206,6 +206,11 @@ class HelpView(View):
         )
 
         embed.add_field(
+            name="0️⃣ Join the Server",
+            value="Use `/enroll` to start the new user enrollment process and get your roles sorted.",
+            inline=False
+        )
+        embed.add_field(
             name="1️⃣ Create an Investigator",
             value="Use `/newinvestigator` to launch the character creation wizard. It will guide you through stats, occupation, and skills.",
             inline=False

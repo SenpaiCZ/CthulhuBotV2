@@ -13,6 +13,8 @@ class mycharacter(commands.Cog):
         name='Check Stats',
         callback=self.view_investigator_menu,
     )
+    self.ctx_menu.description = "View this investigator's stats and bio."
+    self.ctx_menu.binding = self
     self.bot.tree.add_command(self.ctx_menu)
 
   def cog_unload(self):

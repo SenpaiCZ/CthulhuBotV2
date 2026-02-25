@@ -42,9 +42,8 @@ class WizardButton(discord.ui.Button):
             await self.view_parent.cancel(interaction)
 
 class EnrollView(discord.ui.View):
-    def __init__(self, ctx, pages, final_message):
+    def __init__(self, pages, final_message):
         super().__init__(timeout=300)
-        self.ctx = ctx
         self.pages = pages
         self.final_message = final_message
         self.current_page = 0
@@ -160,16 +159,8 @@ class EnrollView(discord.ui.View):
 
         # Cleanup original message
         try:
-            # We can't delete ephemeral messages usually, but if this was a slash command response,
-            # we can edit it to remove content.
-            # If it was a text command response, we can delete.
-            if self.ctx.interaction:
-                 await interaction.edit_original_response(content="Enrollment Complete.", embed=None, view=None)
-            else:
-                 await self.ctx.message.delete() # Delete command message
-                 # We can't easily delete the bot's response message if we don't have handle to it easily
-                 # But we can edit the interaction message (which is the bot's response)
-                 await interaction.message.delete()
+             if interaction.message:
+                 await interaction.message.edit(content="Enrollment Complete.", embed=None, view=None)
         except:
             pass
 
@@ -178,34 +169,35 @@ class EnrollView(discord.ui.View):
 class Enroll(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.help_category = "Admin"
 
-    @commands.hybrid_command(name="enroll", description="Start the new user enrollment process.")
-    async def enroll(self, ctx):
+    @app_commands.command(name="enroll", description="Start the new user enrollment process.")
+    async def enroll(self, interaction: discord.Interaction):
         settings = await load_enroll_settings()
-        guild_id = str(ctx.guild.id)
+        guild_id = str(interaction.guild_id)
 
         guild_config = settings.get(guild_id, {})
 
         if not guild_config.get('enabled', False):
             msg = "Enrollment is not enabled on this server."
-            if ctx.interaction:
-                await ctx.send(msg, ephemeral=True)
+            if interaction.response.is_done():
+                await interaction.followup.send(msg, ephemeral=True)
             else:
-                await ctx.send(msg)
+                await interaction.response.send_message(msg, ephemeral=True)
             return
 
         pages = guild_config.get('pages', [])
         if not pages:
             msg = "No enrollment pages configured."
-            if ctx.interaction:
-                await ctx.send(msg, ephemeral=True)
+            if interaction.response.is_done():
+                 await interaction.followup.send(msg, ephemeral=True)
             else:
-                await ctx.send(msg)
+                 await interaction.response.send_message(msg, ephemeral=True)
             return
 
         final_msg = guild_config.get('final_message', "Enrollment complete!")
 
-        view = EnrollView(ctx, pages, final_msg)
+        view = EnrollView(pages, final_msg)
 
         first_page = pages[0]
         title = first_page.get('title', 'Start')
@@ -218,10 +210,10 @@ class Enroll(commands.Cog):
         )
         embed.set_footer(text=f"Page 1/{len(pages)}")
 
-        if ctx.interaction:
-            await ctx.send(embed=embed, view=view, ephemeral=True)
+        if interaction.response.is_done():
+            await interaction.followup.send(embed=embed, view=view, ephemeral=True)
         else:
-            await ctx.send(embed=embed, view=view)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(Enroll(bot))

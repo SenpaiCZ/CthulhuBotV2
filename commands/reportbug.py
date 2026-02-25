@@ -61,11 +61,14 @@ class reportbug(commands.Cog):
 
   def __init__(self, bot):
     self.bot = bot
+    self.help_category = "Admin"
     # Register Context Menu
     self.ctx_menu = app_commands.ContextMenu(
         name='Report Message',
         callback=self.report_message_context,
     )
+    self.ctx_menu.description = "Report this message as a bug to the admin."
+    self.ctx_menu.binding = self
     self.bot.tree.add_command(self.ctx_menu)
 
   def cog_unload(self):
