@@ -602,7 +602,7 @@ class ChaseCog(commands.Cog):
                 # Fallback if somehow interaction is from ephemeral message but we expect public
                 await interaction.response.send_message(embed=embed, view=view)
 
-    @app_commands.command(name="chase", description="Manage a Chase scene.")
+    @app_commands.command(name="chase", description="🏃 Manage a Chase scene.")
     async def chase_command(self, interaction: discord.Interaction):
         """
         Opens the Chase Wizard.

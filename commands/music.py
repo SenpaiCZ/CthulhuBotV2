@@ -265,7 +265,7 @@ class Music(commands.Cog):
 
     # --- Slash Commands ---
 
-    @app_commands.command(name="play", description="Plays a song from YouTube.")
+    @app_commands.command(name="play", description="▶️ Plays a song from YouTube.")
     @app_commands.describe(query="The song name or URL to play")
     async def play(self, interaction: discord.Interaction, query: str):
         """🎵 Plays a song from YouTube."""
@@ -342,32 +342,32 @@ class Music(commands.Cog):
             except Exception as e:
                 await interaction.followup.send(f"An error occurred: {e}")
 
-    @app_commands.command(name="skip", description="Skips the current song.")
+    @app_commands.command(name="skip", description="⏭️ Skips the current song.")
     async def skip(self, interaction: discord.Interaction):
         """⏭️ Skips the current song."""
         await self.skip_track(interaction)
 
-    @app_commands.command(name="stop", description="Stops music, clears queue, and disconnects.")
+    @app_commands.command(name="stop", description="🛑 Stops music, clears queue, and disconnects.")
     async def stop(self, interaction: discord.Interaction):
         """🛑 Stops music, clears queue, and disconnects."""
         await self.stop_music(interaction)
 
-    @app_commands.command(name="pause", description="Pauses the current song.")
+    @app_commands.command(name="pause", description="⏸️ Pauses the current song.")
     async def pause(self, interaction: discord.Interaction):
         """⏸️ Pauses the current song."""
         await self.toggle_pause(interaction)
 
-    @app_commands.command(name="resume", description="Resumes the current song.")
+    @app_commands.command(name="resume", description="▶️ Resumes the current song.")
     async def resume(self, interaction: discord.Interaction):
         """▶️ Resumes the current song."""
         await self.toggle_pause(interaction)
 
-    @app_commands.command(name="shuffle", description="Shuffles the queue.")
+    @app_commands.command(name="shuffle", description="🔀 Shuffles the queue.")
     async def shuffle(self, interaction: discord.Interaction):
         """🔀 Shuffles the queue."""
         await self.shuffle_queue(interaction)
 
-    @app_commands.command(name="volume", description="Sets the music volume (0-100). Persists per server.")
+    @app_commands.command(name="volume", description="🔊 Sets the music volume (0-100). Persists per server.")
     @app_commands.describe(vol="Volume level (0-100)")
     async def volume(self, interaction: discord.Interaction, vol: int):
         """🔊 Sets the music volume (0-100). Persists per server."""
@@ -392,12 +392,12 @@ class Music(commands.Cog):
         else:
             await interaction.response.send_message(f"🔊 Music volume set to {vol}% (will apply to next song)")
 
-    @app_commands.command(name="loop", description="Toggles loop for the current song.")
+    @app_commands.command(name="loop", description="🔁 Toggles loop for the current song.")
     async def loop(self, interaction: discord.Interaction):
         """🔁 Toggles loop for the current song."""
         await self.toggle_loop(interaction)
 
-    @app_commands.command(name="queue", description="Shows the current queue.")
+    @app_commands.command(name="queue", description="🎼 Shows the current queue.")
     async def queue(self, interaction: discord.Interaction):
         """🎼 Shows the current queue."""
         # We can just send the dashboard embed ephemerally if they ask for queue
@@ -406,7 +406,7 @@ class Music(commands.Cog):
         embed = view.get_embed()
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @app_commands.command(name="nowplaying", description="Shows the currently playing song.")
+    @app_commands.command(name="nowplaying", description="🎵 Shows the currently playing song.")
     async def nowplaying(self, interaction: discord.Interaction):
         """💿 Shows the currently playing song."""
         guild_id = str(interaction.guild.id)

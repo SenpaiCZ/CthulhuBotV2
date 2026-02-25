@@ -302,7 +302,7 @@ class Handout(commands.Cog):
         self.bot = bot
         self.help_category = "Keeper"
 
-    @app_commands.command(description="Create a prop/handout (Newspaper, Telegram, Letter, Script, Morse).")
+    @app_commands.command(description="📄 Create a prop/handout (Newspaper, Telegram, Letter, Script, Morse).")
     @app_commands.describe(type="The type of handout to create")
     @app_commands.choices(type=[
         app_commands.Choice(name="Newspaper", value="newspaper"),

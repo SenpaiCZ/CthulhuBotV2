@@ -11,7 +11,7 @@ class madness(commands.Cog):
         self.bot = bot
         self.help_category = "Keeper"
 
-    @app_commands.command(name="madness", description="Roll for a random madness effect.")
+    @app_commands.command(name="madness", description="🤪 Roll for a random madness effect.")
     @app_commands.describe(category="Choose a specific madness category or list options.")
     @app_commands.choices(category=[
         app_commands.Choice(name="Group", value="Group"),
@@ -49,7 +49,7 @@ class madness(commands.Cog):
             else:
                  await interaction.response.send_message("Invalid category. Use Group, Solo, or Talent.", ephemeral=True)
 
-    @app_commands.command(name="madnessalone", description="Roll for a random Solo madness effect.")
+    @app_commands.command(name="madnessalone", description="😱 Roll for a random Solo madness effect.")
     async def madnessalone(self, interaction: discord.Interaction, option: str = None):
         """
         Shortcut for Solo Madness.
