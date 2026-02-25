@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from loadnsave import autoroom_load, autoroom_save
+from ._autoroom_view import RoomControlView
 
 class Autoroom(commands.Cog):
   def __init__(self, bot):
@@ -144,6 +145,16 @@ class Autoroom(commands.Cog):
                       autorooms[server_id][user_id] = new_channel.id
                       await member.move_to(new_channel)
                       await autoroom_save(autorooms)
+
+                      # Send Dashboard
+                      embed = discord.Embed(
+                          title="🎛️ Room Controls",
+                          description=f"Welcome to your private room, {member.mention}!\nUse the buttons below to manage this channel.",
+                          color=discord.Color.blue()
+                      )
+                      view = RoomControlView(member.id)
+                      await new_channel.send(embed=embed, view=view)
+
                   except Exception as e:
                       print(f"Error creating autoroom: {e}")
   
