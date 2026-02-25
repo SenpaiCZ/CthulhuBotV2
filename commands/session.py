@@ -187,7 +187,7 @@ class Session(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="session", description="Manage your character development session.")
+    @app_commands.command(name="session", description="📅 Manage your character development session.")
     @app_commands.describe(action="The session action to perform", member="The member to show session for (only for 'show' action)")
     @app_commands.choices(action=[
         app_commands.Choice(name="Start Session", value="start"),

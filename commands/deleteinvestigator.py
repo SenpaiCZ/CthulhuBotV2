@@ -37,7 +37,7 @@ class deleteinvestigator(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @app_commands.command(name="deleteinvestigator", description="Delete your investigator and all data.")
+  @app_commands.command(name="deleteinvestigator", description="🗑️ Delete your investigator and all data.")
   @app_commands.describe(member="The member whose investigator you want to delete (Admin only)")
   async def deleteinvestigator(self, interaction: discord.Interaction, member: discord.Member = None):
     """

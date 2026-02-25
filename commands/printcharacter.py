@@ -14,7 +14,7 @@ class PrintCharacter(commands.Cog):
             name='Print Character',
             callback=self.print_character_menu,
         )
-        self.ctx_menu.description = "Generate a PDF/Image of this character sheet."
+        self.ctx_menu.description = "🖨️ Generate a PDF/Image of this character sheet."
         self.ctx_menu.binding = self
         self.bot.tree.add_command(self.ctx_menu)
 
@@ -24,7 +24,7 @@ class PrintCharacter(commands.Cog):
     async def print_character_menu(self, interaction: discord.Interaction, user: discord.Member):
         await self._print_character(interaction, user)
 
-    @app_commands.command(name="printcharacter", description="Prints the character sheet of the user as an image.")
+    @app_commands.command(name="printcharacter", description="🖨️ Prints the character sheet of the user as an image.")
     @app_commands.describe(user="The user whose character you want to print (defaults to you)")
     async def printcharacter(self, interaction: discord.Interaction, user: discord.Member = None):
         """

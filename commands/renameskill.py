@@ -12,7 +12,7 @@ class renameskill(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @app_commands.command(description="Rename a skill on your character sheet.")
+  @app_commands.command(description="✏️ Rename a skill on your character sheet.")
   @app_commands.describe(skill_name="The current name of the skill to rename", new_name="The new name for the skill")
   async def renameskill(self, interaction: discord.Interaction, skill_name: str, new_name: str):
       """
