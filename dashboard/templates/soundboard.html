@@ -115,6 +115,16 @@
 </div>
 
 <script>
+    function escapeHtml(text) {
+        if (!text) return text;
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     let currentData = null;
     let previousFilesStr = null;
     let selectedGuildId = null;
@@ -265,24 +275,25 @@
                     el = document.createElement('div');
                     el.className = 'd-flex justify-content-between align-items-center mb-2 border-bottom pb-2';
                     el.dataset.trackId = track.id;
+                    const safeTrackName = escapeHtml(track.name);
                     el.innerHTML = `
-                        <div class="fw-bold text-truncate me-2" style="max-width: 200px;" title="${track.name}">${track.name}</div>
+                        <div class="fw-bold text-truncate me-2" style="max-width: 200px;" title="${safeTrackName}">${safeTrackName}</div>
                         <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
                             <div class="d-flex align-items-center" title="Volume">
                                 <span class="small me-1">Vol</span>
-                                <input type="range" class="form-range mx-1 track-vol" style="width: 80px;" min="0" max="100">
+                                <input type="range" class="form-range mx-1 track-vol" style="width: 80px;" min="0" max="100" aria-label="Volume for ${safeTrackName}">
                             </div>
 
                             <div class="form-check form-switch pt-1" title="Loop">
-                                 <input class="form-check-input track-loop" type="checkbox">
+                                 <input class="form-check-input track-loop" type="checkbox" aria-label="Loop ${safeTrackName}">
                                  <label class="form-check-label small">Loop</label>
                             </div>
 
-                            <button class="btn btn-sm btn-outline-warning track-pause" style="width: 40px;" title="Pause/Resume">
+                            <button class="btn btn-sm btn-outline-warning track-pause" style="width: 40px;" title="${track.paused ? 'Resume' : 'Pause'}" aria-label="${track.paused ? 'Resume' : 'Pause'} ${safeTrackName}">
                                 ⏸
                             </button>
 
-                            <button class="btn btn-sm btn-outline-danger track-remove" title="Stop">
+                            <button class="btn btn-sm btn-outline-danger track-remove" title="Stop" aria-label="Stop ${safeTrackName}">
                                 ❌
                             </button>
                         </div>
@@ -338,24 +349,25 @@
                     // Display name without extension
                     const displayName = file.name.replace(/\.[^/.]+$/, "");
                     const safeDisplayName = displayName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const htmlDisplayName = escapeHtml(displayName);
 
                     col.innerHTML = `
                         <div class="card h-100 shadow-sm sound-card" style="cursor: pointer; transition: transform 0.1s;">
                             <div class="card-body d-flex flex-column justify-content-between p-2" style="background-color: ${folderColor || '#f8f9fa'}; min-height: 100px;">
-                                <h6 class="card-title text-center text-truncate fw-bold mb-2" title="${file.name}" style="pointer-events: none; user-select: none; text-shadow: 0 1px 3px rgba(0,0,0,0.8); color: white;">
-                                    ${displayName}
+                                <h6 class="card-title text-center text-truncate fw-bold mb-2" title="${escapeHtml(file.name)}" style="pointer-events: none; user-select: none; text-shadow: 0 1px 3px rgba(0,0,0,0.8); color: white;">
+                                    ${htmlDisplayName}
                                 </h6>
                             </div>
                             <div class="card-footer p-2 bg-light d-flex align-items-center justify-content-between stop-prop">
                                 <div class="d-flex align-items-center flex-grow-1 me-2" title="Volume">
-                                    <input type="range" class="form-range sound-vol" min="0" max="100" value="${savedVol}" data-path="${safePath}">
+                                    <input type="range" class="form-range sound-vol" min="0" max="100" value="${savedVol}" data-path="${safePath}" aria-label="Volume for ${htmlDisplayName}">
                                 </div>
                                 <div class="form-check form-switch m-0 me-2" title="Loop">
-                                    <input class="form-check-input sound-loop" type="checkbox" ${savedLoop ? 'checked' : ''} data-path="${safePath}">
+                                    <input class="form-check-input sound-loop" type="checkbox" ${savedLoop ? 'checked' : ''} data-path="${safePath}" aria-label="Loop ${htmlDisplayName}">
                                 </div>
                                 <div class="d-flex">
-                                    <button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1" onclick="openRenameModal('${safePath}', '${safeDisplayName}')" title="Rename File">✏️</button>
-                                    <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteFile('${safePath}')" title="Delete File">🗑</button>
+                                    <button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1" onclick="openRenameModal('${safePath}', '${safeDisplayName}')" title="Rename File" aria-label="Rename ${htmlDisplayName}">✏️</button>
+                                    <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteFile('${safePath}')" title="Delete File" aria-label="Delete ${htmlDisplayName}">🗑</button>
                                 </div>
                             </div>
                         </div>
