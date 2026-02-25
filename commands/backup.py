@@ -73,7 +73,7 @@ class backup(commands.Cog):
   async def before_backup_task(self):
       await self.bot.wait_until_ready()
   
-  @app_commands.command(name="backup", description="Zips the data/ folder and sends it to the bot owner.")
+  @app_commands.command(name="backup", description="💾 Zips the data/ folder and sends it to the bot owner.")
   async def backup(self, interaction: discord.Interaction):
     # Check for ownership manually since app_commands.checks doesn't have is_owner built-in directly
     if not await self.bot.is_owner(interaction.user):

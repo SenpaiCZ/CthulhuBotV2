@@ -8,7 +8,7 @@ class smartreaction(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    group = app_commands.Group(name="smartreaction", description="Manage smart reactions", guild_only=True)
+    group = app_commands.Group(name="smartreaction", description="💡 Manage smart reactions", guild_only=True)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -29,7 +29,7 @@ class smartreaction(commands.Cog):
                     except discord.HTTPException:
                         pass # Ignore if emoji is invalid or bot has no permission
 
-    @group.command(name="add", description="Add a new word-emoji pair for smart reactions.")
+    @group.command(name="add", description="➕ Add a new word-emoji pair for smart reactions.")
     @app_commands.describe(word="The word to trigger the reaction", emoji="The emoji to react with")
     @app_commands.checks.has_permissions(administrator=True)
     async def add(self, interaction: discord.Interaction, word: str, emoji: str):
@@ -47,7 +47,7 @@ class smartreaction(commands.Cog):
 
         await interaction.followup.send(f"Added reaction: '{word_lower}' -> {emoji}")
 
-    @group.command(name="remove", description="Remove a smart reaction.")
+    @group.command(name="remove", description="➖ Remove a smart reaction.")
     @app_commands.describe(word="The word to remove the reaction for", emoji="The emoji that was associated")
     @app_commands.checks.has_permissions(administrator=True)
     async def remove(self, interaction: discord.Interaction, word: str, emoji: str):
@@ -73,7 +73,7 @@ class smartreaction(commands.Cog):
         else:
             await interaction.followup.send("No reactions set up for this server.")
 
-    @group.command(name="list", description="List all smart reactions for the server.")
+    @group.command(name="list", description="📃 List all smart reactions for the server.")
     async def list(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
 

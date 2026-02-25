@@ -72,21 +72,21 @@ class GamerRoles(commands.Cog):
             self.settings_cache = await load_gamerole_settings()
 
     # Define Slash Command Group
-    gamerole_group = app_commands.Group(name="gamerole", description="Manages automatic gamer roles")
+    gamerole_group = app_commands.Group(name="gamerole", description="🎮 Manages automatic gamer roles")
 
-    @gamerole_group.command(name="enable", description="Enables the gamer role feature.")
+    @gamerole_group.command(name="enable", description="✅ Enables the gamer role feature.")
     @app_commands.checks.has_permissions(administrator=True)
     async def enable(self, interaction: discord.Interaction):
         await self.update_settings(interaction.guild.id, "enabled", True)
         await interaction.response.send_message("Gamer Roles feature **ENABLED**.")
 
-    @gamerole_group.command(name="disable", description="Disables the gamer role feature.")
+    @gamerole_group.command(name="disable", description="🛑 Disables the gamer role feature.")
     @app_commands.checks.has_permissions(administrator=True)
     async def disable(self, interaction: discord.Interaction):
         await self.update_settings(interaction.guild.id, "enabled", False)
         await interaction.response.send_message("Gamer Roles feature **DISABLED**.")
 
-    @gamerole_group.command(name="status", description="Shows the current status and settings.")
+    @gamerole_group.command(name="status", description="ℹ️ Shows the current status and settings.")
     @app_commands.checks.has_permissions(administrator=True)
     async def status(self, interaction: discord.Interaction):
         s = await self.get_settings(interaction.guild.id)
@@ -107,7 +107,7 @@ class GamerRoles(commands.Cog):
 
         await interaction.response.send_message(embed=embed)
 
-    @gamerole_group.command(name="ignore", description="Adds an activity to the ignore list.")
+    @gamerole_group.command(name="ignore", description="🚫 Adds an activity to the ignore list.")
     @app_commands.checks.has_permissions(administrator=True)
     async def ignore(self, interaction: discord.Interaction, activity_name: str):
         async with self.cache_lock:
@@ -125,7 +125,7 @@ class GamerRoles(commands.Cog):
             else:
                 await interaction.response.send_message(f"**{activity_name}** is already in the ignore list.")
 
-    @gamerole_group.command(name="unignore", description="Removes an activity from the ignore list.")
+    @gamerole_group.command(name="unignore", description="⭕ Removes an activity from the ignore list.")
     @app_commands.checks.has_permissions(administrator=True)
     async def unignore(self, interaction: discord.Interaction, activity_name: str):
         async with self.cache_lock:
@@ -144,7 +144,7 @@ class GamerRoles(commands.Cog):
             else:
                 await interaction.response.send_message(f"**{activity_name}** is not in the ignore list.")
 
-    @gamerole_group.command(name="color", description="Sets the role color.")
+    @gamerole_group.command(name="color", description="🎨 Sets the role color.")
     @app_commands.checks.has_permissions(administrator=True)
     async def color(self, interaction: discord.Interaction, hex_code: str = None):
         if hex_code:
@@ -161,13 +161,13 @@ class GamerRoles(commands.Cog):
             view = GamerRoleColorView(self, interaction.guild.id)
             await interaction.response.send_message("Select a color for Gamer Roles:", view=view)
 
-    @gamerole_group.command(name="setemoji", description="Sets an emoji for a specific game activity.")
+    @gamerole_group.command(name="setemoji", description="😊 Sets an emoji for a specific game activity.")
     @app_commands.checks.has_permissions(administrator=True)
     async def setemoji(self, interaction: discord.Interaction, activity_name: str, emoji: str):
         await self.update_activity_emoji(interaction.guild, activity_name, emoji)
         await interaction.response.send_message(f"Set emoji for **{activity_name}** to {emoji}.")
 
-    @gamerole_group.command(name="removeemoji", description="Removes the custom emoji for a specific game activity.")
+    @gamerole_group.command(name="removeemoji", description="😐 Removes the custom emoji for a specific game activity.")
     @app_commands.checks.has_permissions(administrator=True)
     async def removeemoji(self, interaction: discord.Interaction, activity_name: str):
         await self.update_activity_emoji(interaction.guild, activity_name, None)
@@ -352,7 +352,7 @@ class GamerRoles(commands.Cog):
 
         asyncio.create_task(self.update_hoisting(guild, list(managed_roles)))
 
-    @gamerole_group.command(name="debug_trigger", description="Debug tool to simulate presence update.")
+    @gamerole_group.command(name="debug_trigger", description="🐞 Debug tool to simulate presence update.")
     @app_commands.checks.has_permissions(administrator=True)
     async def debug_trigger(self, interaction: discord.Interaction, member: discord.Member, activity_name: str, action: str):
         settings = await self.get_settings(interaction.guild.id)

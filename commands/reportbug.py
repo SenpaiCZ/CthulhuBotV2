@@ -67,7 +67,7 @@ class reportbug(commands.Cog):
         name='Report Message',
         callback=self.report_message_context,
     )
-    self.ctx_menu.description = "Report this message as a bug to the admin."
+    self.ctx_menu.description = "🖱️ Report this message as a bug to the admin."
     self.ctx_menu.binding = self
     self.bot.tree.add_command(self.ctx_menu)
 
@@ -78,7 +78,7 @@ class reportbug(commands.Cog):
       modal = ReportBugModal(self.bot, interaction.user, interaction.guild, context_message=message)
       await interaction.response.send_modal(modal)
 
-  @app_commands.command(description="Send a bug report to the bot creator.")
+  @app_commands.command(description="🐛 Send a bug report to the bot creator.")
   async def reportbug(self, interaction: discord.Interaction):
       """
       Send a bug report to the bot creator.

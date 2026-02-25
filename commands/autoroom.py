@@ -9,9 +9,9 @@ class Autoroom(commands.Cog):
     self.bot = bot
 
   # Create a slash command group
-  autoroom_group = app_commands.Group(name="autoroom", description="Manage auto-rooms")
+  autoroom_group = app_commands.Group(name="autoroom", description="🔊 Manage auto-rooms")
 
-  @autoroom_group.command(name="setup", description="Configure Auto Room source channel and target category.")
+  @autoroom_group.command(name="setup", description="⚙️ Configure Auto Room source channel and target category.")
   @app_commands.describe(channel="Source Voice Channel", category="Target Category")
   @app_commands.checks.has_permissions(administrator=True)
   async def setup(self, interaction: discord.Interaction, channel: discord.VoiceChannel, category: discord.CategoryChannel):
@@ -33,7 +33,7 @@ class Autoroom(commands.Cog):
           f"Target Category: {category.mention}"
       )
 
-  @autoroom_group.command(name="kick", description="Kick a user from your auto-room.")
+  @autoroom_group.command(name="kick", description="👢 Kick a user from your auto-room.")
   @app_commands.describe(member="The user to kick")
   async def kick(self, interaction: discord.Interaction, member: discord.Member):
       """Remove a user from your auto-room."""
@@ -64,7 +64,7 @@ class Autoroom(commands.Cog):
       else:
           await interaction.response.send_message("That user is not in your room.", ephemeral=True)
 
-  @autoroom_group.command(name="lock", description="Lock your auto-room so no one can join.")
+  @autoroom_group.command(name="lock", description="🔒 Lock your auto-room so no one can join.")
   async def lock(self, interaction: discord.Interaction):
       """Prevents anyone from joining your auto-room."""
       server_id = str(interaction.guild.id)
@@ -88,7 +88,7 @@ class Autoroom(commands.Cog):
       else:
           await interaction.response.send_message("You need to be in your autoroom to lock it.", ephemeral=True)
 
-  @autoroom_group.command(name="unlock", description="Unlock your auto-room so anyone can join.")
+  @autoroom_group.command(name="unlock", description="🔓 Unlock your auto-room so anyone can join.")
   async def unlock(self, interaction: discord.Interaction):
       """Opens your room so anyone can join in."""
       server_id = str(interaction.guild.id)

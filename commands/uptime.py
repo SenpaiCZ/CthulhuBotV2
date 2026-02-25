@@ -9,7 +9,7 @@ class Uptime(commands.Cog):
         self.bot = bot
         self.start_time = datetime.datetime.now()
 
-    @app_commands.command(name="uptime", description="Returns how long the bot has been online.")
+    @app_commands.command(name="uptime", description="⏱️ Returns how long the bot has been online.")
     async def uptime(self, interaction: discord.Interaction):
         """Returns how long the bot has been online."""
         now = datetime.datetime.now()

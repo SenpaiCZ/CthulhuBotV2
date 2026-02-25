@@ -171,7 +171,7 @@ class Enroll(commands.Cog):
         self.bot = bot
         self.help_category = "Admin"
 
-    @app_commands.command(name="enroll", description="Start the new user enrollment process.")
+    @app_commands.command(name="enroll", description="📝 Start the new user enrollment process.")
     async def enroll(self, interaction: discord.Interaction):
         settings = await load_enroll_settings()
         guild_id = str(interaction.guild_id)

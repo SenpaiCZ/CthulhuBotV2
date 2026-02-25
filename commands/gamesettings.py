@@ -8,9 +8,9 @@ class GameSettings(commands.Cog):
         self.bot = bot
         self.help_category = "Admin"
 
-    gamesettings_group = app_commands.Group(name="gamesettings", description="Manage game settings")
+    gamesettings_group = app_commands.Group(name="gamesettings", description="⚙️ Manage game settings")
 
-    @gamesettings_group.command(name="maxskill", description="Set the maximum starting skill points for new investigators.")
+    @gamesettings_group.command(name="maxskill", description="📈 Set the maximum starting skill points for new investigators.")
     @app_commands.describe(value="The maximum skill points (1-99)")
     @app_commands.checks.has_permissions(administrator=True)
     async def maxskill(self, interaction: discord.Interaction, value: int):

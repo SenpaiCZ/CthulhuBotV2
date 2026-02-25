@@ -159,9 +159,9 @@ class PokemonGo(commands.Cog):
             return []
 
     # --- Slash Commands ---
-    pogo_group = app_commands.Group(name="pogo", description="Pokemon GO Event Commands", guild_only=True)
+    pogo_group = app_commands.Group(name="pogo", description="🥎 Pokemon GO Event Commands", guild_only=True)
 
-    @pogo_group.command(name="setchannel", description="Set the channel for POGO notifications.")
+    @pogo_group.command(name="setchannel", description="📢 Set the channel for POGO notifications.")
     @app_commands.describe(channel="Channel to set (defaults to current)")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_channel(self, interaction: discord.Interaction, channel: discord.TextChannel = None):
@@ -175,7 +175,7 @@ class PokemonGo(commands.Cog):
         await save_pogo_settings(self.settings)
         await interaction.response.send_message(f"Pokemon GO notifications will be sent to {target_channel.mention}")
 
-    @pogo_group.command(name="setrole", description="Set the role to ping for POGO notifications.")
+    @pogo_group.command(name="setrole", description="👥 Set the role to ping for POGO notifications.")
     @app_commands.describe(role="Role to ping")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_role(self, interaction: discord.Interaction, role: discord.Role):
@@ -188,7 +188,7 @@ class PokemonGo(commands.Cog):
         await save_pogo_settings(self.settings)
         await interaction.response.send_message(f"Role {role.mention} will be pinged for notifications.")
 
-    @pogo_group.command(name="forceupdate", description="Force update events from LeekDuck.")
+    @pogo_group.command(name="forceupdate", description="🔄 Force update events from LeekDuck.")
     @app_commands.checks.has_permissions(administrator=True)
     async def force_update(self, interaction: discord.Interaction):
         """Force update events from LeekDuck."""

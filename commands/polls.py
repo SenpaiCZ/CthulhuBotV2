@@ -173,7 +173,7 @@ class Polls(commands.Cog):
         final_embed = self.create_poll_embed(poll_data)
         await msg.edit(embed=final_embed, view=view)
 
-    @app_commands.command(description="Create a poll with multiple options.")
+    @app_commands.command(description="📊 Create a poll with multiple options.")
     @app_commands.describe(question="The question to ask (leave blank for Modal)", options="Comma-separated options (leave blank for Modal)")
     async def poll(self, interaction: discord.Interaction, question: str = None, options: str = None):
         """

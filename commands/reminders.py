@@ -180,9 +180,9 @@ class Reminders(commands.Cog):
         return total_seconds
 
     # --- Slash Command Group ---
-    reminder_group = app_commands.Group(name="reminder", description="Manage your reminders")
+    reminder_group = app_commands.Group(name="reminder", description="⏰ Manage your reminders")
 
-    @reminder_group.command(name="set", description="Set a new reminder.")
+    @reminder_group.command(name="set", description="➕ Set a new reminder.")
     @app_commands.describe(duration="Time until reminder (e.g. 10m, 1h, 1d)", message="What to remind you about")
     async def set_reminder(self, interaction: discord.Interaction, duration: str, message: str):
         """Set a reminder."""
@@ -220,7 +220,7 @@ class Reminders(commands.Cog):
             for option in options if current.lower() in option.lower()
         ][:25]
 
-    @reminder_group.command(name="list", description="List your active reminders.")
+    @reminder_group.command(name="list", description="📃 List your active reminders.")
     async def list_reminders(self, interaction: discord.Interaction):
         """List active reminders."""
         guild_id = str(interaction.guild_id)
@@ -258,7 +258,7 @@ class Reminders(commands.Cog):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         view.message = await interaction.original_response()
 
-    @reminder_group.command(name="delete", description="Delete a specific reminder.")
+    @reminder_group.command(name="delete", description="🗑️ Delete a specific reminder.")
     @app_commands.describe(reminder_id="Search for the reminder to delete")
     async def delete_reminder_cmd(self, interaction: discord.Interaction, reminder_id: str):
         """Delete a reminder."""

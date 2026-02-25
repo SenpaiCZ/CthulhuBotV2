@@ -63,7 +63,7 @@ class UpdateBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name='updatebot', description="Updates the bot from the GitHub repository (Master branch). Owner only.")
+    @app_commands.command(name='updatebot', description="🔄 Updates the bot from the GitHub repository (Master branch). Owner only.")
     async def update_bot(self, interaction: discord.Interaction):
         """
         Updates the bot from the GitHub repository (Master branch).

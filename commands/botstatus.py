@@ -34,7 +34,7 @@ class BotStatus(commands.Cog):
             return discord.Activity(type=discord.ActivityType.competing, name=text)
         return None
 
-    @app_commands.command(name="status", description="Sets the bot's status. Owner only.")
+    @app_commands.command(name="status", description="🤖 Sets the bot's status. Owner only.")
     @app_commands.describe(activity_type="The type of activity", text="The status text")
     @app_commands.choices(activity_type=[
         app_commands.Choice(name="Playing", value="playing"),
