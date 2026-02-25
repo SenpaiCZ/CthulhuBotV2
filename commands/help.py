@@ -402,6 +402,7 @@ class Help(commands.Cog):
             # Get App Commands from Cog
             if hasattr(cog, "get_app_commands"):
                 for cmd in cog.get_app_commands():
+                    if cmd.name == 'help': continue
                     # Determine command category: Check for override via extras, else use cog category
                     cmd_category = cog_category
                     if hasattr(cmd, "extras") and "help_category" in cmd.extras:
@@ -415,6 +416,7 @@ class Help(commands.Cog):
             # Get Text Commands (Legacy)
             if hasattr(cog, "get_commands"):
                 for cmd in cog.get_commands():
+                    if cmd.name == 'help': continue
                     if cmd.hidden: continue
                     if not await self._can_run(cmd, ctx): continue
 
@@ -429,6 +431,7 @@ class Help(commands.Cog):
         # 2. Iterate remaining App Commands (Slash + Context Menus) from Tree
         app_cmds = self.bot.tree.get_commands()
         for cmd in app_cmds:
+            if cmd.name == 'help': continue
             if cmd.name not in seen_commands:
                 # Try to determine category from binding if present
                 category = "Other"
