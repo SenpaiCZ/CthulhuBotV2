@@ -104,12 +104,13 @@ class SkillRollSelect(Select):
         luck_threshold = (await load_luck_stats()).get(self.dashboard_view.server_id, 10)
 
         # Create View
+        # Use owner_id for mock stats so Luck logic works correctly for the character owner
         view = RollResultView(
             ctx=ctx,
             cog=roll_cog,
-            player_stats={self.dashboard_view.server_id: {str(self.dashboard_view.user.id): char_data}}, # Mock full stats structure
+            player_stats={self.dashboard_view.server_id: {str(self.dashboard_view.owner_id): char_data}}, # Mock full stats structure
             server_id=self.dashboard_view.server_id,
-            user_id=str(self.dashboard_view.user.id),
+            user_id=str(self.dashboard_view.owner_id),
             stat_name=skill_name,
             current_value=current_val,
             ones_roll=ones,
@@ -200,7 +201,7 @@ class QuickUpdateModal(Modal):
         # Save
         player_stats = await load_player_stats()
         if self.dashboard_view.server_id in player_stats:
-            player_stats[self.dashboard_view.server_id][str(self.dashboard_view.user.id)] = self.dashboard_view.char_data
+            player_stats[self.dashboard_view.server_id][self.dashboard_view.owner_id] = self.dashboard_view.char_data
             await save_player_stats(player_stats)
 
         await interaction.response.send_message(f"✅ Updated **{self.stat_key}** to **{new_val}**.", ephemeral=True)
@@ -278,7 +279,7 @@ class AddItemModal(Modal, title="Add Inventory Item"):
             if self.view.server_id not in player_stats:
                 player_stats[self.view.server_id] = {}
 
-            player_stats[self.view.server_id][str(self.view.user.id)] = self.view.char_data
+            player_stats[self.view.server_id][self.view.owner_id] = self.view.char_data
             await save_player_stats(player_stats)
 
             await interaction.response.send_message(f"Added **{item_str}** to inventory.", ephemeral=True)
@@ -307,7 +308,7 @@ class EditItemModal(Modal, title="Edit Item"):
                 # Save
                 try:
                     player_stats = await load_player_stats()
-                    player_stats[self.dashboard_view.server_id][str(self.dashboard_view.user.id)] = self.dashboard_view.char_data
+                    player_stats[self.dashboard_view.server_id][self.dashboard_view.owner_id] = self.dashboard_view.char_data
                     await save_player_stats(player_stats)
 
                     await interaction.response.send_message(f"✅ Item updated to: **{new_text}**", ephemeral=True)
@@ -330,7 +331,10 @@ class GiveUserSelect(UserSelect):
     async def callback(self, interaction: discord.Interaction):
         target_user = self.values[0] # discord.Member or User
 
-        if target_user.id == interaction.user.id:
+        # Sender ID is the character owner, not necessarily the interactor (if GM)
+        sender_id = self.action_view.dashboard_view.owner_id
+
+        if str(target_user.id) == sender_id:
             return await interaction.response.send_message("You cannot give items to yourself.", ephemeral=True)
 
         if target_user.bot:
@@ -339,7 +343,6 @@ class GiveUserSelect(UserSelect):
         player_stats = await load_player_stats()
         server_id = str(interaction.guild_id)
         target_id = str(target_user.id)
-        sender_id = str(interaction.user.id)
 
         # 1. Validate Target has Investigator
         if server_id not in player_stats or target_id not in player_stats[server_id]:
@@ -387,11 +390,6 @@ class GiveUserSelect(UserSelect):
             local_backstory = self.action_view.dashboard_view.char_data.get("Backstory", {})
             if self.category in local_backstory and isinstance(local_backstory[self.category], list):
                  if 0 <= self.index < len(local_backstory[self.category]):
-                     # Optimistic update - assume index matches because we validated against self.item_str above
-                     # But local view might be stale, so verify content if possible.
-                     # Since we are about to refresh, popping by index is risky if list shifted.
-                     # But self.index came from the select menu which was built from current state.
-                     # So it should be fine.
                      local_backstory[self.category].pop(self.index)
 
         # 3. Feedback
@@ -409,7 +407,9 @@ class ItemActionsView(View):
         self.category = category
         self.item_str = item_str
         self.index = index
-        self.add_item(GiveUserSelect(self, category, item_str, index))
+        # Give button is available if user has edit permissions
+        if self.dashboard_view.can_edit:
+            self.add_item(GiveUserSelect(self, category, item_str, index))
 
     @discord.ui.button(label="Show", style=discord.ButtonStyle.secondary, emoji="👁️", row=1)
     async def show_item(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -422,15 +422,20 @@ class ItemActionsView(View):
 
     @discord.ui.button(label="Edit", style=discord.ButtonStyle.primary, emoji="✏️", row=1)
     async def edit(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.dashboard_view.can_edit:
+             return await interaction.response.send_message("You cannot edit this.", ephemeral=True)
         modal = EditItemModal(self.dashboard_view, self.category, self.index, self.item_str)
         await interaction.response.send_modal(modal)
         self.stop()
 
     @discord.ui.button(label="Discard", style=discord.ButtonStyle.danger, emoji="🗑️", row=1)
     async def discard(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.dashboard_view.can_edit:
+             return await interaction.response.send_message("You cannot discard this.", ephemeral=True)
+
         player_stats = await load_player_stats()
         server_id = str(interaction.guild_id)
-        user_id = str(interaction.user.id)
+        user_id = self.dashboard_view.owner_id
 
         char_data = player_stats.get(server_id, {}).get(user_id, {})
         backstory = char_data.get("Backstory", {})
@@ -541,9 +546,10 @@ class InventorySelect(Select):
 
 
 class CharacterDashboardView(View):
-    def __init__(self, user, char_data, mode_label, current_mode, server_id):
+    def __init__(self, user, owner_id, char_data, mode_label, current_mode, server_id):
         super().__init__(timeout=300) # 5 minute timeout
         self.user = user
+        self.owner_id = str(owner_id)
         self.char_data = char_data
         self.mode_label = mode_label
         self.current_mode = current_mode
@@ -556,6 +562,15 @@ class CharacterDashboardView(View):
 
         # Build the initial Select Menu
         self.update_components()
+
+    @property
+    def can_edit(self):
+        # Viewer is Owner OR Viewer is Admin
+        if str(self.user.id) == self.owner_id:
+            return True
+        if self.user.guild_permissions.administrator:
+            return True
+        return False
 
     def update_components(self):
         self.clear_items()
@@ -575,7 +590,8 @@ class CharacterDashboardView(View):
 
         # Row 1: Context Specific
         if self.current_section == "stats":
-             self.add_item(QuickUpdateSelect(self))
+             if self.can_edit:
+                 self.add_item(QuickUpdateSelect(self))
 
         elif self.current_section == "skills":
             skill_list = self._get_skill_list()
@@ -612,13 +628,14 @@ class CharacterDashboardView(View):
         self.add_item(search_btn)
 
         # Add Item
-        add_item_btn = Button(label="Add Item", style=discord.ButtonStyle.secondary, row=2, emoji="🎒")
-        add_item_btn.callback = self.add_item_callback
-        self.add_item(add_item_btn)
+        if self.can_edit:
+            add_item_btn = Button(label="Add Item", style=discord.ButtonStyle.secondary, row=2, emoji="🎒")
+            add_item_btn.callback = self.add_item_callback
+            self.add_item(add_item_btn)
 
         # Row 3: Context Actions & Close
         # Backstory Actions (Conditional)
-        if self.current_section == "backstory":
+        if self.current_section == "backstory" and self.can_edit:
              add_entry_btn = Button(label="Add Note", style=discord.ButtonStyle.secondary, row=3, emoji="➕")
              add_entry_btn.callback = self.add_entry_callback
              self.add_item(add_entry_btn)
@@ -705,9 +722,9 @@ class CharacterDashboardView(View):
         try:
             # Re-fetch data to ensure we have the latest updates
             player_stats = await load_player_stats()
-            # server_id and user.id are used to get the specific char_data
-            if self.server_id in player_stats and str(self.user.id) in player_stats[self.server_id]:
-                self.char_data = player_stats[self.server_id][str(self.user.id)]
+            # server_id and owner_id are used to get the specific char_data
+            if self.server_id in player_stats and self.owner_id in player_stats[self.server_id]:
+                self.char_data = player_stats[self.server_id][self.owner_id]
 
             self.update_components()
             await self.message.edit(embed=self.get_embed(), view=self)
@@ -725,19 +742,27 @@ class CharacterDashboardView(View):
         if interaction.user != self.user:
             return await interaction.response.send_message("Not your dashboard!", ephemeral=True)
 
-        view = BackstoryCategorySelectView(self.user, self.server_id, str(self.user.id), mode="add", callback=self.refresh_dashboard)
+        if not self.can_edit:
+             return await interaction.response.send_message("You cannot edit this character.", ephemeral=True)
+
+        view = BackstoryCategorySelectView(self.user, self.server_id, self.owner_id, mode="add", callback=self.refresh_dashboard)
         await interaction.response.send_message("Select a category to add to:", view=view, ephemeral=True)
 
     async def remove_entry_callback(self, interaction: discord.Interaction):
         if interaction.user != self.user:
             return await interaction.response.send_message("Not your dashboard!", ephemeral=True)
 
-        view = BackstoryCategorySelectView(self.user, self.server_id, str(self.user.id), mode="remove", callback=self.refresh_dashboard)
+        if not self.can_edit:
+             return await interaction.response.send_message("You cannot edit this character.", ephemeral=True)
+
+        view = BackstoryCategorySelectView(self.user, self.server_id, self.owner_id, mode="remove", callback=self.refresh_dashboard)
         await interaction.response.send_message("Select a category to remove from:", view=view, ephemeral=True)
 
     async def add_item_callback(self, interaction: discord.Interaction):
         if interaction.user != self.user:
             return await interaction.response.send_message("Not your dashboard!", ephemeral=True)
+        if not self.can_edit:
+             return await interaction.response.send_message("You cannot edit this character.", ephemeral=True)
         await interaction.response.send_modal(AddItemModal(self))
 
     async def launch_item_actions(self, interaction, category, item_str, index):
