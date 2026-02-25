@@ -386,9 +386,9 @@ class loot(commands.Cog):
         self.bot = bot
         self.help_category = "Keeper"
 
-    loot_group = app_commands.Group(name="loot", description="Loot related commands")
+    loot_group = app_commands.Group(name="loot", description="💰 Loot related commands")
 
-    @loot_group.command(name="random", description="Generate random loot from the 1920s.")
+    @loot_group.command(name="random", description="🎲 Generate random loot from the 1920s.")
     async def loot_random(self, interaction: discord.Interaction):
         """
         Generate random loot from 1920s.
@@ -413,7 +413,7 @@ class loot(commands.Cog):
         msg = await interaction.followup.send(embed=embed, view=view)
         view.message = msg
 
-    @loot_group.command(name="custom", description="Create custom loot distribution.")
+    @loot_group.command(name="custom", description="✍️ Create custom loot distribution.")
     async def loot_custom(self, interaction: discord.Interaction):
         """
         Create a custom loot drop via a modal.

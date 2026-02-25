@@ -239,7 +239,7 @@ class RandomNPC(commands.Cog):
         # Edit the message
         await interaction.response.edit_message(embed=embed, view=view)
 
-    @app_commands.command(name="randomnpc", description="Generate an NPC with random name and stats.")
+    @app_commands.command(name="randomnpc", description="👤 Generate an NPC with random name and stats.")
     async def randomnpc(self, interaction: discord.Interaction):
         """
         Generates a random NPC.

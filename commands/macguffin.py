@@ -54,7 +54,7 @@ class macguffin(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
-  @app_commands.command(name="macguffin", description="Outputs a random MacGuffin or lists options.")
+  @app_commands.command(name="macguffin", description="🔮 Outputs a random MacGuffin or lists options.")
   async def macguffin(self, interaction: discord.Interaction):
     """
     Outputs a random MacGuffin or lists options.
