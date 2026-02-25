@@ -16,7 +16,7 @@ import datetime
 from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort, send_from_directory
 from markupsafe import escape
 from loadnsave import (
-    load_player_stats, save_player_stats, load_retired_characters_data, save_retired_characters_data, load_settings, save_settings,
+    load_player_stats, save_player_stats, load_retired_characters_data, save_retired_characters_data, load_settings, load_settings_async, save_settings,
     load_soundboard_settings, save_soundboard_settings, load_music_blacklist, save_music_blacklist,
     load_server_stats, save_server_stats, load_server_volumes, save_server_volumes,
     load_karma_settings, save_karma_settings,
@@ -70,7 +70,7 @@ app.bot = None  # Placeholder for the Discord bot instance
 @app.before_serving
 async def app_startup():
     # Sentinel: Secure Default Password Check
-    settings = load_settings()
+    settings = await load_settings_async()
     admin_password = settings.get('admin_password')
 
     if not admin_password or admin_password == "changeme":
@@ -274,8 +274,8 @@ def inject_user():
     return dict(is_admin=is_admin())
 
 @app.context_processor
-def inject_theme():
-    settings = load_settings()
+async def inject_theme():
+    settings = await load_settings_async()
     theme = settings.get('dashboard_theme', 'cthulhu')
     fonts = settings.get('dashboard_fonts', {
         'headers': '',
@@ -412,7 +412,7 @@ async def login():
     if request.method == 'POST':
         form = await request.form
         password = form.get('password')
-        settings = load_settings()
+        settings = await load_settings_async()
 
         # Sentinel: Prevent timing attacks
         input_password = password or ""
@@ -1228,7 +1228,7 @@ async def admin_dashboard():
 @app.route('/admin/design')
 async def admin_design():
     if not is_admin(): return redirect(url_for('login'))
-    settings = load_settings()
+    settings = await load_settings_async()
     current_theme = settings.get('dashboard_theme', 'cthulhu')
     current_fonts = settings.get('dashboard_fonts', {})
     current_origin_fonts = settings.get('origin_fonts', {})
@@ -1257,7 +1257,7 @@ async def save_fonts():
     body_font = data.get('body')
     special_font = data.get('special')
 
-    settings = load_settings()
+    settings = await load_settings_async()
     if 'dashboard_fonts' not in settings:
         settings['dashboard_fonts'] = {}
 
@@ -1277,7 +1277,7 @@ async def save_origin_fonts():
     body_font = data.get('body')
     special_font = data.get('special')
 
-    settings = load_settings()
+    settings = await load_settings_async()
     if 'origin_fonts' not in settings:
         settings['origin_fonts'] = {}
 
@@ -1298,7 +1298,7 @@ async def save_design():
     if not theme:
         return jsonify({"status": "error", "message": "Missing theme"}), 400
 
-    settings = load_settings()
+    settings = await load_settings_async()
     settings['dashboard_theme'] = theme
     await save_settings(settings)
 
@@ -3466,7 +3466,7 @@ async def deleter_bulk():
 @app.route('/admin/backup')
 async def admin_backup():
     if not is_admin(): return redirect(url_for('login'))
-    settings = load_settings()
+    settings = await load_settings_async()
     backup_time = settings.get('backup_time')
     return await render_template('backup_dashboard.html', backup_time=backup_time)
 
@@ -3482,7 +3482,7 @@ async def backup_save():
         if not re.match(r'^\d{2}:\d{2}$', backup_time):
              return jsonify({"status": "error", "message": "Invalid time format (HH:MM required)"}), 400
 
-    settings = load_settings()
+    settings = await load_settings_async()
     settings['backup_time'] = backup_time
     await save_settings(settings)
 

@@ -92,6 +92,21 @@ def load_settings():
     _SETTINGS_CACHE = settings
     return settings.copy()
 
+async def load_settings_async():
+    """Asynchronous load for settings with priority: ENV > config.json"""
+    global _SETTINGS_CACHE
+    if _SETTINGS_CACHE is not None:
+        return _SETTINGS_CACHE.copy()
+
+    settings = await _load_json_file('.', 'config.json')
+
+    # 2. Environment Variables
+    if os.getenv("DISCORD_TOKEN"):
+        settings["token"] = os.getenv("DISCORD_TOKEN")
+
+    _SETTINGS_CACHE = settings
+    return settings.copy()
+
 async def save_settings(settings_data):
     """Asynchronously save settings to config.json"""
     global _SETTINGS_CACHE
