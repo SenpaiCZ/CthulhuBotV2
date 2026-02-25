@@ -397,13 +397,14 @@ class Help(commands.Cog):
             if cmd.name not in seen_commands:
                 # Try to determine category from binding if present
                 category = "Other"
-                if cmd.binding:
+                binding = getattr(cmd, "binding", None)
+                if binding:
                     # Check if binding is a Cog instance
-                    if isinstance(cmd.binding, commands.Cog):
-                         cog = cmd.binding
+                    if isinstance(binding, commands.Cog):
+                         cog = binding
                          category = getattr(cog, "help_category", None) or LEGACY_CATEGORY_MAP.get(type(cog).__name__, "Other")
                     else:
-                        cog_name = type(cmd.binding).__name__
+                        cog_name = type(binding).__name__
                         category = LEGACY_CATEGORY_MAP.get(cog_name, "Other")
 
                 if category not in help_data: help_data[category] = []
