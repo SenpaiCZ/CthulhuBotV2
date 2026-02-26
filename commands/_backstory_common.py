@@ -116,19 +116,72 @@ class BackstoryAddModal(discord.ui.Modal):
         if self.callback_func:
             await self.callback_func(interaction)
 
+class BackstoryEditModal(discord.ui.Modal):
+    def __init__(self, category, item_index, item_text, server_id, user_id, callback=None):
+        title = f"Edit {category}"
+        if len(title) > 45:
+            title = title[:42] + "..."
+        super().__init__(title=title)
+
+        self.category = category
+        self.item_index = item_index # Index in the list
+        self.original_text = item_text
+        self.server_id = server_id
+        self.user_id = user_id
+        self.callback_func = callback
+
+        self.new_text = discord.ui.TextInput(
+            style=discord.TextStyle.paragraph,
+            default=item_text[:4000],
+            required=True,
+            max_length=4000
+        )
+        self.add_item(discord.ui.Label(text="Edit content", component=self.new_text))
+
+    async def on_submit(self, interaction: discord.Interaction):
+        player_stats = await load_player_stats()
+
+        backstory = player_stats.get(self.server_id, {}).get(self.user_id, {}).get("Backstory", {})
+        if self.category not in backstory:
+             await interaction.response.send_message("Error: Category not found (concurrent modification?)", ephemeral=True)
+             return
+
+        items = backstory[self.category]
+
+        # Check index bounds
+        if self.item_index >= len(items):
+             await interaction.response.send_message("Error: The item seems to have moved or been deleted. Please refresh.", ephemeral=True)
+             return
+
+        # Check if item still matches original text (optimistic locking)
+        # Note: If text changed, we probably shouldn't blindly overwrite, but for UX simplicity we might just overwrite.
+        # However, checking helps prevent confusing race conditions.
+        if items[self.item_index] != self.original_text:
+             await interaction.response.send_message("⚠️ Warning: The item content changed while you were editing. Edit cancelled to prevent data loss.", ephemeral=True)
+             return
+
+        # Update
+        items[self.item_index] = self.new_text.value
+        await save_player_stats(player_stats)
+
+        await interaction.response.send_message(f"✅ Updated item in **{self.category}**.", ephemeral=True)
+
+        if self.callback_func:
+            await self.callback_func(interaction)
+
 class BackstoryCategorySelectView(discord.ui.View):
     def __init__(self, author, server_id, user_id, mode="add", callback=None):
         super().__init__(timeout=60)
         self.author = author
         self.server_id = server_id
         self.user_id = user_id
-        self.mode = mode # "add" or "remove"
+        self.mode = mode # "add", "edit", "remove"
         self.callback_func = callback
 
         # Build options
         self.categories = CATEGORIES
 
-        self.select_menu = discord.ui.Select(placeholder="Select a category...", min_values=1, max_values=1)
+        self.select_menu = discord.ui.Select(placeholder=f"Select category to {mode}...", min_values=1, max_values=1)
 
         for cat in self.categories[:25]: # Limit to 25
             self.select_menu.add_option(label=cat[:100], value=cat)
@@ -147,30 +200,31 @@ class BackstoryCategorySelectView(discord.ui.View):
             modal = BackstoryAddModal(category, self.server_id, self.user_id, self.callback_func)
             await interaction.response.send_modal(modal)
 
-        elif self.mode == "remove":
+        elif self.mode in ["remove", "edit"]:
             # Launch Item Select View
             # We need to fetch items first
             player_stats = await load_player_stats()
             items = player_stats.get(self.server_id, {}).get(self.user_id, {}).get("Backstory", {}).get(category, [])
 
             if not items:
-                await interaction.response.send_message(f"No items in **{category}** to remove.", ephemeral=True)
+                await interaction.response.send_message(f"No items in **{category}** to {self.mode}.", ephemeral=True)
                 return
 
-            view = BackstoryItemSelectView(self.author, self.server_id, self.user_id, category, items, self.callback_func)
-            await interaction.response.send_message(f"Select an item from **{category}** to remove:", view=view, ephemeral=True)
+            view = BackstoryItemSelectView(self.author, self.server_id, self.user_id, category, items, self.mode, self.callback_func)
+            await interaction.response.send_message(f"Select an item from **{category}** to {self.mode}:", view=view, ephemeral=True)
 
 class BackstoryItemSelectView(discord.ui.View):
-    def __init__(self, author, server_id, user_id, category, items, callback=None):
+    def __init__(self, author, server_id, user_id, category, items, mode="remove", callback=None):
         super().__init__(timeout=60)
         self.author = author
         self.server_id = server_id
         self.user_id = user_id
         self.category = category
         self.items = items
+        self.mode = mode # "remove" or "edit"
         self.callback_func = callback
 
-        self.select_menu = discord.ui.Select(placeholder="Select an item to remove...", min_values=1, max_values=1)
+        self.select_menu = discord.ui.Select(placeholder=f"Select item to {mode}...", min_values=1, max_values=1)
 
         # Limit items to 25
         for i, item in enumerate(items[:25]):
@@ -191,31 +245,36 @@ class BackstoryItemSelectView(discord.ui.View):
              await interaction.response.send_message("Error: Item not found.", ephemeral=True)
              return
 
-        item_to_remove = self.items[index]
+        item_text = self.items[index]
 
-        # Perform removal
-        player_stats = await load_player_stats()
-        # Re-fetch list to be safe
-        current_list = player_stats.get(self.server_id, {}).get(self.user_id, {}).get("Backstory", {}).get(self.category, [])
+        if self.mode == "remove":
+            # Perform removal
+            player_stats = await load_player_stats()
+            # Re-fetch list to be safe
+            current_list = player_stats.get(self.server_id, {}).get(self.user_id, {}).get("Backstory", {}).get(self.category, [])
 
-        try:
-            # Re-verify item exists
-            if item_to_remove in current_list:
-                current_list.remove(item_to_remove)
-                await save_player_stats(player_stats)
+            try:
+                # Re-verify item exists
+                if item_text in current_list:
+                    current_list.remove(item_text)
+                    await save_player_stats(player_stats)
 
-                msg = f"✅ Removed from **{self.category}**:\n>>> {item_to_remove}"
-                await interaction.response.send_message(msg, ephemeral=True)
+                    msg = f"✅ Removed from **{self.category}**:\n>>> {item_text}"
+                    await interaction.response.send_message(msg, ephemeral=True)
 
-                if self.callback_func:
-                    await self.callback_func(interaction)
-            else:
-                await interaction.response.send_message("Error: Item not found (maybe already removed?).", ephemeral=True)
-        except Exception as e:
-            await interaction.response.send_message(f"Error removing item: {e}", ephemeral=True)
+                    if self.callback_func:
+                        await self.callback_func(interaction)
+                else:
+                    await interaction.response.send_message("Error: Item not found (maybe already removed?).", ephemeral=True)
+            except Exception as e:
+                await interaction.response.send_message(f"Error removing item: {e}", ephemeral=True)
 
-        # Disable buttons
-        for child in self.children:
-            child.disabled = True
-        await interaction.message.edit(view=self)
-        self.stop()
+            # Disable buttons
+            for child in self.children:
+                child.disabled = True
+            await interaction.message.edit(view=self)
+            self.stop()
+
+        elif self.mode == "edit":
+             modal = BackstoryEditModal(self.category, index, item_text, self.server_id, self.user_id, self.callback_func)
+             await interaction.response.send_modal(modal)

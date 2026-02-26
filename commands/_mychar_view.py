@@ -150,6 +150,44 @@ class SkillRollSelect(Select):
 
         await interaction.response.edit_message(content=f"🎲 Rolled **{skill_name}**! Check the channel.", embed=None, view=back_view)
 
+class BioEditModal(Modal, title="Edit Biography"):
+    name = TextInput(label="Investigator Name", max_length=100)
+    occupation = TextInput(label="Occupation", max_length=100)
+    residence = TextInput(label="Residence", max_length=100)
+    age = TextInput(label="Age", min_length=1, max_length=3)
+
+    def __init__(self, view, char_data):
+        super().__init__()
+        self.dashboard_view = view
+        # Pre-fill
+        self.name.default = char_data.get("NAME", "")
+        self.occupation.default = char_data.get("Occupation", "")
+        self.residence.default = char_data.get("Residence", "")
+        self.age.default = str(char_data.get("Age", ""))
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            age_val = int(self.age.value)
+        except ValueError:
+            return await interaction.response.send_message("❌ Age must be a number.", ephemeral=True)
+
+        # Fetch fresh stats to avoid overwriting concurrent changes
+        player_stats = await load_player_stats()
+        server_id = self.dashboard_view.server_id
+        owner_id = self.dashboard_view.owner_id
+
+        if server_id in player_stats and owner_id in player_stats[server_id]:
+            fresh_char_data = player_stats[server_id][owner_id]
+            fresh_char_data["NAME"] = self.name.value
+            fresh_char_data["Occupation"] = self.occupation.value
+            fresh_char_data["Residence"] = self.residence.value
+            fresh_char_data["Age"] = age_val
+
+            await save_player_stats(player_stats)
+            await interaction.response.send_message("✅ Biography updated.", ephemeral=True)
+            await self.dashboard_view.refresh_dashboard(interaction)
+        else:
+            await interaction.response.send_message("❌ Error: Character not found.", ephemeral=True)
 
 class QuickUpdateModal(Modal):
     def __init__(self, view, stat_key, current_val, max_val=None):
@@ -196,16 +234,17 @@ class QuickUpdateModal(Modal):
             pass # Allow override for now, or clamp?
 
         # Update Data
-        self.dashboard_view.char_data[self.stat_key] = new_val
-
-        # Save
         player_stats = await load_player_stats()
-        if self.dashboard_view.server_id in player_stats:
-            player_stats[self.dashboard_view.server_id][self.dashboard_view.owner_id] = self.dashboard_view.char_data
-            await save_player_stats(player_stats)
+        server_id = self.dashboard_view.server_id
+        owner_id = self.dashboard_view.owner_id
 
-        await interaction.response.send_message(f"✅ Updated **{self.stat_key}** to **{new_val}**.", ephemeral=True)
-        await self.dashboard_view.refresh_dashboard(interaction)
+        if server_id in player_stats and owner_id in player_stats[server_id]:
+            player_stats[server_id][owner_id][self.stat_key] = new_val
+            await save_player_stats(player_stats)
+            await interaction.response.send_message(f"✅ Updated **{self.stat_key}** to **{new_val}**.", ephemeral=True)
+            await self.dashboard_view.refresh_dashboard(interaction)
+        else:
+            await interaction.response.send_message("❌ Error: Character not found.", ephemeral=True)
 
 class QuickUpdateSelect(Select):
     def __init__(self, view):
@@ -257,31 +296,30 @@ class AddItemModal(Modal, title="Add Inventory Item"):
         if self.details.value:
             item_str += f" {self.details.value.strip()}"
 
-        # Default to "Gear and Possessions"
         target_key = "Gear and Possessions"
-        if "Backstory" not in self.view.char_data:
-            self.view.char_data["Backstory"] = {}
 
-        backstory = self.view.char_data["Backstory"]
-        if target_key not in backstory:
-            backstory[target_key] = []
-
-        # Ensure it's a list
-        if not isinstance(backstory[target_key], list):
-             backstory[target_key] = [str(backstory[target_key])]
-
-        backstory[target_key].append(item_str)
-
-        # Save
         try:
             player_stats = await load_player_stats()
-            # Ensure structure exists
-            if self.view.server_id not in player_stats:
-                player_stats[self.view.server_id] = {}
+            server_id = self.view.server_id
+            owner_id = self.view.owner_id
 
-            player_stats[self.view.server_id][self.view.owner_id] = self.view.char_data
+            if server_id not in player_stats: player_stats[server_id] = {}
+            if owner_id not in player_stats[server_id]:
+                 await interaction.response.send_message("❌ Error: Character not found.", ephemeral=True)
+                 return
+
+            char_data = player_stats[server_id][owner_id]
+            if "Backstory" not in char_data: char_data["Backstory"] = {}
+
+            backstory = char_data["Backstory"]
+            if target_key not in backstory: backstory[target_key] = []
+
+            if not isinstance(backstory[target_key], list):
+                 backstory[target_key] = [str(backstory[target_key])]
+
+            backstory[target_key].append(item_str)
+
             await save_player_stats(player_stats)
-
             await interaction.response.send_message(f"Added **{item_str}** to inventory.", ephemeral=True)
             await self.view.refresh_dashboard(interaction)
         except Exception as e:
@@ -299,26 +337,29 @@ class EditItemModal(Modal, title="Edit Item"):
     async def on_submit(self, interaction: discord.Interaction):
         new_text = self.item_input.value.strip()
 
-        # Update Data
-        backstory = self.dashboard_view.char_data.get("Backstory", {})
-        if self.category in backstory and isinstance(backstory[self.category], list):
-            if 0 <= self.index < len(backstory[self.category]):
-                backstory[self.category][self.index] = new_text
+        try:
+            player_stats = await load_player_stats()
+            server_id = self.dashboard_view.server_id
+            owner_id = self.dashboard_view.owner_id
 
-                # Save
-                try:
-                    player_stats = await load_player_stats()
-                    player_stats[self.dashboard_view.server_id][self.dashboard_view.owner_id] = self.dashboard_view.char_data
-                    await save_player_stats(player_stats)
+            if server_id in player_stats and owner_id in player_stats[server_id]:
+                char_data = player_stats[server_id][owner_id]
+                backstory = char_data.get("Backstory", {})
 
-                    await interaction.response.send_message(f"✅ Item updated to: **{new_text}**", ephemeral=True)
-                    await self.dashboard_view.refresh_dashboard(interaction)
-                except Exception as e:
-                    await interaction.response.send_message(f"Error saving update: {e}", ephemeral=True)
+                if self.category in backstory and isinstance(backstory[self.category], list):
+                    if 0 <= self.index < len(backstory[self.category]):
+                        backstory[self.category][self.index] = new_text
+                        await save_player_stats(player_stats)
+                        await interaction.response.send_message(f"✅ Item updated to: **{new_text}**", ephemeral=True)
+                        await self.dashboard_view.refresh_dashboard(interaction)
+                    else:
+                        await interaction.response.send_message("Error: Item index out of bounds.", ephemeral=True)
+                else:
+                    await interaction.response.send_message("Error: Category not found.", ephemeral=True)
             else:
-                await interaction.response.send_message("Error: Item index out of bounds.", ephemeral=True)
-        else:
-            await interaction.response.send_message("Error: Category not found.", ephemeral=True)
+                 await interaction.response.send_message("❌ Error: Character not found.", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"Error saving update: {e}", ephemeral=True)
 
 class GiveUserSelect(UserSelect):
     def __init__(self, view, category, item_str, index):
@@ -593,6 +634,11 @@ class CharacterDashboardView(View):
              if self.can_edit:
                  self.add_item(QuickUpdateSelect(self))
 
+                 # Add Edit Bio Button here
+                 edit_bio_btn = Button(label="Edit Bio", style=discord.ButtonStyle.secondary, row=2, emoji="✏️")
+                 edit_bio_btn.callback = self.edit_bio_callback
+                 self.add_item(edit_bio_btn)
+
         elif self.current_section == "skills":
             skill_list = self._get_skill_list()
             max_pages = math.ceil(len(skill_list) / self.items_per_page)
@@ -636,11 +682,18 @@ class CharacterDashboardView(View):
         # Row 3: Context Actions & Close
         # Backstory Actions (Conditional)
         if self.current_section == "backstory" and self.can_edit:
-             add_entry_btn = Button(label="Add Note", style=discord.ButtonStyle.secondary, row=3, emoji="➕")
+             # Add Entry
+             add_entry_btn = Button(label="Add Entry", style=discord.ButtonStyle.secondary, row=3, emoji="➕")
              add_entry_btn.callback = self.add_entry_callback
              self.add_item(add_entry_btn)
 
-             remove_btn = Button(label="Remove", style=discord.ButtonStyle.secondary, row=3, emoji="➖")
+             # Edit Entry
+             edit_entry_btn = Button(label="Edit Entry", style=discord.ButtonStyle.secondary, row=3, emoji="✏️")
+             edit_entry_btn.callback = self.edit_entry_callback
+             self.add_item(edit_entry_btn)
+
+             # Remove Entry
+             remove_btn = Button(label="Remove Entry", style=discord.ButtonStyle.secondary, row=3, emoji="➖")
              remove_btn.callback = self.remove_entry_callback
              self.add_item(remove_btn)
 
@@ -757,6 +810,23 @@ class CharacterDashboardView(View):
 
         view = BackstoryCategorySelectView(self.user, self.server_id, self.owner_id, mode="remove", callback=self.refresh_dashboard)
         await interaction.response.send_message("Select a category to remove from:", view=view, ephemeral=True)
+
+    async def edit_entry_callback(self, interaction: discord.Interaction):
+        if interaction.user != self.user:
+            return await interaction.response.send_message("Not your dashboard!", ephemeral=True)
+        if not self.can_edit:
+             return await interaction.response.send_message("You cannot edit this character.", ephemeral=True)
+
+        view = BackstoryCategorySelectView(self.user, self.server_id, self.owner_id, mode="edit", callback=self.refresh_dashboard)
+        await interaction.response.send_message("Select a category to edit:", view=view, ephemeral=True)
+
+    async def edit_bio_callback(self, interaction: discord.Interaction):
+        if interaction.user != self.user:
+             return await interaction.response.send_message("Not your dashboard!", ephemeral=True)
+        if not self.can_edit:
+             return await interaction.response.send_message("You cannot edit this.", ephemeral=True)
+        modal = BioEditModal(self, self.char_data)
+        await interaction.response.send_modal(modal)
 
     async def add_item_callback(self, interaction: discord.Interaction):
         if interaction.user != self.user:
