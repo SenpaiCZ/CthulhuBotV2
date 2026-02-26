@@ -248,6 +248,7 @@ function addLootItem() {
         currentLootItems.push(val);
         input.value = '';
         renderLootList();
+        input.focus();
     }
 }
 
@@ -469,6 +470,11 @@ function addSkillSoundRow(skillName = '', values = {}) {
     `;
 
     container.appendChild(row);
+
+    if (!skillName) {
+        const input = row.querySelector('.skill-name-input');
+        if (input) input.focus();
+    }
 }
 
 async function saveSoundSettings() {
