@@ -24,6 +24,43 @@ bot = commands.Bot(command_prefix=get_prefix,
                    intents=discord.Intents.all(),
                    help_command=None)
 
+# Global list to track failed loads
+bot.failed_extensions = []
+
+@bot.event
+async def on_ready():
+    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
+    print('------')
+
+    if hasattr(bot, 'failed_extensions') and bot.failed_extensions:
+        try:
+            app_info = await bot.application_info()
+            owner = app_info.owner
+
+            # Handle Team ownership edge case
+            if isinstance(owner, discord.Team):
+                 owner = getattr(owner, 'owner', None)
+                 if isinstance(owner, int):
+                      owner = await bot.fetch_user(owner)
+
+            if owner and hasattr(owner, 'send'):
+                error_message = "**⚠️ Startup Issues:**\nThe following extensions failed to load:\n\n"
+                for filename, error in bot.failed_extensions:
+                    error_message += f"**{filename}**:\n`{error}`\n\n"
+
+                # Send DM (chunk if necessary)
+                if len(error_message) > 2000:
+                    chunks = [error_message[i:i+1900] for i in range(0, len(error_message), 1900)]
+                    for chunk in chunks:
+                        await owner.send(chunk)
+                else:
+                    await owner.send(error_message)
+
+                print(f"Sent error report to owner: {owner}")
+                bot.failed_extensions = [] # Clear after sending
+        except Exception as e:
+            print(f"Failed to send error report to owner: {e}")
+
 # Loading cogs!
 async def load():
   # in folder commands
@@ -38,6 +75,7 @@ async def load():
         print(f"Warning: {filename} has no 'setup' function. Skipping.")
       except Exception as e:
         print(f"Failed to load extension {filename}: {e}")
+        bot.failed_extensions.append((filename, str(e)))
 
 async def main():
   async with bot:

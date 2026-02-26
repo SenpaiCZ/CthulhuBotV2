@@ -8,23 +8,35 @@ import urllib.parse
 from playwright.async_api import async_playwright
 from loadnsave import load_karma_settings, save_karma_settings, load_karma_stats, save_karma_stats, load_settings
 
+class KarmaActionsView(discord.ui.View):
+    def __init__(self, cog, target_user):
+        super().__init__(timeout=60)
+        self.cog = cog
+        self.target_user = target_user
+
+    @discord.ui.button(label="Check Karma", style=discord.ButtonStyle.primary, emoji="🌟")
+    async def check_karma(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.cog._send_karma_response(interaction, self.target_user)
+
+    @discord.ui.button(label="View Rank Card", style=discord.ButtonStyle.secondary, emoji="🔮")
+    async def view_rank_card(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.cog._show_rank_card(interaction, self.target_user)
+
 class Karma(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.ctx_menu_check = app_commands.ContextMenu(
-            name='Check Karma',
-            callback=self.karma_context_menu,
+        self.ctx_menu_actions = app_commands.ContextMenu(
+            name='Karma Actions',
+            callback=self.karma_actions_menu,
         )
-        self.ctx_menu_rank = app_commands.ContextMenu(
-            name='View Rank Card',
-            callback=self.view_rank_card_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu_check, override=True)
-        self.bot.tree.add_command(self.ctx_menu_rank, override=True)
+        self.bot.tree.add_command(self.ctx_menu_actions, override=True)
 
     def cog_unload(self):
-        self.bot.tree.remove_command(self.ctx_menu_check.name, type=self.ctx_menu_check.type)
-        self.bot.tree.remove_command(self.ctx_menu_rank.name, type=self.ctx_menu_rank.type)
+        self.bot.tree.remove_command(self.ctx_menu_actions.name, type=self.ctx_menu_actions.type)
+
+    async def karma_actions_menu(self, interaction: discord.Interaction, user: discord.Member):
+        view = KarmaActionsView(self, user)
+        await interaction.response.send_message(f"Select an action for {user.display_name}:", view=view, ephemeral=True)
 
     async def get_guild_settings(self, guild_id):
         settings = await load_karma_settings()
@@ -406,12 +418,6 @@ class Karma(commands.Cog):
             user = interaction.user
 
         await self._send_karma_response(interaction, user)
-
-    async def karma_context_menu(self, interaction: discord.Interaction, user: discord.User):
-        await self._send_karma_response(interaction, user)
-
-    async def view_rank_card_menu(self, interaction: discord.Interaction, user: discord.Member):
-        await self._show_rank_card(interaction, user)
 
     async def _send_karma_response(self, interaction: discord.Interaction, user: discord.User):
         stats = await load_karma_stats()
