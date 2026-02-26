@@ -562,6 +562,209 @@ class QuickSkillSelect(Select):
         await interaction.response.send_message(f"✅ Rolled **{skill_name}** in channel.", ephemeral=True)
 
 
+class SafeDiceParser:
+    def __init__(self):
+        self.max_dice_count = 100
+        self.max_sides = 1000
+        self.max_result = 1000000 # 1 million limit
+
+    def evaluate(self, expression):
+        expression = str(expression).replace(" ", "")
+
+        if "**" in expression: raise ValueError("Power operator not allowed")
+        if "//" in expression: raise ValueError("Floor division not allowed")
+
+        tokens = self._tokenize(expression)
+        result_val, detail_str = self._parse_expression(tokens)
+
+        if result_val > self.max_result:
+            raise ValueError(f"Result too large (max {self.max_result})")
+
+        return result_val, detail_str
+
+    def _tokenize(self, expr):
+        tokens = []
+        i = 0
+        while i < len(expr):
+            char = expr[i]
+            if char.isdigit():
+                num_str = char
+                i += 1
+                while i < len(expr) and expr[i].isdigit():
+                    num_str += expr[i]
+                    i += 1
+                tokens.append(('NUM', int(num_str)))
+                continue
+            elif char.lower() in "+-*/()d":
+                if char.lower() == 'd':
+                    tokens.append(('OP', 'd'))
+                else:
+                    tokens.append(('OP', char))
+                i += 1
+                continue
+            else:
+                raise ValueError(f"Invalid character: {char}")
+        return tokens
+
+    def _parse_expression(self, tokens):
+        val, det = self._parse_term(tokens)
+        while tokens and tokens[0][0] == 'OP' and tokens[0][1] in "+-":
+            op = tokens.pop(0)[1]
+            right_val, right_det = self._parse_term(tokens)
+            if op == '+':
+                val += right_val
+                if right_det: det += f" + {right_det}"
+            else:
+                val -= right_val
+                if right_det: det += f" - {right_det}" # Logic check: 1d6 - 1d6? Detail needs parenthesis maybe?
+                # For simplicity, we just append details. The math is correct.
+        return val, det
+
+    def _parse_term(self, tokens):
+        val, det = self._parse_factor(tokens)
+        while tokens and tokens[0][0] == 'OP' and tokens[0][1] in "*/":
+            op = tokens.pop(0)[1]
+            right_val, right_det = self._parse_factor(tokens)
+            if op == '*':
+                val *= right_val
+                if right_det: det += f" * {right_det}"
+            else:
+                if right_val == 0: raise ValueError("Division by zero")
+                val //= right_val
+                if right_det: det += f" / {right_det}"
+        return val, det
+
+    def _parse_factor(self, tokens):
+        if not tokens: raise ValueError("Unexpected end of expression")
+        token = tokens.pop(0)
+
+        if token[0] == 'NUM':
+            val = token[1]
+            if tokens and tokens[0][0] == 'OP' and tokens[0][1] == 'd':
+                tokens.pop(0)
+                if not tokens or tokens[0][0] != 'NUM': raise ValueError("Expected number after 'd'")
+                sides = tokens.pop(0)[1]
+                return self._roll_dice(val, sides)
+            return val, str(val)
+
+        elif token[0] == 'OP' and token[1] == '(':
+            val, det = self._parse_expression(tokens)
+            if not tokens or tokens[0][1] != ')': raise ValueError("Missing closing parenthesis")
+            tokens.pop(0)
+            return val, f"({det})"
+
+        elif token[0] == 'OP' and token[1] == 'd':
+            if not tokens or tokens[0][0] != 'NUM': raise ValueError("Expected number after 'd'")
+            sides = tokens.pop(0)[1]
+            return self._roll_dice(1, sides)
+
+        else:
+            raise ValueError(f"Unexpected token: {token}")
+
+    def _roll_dice(self, count, sides):
+        if count > self.max_dice_count: raise ValueError(f"Too many dice (max {self.max_dice_count})")
+        if sides > self.max_sides: raise ValueError(f"Too many sides (max {self.max_sides})")
+        if count <= 0 or sides <= 0: return 0, "0"
+
+        rolls = [random.randint(1, sides) for _ in range(count)]
+        total = sum(rolls)
+        rolls_str = ', '.join(map(str, rolls))
+        if len(rolls_str) > 50: rolls_str = rolls_str[:50] + "..."
+
+        # Format: [6, 2]
+        detail = f"[{rolls_str}]"
+        return total, detail
+
+class DiceTrayView(View):
+    def __init__(self, cog, user):
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.user = user
+        self.expression = ""
+        self.update_buttons()
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.user:
+            await interaction.response.send_message("This dice tray is not for you!", ephemeral=True)
+            return False
+        return True
+
+    def update_buttons(self):
+        # We don't need to rebuild buttons every time, just update embed via callback
+        pass
+
+    def get_embed(self):
+        desc = "Click buttons to build your dice pool."
+        if self.expression:
+            desc = f"```\n{self.expression}\n```"
+
+        embed = discord.Embed(title="🎲 Dice Tray", description=desc, color=discord.Color.gold())
+        return embed
+
+    async def update_display(self, interaction):
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+
+    async def add_term(self, interaction, term):
+        if self.expression:
+            self.expression += f" + {term}"
+        else:
+            self.expression = term
+        await self.update_display(interaction)
+
+    @discord.ui.button(label="D4", style=discord.ButtonStyle.secondary, row=0)
+    async def d4(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.add_term(interaction, "1d4")
+
+    @discord.ui.button(label="D6", style=discord.ButtonStyle.secondary, row=0)
+    async def d6(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.add_term(interaction, "1d6")
+
+    @discord.ui.button(label="D8", style=discord.ButtonStyle.secondary, row=0)
+    async def d8(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.add_term(interaction, "1d8")
+
+    @discord.ui.button(label="D10", style=discord.ButtonStyle.secondary, row=0)
+    async def d10(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.add_term(interaction, "1d10")
+
+    @discord.ui.button(label="D12", style=discord.ButtonStyle.secondary, row=0)
+    async def d12(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.add_term(interaction, "1d12")
+
+    @discord.ui.button(label="D20", style=discord.ButtonStyle.secondary, row=1)
+    async def d20(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.add_term(interaction, "1d20")
+
+    @discord.ui.button(label="D100", style=discord.ButtonStyle.secondary, row=1)
+    async def d100(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.add_term(interaction, "1d100")
+
+    @discord.ui.button(label="+1", style=discord.ButtonStyle.secondary, row=1)
+    async def plus1(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.expression += " + 1"
+        await self.update_display(interaction)
+
+    @discord.ui.button(label="+5", style=discord.ButtonStyle.secondary, row=1)
+    async def plus5(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.expression += " + 5"
+        await self.update_display(interaction)
+
+    @discord.ui.button(label="Clear", style=discord.ButtonStyle.danger, row=1)
+    async def clear(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.expression = ""
+        await self.update_display(interaction)
+
+    @discord.ui.button(label="ROLL!", style=discord.ButtonStyle.success, row=2, emoji="🎲")
+    async def roll_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.expression:
+            return await interaction.response.send_message("Add dice first!", ephemeral=True)
+
+        await interaction.response.defer()
+        await interaction.delete_original_response()
+
+        # Tray rolls are always private
+        await self.cog._perform_roll(interaction, self.expression, 0, 0, True, "Regular")
+
 class Roll(commands.Cog):
 
     def __init__(self, bot):
@@ -602,23 +805,9 @@ class Roll(commands.Cog):
         await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
     def evaluate_dice_expression(self, expression):
-        expression = str(expression).replace('D', 'd').replace(' ', '')
-        detail_parts = []
-
-        def roll_dice(match):
-            num, size = map(int, match.groups())
-            rolls = [random.randint(1, size) for _ in range(num)]
-            detail_parts.append(f":game_die: {num}d{size}: {' + '.join(map(str, rolls))} = {sum(rolls)}")
-            return sum(rolls)
-
-        dice_pattern = re.compile(r'(\d+)d(\d+)')
-        expression = dice_pattern.sub(lambda m: str(roll_dice(m)), expression)
-
-        if not re.match(r'^[\d+\-*/().]+$', expression):
-            raise ValueError("Invalid dice expression")
-
-        result = eval(expression, {"__builtins__": None})
-        detail = "\n".join(detail_parts) + f"\nExpression: {expression}"
+        # Use SafeDiceParser
+        parser = SafeDiceParser()
+        result, detail = parser.evaluate(expression)
         return result, detail
 
     def calculate_roll_result(self, roll, skill_value):
@@ -668,14 +857,26 @@ class Roll(commands.Cog):
         penalty=[app_commands.Choice(name="0", value=0), app_commands.Choice(name="1", value=1), app_commands.Choice(name="2", value=2)],
         difficulty=[app_commands.Choice(name="Regular", value="Regular"), app_commands.Choice(name="Hard", value="Hard"), app_commands.Choice(name="Extreme", value="Extreme")]
     )
-    async def roll(self, interaction: discord.Interaction, dice_expression: str, bonus: int = 0, penalty: int = 0, secret: bool = False, difficulty: str = "Regular"):
+    async def roll(self, interaction: discord.Interaction, dice_expression: str = None, bonus: int = 0, penalty: int = 0, secret: bool = False, difficulty: str = "Regular"):
         """
         🎲 Perform a dice roll or skill check.
         """
-        # Defer
         ephemeral = secret
-        await interaction.response.defer(ephemeral=ephemeral)
+        if dice_expression is None:
+            ephemeral = True
 
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=ephemeral)
+
+        if not dice_expression:
+            view = DiceTrayView(self, interaction.user)
+            await interaction.followup.send(embed=view.get_embed(), view=view, ephemeral=True)
+            return
+
+        await self._perform_roll(interaction, dice_expression, bonus, penalty, secret, difficulty)
+
+    async def _perform_roll(self, interaction, dice_expression, bonus, penalty, secret, difficulty):
+        ephemeral = secret
         async def send_msg(content=None, embed=None, view=None):
              return await interaction.followup.send(content=content, embed=embed, view=view, ephemeral=ephemeral, wait=True)
 
