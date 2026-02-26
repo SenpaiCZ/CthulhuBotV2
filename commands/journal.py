@@ -650,7 +650,7 @@ class ClueDestinationView(ui.View):
         await interaction.response.send_modal(modal)
         self.stop()
 
-    @discord.ui.button(label="Master Journal", style=discord.ButtonStyle.gold, emoji="📜")
+    @discord.ui.button(label="Master Journal", style=discord.ButtonStyle.success, emoji="📜")
     async def master(self, interaction: discord.Interaction, button: discord.ui.Button):
         modal = JournalEntryModal(self.cog, "master", original_entry=self.original_entry, title="Save Clue", image_attachments=self.image_attachments)
         await interaction.response.send_modal(modal)
