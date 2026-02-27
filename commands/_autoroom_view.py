@@ -2,7 +2,7 @@ import discord
 from discord import ui
 
 class RenameRoomModal(ui.Modal, title="Rename Voice Channel"):
-    name = ui.TextInput(label="New Channel Name", placeholder="e.g. Secret Lair", max_length=100)
+    name = ui.TextInput(label="New Channel Name", placeholder="e.g. Secret Lair", max_length=100, style=discord.TextStyle.short)
 
     async def on_submit(self, interaction: discord.Interaction):
         new_name = self.name.value

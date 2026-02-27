@@ -84,7 +84,7 @@ class randomname(commands.Cog):
     self.bot = bot
     self.help_category = "Keeper"
 
-  @app_commands.command(name="randomname", description="Generate a random name from the 1920s era.")
+  @app_commands.command(name="randomname", description="🎲 Generate a random name from the 1920s era.")
   @app_commands.describe(region="Choose a region for the name origin")
   @app_commands.choices(region=[
       app_commands.Choice(name="English & American", value="english"),

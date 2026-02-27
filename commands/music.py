@@ -372,7 +372,7 @@ class Music(commands.Cog):
     async def volume(self, interaction: discord.Interaction, vol: int):
         """🔊 Sets the music volume (0-100). Persists per server."""
         if not interaction.guild:
-            await interaction.response.send_message("This command can only be used in a server.")
+            await interaction.response.send_message("This command can only be used in a server.", ephemeral=True)
             return
 
         guild_id = str(interaction.guild.id)
@@ -390,7 +390,7 @@ class Music(commands.Cog):
             track.volume = new_vol
             await self.refresh_dashboard(interaction)
         else:
-            await interaction.response.send_message(f"🔊 Music volume set to {vol}% (will apply to next song)")
+            await interaction.response.send_message(f"🔊 Music volume set to {vol}% (will apply to next song)", ephemeral=True)
 
     @app_commands.command(name="loop", description="🔁 Toggles loop for the current song.")
     async def loop(self, interaction: discord.Interaction):

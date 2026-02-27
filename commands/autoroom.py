@@ -58,9 +58,9 @@ class Autoroom(commands.Cog):
       if member.voice and member.voice.channel and member.voice.channel.id == user_channel_id:
           try:
               await member.move_to(None)  # Disconnect
-              await interaction.response.send_message(f"{member.display_name} has been kicked from your room.")
+              await interaction.response.send_message(f"👢 {member.display_name} has been kicked from your room.", ephemeral=True)
           except discord.errors.Forbidden:
-              await interaction.response.send_message("I don't have permission to move that user.", ephemeral=True)
+              await interaction.response.send_message("❌ I don't have permission to move that user.", ephemeral=True)
       else:
           await interaction.response.send_message("That user is not in your room.", ephemeral=True)
 

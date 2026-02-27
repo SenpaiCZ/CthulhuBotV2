@@ -713,7 +713,7 @@ class Journal(commands.Cog):
              modal = JournalEntryModal(self, "personal", target_user_id=None, original_entry=pre_filled_data, title="Save Clue", image_attachments=image_attachments)
              await interaction.response.send_modal(modal)
 
-    @journal_group.command(name="open", description="Open your journal (Personal or Master).")
+    @journal_group.command(name="open", description="📖 Open your journal (Personal or Master).")
     async def open_journal(self, interaction: discord.Interaction):
         view = JournalView(self, interaction, mode="personal")
         embed = await view.get_embed()
@@ -727,7 +727,7 @@ class Journal(commands.Cog):
         await interaction.response.send_message(embed=embed, view=view, files=files, ephemeral=True)
         view.message = await interaction.original_response()
 
-    @journal_group.command(name="grant", description="Grant a user access to the Master Journal (Admin only).")
+    @journal_group.command(name="grant", description="🔓 Grant a user access to the Master Journal (Admin only).")
     @app_commands.describe(user="The user to grant access to")
     @app_commands.checks.has_permissions(administrator=True)
     async def grant_access(self, interaction: discord.Interaction, user: discord.Member):
@@ -748,7 +748,7 @@ class Journal(commands.Cog):
         else:
             await interaction.response.send_message(f"ℹ️ **{user.display_name}** already has access.", ephemeral=True)
 
-    @journal_group.command(name="revoke", description="Revoke a user's access to the Master Journal (Admin only).")
+    @journal_group.command(name="revoke", description="🔒 Revoke a user's access to the Master Journal (Admin only).")
     @app_commands.describe(user="The user to revoke access from")
     @app_commands.checks.has_permissions(administrator=True)
     async def revoke_access(self, interaction: discord.Interaction, user: discord.Member):
@@ -765,7 +765,7 @@ class Journal(commands.Cog):
 
         await interaction.response.send_message(f"ℹ️ **{user.display_name}** does not have access.", ephemeral=True)
 
-    @journal_group.command(name="inspect", description="View a player's personal journal (Admin only).")
+    @journal_group.command(name="inspect", description="🧐 View a player's personal journal (Admin only).")
     @app_commands.describe(user="The player whose journal you want to read")
     @app_commands.checks.has_permissions(administrator=True)
     async def inspect_journal(self, interaction: discord.Interaction, user: discord.Member):
