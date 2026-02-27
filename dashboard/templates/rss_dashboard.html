@@ -211,11 +211,11 @@ function renderFeedTable(feeds, tableId, noDataMsgId) {
             <td><a href="${feed.link}" target="_blank" title="${feed.link}">${displayLink}</a></td>
             <td>
                 <input type="color" class="form-control form-control-color" value="${feed.color || '#2E8B57'}"
-                       onchange="updateColor('${feed.guild_id}', '${feed.link}', this.value)" title="Update Color">
+                       onchange="updateColor('${feed.guild_id}', '${feed.link}', this.value)" title="Update Color" aria-label="Color for ${feed.link.replace(/"/g, '&quot;')}">
             </td>
             <td><small>${feed.last_message || 'None'}</small></td>
             <td>
-                <button class="btn btn-danger btn-sm" onclick="deleteFeed('${feed.guild_id}', '${feed.link}')">
+                <button class="btn btn-danger btn-sm" onclick="deleteFeed('${feed.guild_id}', '${feed.link}')" aria-label="Delete feed ${feed.link.replace(/"/g, '&quot;')}">
                     Delete
                 </button>
             </td>
