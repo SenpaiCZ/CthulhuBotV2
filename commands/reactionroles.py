@@ -51,14 +51,17 @@ class ReactionRoles(commands.Cog):
 
         await save_reaction_roles(data)
 
-    @app_commands.command(name="reactionrole", description="🎭 Setup a reaction role.")
+    @app_commands.command(name="reactionrole", description="🎭 [DEPRECATED] Setup a reaction role. Use /rolepanel instead.")
     @app_commands.describe(message_link="The message link or ID.", role="The role to assign.", emoji="The emoji to react with.")
     @app_commands.checks.has_permissions(administrator=True)
     async def reaction_role(self, interaction: discord.Interaction, message_link: str, role: discord.Role, emoji: str):
         """
         🎭 Setup a reaction role.
+        **DEPRECATED**: Please use `/rolepanel` for a better experience.
         """
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.send_message("⚠️ **Deprecation Warning**: Reaction Roles are deprecated. Please consider using `/rolepanel` for modern button-based roles.", ephemeral=True)
+        # Continue with old logic for now...
+        # await interaction.response.defer(ephemeral=True) # Cannot defer after send_message
 
         # Determine Message
         message = None

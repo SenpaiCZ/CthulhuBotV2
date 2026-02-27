@@ -13,6 +13,7 @@ import emoji
 import emojis
 import feedparser
 import datetime
+import time
 from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort, send_from_directory
 from markupsafe import escape
 from loadnsave import (
@@ -57,6 +58,7 @@ FONTS_FOLDER = os.path.join("data", "fonts")
 OLD_FONTS_FOLDER = os.path.join("dashboard", "static", "fonts")
 server_volumes = {} # guild_id (str) -> {'music': 1.0, 'soundboard': 0.5}
 guild_mixers = {} # guild_id (str) -> MixingAudioSource
+_failed_login_attempts = {} # ip (str) -> [timestamp, ...]
 
 BASIC_FONTS = [
     "Arial", "Verdana", "Helvetica", "Tahoma", "Trebuchet MS", "Times New Roman",
@@ -150,6 +152,35 @@ async def check_csrf():
 # Helper to check login
 def is_admin():
     return session.get('logged_in', False)
+
+def check_rate_limit(ip):
+    """
+    Sentinel: Check if IP is rate limited for login.
+    Limit: 5 attempts per 60 seconds.
+    """
+    now = time.time()
+    attempts = _failed_login_attempts.get(ip, [])
+    # Filter out old attempts
+    attempts = [t for t in attempts if now - t < 60]
+
+    if not attempts:
+        if ip in _failed_login_attempts:
+            del _failed_login_attempts[ip]
+    else:
+        _failed_login_attempts[ip] = attempts
+
+    if len(attempts) >= 5:
+        return False
+    return True
+
+def record_login_failure(ip):
+    """
+    Sentinel: Record a failed login attempt.
+    """
+    now = time.time()
+    if ip not in _failed_login_attempts:
+        _failed_login_attempts[ip] = []
+    _failed_login_attempts[ip].append(now)
 
 def format_bold(text):
     if not isinstance(text, str):
@@ -410,6 +441,11 @@ async def index():
 @app.route('/login', methods=['GET', 'POST'])
 async def login():
     if request.method == 'POST':
+        # Sentinel: Rate Limiting
+        ip = request.remote_addr
+        if not check_rate_limit(ip):
+             return await render_template('login.html', error="Too many failed attempts. Please try again later."), 429
+
         form = await request.form
         password = form.get('password')
         settings = await load_settings_async()
@@ -419,9 +455,14 @@ async def login():
         expected_password = settings.get('admin_password', 'changeme') or ""
 
         if secrets.compare_digest(input_password, expected_password):
+            # Sentinel: Clear failed attempts on success
+            if ip in _failed_login_attempts:
+                del _failed_login_attempts[ip]
             session['logged_in'] = True
             return redirect(url_for('admin_dashboard'))
         else:
+            # Sentinel: Record failure
+            record_login_failure(ip)
             return await render_template('login.html', error="Invalid Password")
     return await render_template('login.html')
 
