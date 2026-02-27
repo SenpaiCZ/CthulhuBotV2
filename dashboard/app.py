@@ -2063,9 +2063,21 @@ async def soundboard_file_settings():
     if not file_path or volume is None or loop is None:
         return jsonify({"status": "error", "message": "Missing arguments"}), 400
 
-    # Security check
+    # Security check: Basic traversal check
     if '..' in file_path:
         return jsonify({"status": "error", "message": "Invalid file path"}), 400
+
+    # Sentinel: Robust Path Traversal Check
+    # Ensure the resolved absolute path is within the SOUNDBOARD_FOLDER
+    # Note: For settings, we don't necessarily need the file to exist on disk right now (maybe deleted?),
+    # but we should still enforce that the key is safe.
+    # However, standard usage implies we are modifying settings for an existing file.
+    # We'll construct the hypothetical full path to validate it.
+    full_path = os.path.join(SOUNDBOARD_FOLDER, file_path)
+    abs_target = os.path.abspath(full_path)
+    abs_root = os.path.abspath(SOUNDBOARD_FOLDER)
+    if os.path.commonpath([abs_target, abs_root]) != abs_root:
+        return jsonify({"status": "error", "message": "Path traversal detected"}), 400
 
     try:
         vol_int = int(volume)
@@ -2113,6 +2125,13 @@ async def soundboard_play():
         return jsonify({"status": "error", "message": "Invalid file path"}), 400
 
     full_path = os.path.join(SOUNDBOARD_FOLDER, file_path)
+
+    # Sentinel: Robust Path Traversal Check
+    abs_target = os.path.abspath(full_path)
+    abs_root = os.path.abspath(SOUNDBOARD_FOLDER)
+    if os.path.commonpath([abs_target, abs_root]) != abs_root:
+        return jsonify({"status": "error", "message": "Path traversal detected"}), 400
+
     if not os.path.exists(full_path):
         return jsonify({"status": "error", "message": "File not found"}), 404
 
