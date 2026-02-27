@@ -350,30 +350,56 @@ class LootView(View):
         await interaction.edit_original_response(embed=embed, view=self)
 
 
-class LootCustomModal(Modal, title="Create Custom Loot"):
-    items = TextInput(
-        label="Items (one per line)",
-        style=discord.TextStyle.paragraph,
-        placeholder="A Mysterious Sword\nHealing Potion\nOld Map",
-        required=True,
-        max_length=2000
-    )
+class LootCustomModal(Modal):
+    def __init__(self, default_items=""):
+        super().__init__(title="Create Custom Loot")
+        self.flavor = TextInput(
+            label="Flavor Text (Optional)",
+            style=discord.TextStyle.paragraph,
+            placeholder="A dusty chest sits in the corner...",
+            required=False,
+            max_length=1000
+        )
+        self.items = TextInput(
+            label="Items (one per line)",
+            style=discord.TextStyle.paragraph,
+            placeholder="A Mysterious Sword\nHealing Potion\nOld Map",
+            default=default_items[:2000],
+            required=True,
+            max_length=2000
+        )
+        self.money = TextInput(
+            label="Money (Optional)",
+            style=discord.TextStyle.short,
+            placeholder="e.g. $10.00",
+            required=False,
+            max_length=100
+        )
+        self.add_item(self.flavor)
+        self.add_item(self.items)
+        self.add_item(self.money)
 
     async def on_submit(self, interaction: discord.Interaction):
         items_text = self.items.value
         items = [line.strip() for line in items_text.split('\n') if line.strip()]
 
-        if not items:
-            await interaction.response.send_message("You must provide at least one item.", ephemeral=True)
+        money_val = self.money.value.strip() if self.money.value else None
+        flavor_text = self.flavor.value.strip() if self.flavor.value else "Items available for taking:"
+
+        if not items and not money_val:
+            await interaction.response.send_message("You must provide at least one item or money.", ephemeral=True)
             return
 
-        view = LootView(items, None, interaction.guild.id, None, rerollable=False)
+        view = LootView(items, money_val, interaction.guild.id, None, rerollable=False)
 
         embed = discord.Embed(title="Custom Loot Available", color=discord.Color.gold())
-        embed.description = "Items available for taking:"
+        embed.description = flavor_text
 
         for item in items:
             embed.add_field(name=f"{get_emoji_for_item(item)} {item}", value="\u200b", inline=False)
+
+        if money_val:
+            embed.add_field(name="💰 Money", value=f"**{money_val}**", inline=False)
 
         await interaction.response.send_message(embed=embed, view=view)
 
@@ -385,6 +411,21 @@ class loot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.help_category = "Keeper"
+
+        self.ctx_menu = app_commands.ContextMenu(
+            name="💰 Turn into Loot",
+            callback=self.turn_into_loot_context
+        )
+        self.ctx_menu.binding = self
+        self.ctx_menu.description = "Turn this message into a loot drop"
+        self.bot.tree.add_command(self.ctx_menu)
+
+    async def cog_unload(self):
+        self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
+
+    async def turn_into_loot_context(self, interaction: discord.Interaction, message: discord.Message):
+        content = message.clean_content
+        await interaction.response.send_modal(LootCustomModal(default_items=content))
 
     loot_group = app_commands.Group(name="loot", description="💰 Loot related commands")
 
