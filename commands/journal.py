@@ -675,7 +675,7 @@ class Journal(commands.Cog):
     def cog_unload(self):
         self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
 
-    journal_group = app_commands.Group(name="journal", description="Manage and view journals")
+    journal_group = app_commands.Group(name="journal", description="📔 Manage and view journals")
 
     async def save_clue_context(self, interaction: discord.Interaction, message: discord.Message):
         """

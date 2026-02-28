@@ -9,7 +9,7 @@ class removebackstory(commands.Cog):
         self.bot = bot
         self.help_category = "Player"
 
-    @app_commands.command(name="removebackstory", description="Interactive wizard to remove items from your character's backstory.")
+    @app_commands.command(name="removebackstory", description="🗑️ Interactive wizard to remove items from your character's backstory.")
     async def removebackstory(self, interaction: discord.Interaction):
         """
         Interactive wizard to remove items from your character's backstory.
