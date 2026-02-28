@@ -79,10 +79,81 @@ class ReminderListView(ui.View):
         else:
             await interaction.response.send_message(f"❌ Failed to delete: {msg}", ephemeral=True)
 
+class ReminderContextMenuModal(discord.ui.Modal, title="Set Reminder"):
+    def __init__(self, cog, message: discord.Message):
+        super().__init__()
+        self.cog = cog
+
+        # Pre-fill note with context
+        content_preview = message.content
+        if len(content_preview) > 800:
+             content_preview = content_preview[:800] + "..."
+        default_note = f"Context: {content_preview}\n{message.jump_url}"
+        if len(default_note) > 1000:
+             default_note = default_note[:1000]
+
+        self.duration = discord.ui.TextInput(
+            label="Duration (e.g., 10m, 1h, 1d)",
+            placeholder="1h",
+            max_length=10,
+            required=True
+        )
+        self.message_note = discord.ui.TextInput(
+            label="Reminder Note",
+            style=discord.TextStyle.paragraph,
+            default=default_note,
+            max_length=1000,
+            required=True
+        )
+
+        self.add_item(self.duration)
+        self.add_item(self.message_note)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        seconds = self.cog.parse_duration(self.duration.value)
+        if seconds <= 0:
+            await interaction.response.send_message("❌ Invalid duration. Please use a format like `10m`, `1h`, `1d`, `30s`.", ephemeral=True)
+            return
+
+        res, result = await self.cog.create_reminder_api(
+            interaction.guild_id,
+            interaction.channel_id,
+            interaction.user.id,
+            self.message_note.value,
+            seconds
+        )
+
+        if not res:
+            await interaction.response.send_message(f"❌ Failed to set reminder: {result}", ephemeral=True)
+            return
+
+        reminder = result
+        due_time = reminder['due_timestamp']
+
+        human_time = f"<t:{int(due_time)}:R>"
+        embed = discord.Embed(
+            title="✅ Reminder Set",
+            description=f"I'll remind you in {human_time} about:\n**{self.message_note.value}**",
+            color=discord.Color.green()
+        )
+        embed.set_footer(text="I will ping you in this channel when it's time.")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
 class Reminders(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.reminders = {} # guild_id -> list of reminders
+        self.help_category = "Player"
+
+        # Register Context Menu
+        self.ctx_menu = app_commands.ContextMenu(
+            name='⏰ Remind Me',
+            callback=self.remind_me_context,
+        )
+        self.ctx_menu.binding = self
+        self.bot.tree.add_command(self.ctx_menu)
 
     async def cog_load(self):
         self.reminders = await load_reminder_data()
@@ -90,6 +161,11 @@ class Reminders(commands.Cog):
 
     def cog_unload(self):
         self.check_reminders.cancel()
+        self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
+
+    async def remind_me_context(self, interaction: discord.Interaction, message: discord.Message):
+        modal = ReminderContextMenuModal(self, message)
+        await interaction.response.send_modal(modal)
 
     @tasks.loop(seconds=30)
     async def check_reminders(self):

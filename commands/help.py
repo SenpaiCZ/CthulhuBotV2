@@ -466,7 +466,7 @@ class Help(commands.Cog):
                 return False
         return True # Assume app commands are visible unless filtered elsewhere
 
-    @app_commands.command(name="help", description="Show the interactive help dashboard.")
+    @app_commands.command(name="help", description="ℹ️ Show the interactive help dashboard.")
     async def help_command(self, interaction: discord.Interaction):
         """
         Shows the interactive help dashboard.
