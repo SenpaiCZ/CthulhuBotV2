@@ -2064,7 +2064,11 @@ async def soundboard_file_settings():
         return jsonify({"status": "error", "message": "Missing arguments"}), 400
 
     # Security check
-    if '..' in file_path:
+    try:
+        full_path = os.path.abspath(os.path.join(SOUNDBOARD_FOLDER, file_path))
+        if os.path.commonpath([full_path, os.path.abspath(SOUNDBOARD_FOLDER)]) != os.path.abspath(SOUNDBOARD_FOLDER):
+            return jsonify({"status": "error", "message": "Invalid file path"}), 400
+    except ValueError:
         return jsonify({"status": "error", "message": "Invalid file path"}), 400
 
     try:
@@ -2109,10 +2113,13 @@ async def soundboard_play():
         return jsonify({"status": "error", "message": "Missing arguments"}), 400
 
     # Security check for file path
-    if '..' in file_path:
+    try:
+        full_path = os.path.abspath(os.path.join(SOUNDBOARD_FOLDER, file_path))
+        if os.path.commonpath([full_path, os.path.abspath(SOUNDBOARD_FOLDER)]) != os.path.abspath(SOUNDBOARD_FOLDER):
+            return jsonify({"status": "error", "message": "Invalid file path"}), 400
+    except ValueError:
         return jsonify({"status": "error", "message": "Invalid file path"}), 400
 
-    full_path = os.path.join(SOUNDBOARD_FOLDER, file_path)
     if not os.path.exists(full_path):
         return jsonify({"status": "error", "message": "File not found"}), 404
 
@@ -2324,14 +2331,12 @@ async def soundboard_delete_file():
         return jsonify({"status": "error", "message": "Missing file_path"}), 400
 
     # Basic path validation
-    if '..' in file_path:
+    try:
+        full_path = os.path.abspath(os.path.join(SOUNDBOARD_FOLDER, file_path))
+        if os.path.commonpath([full_path, os.path.abspath(SOUNDBOARD_FOLDER)]) != os.path.abspath(SOUNDBOARD_FOLDER):
+            return jsonify({"status": "error", "message": "Path traversal detected"}), 400
+    except ValueError:
         return jsonify({"status": "error", "message": "Invalid path"}), 400
-
-    full_path = os.path.join(SOUNDBOARD_FOLDER, file_path)
-
-    # Ensure it is inside soundboard folder
-    if not os.path.abspath(full_path).startswith(os.path.abspath(SOUNDBOARD_FOLDER)):
-        return jsonify({"status": "error", "message": "Path traversal detected"}), 400
 
     if not os.path.exists(full_path):
         return jsonify({"status": "error", "message": "File not found"}), 404
@@ -2363,14 +2368,12 @@ async def soundboard_rename_file():
         return jsonify({"status": "error", "message": "Missing file_path or new_name"}), 400
 
     # Basic path validation
-    if '..' in file_path:
+    try:
+        full_old_path = os.path.abspath(os.path.join(SOUNDBOARD_FOLDER, file_path))
+        if os.path.commonpath([full_old_path, os.path.abspath(SOUNDBOARD_FOLDER)]) != os.path.abspath(SOUNDBOARD_FOLDER):
+            return jsonify({"status": "error", "message": "Path traversal detected"}), 400
+    except ValueError:
         return jsonify({"status": "error", "message": "Invalid path"}), 400
-
-    full_old_path = os.path.join(SOUNDBOARD_FOLDER, file_path)
-
-    # Ensure it is inside soundboard folder
-    if not os.path.abspath(full_old_path).startswith(os.path.abspath(SOUNDBOARD_FOLDER)):
-        return jsonify({"status": "error", "message": "Path traversal detected"}), 400
 
     if not os.path.exists(full_old_path):
         return jsonify({"status": "error", "message": "File not found"}), 404
