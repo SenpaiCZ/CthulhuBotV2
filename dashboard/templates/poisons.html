@@ -9,7 +9,7 @@
             <h5 class="m-0 text-success">{{ title }}</h5>
         </div>
         <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
-            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search...">
+            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search..." aria-label="Search {{ title }}">
         </div>
         <div class="list-group list-group-flush sidebar-list" id="itemList">
             {% if data %}
