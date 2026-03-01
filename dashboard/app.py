@@ -675,7 +675,7 @@ async def render_monster_view():
             break
 
     if not target:
-        return f"Monster '{name}' not found", 404
+        return f"Monster '{escape(name)}' not found", 404
 
     image_url = get_image_url("monster", target['name'])
     template = 'render_monster_origin.html' if style == 'origin' else 'render_monster.html'
@@ -702,7 +702,7 @@ async def render_deity_view():
             break
 
     if not target:
-        return f"Deity '{name}' not found", 404
+        return f"Deity '{escape(name)}' not found", 404
 
     image_url = get_image_url("deity", target['name'])
     template = 'render_deity_origin.html' if style == 'origin' else 'render_deity.html'
@@ -729,7 +729,7 @@ async def render_spell_view():
             break
 
     if not target:
-        return f"Spell '{name}' not found", 404
+        return f"Spell '{escape(name)}' not found", 404
 
     image_url = get_image_url("spell", target['name'])
     template = 'render_spell_origin.html' if style == 'origin' else 'render_spell.html'
@@ -753,7 +753,7 @@ async def render_weapon_view():
             break
 
     if not target_key:
-        return f"Weapon '{name}' not found", 404
+        return f"Weapon '{escape(name)}' not found", 404
 
     weapon = data[target_key]
     image_url = get_image_url("weapon", target_key)
@@ -779,7 +779,7 @@ async def render_archetype_view():
             break
 
     if not target_key:
-        return f"Archetype '{name}' not found", 404
+        return f"Archetype '{escape(name)}' not found", 404
 
     # Process emojis
     archetype = data[target_key]
@@ -821,7 +821,7 @@ async def render_pulp_talent_view():
             break
 
     if not target_talent:
-        return f"Talent '{name}' not found", 404
+        return f"Talent '{escape(name)}' not found", 404
 
     image_url = get_image_url("pulp_talent", target_talent['name'])
     return await render_template('render_pulp_talent.html', talent=target_talent, emojis=emojis, emoji_lib=emoji, image_url=image_url)
@@ -842,7 +842,7 @@ async def render_insane_talent_view():
             break
 
     if not target_key:
-        return f"Insane Talent '{name}' not found", 404
+        return f"Insane Talent '{escape(name)}' not found", 404
 
     image_url = get_image_url("insane_talent", target_key)
     return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Insane Talent", emojis=emojis, emoji_lib=emoji, image_url=image_url)
@@ -863,7 +863,7 @@ async def render_mania_view():
             break
 
     if not target_key:
-        return f"Mania '{name}' not found", 404
+        return f"Mania '{escape(name)}' not found", 404
 
     image_url = get_image_url("mania", target_key)
     return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Mania", emojis=emojis, emoji_lib=emoji, image_url=image_url)
@@ -884,7 +884,7 @@ async def render_phobia_view():
             break
 
     if not target_key:
-        return f"Phobia '{name}' not found", 404
+        return f"Phobia '{escape(name)}' not found", 404
 
     image_url = get_image_url("phobia", target_key)
     return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Phobia", emojis=emojis, emoji_lib=emoji, image_url=image_url)
@@ -905,7 +905,7 @@ async def render_poison_view():
             break
 
     if not target_key:
-        return f"Poison '{name}' not found", 404
+        return f"Poison '{escape(name)}' not found", 404
 
     image_url = get_image_url("poison", target_key)
     return await render_template('render_poison.html', title=target_key, poison=data[target_key], type="Poison", emojis=emojis, emoji_lib=emoji, image_url=image_url)
@@ -926,7 +926,7 @@ async def render_skill_view():
             break
 
     if not target_key:
-        return f"Skill '{name}' not found", 404
+        return f"Skill '{escape(name)}' not found", 404
 
     image_url = get_image_url("skill", target_key)
     return await render_template('render_simple_entry.html', title=target_key, description=data[target_key], type="Skill", emojis=emojis, emoji_lib=emoji, image_url=image_url)
@@ -948,7 +948,7 @@ async def render_invention_view():
             break
 
     if not target_key:
-        return f"Invention decade '{name}' not found", 404
+        return f"Invention decade '{escape(name)}' not found", 404
 
     image_url = get_image_url("invention", target_key)
     return await render_template('render_timeline.html', title=target_key, events=data[target_key], type="Inventions", emojis=emojis, emoji_lib=emoji, image_url=image_url)
@@ -970,7 +970,7 @@ async def render_year_view():
             break
 
     if not target_key:
-        return f"Year '{name}' not found", 404
+        return f"Year '{escape(name)}' not found", 404
 
     image_url = get_image_url("year", target_key)
     return await render_template('render_timeline.html', title=target_key, events=data[target_key], type="Timeline", emojis=emojis, emoji_lib=emoji, image_url=image_url)
@@ -992,7 +992,7 @@ async def render_occupation_view():
             break
 
     if not target_key:
-        return f"Occupation '{name}' not found", 404
+        return f"Occupation '{escape(name)}' not found", 404
 
     image_url = get_image_url("occupation", target_key)
     return await render_template('render_occupation.html', occupation=data[target_key], name=target_key, image_url=image_url)
