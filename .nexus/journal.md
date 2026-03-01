@@ -1,0 +1,1 @@
+## 2024-05-24 - Heal / Damage Context Menu -> **UX Fail:** GMs had to type complex commands or navigate menus to adjust player stats during combat. **UX Win:** Added a "Heal / Damage" Context Menu that opens a QuickStatAdjustModal to seamlessly adjust HP, SAN, and MP.
