@@ -67,11 +67,108 @@ class CalculationView(View):
     async def on_timeout(self):
         self.stop()
 
+
+class QuickStatAdjustModal(discord.ui.Modal, title="Heal / Damage"):
+    hp_adj = discord.ui.TextInput(label="HP Adjustment (+/-)", placeholder="e.g. -5 for 5 damage, +3 for 3 healing", required=False, max_length=10)
+    san_adj = discord.ui.TextInput(label="SAN Adjustment (+/-)", placeholder="e.g. -2 for 2 sanity loss", required=False, max_length=10)
+    mp_adj = discord.ui.TextInput(label="MP Adjustment (+/-)", placeholder="e.g. -5 to spend 5 magic points", required=False, max_length=10)
+
+    def __init__(self, cog, target_member):
+        super().__init__()
+        self.cog = cog
+        self.target_member = target_member
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        server_id = str(interaction.guild_id)
+        user_id = str(self.target_member.id)
+
+        # Fresh load of player stats to ensure data integrity
+        player_stats = await load_player_stats()
+        if server_id not in player_stats or user_id not in player_stats[server_id]:
+            return await interaction.followup.send(f"{self.target_member.display_name} does not have an active investigator.", ephemeral=True)
+
+        user_stats = player_stats[server_id][user_id]
+        server_stats = await load_gamemode_stats()
+        current_mode = server_stats.get(server_id, {}).get('game_mode', 'Call of Cthulhu')
+
+        # Calculate limits
+        con = user_stats.get("CON", 0)
+        siz = user_stats.get("SIZ", 0)
+        hp_limit = math.floor((con + siz) / 10) if current_mode == 'Call of Cthulhu' else math.floor((con + siz) / 5)
+        san_limit = 99 - user_stats.get("Cthulhu Mythos", 0)
+        mp_limit = math.floor(user_stats.get("POW", 0) / 5)
+
+        updates = []
+
+        # Helper function to parse adjustments
+        def parse_adj(adj_str, current_val, limit, stat_name):
+            adj_str = adj_str.strip()
+            if not adj_str: return current_val, None
+            try:
+                val = current_val + int(adj_str)
+
+                # Apply bounds
+                val = max(0, min(val, limit))
+                change = val - current_val
+                if change != 0:
+                     return val, f"**{stat_name}**: {current_val} -> **{val}** ({change:+})"
+            except ValueError:
+                pass
+            return current_val, None
+
+        # Process each stat
+        new_hp, hp_msg = parse_adj(self.hp_adj.value, user_stats.get("HP", 0), hp_limit, "HP")
+        if hp_msg:
+             user_stats["HP"] = new_hp
+             updates.append(hp_msg)
+
+        new_san, san_msg = parse_adj(self.san_adj.value, user_stats.get("SAN", 0), san_limit, "SAN")
+        if san_msg:
+             user_stats["SAN"] = new_san
+             updates.append(san_msg)
+
+        new_mp, mp_msg = parse_adj(self.mp_adj.value, user_stats.get("MP", 0), mp_limit, "MP")
+        if mp_msg:
+             user_stats["MP"] = new_mp
+             updates.append(mp_msg)
+
+        if not updates:
+             return await interaction.followup.send("No valid adjustments were provided or no changes were made.", ephemeral=True)
+
+        player_stats[server_id][user_id] = user_stats
+        await save_player_stats(player_stats)
+
+        embed = discord.Embed(title=f"Stat Updates for {self.target_member.display_name}", description="\n".join(updates), color=discord.Color.green())
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
+
 class stat(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
         self.help_category = "Player"
+        self.heal_damage_menu = app_commands.ContextMenu(
+            name="Heal / Damage",
+            callback=self.heal_damage_context_menu
+        )
+        self.bot.tree.add_command(self.heal_damage_menu)
+
+    async def cog_unload(self):
+        self.bot.tree.remove_command(self.heal_damage_menu.name, type=self.heal_damage_menu.type)
+
+    async def heal_damage_context_menu(self, interaction: discord.Interaction, member: discord.Member):
+        server_id = str(interaction.guild_id)
+        user_id = str(member.id)
+
+        player_stats = await load_player_stats()
+        if server_id not in player_stats or user_id not in player_stats[server_id]:
+            return await interaction.response.send_message(f"⛔ {member.display_name} does not have an active investigator in this server.", ephemeral=True)
+
+        modal = QuickStatAdjustModal(self, member)
+        await interaction.response.send_modal(modal)
+
+
 
     async def check_limit(self, interaction, stat_key, new_value, limit, emoji_key):
         view = LimitCheckView(interaction.user, limit)
