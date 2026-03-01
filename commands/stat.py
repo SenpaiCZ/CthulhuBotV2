@@ -67,11 +67,93 @@ class CalculationView(View):
     async def on_timeout(self):
         self.stop()
 
+class QuickStatAdjustModal(discord.ui.Modal, title="Heal / Damage (Adjust Stats)"):
+    hp_change = discord.ui.TextInput(label="HP Change (e.g. -3, +5)", placeholder="Leave blank for no change", required=False, max_length=10)
+    san_change = discord.ui.TextInput(label="SAN Change (e.g. -2, +1)", placeholder="Leave blank for no change", required=False, max_length=10)
+    mp_change = discord.ui.TextInput(label="MP Change (e.g. -1, +4)", placeholder="Leave blank for no change", required=False, max_length=10)
+
+    def __init__(self, bot, target_user_id):
+        super().__init__()
+        self.bot = bot
+        self.target_user_id = str(target_user_id)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        server_id = str(interaction.guild_id)
+        player_stats = await load_player_stats()
+
+        if server_id not in player_stats or self.target_user_id not in player_stats[server_id]:
+            await interaction.response.send_message("Target user does not have an investigator.", ephemeral=True)
+            return
+
+        char_data = player_stats[server_id][self.target_user_id]
+        changes_made = []
+
+        # Process HP
+        if self.hp_change.value.strip():
+            try:
+                val = int(self.hp_change.value.strip())
+                old_hp = char_data.get("HP", 0)
+                char_data["HP"] = max(0, old_hp + val)
+                changes_made.append(f"❤️ **HP:** {old_hp} -> {char_data['HP']}")
+            except ValueError:
+                pass
+
+        # Process SAN
+        if self.san_change.value.strip():
+            try:
+                val = int(self.san_change.value.strip())
+                old_san = char_data.get("SAN", 0)
+                char_data["SAN"] = max(0, old_san + val)
+                changes_made.append(f"🧠 **SAN:** {old_san} -> {char_data['SAN']}")
+            except ValueError:
+                pass
+
+        # Process MP
+        if self.mp_change.value.strip():
+            try:
+                val = int(self.mp_change.value.strip())
+                old_mp = char_data.get("MP", 0)
+                char_data["MP"] = max(0, old_mp + val)
+                changes_made.append(f"✨ **MP:** {old_mp} -> {char_data['MP']}")
+            except ValueError:
+                pass
+
+        if not changes_made:
+            await interaction.response.send_message("No valid changes were provided.", ephemeral=True)
+            return
+
+        await save_player_stats(player_stats)
+
+        target_member = interaction.guild.get_member(int(self.target_user_id))
+        target_name = target_member.display_name if target_member else "Unknown"
+
+        embed = discord.Embed(title=f"Stats Updated for {target_name}", description="\n".join(changes_made), color=discord.Color.blue())
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
 class stat(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
         self.help_category = "Player"
+
+        self.ctx_menu = app_commands.ContextMenu(
+            name='Heal / Damage',
+            callback=self.heal_damage_context,
+        )
+        self.bot.tree.add_command(self.ctx_menu)
+
+    def cog_unload(self):
+        self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
+
+    async def heal_damage_context(self, interaction: discord.Interaction, member: discord.Member):
+        if not interaction.user.guild_permissions.administrator:
+            # You might want to check for a specific GM role if needed, but Nexus usually uses admin
+            await interaction.response.send_message("❌ Only Administrators (Game Masters) can use this tool.", ephemeral=True)
+            return
+
+        modal = QuickStatAdjustModal(self.bot, member.id)
+        await interaction.response.send_modal(modal)
 
     async def check_limit(self, interaction, stat_key, new_value, limit, emoji_key):
         view = LimitCheckView(interaction.user, limit)
