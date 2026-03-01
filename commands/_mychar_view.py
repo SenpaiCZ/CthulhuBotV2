@@ -100,8 +100,12 @@ class SkillRollSelect(Select):
         ctx = MockContext(interaction)
 
         # Luck Threshold
-        from loadnsave import load_luck_stats
+        from loadnsave import load_luck_stats, load_weapons_data
         luck_threshold = (await load_luck_stats()).get(self.dashboard_view.server_id, 10)
+
+        from commands.roll import get_weapon_damage_data
+        weapon_db = await load_weapons_data()
+        damage_data, damage_bonus = get_weapon_damage_data(char_data, weapon_db, skill_name)
 
         # Create View
         # Use owner_id for mock stats so Luck logic works correctly for the character owner
@@ -117,7 +121,9 @@ class SkillRollSelect(Select):
             tens_rolls=[tens],
             net_dice=0,
             result_tier=result_tier,
-            luck_threshold=luck_threshold
+            luck_threshold=luck_threshold,
+            damage_data=damage_data,
+            damage_bonus=damage_bonus
         )
 
         # Create Embed

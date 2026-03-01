@@ -19,6 +19,75 @@ from emojis import get_stat_emoji, get_health_bar
 from support_functions import session_success, MockContext
 from rapidfuzz import process, fuzz
 
+def get_weapon_damage_data(char_data, weapon_db, target_skill):
+    damage_data = []
+    damage_bonus = char_data.get("Damage Bonus", "0")
+
+    if target_skill in ["Fighting (Brawl)", "Brawl", "Unarmed"]:
+        damage_data.append({"label": "Unarmed", "value": "1D3"})
+
+    inventory = []
+    backstory = char_data.get("Backstory", {})
+    sources = ["Gear and Possessions", "Weapons", "Equipment", "Assets"]
+    for key in sources:
+        items = backstory.get(key, [])
+        if isinstance(items, list):
+            inventory.extend(items)
+
+    weapon_keys = list(weapon_db.keys())
+
+    for item in inventory:
+        if not isinstance(item, str): continue
+
+        match = re.match(r"^(?:🔴|🟢)?\s*(.*?)\s*\[(\d+)(?:/(\d+))?\](?:\s*\(JAMMED\))?\s*$", item)
+        clean_name_candidate = match.group(1).strip() if match else item
+
+        if clean_name_candidate.lower().startswith("a "): clean_name_candidate = clean_name_candidate[2:].strip()
+        elif clean_name_candidate.lower().startswith("an "): clean_name_candidate = clean_name_candidate[3:].strip()
+
+        db_key = None
+        if clean_name_candidate in weapon_keys:
+            db_key = clean_name_candidate
+        else:
+            fuzzy = process.extractOne(clean_name_candidate, weapon_keys, scorer=fuzz.token_set_ratio)
+            if fuzzy and fuzzy[1] > 85:
+                db_key = fuzzy[0]
+
+        if db_key:
+            w_data = weapon_db.get(db_key, {})
+            w_skill = w_data.get("Skill", "")
+
+            is_match = False
+            if w_skill == target_skill:
+                is_match = True
+            elif w_skill == "Pistol" and target_skill in ["Firearms (Handgun)", "Handgun"]:
+                is_match = True
+            elif w_skill in ["Rifle/Shotgun", "Rifle", "Shotgun"] and target_skill in ["Firearms (Rifle/Shotgun)", "Rifle", "Shotgun"]:
+                is_match = True
+            elif target_skill in ["Fighting (Brawl)", "Brawl"] and w_skill in ["Brawl", "Fighting (Brawl)", "Fighting"]:
+                is_match = True
+
+            if is_match:
+                raw_damage = w_data.get("damage", "1D3")
+                if not raw_damage or raw_damage.lower() == "unknown":
+                    continue
+
+                parts = re.split(r'\s+or\s+', raw_damage, flags=re.IGNORECASE)
+                for part in parts:
+                    part = part.strip()
+                    dmg_match = re.match(r"^(.*?)\s*\((.*?)\)$", part)
+                    if dmg_match:
+                        formula = dmg_match.group(1).strip()
+                        label = f"{clean_name_candidate} ({dmg_match.group(2).strip()})"
+                    else:
+                        formula = part
+                        label = clean_name_candidate
+
+                    if not any(d['label'] == label and d['value'] == formula for d in damage_data):
+                        damage_data.append({'label': label, 'value': formula})
+
+    return damage_data if damage_data else None, damage_bonus
+
 class SessionView(View):
     def __init__(self, ctx):
         super().__init__(timeout=60)
@@ -529,6 +598,11 @@ class QuickSkillSelect(Select):
         luck_threshold = (await load_luck_stats()).get(self.server_id, 10)
 
         ctx = MockContext(interaction)
+
+        from loadnsave import load_weapons_data
+        weapon_db = await load_weapons_data()
+        damage_data, damage_bonus = get_weapon_damage_data(self.char_data, weapon_db, skill_name)
+
         view = RollResultView(
             ctx=ctx,
             cog=roll_cog,
@@ -541,7 +615,9 @@ class QuickSkillSelect(Select):
             tens_rolls=[tens],
             net_dice=0,
             result_tier=result_tier,
-            luck_threshold=luck_threshold
+            luck_threshold=luck_threshold,
+            damage_data=damage_data,
+            damage_bonus=damage_bonus
         )
 
         color = discord.Color.green()
@@ -1009,6 +1085,10 @@ class Roll(commands.Cog):
 
             luck_threshold = (await load_luck_stats()).get(server_id, 10)
 
+            from loadnsave import load_weapons_data
+            weapon_db = await load_weapons_data()
+            damage_data, damage_bonus = get_weapon_damage_data(stats, weapon_db, stat_name)
+
             view = RollResultView(
                 ctx=ctx,
                 cog=self,
@@ -1021,7 +1101,9 @@ class Roll(commands.Cog):
                 tens_rolls=tens_rolls,
                 net_dice=net_dice,
                 result_tier=result_tier,
-                luck_threshold=luck_threshold
+                luck_threshold=luck_threshold,
+                damage_data=damage_data,
+                damage_bonus=damage_bonus
             )
 
             tens_str = ", ".join(str(t) if t != 0 else "00" for t in tens_rolls)
