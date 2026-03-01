@@ -35,6 +35,9 @@
         const form = document.querySelector('form');
 
         if (togglePassword && password) {
+            // Set initial aria-label
+            togglePassword.setAttribute('aria-label', 'Show password');
+
             togglePassword.addEventListener('click', function (e) {
                 // Toggle the type attribute
                 const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -46,6 +49,10 @@
                     icon.classList.toggle('bi-eye');
                     icon.classList.toggle('bi-eye-slash');
                 }
+
+                // Update aria-label for accessibility
+                const label = type === 'password' ? 'Show password' : 'Hide password';
+                this.setAttribute('aria-label', label);
             });
         }
 
