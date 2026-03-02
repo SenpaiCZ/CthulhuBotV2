@@ -416,8 +416,6 @@ class loot(commands.Cog):
             name="💰 Turn into Loot",
             callback=self.turn_into_loot_context
         )
-        self.ctx_menu.binding = self
-        self.ctx_menu.description = "Turn this message into a loot drop"
         self.bot.tree.add_command(self.ctx_menu)
 
     async def cog_unload(self):

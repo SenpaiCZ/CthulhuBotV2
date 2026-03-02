@@ -774,8 +774,6 @@ class Roll(commands.Cog):
             name='Quick Roll',
             callback=self.quick_roll_context,
         )
-        self.ctx_menu.description = "🎲 Quickly roll a skill for this character."
-        self.ctx_menu.binding = self
         self.bot.tree.add_command(self.ctx_menu)
 
     def cog_unload(self):

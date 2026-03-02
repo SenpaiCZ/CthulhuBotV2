@@ -152,7 +152,6 @@ class Reminders(commands.Cog):
             name='⏰ Remind Me',
             callback=self.remind_me_context,
         )
-        self.ctx_menu.binding = self
         self.bot.tree.add_command(self.ctx_menu)
 
     async def cog_load(self):
