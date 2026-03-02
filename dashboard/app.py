@@ -329,10 +329,24 @@ async def bot_status():
 
 @app.route('/fonts/<path:filename>')
 async def serve_fonts(filename):
+    try:
+        full_path = os.path.abspath(os.path.join(FONTS_FOLDER, filename))
+        if os.path.commonpath([full_path, os.path.abspath(FONTS_FOLDER)]) != os.path.abspath(FONTS_FOLDER):
+            return "Invalid file path", 400
+    except ValueError:
+        return "Invalid file path", 400
+
     return await send_from_directory(FONTS_FOLDER, filename)
 
 @app.route('/images/<path:filename>')
 async def serve_image(filename):
+    try:
+        full_path = os.path.abspath(os.path.join(IMAGES_FOLDER, filename))
+        if os.path.commonpath([full_path, os.path.abspath(IMAGES_FOLDER)]) != os.path.abspath(IMAGES_FOLDER):
+            return "Invalid file path", 400
+    except ValueError:
+        return "Invalid file path", 400
+
     return await send_from_directory(IMAGES_FOLDER, filename)
 
 @app.route('/api/images/upload', methods=['POST'])
@@ -3613,10 +3627,14 @@ async def backup_download_file(filename):
     if not is_admin(): return redirect(url_for('login'))
 
     # Security checks
-    if '..' in filename or '/' in filename or '\\' in filename:
-        return "Invalid filename", 400
+    try:
+        full_path = os.path.abspath(os.path.join(BACKUP_FOLDER, filename))
+        if os.path.commonpath([full_path, os.path.abspath(BACKUP_FOLDER)]) != os.path.abspath(BACKUP_FOLDER):
+            return "Invalid file path", 400
+    except ValueError:
+        return "Invalid file path", 400
 
-    if not os.path.exists(os.path.join(BACKUP_FOLDER, filename)):
+    if not os.path.exists(full_path):
         return "File not found", 404
 
     return await send_from_directory(BACKUP_FOLDER, filename, as_attachment=True)
