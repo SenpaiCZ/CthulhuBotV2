@@ -14,8 +14,6 @@ class PrintCharacter(commands.Cog):
             name='Print Character',
             callback=self.print_character_menu,
         )
-        self.ctx_menu.description = "🖨️ Generate a PDF/Image of this character sheet."
-        self.ctx_menu.binding = self
         self.bot.tree.add_command(self.ctx_menu)
 
     def cog_unload(self):
