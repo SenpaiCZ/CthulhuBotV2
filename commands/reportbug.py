@@ -67,7 +67,6 @@ class reportbug(commands.Cog):
         name='Report Message',
         callback=self.report_message_context,
     )
-    self.ctx_menu.description = "🖱️ Report this message as a bug to the admin."
     self.ctx_menu.binding = self
     self.bot.tree.add_command(self.ctx_menu)
 

@@ -367,7 +367,6 @@ class Versus(commands.Cog):
             name='Challenge to Versus',
             callback=self.challenge_context_menu,
         )
-        self.ctx_menu.description = "⚔️ Start an opposed roll against this player."
         self.ctx_menu.binding = self
         self.bot.tree.add_command(self.ctx_menu)
 
