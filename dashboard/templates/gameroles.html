@@ -49,7 +49,7 @@ function renderGuilds(guilds) {
             ignoredListHtml += `
                 <li class="list-group-item d-flex justify-content-between align-items-center bg-dark text-light border-secondary">
                     ${activity}
-                    <button class="btn btn-sm btn-outline-danger" onclick="removeIgnored('${guild.id}', '${activity}')">
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeIgnored('${guild.id}', '${activity}')" aria-label="Remove ignored activity ${activity}">
                         <i class="bi bi-trash"></i>
                     </button>
                 </li>
@@ -62,7 +62,7 @@ function renderGuilds(guilds) {
             emojiListHtml += `
                 <li class="list-group-item d-flex justify-content-between align-items-center bg-dark text-light border-secondary">
                     <span>${emoji} <strong>${activity}</strong></span>
-                    <button class="btn btn-sm btn-outline-danger" onclick="removeEmoji('${guild.id}', '${activity}')">
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeEmoji('${guild.id}', '${activity}')" aria-label="Remove custom emoji for ${activity}">
                         <i class="bi bi-trash"></i>
                     </button>
                 </li>
@@ -99,7 +99,7 @@ function renderGuilds(guilds) {
                     </ul>
                     <div class="input-group">
                         <input type="text" class="form-control bg-dark text-light border-secondary"
-                               id="new-ignore-${guild.id}" placeholder="Activity Name (e.g. Custom Status)">
+                               id="new-ignore-${guild.id}" placeholder="Activity Name (e.g. Custom Status)" aria-label="New ignored activity name">
                         <button class="btn btn-outline-success" onclick="addIgnored('${guild.id}')">Add</button>
                     </div>
                 </div>
@@ -114,9 +114,9 @@ function renderGuilds(guilds) {
                     </ul>
                     <div class="input-group">
                         <input type="text" class="form-control bg-dark text-light border-secondary"
-                               id="new-emoji-activity-${guild.id}" placeholder="Activity Name (e.g. Minecraft)">
+                               id="new-emoji-activity-${guild.id}" placeholder="Activity Name (e.g. Minecraft)" aria-label="Activity name for new emoji">
                         <input type="text" class="form-control bg-dark text-light border-secondary"
-                               id="new-emoji-char-${guild.id}" placeholder="Emoji (e.g. ⛏️)" style="max-width: 80px;">
+                               id="new-emoji-char-${guild.id}" placeholder="Emoji (e.g. ⛏️)" style="max-width: 80px;" aria-label="Emoji character">
                         <button class="btn btn-outline-success" onclick="addEmoji('${guild.id}')">Set</button>
                     </div>
                 </div>
