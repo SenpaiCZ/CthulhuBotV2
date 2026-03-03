@@ -4,9 +4,11 @@ from discord.ext import commands
 from discord import app_commands, ui
 from loadnsave import load_player_stats, save_player_stats
 
-
-class DeleteInvestigatorModal(ui.Modal, title="Delete Investigator"):
-    name_confirmation = ui.TextInput(label="Confirm Name", placeholder="Type the investigator's name to confirm")
+class DeleteInvestigatorModal(ui.Modal, title="Kill Character"):
+    name_confirmation = ui.TextInput(
+        label="Confirm Name",
+        placeholder="Type the investigator's name to confirm"
+    )
 
     def __init__(self, cog, user_id, server_id, investigator_name, member):
         super().__init__()
@@ -23,52 +25,86 @@ class DeleteInvestigatorModal(ui.Modal, title="Delete Investigator"):
              if self.server_id in player_stats and self.user_id in player_stats[self.server_id]:
                  del player_stats[self.server_id][self.user_id]
                  await save_player_stats(player_stats)
-                 await interaction.response.send_message(
-                     f"Investigator '{self.investigator_name}' for {self.member.display_name} has been deleted."
+
+                 embed = discord.Embed(
+                     title="☠️ Investigator Killed",
+                     description=f"Investigator **{self.investigator_name}** for {self.member.display_name} has met a tragic end and their data has been deleted.",
+                     color=discord.Color.dark_red()
                  )
+                 await interaction.response.send_message(embed=embed)
              else:
-                 await interaction.response.send_message("Investigator data not found (maybe already deleted?).", ephemeral=True)
+                 await interaction.response.send_message("❌ Investigator data not found (maybe already deleted?).", ephemeral=True)
         else:
-             await interaction.response.send_message("Confirmation name did not match. Deletion cancelled.", ephemeral=True)
+             await interaction.response.send_message("❌ Confirmation name did not match. Deletion cancelled.", ephemeral=True)
 
 
 class deleteinvestigator(commands.Cog):
 
-  def __init__(self, bot):
-    self.bot = bot
+    def __init__(self, bot):
+        self.bot = bot
+        self.ctx_menu = app_commands.ContextMenu(
+            name='Kill Character',
+            callback=self.kill_character_context_menu,
+        )
+        self.bot.tree.add_command(self.ctx_menu)
 
-  @app_commands.command(name="deleteinvestigator", description="🗑️ Delete your investigator and all data.")
-  @app_commands.describe(member="The member whose investigator you want to delete (Admin only)")
-  async def deleteinvestigator(self, interaction: discord.Interaction, member: discord.Member = None):
-    """
-    Delete your investigator, all data, backstory and inventory. You will be prompted to write your investigators name to confirm deletion. Server owners can delete other players investigators.
-    """
-    user_id = str(interaction.user.id)
-    server_id = str(interaction.guild.id)
-    player_stats = await load_player_stats()
+    def cog_unload(self):
+        self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
 
-    if member is None:
-      member = interaction.user
+    async def kill_character_context_menu(self, interaction: discord.Interaction, member: discord.Member):
+        user_id = str(member.id)
+        server_id = str(interaction.guild.id)
+        player_stats = await load_player_stats()
 
-    # Check if the author is the server owner
-    is_server_owner = interaction.user == interaction.guild.owner
+        is_server_owner = interaction.user == interaction.guild.owner
+        is_admin = interaction.user.guild_permissions.administrator
+        is_self = interaction.user == member
 
-    if is_server_owner or interaction.user == member:
-      target_user_id = str(member.id)
+        if not (is_server_owner or is_admin or is_self):
+            await interaction.response.send_message(
+                "❌ Only Administrators, the Server Owner, or the User themselves can delete their investigator.",
+                ephemeral=True
+            )
+            return
 
-      if server_id in player_stats and target_user_id in player_stats[server_id]:
-        investigator_name = player_stats[server_id][target_user_id]["NAME"]
+        if server_id in player_stats and user_id in player_stats[server_id]:
+            investigator_name = player_stats[server_id][user_id]["NAME"]
+            modal = DeleteInvestigatorModal(self, user_id, server_id, investigator_name, member)
+            await interaction.response.send_modal(modal)
+        else:
+            await interaction.response.send_message(f"❌ {member.display_name} doesn't have an investigator.", ephemeral=True)
 
-        modal = DeleteInvestigatorModal(self, target_user_id, server_id, investigator_name, member)
-        await interaction.response.send_modal(modal)
-      else:
-        await interaction.response.send_message(f"{member.display_name} doesn't have an investigator.", ephemeral=True)
-    else:
-      await interaction.response.send_message(
-          "Only the server owner or the user themselves can delete their investigator.",
-          ephemeral=True
-      )
+    @app_commands.command(name="deleteinvestigator", description="🗑️ Delete your investigator and all data.")
+    @app_commands.describe(member="The member whose investigator you want to delete (Admin only)")
+    async def deleteinvestigator(self, interaction: discord.Interaction, member: discord.Member = None):
+        """
+        Delete your investigator, all data, backstory and inventory. You will be prompted to write your investigators name to confirm deletion. Server owners and admins can delete other players investigators.
+        """
+        user_id = str(interaction.user.id)
+        server_id = str(interaction.guild.id)
+        player_stats = await load_player_stats()
 
+        if member is None:
+            member = interaction.user
+
+        is_server_owner = interaction.user == interaction.guild.owner
+        is_admin = interaction.user.guild_permissions.administrator
+        is_self = interaction.user == member
+
+        if is_server_owner or is_admin or is_self:
+            target_user_id = str(member.id)
+
+            if server_id in player_stats and target_user_id in player_stats[server_id]:
+                investigator_name = player_stats[server_id][target_user_id]["NAME"]
+                modal = DeleteInvestigatorModal(self, target_user_id, server_id, investigator_name, member)
+                await interaction.response.send_modal(modal)
+            else:
+                await interaction.response.send_message(f"❌ {member.display_name} doesn't have an investigator.", ephemeral=True)
+        else:
+            await interaction.response.send_message(
+                "❌ Only Administrators, the Server Owner, or the User themselves can delete their investigator.",
+                ephemeral=True
+            )
 
 async def setup(bot):
-  await bot.add_cog(deleteinvestigator(bot))
+    await bot.add_cog(deleteinvestigator(bot))
