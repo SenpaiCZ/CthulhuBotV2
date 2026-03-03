@@ -1,1 +1,2 @@
 ## 2024-05-24 - Heal / Damage Context Menu -> **UX Fail:** GMs had to type complex commands or navigate menus to adjust player stats during combat. **UX Win:** Added a "Heal / Damage" Context Menu that opens a QuickStatAdjustModal to seamlessly adjust HP, SAN, and MP.
+## 2026-03-01 - Giveaway Selection -> **UX Fail:** Users had to manually copy and paste message links or IDs to end or reroll a giveaway. **UX Win:** Added Autocomplete for giveaway selection, querying active/ended giveaways to suggest valid options.

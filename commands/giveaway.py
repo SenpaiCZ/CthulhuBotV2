@@ -235,6 +235,24 @@ class Giveaway(commands.Cog):
         except Exception as e:
              await interaction.response.send_message(f"Error: {e}", ephemeral=True)
 
+    @end_giveaway.autocomplete('message_link_or_id')
+    async def end_autocomplete(self, interaction: discord.Interaction, current: str):
+        data = await load_giveaway_data()
+        guild_id = str(interaction.guild_id)
+
+        if guild_id not in data:
+            return []
+
+        choices = []
+        for msg_id, gw in data[guild_id].items():
+            if gw["status"] == "active":
+                title = gw.get("title", "Unknown")
+                name = f"{title} (ID: {msg_id})"
+                if current.lower() in name.lower():
+                    choices.append(app_commands.Choice(name=name[:100], value=msg_id))
+
+        return choices[:25]
+
     @giveaway_group.command(name="reroll", description="🔄 Reroll a winner for an ended giveaway.")
     @app_commands.describe(message_link_or_id="The message link or ID of the giveaway")
     async def reroll_giveaway(self, interaction: discord.Interaction, message_link_or_id: str):
@@ -255,6 +273,24 @@ class Giveaway(commands.Cog):
                  await interaction.response.send_message(msg)
         except Exception as e:
              await interaction.response.send_message(f"Error: {e}", ephemeral=True)
+
+    @reroll_giveaway.autocomplete('message_link_or_id')
+    async def reroll_autocomplete(self, interaction: discord.Interaction, current: str):
+        data = await load_giveaway_data()
+        guild_id = str(interaction.guild_id)
+
+        if guild_id not in data:
+            return []
+
+        choices = []
+        for msg_id, gw in data[guild_id].items():
+            if gw["status"] == "ended":
+                title = gw.get("title", "Unknown")
+                name = f"{title} (ID: {msg_id})"
+                if current.lower() in name.lower():
+                    choices.append(app_commands.Choice(name=name[:100], value=msg_id))
+
+        return choices[:25]
 
     @giveaway_group.command(name="list", description="📃 List all active giveaways.")
     @app_commands.checks.has_permissions(administrator=True)
