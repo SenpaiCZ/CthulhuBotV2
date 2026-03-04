@@ -2675,7 +2675,7 @@ async def reaction_roles_add():
     emoji_str = data_in.get('emoji')
     channel_id = data_in.get('channel_id')
 
-    if not all([guild_id, message_id, role_id, emoji_str]):
+    if not all([guild_id, message_id, role_id, emoji_str, channel_id]):
         return jsonify({"status": "error", "message": "Missing arguments"}), 400
 
     resolved_emoji = emoji_str
@@ -2800,10 +2800,21 @@ async def reaction_roles_delete():
                                 pass
 
                     if not message:
+                        # 1. Check bot's message cache first
+                        cached_msgs = getattr(app.bot, 'cached_messages', [])
+                        for msg in cached_msgs:
+                            if msg.id == int(message_id) and msg.guild and msg.guild.id == int(guild_id):
+                                message = msg
+                                break
+
+                    if not message:
                         # Fallback search if channel_id missing or incorrect
                         for chan in guild.text_channels:
                             try:
                                 message = await chan.fetch_message(int(message_id))
+                                # Update channel_id in data to avoid future N+1 searches
+                                if "roles" in message_data:
+                                    message_data["channel_id"] = str(chan.id)
                                 break
                             except:
                                 continue
