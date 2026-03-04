@@ -2,6 +2,7 @@ import discord, random
 from discord import app_commands
 from discord.ext import commands
 from loadnsave import load_macguffin_data
+from rapidfuzz import process, fuzz
 
 
 class MacGuffinView(discord.ui.View):
@@ -55,12 +56,53 @@ class macguffin(commands.Cog):
     self.bot = bot
 
   @app_commands.command(name="macguffin", description="🔮 Outputs a random MacGuffin or lists options.")
-  async def macguffin(self, interaction: discord.Interaction):
+  @app_commands.describe(name="The specific MacGuffin to look up (optional)")
+  async def macguffin(self, interaction: discord.Interaction, name: str = None):
     """
-    Outputs a random MacGuffin or lists options.
+    Outputs a specific MacGuffin, a random MacGuffin, or lists options.
     """
-    view = MacGuffinView(interaction.user)
-    await interaction.response.send_message("Choose an option:", view=view, ephemeral=True)
+    if name:
+        macguffin_list = await load_macguffin_data()
+        if not macguffin_list:
+             await interaction.response.send_message("No MacGuffins found.", ephemeral=True)
+             return
+
+        choices = list(macguffin_list.keys())
+
+        # Check for exact match
+        exact_match = None
+        for choice in choices:
+            if choice.lower() == name.lower():
+                exact_match = choice
+                break
+
+        target_name = exact_match
+        if not target_name:
+            extract = process.extractOne(name, choices, scorer=fuzz.WRatio)
+            if extract and extract[1] > 60:
+                target_name = extract[0]
+
+        if target_name:
+            embed = discord.Embed(title=target_name, description=macguffin_list[target_name], color=0xff0000)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        else:
+            await interaction.response.send_message(f"No MacGuffin found matching '{name}'.", ephemeral=True)
+    else:
+        view = MacGuffinView(interaction.user)
+        await interaction.response.send_message("Choose an option:", view=view, ephemeral=True)
+
+  @macguffin.autocomplete('name')
+  async def macguffin_autocomplete(self, interaction: discord.Interaction, current: str):
+      macguffin_list = await load_macguffin_data()
+      if not macguffin_list:
+          return []
+
+      choices = list(macguffin_list.keys())
+      if not current:
+          return [app_commands.Choice(name=c[:100], value=c[:100]) for c in sorted(choices)[:25]]
+
+      matches = process.extract(current, choices, scorer=fuzz.WRatio, limit=25)
+      return [app_commands.Choice(name=m[0][:100], value=m[0][:100]) for m in matches]
 
 
 async def setup(bot):
