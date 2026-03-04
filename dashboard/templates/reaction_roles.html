@@ -245,6 +245,7 @@ async function addRule() {
             document.getElementById('message-id').value = '';
             document.getElementById('emoji-input').value = '';
             // keep guild and role select as is for rapid adding
+            document.getElementById('message-id').focus();
         } else {
             alert("Error: " + res.message);
         }
