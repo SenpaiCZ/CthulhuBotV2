@@ -4,6 +4,7 @@ from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, Select, Button
 from loadnsave import load_names_data
+from emojis import get_stat_emoji
 
 class GenderSelectView(View):
     def __init__(self, cog, interaction):
@@ -103,14 +104,6 @@ class RandomNPC(commands.Cog):
         self.bot = bot
         self.help_category = "Keeper"
 
-    def get_stat_emoji(self, stat_name):
-        stat_emojis = {
-            "STR": "💪", "DEX": "🏃", "CON": "🧡", "INT": "🧠",
-            "POW": "⚡", "APP": "😍", "EDU": "🎓", "SIZ": "📏",
-            "HP": "❤️", "LUCK": "🍀",
-        }
-        return stat_emojis.get(stat_name, "")
-
     async def create_npc_embed(self, gender, region):
         all_names = await load_names_data()
 
@@ -141,42 +134,12 @@ class RandomNPC(commands.Cog):
 
         # Stat Generation Helpers
         def roll_3d6_x5():
-            # Original logic: 5 * sum(sorted([random.randint(1, 6) for _ in range(3)])[1:])
-            # Wait, original code was: 5 * sum(sorted([random.randint(1, 6) for _ in range(3)])[1:])
-            # This is "Drop Lowest" logic? No, sorted gives [lowest, middle, highest]. [1:] gives [middle, highest].
-            # Standard CoC 7e stats are 3D6 * 5.
-            # But maybe this is "Heroic" stats (4D6 drop lowest)?
-            # The original code `createnpc.py` used `sum(sorted([random.randint(1, 6) for _ in range(3)])[1:])`.
-            # Wait, `range(3)` creates 3 dice. `sorted` sorts them. `[1:]` takes top 2.
-            # So it's sum of top 2 of 3 dice * 5. That's a range of 10-60. Average 35.
-            # Standard CoC is 3D6*5 (15-90, avg 50).
-            # Maybe I misread the original code.
-            # Let's re-read the original `createnpc.py`.
-            # `5 * sum(sorted([random.randint(1, 6) for _ in range(3)])[1:])`
-            # Yes, that takes the sum of the 2 highest dice out of 3.
-            # That seems very low for stats (max 12*5=60).
-            # But I should preserve the logic unless it's clearly wrong.
-            # Wait, if `range(3)` creates 3 dice, `[1:]` slices from index 1 to end.
-            # Index 0 is the smallest. So yes, top 2.
-            # Maybe the original intent was `range(4)` (4d6 drop lowest) -> top 3?
-            # Or maybe `range(3)` was just 3d6 and `[1:]` was a mistake or intentional nerf.
-            # However, I should probably stick to standard CoC 7e rules or copy the logic exactly.
-            # Standard CoC 7e: STR, CON, DEX, APP, POW are 3D6 * 5. SIZ, INT, EDU are (2D6+6) * 5.
-            # The previous code had:
-            # STR, CON, DEX, APP, POW, LUCK: `roll_3d6_x5`
-            # SIZ, INT, EDU: `roll_2d6_plus_6_x5`
-
-            # Let's fix it to be standard CoC 7e if the previous was weird, or stick to previous if I'm not sure.
-            # I'll stick to 3d6 * 5.
-            # Original: `sum(sorted([random.randint(1, 6) for _ in range(3)])[1:])` -> top 2 of 3.
-            # This results in avg ~7+ * 5 = 35.
-            # 3D6 avg is 10.5 * 5 = 52.5.
-            # The original code makes NPCs very weak.
-            # I will assume standard CoC rules are preferred and use 3D6 * 5.
+            # Standard CoC 7e: STR, CON, DEX, APP, POW are 3D6 * 5.
             return 5 * sum([random.randint(1, 6) for _ in range(3)])
 
         def roll_2d6_plus_6_x5():
-             return 5 * (sum([random.randint(1, 6) for _ in range(2)]) + 6)
+            # Standard CoC 7e: SIZ, INT, EDU are (2D6+6) * 5.
+            return 5 * (sum([random.randint(1, 6) for _ in range(2)]) + 6)
 
         stats = {
             "STR": roll_3d6_x5(),
@@ -192,6 +155,29 @@ class RandomNPC(commands.Cog):
 
         # Derived Stats
         stats["HP"] = (stats["CON"] + stats["SIZ"]) // 10
+        stats["MP"] = stats["POW"] // 5
+        stats["SAN"] = stats["POW"]
+
+        # Build and Damage Bonus
+        str_siz = stats["STR"] + stats["SIZ"]
+        if 2 <= str_siz <= 64: db="-2"; b=-2
+        elif 65 <= str_siz <= 84: db="-1"; b=-1
+        elif 85 <= str_siz <= 124: db="0"; b=0
+        elif 125 <= str_siz <= 164: db="+1D4"; b=1
+        elif 165 <= str_siz <= 204: db="+1D6"; b=2
+        elif 205 <= str_siz <= 284: db="+2D6"; b=3
+        elif 285 <= str_siz <= 364: db="+3D6"; b=4
+        elif 365 <= str_siz <= 444: db="+4D6"; b=5
+        elif 445 <= str_siz <= 524: db="+5D6"; b=6
+        else: db="+6D6"; b=7
+        stats["DB"] = db
+        stats["Build"] = b
+
+        # Move
+        mov = 8
+        if stats["DEX"] < stats["SIZ"] and stats["STR"] < stats["SIZ"]: mov = 7
+        elif stats["DEX"] > stats["SIZ"] and stats["STR"] > stats["SIZ"]: mov = 9
+        stats["Move"] = mov
 
         embed = discord.Embed(
             title=f"👤 {name}",
@@ -201,21 +187,26 @@ class RandomNPC(commands.Cog):
 
         # Field 1: Physical
         phys_text = (
-            f"{self.get_stat_emoji('STR')} **STR:** {stats['STR']}\n"
-            f"{self.get_stat_emoji('CON')} **CON:** {stats['CON']}\n"
-            f"{self.get_stat_emoji('SIZ')} **SIZ:** {stats['SIZ']}\n"
-            f"{self.get_stat_emoji('DEX')} **DEX:** {stats['DEX']}\n"
-             f"{self.get_stat_emoji('HP')} **HP:** {stats['HP']}"
+            f"{get_stat_emoji('STR')} **STR:** {stats['STR']}\n"
+            f"{get_stat_emoji('CON')} **CON:** {stats['CON']}\n"
+            f"{get_stat_emoji('SIZ')} **SIZ:** {stats['SIZ']}\n"
+            f"{get_stat_emoji('DEX')} **DEX:** {stats['DEX']}\n"
+            f"{get_stat_emoji('HP')} **HP:** {stats['HP']}\n"
+            f"{get_stat_emoji('Move')} **Move:** {stats['Move']}\n"
+            f"{get_stat_emoji('Build')} **Build:** {stats['Build']}\n"
+            f"{get_stat_emoji('DB')} **DB:** {stats['DB']}"
         )
         embed.add_field(name="Physical", value=phys_text, inline=True)
 
         # Field 2: Mental
         ment_text = (
-            f"{self.get_stat_emoji('INT')} **INT:** {stats['INT']}\n"
-            f"{self.get_stat_emoji('POW')} **POW:** {stats['POW']}\n"
-            f"{self.get_stat_emoji('EDU')} **EDU:** {stats['EDU']}\n"
-            f"{self.get_stat_emoji('APP')} **APP:** {stats['APP']}\n"
-            f"{self.get_stat_emoji('LUCK')} **LUCK:** {stats['LUCK']}"
+            f"{get_stat_emoji('INT')} **INT:** {stats['INT']}\n"
+            f"{get_stat_emoji('POW')} **POW:** {stats['POW']}\n"
+            f"{get_stat_emoji('EDU')} **EDU:** {stats['EDU']}\n"
+            f"{get_stat_emoji('APP')} **APP:** {stats['APP']}\n"
+            f"{get_stat_emoji('SAN')} **SAN:** {stats['SAN']}\n"
+            f"{get_stat_emoji('MP')} **MP:** {stats['MP']}\n"
+            f"{get_stat_emoji('LUCK')} **LUCK:** {stats['LUCK']}"
         )
         embed.add_field(name="Mental", value=ment_text, inline=True)
 
