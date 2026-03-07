@@ -25,11 +25,11 @@ YTDL_OPTIONS = {
     'quiet': True,
     'no_warnings': True,
     'default_search': 'auto',
-
+    'socket_timeout': 30,
 }
 
 FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -reconnect_on_network_error 1 -reconnect_on_http_error 4xx,5xx',
     'options': '-vn',
 }
 
@@ -297,7 +297,7 @@ class Music(commands.Cog):
                         print(f"[Music] Error forcefully disconnecting stale voice client: {e}")
 
                 try:
-                    await interaction.user.voice.channel.connect(timeout=20.0, reconnect=True)
+                    await interaction.user.voice.channel.connect(timeout=60.0, reconnect=True)
                 except discord.ClientException as e:
                     await interaction.followup.send(f"❌ Failed to connect: {e}")
                     return
