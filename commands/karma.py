@@ -25,18 +25,12 @@ class KarmaActionsView(discord.ui.View):
 class Karma(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.ctx_menu_actions = app_commands.ContextMenu(
-            name='Karma Actions',
-            callback=self.karma_actions_menu,
-        )
-        self.bot.tree.add_command(self.ctx_menu_actions, override=True)
 
     def cog_unload(self):
-        self.bot.tree.remove_command(self.ctx_menu_actions.name, type=self.ctx_menu_actions.type)
+        pass
 
-    async def karma_actions_menu(self, interaction: discord.Interaction, user: discord.Member):
-        view = KarmaActionsView(self, user)
-        await interaction.response.send_message(f"Select an action for {user.display_name}:", view=view, ephemeral=True)
+    # Karma Actions Context Menu is deprecated due to 5 globally context menus limit.
+    # We will just rely on the slash commands `/karma` and `/memelevel` instead.
 
     async def get_guild_settings(self, guild_id):
         settings = await load_karma_settings()

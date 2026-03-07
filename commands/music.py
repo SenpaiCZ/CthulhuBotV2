@@ -273,14 +273,15 @@ class Music(commands.Cog):
             await interaction.response.send_message("This command can only be used in a server.")
             return
 
+        # Defer immediately to prevent timeout if connect takes too long
+        await interaction.response.defer()
+
         if not interaction.guild.voice_client:
             if interaction.user.voice:
                 await interaction.user.voice.channel.connect()
             else:
-                await interaction.response.send_message("You are not connected to a voice channel.")
+                await interaction.followup.send("You are not connected to a voice channel.")
                 return
-
-        await interaction.response.defer()
 
         # Check for cookies file
         opts = YTDL_OPTIONS.copy()
