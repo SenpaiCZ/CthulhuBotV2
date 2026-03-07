@@ -292,11 +292,11 @@ async def get_or_join_voice_channel(guild_id, channel_id):
                     await voice_client.disconnect(force=True)
                 except Exception as e:
                     print(f"[Dashboard] Error forcefully disconnecting stale voice client: {e}")
-                voice_client = await channel.connect(timeout=20.0, reconnect=True)
+                voice_client = await channel.connect(timeout=60.0, reconnect=True)
             elif voice_client.channel.id != channel.id:
                 await voice_client.move_to(channel)
         else:
-            voice_client = await channel.connect(timeout=20.0, reconnect=True)
+            voice_client = await channel.connect(timeout=60.0, reconnect=True)
     except asyncio.TimeoutError:
         print(f"[Dashboard] Timeout connecting to voice channel in guild {guild_id}. UDP blocked?")
         return None, "Connection timed out. This may indicate a network issue (e.g. UDP ports blocked) on the server hosting the bot."
