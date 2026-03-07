@@ -2174,8 +2174,14 @@ async def soundboard_play():
 
         try:
             if not voice_client.is_connected():
-                print(f"[Dashboard] Bot disconnected right before play in guild {guild_id}. Attempting to reconnect...")
+                print(f"[Dashboard] Bot disconnected right before play in guild {guild_id}. Attempting to forcefully disconnect...")
                 import discord
+                try:
+                    # Non-blocking forceful disconnect
+                    if app.bot:
+                        app.bot.loop.create_task(voice_client.disconnect(force=True))
+                except Exception as ex:
+                    print(f"[Dashboard] Error forcefully disconnecting voice client: {ex}")
                 raise discord.ClientException("Bot is not connected to voice anymore.")
             voice_client.play(source)
         except Exception as e:

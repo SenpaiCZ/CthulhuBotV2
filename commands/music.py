@@ -26,10 +26,11 @@ YTDL_OPTIONS = {
     'no_warnings': True,
     'default_search': 'auto',
     'socket_timeout': 30,
+    'source_address': '0.0.0.0', # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
 
 FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -reconnect_on_network_error 1 -reconnect_on_http_error 4xx,5xx',
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -reconnect_on_network_error 1 -reconnect_on_http_error 4xx,5xx -timeout 10000000',
     'options': '-vn',
 }
 
@@ -127,8 +128,13 @@ class Music(commands.Cog):
 
                  try:
                      if not guild.voice_client.is_connected():
-                         print(f"[Music] Bot disconnected right before play in guild {guild_id}. Attempting to reconnect...")
-                         # Can't cleanly await reconnect here easily without blocking, but we can fail gracefully.
+                         print(f"[Music] Bot disconnected right before play in guild {guild_id}. Attempting to forcefully disconnect...")
+                         try:
+                             # Needs to be a task to not block sync flow if it hangs
+                             self.bot.loop.create_task(guild.voice_client.disconnect(force=True))
+                         except Exception as e:
+                             print(f"[Music] Error during forceful disconnect: {e}")
+
                          raise discord.ClientException("Bot is not connected to voice anymore.")
                      guild.voice_client.play(source)
                  except discord.ClientException as e:
