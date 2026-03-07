@@ -124,7 +124,19 @@ class Music(commands.Cog):
                      guild.voice_client.stop()
                  # Mixer handles volume per track now
                  source = discord.PCMVolumeTransformer(mixer, volume=1.0)
-                 guild.voice_client.play(source)
+
+                 try:
+                     if not guild.voice_client.is_connected():
+                         print(f"[Music] Bot disconnected right before play in guild {guild_id}. Attempting to reconnect...")
+                         # Can't cleanly await reconnect here easily without blocking, but we can fail gracefully.
+                         raise discord.ClientException("Bot is not connected to voice anymore.")
+                     guild.voice_client.play(source)
+                 except discord.ClientException as e:
+                     print(f"[Music] Playback error in guild {guild_id}: {e}")
+                     return
+                 except Exception as e:
+                     print(f"[Music] Unexpected playback error: {e}")
+                     return
 
         url = song_info['url']
         original_url = song_info.get('original_url', url)
@@ -276,9 +288,27 @@ class Music(commands.Cog):
         # Defer immediately to prevent timeout if connect takes too long
         await interaction.response.defer()
 
-        if not interaction.guild.voice_client:
+        if not interaction.guild.voice_client or not interaction.guild.voice_client.is_connected():
             if interaction.user.voice:
-                await interaction.user.voice.channel.connect()
+                if interaction.guild.voice_client:
+                    try:
+                        await interaction.guild.voice_client.disconnect(force=True)
+                    except Exception as e:
+                        print(f"[Music] Error forcefully disconnecting stale voice client: {e}")
+
+                try:
+                    await interaction.user.voice.channel.connect(timeout=20.0, reconnect=True)
+                except discord.ClientException as e:
+                    await interaction.followup.send(f"❌ Failed to connect: {e}")
+                    return
+                except TimeoutError:
+                    print(f"[Music] Timeout connecting to voice channel in guild {interaction.guild.id}. UDP blocked?")
+                    await interaction.followup.send("❌ Connection timed out. This may indicate a network issue (e.g. UDP ports blocked) on the server hosting the bot.")
+                    return
+                except Exception as e:
+                    print(f"[Music] Unexpected error connecting to voice: {e}")
+                    await interaction.followup.send("❌ Unexpected error while connecting to voice. Please check the console.")
+                    return
             else:
                 await interaction.followup.send("You are not connected to a voice channel.")
                 return
