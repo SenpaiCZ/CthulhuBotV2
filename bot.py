@@ -111,3 +111,11 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+@bot.event
+async def on_voice_state_update(member, before, after):
+    if member == bot.user:
+        if before.channel and not after.channel:
+            print(f"[Voice] Bot was disconnected from {before.channel.guild.name} ({before.channel.guild.id}).")
+        elif not before.channel and after.channel:
+            print(f"[Voice] Bot connected to {after.channel.guild.name} ({after.channel.guild.id}) in {after.channel.name}.")

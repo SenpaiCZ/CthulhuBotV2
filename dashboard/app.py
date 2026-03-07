@@ -268,6 +268,8 @@ def get_image_url(type_slug, name):
 
     return None
 
+import asyncio
+
 async def get_or_join_voice_channel(guild_id, channel_id):
     if not app.bot:
         return None, "Bot not initialized"
@@ -286,17 +288,24 @@ async def get_or_join_voice_channel(guild_id, channel_id):
         if voice_client:
             if not voice_client.is_connected():
                 # Stale connection object? try to cleanup and reconnect
-                await voice_client.disconnect(force=True)
-                voice_client = await channel.connect()
+                try:
+                    await voice_client.disconnect(force=True)
+                except Exception as e:
+                    print(f"[Dashboard] Error forcefully disconnecting stale voice client: {e}")
+                voice_client = await channel.connect(timeout=20.0, reconnect=True)
             elif voice_client.channel.id != channel.id:
                 await voice_client.move_to(channel)
         else:
-            voice_client = await channel.connect()
+            voice_client = await channel.connect(timeout=20.0, reconnect=True)
+    except asyncio.TimeoutError:
+        print(f"[Dashboard] Timeout connecting to voice channel in guild {guild_id}. UDP blocked?")
+        return None, "Connection timed out. This may indicate a network issue (e.g. UDP ports blocked) on the server hosting the bot."
     except Exception as e:
+        print(f"[Dashboard] Unexpected error connecting to voice in guild {guild_id}: {e}")
         return None, str(e)
 
-    if voice_client is None:
-        return None, "Failed to connect to voice channel."
+    if voice_client is None or not voice_client.is_connected():
+        return None, "Failed to establish a stable connection to the voice channel."
 
     return voice_client, None
 
@@ -2162,7 +2171,16 @@ async def soundboard_play():
 
         # Mixer handles volume per track now
         source = discord.PCMVolumeTransformer(mixer, volume=1.0)
-        voice_client.play(source)
+
+        try:
+            if not voice_client.is_connected():
+                print(f"[Dashboard] Bot disconnected right before play in guild {guild_id}. Attempting to reconnect...")
+                import discord
+                raise discord.ClientException("Bot is not connected to voice anymore.")
+            voice_client.play(source)
+        except Exception as e:
+            print(f"[Dashboard] Playback error in guild {guild_id}: {e}")
+            return jsonify({"status": "error", "message": f"Playback error: {e}"}), 500
 
     # Add track
     loop_setting = data.get('loop', True)
