@@ -39,7 +39,9 @@ class PokemonGo(commands.Cog):
                 if 'timestamp' not in ev:
                     try:
                         dt = datetime.datetime.fromisoformat(ev['start_time'])
-                        # Treat naive as local, just like scrape_events
+                        # Treat naive as UTC for Discord timestamp consistency
+                        if dt.tzinfo is None:
+                            dt = dt.replace(tzinfo=datetime.timezone.utc)
                         ev['timestamp'] = int(dt.timestamp())
                         need_save = True
                     except Exception as e:
@@ -80,6 +82,12 @@ class PokemonGo(commands.Cog):
                 # Force naive to match system time (requested by user)
                 if start_date.tzinfo is not None:
                         start_date = start_date.replace(tzinfo=None)
+
+                # Calculate UTC-aware timestamp for Discord
+                ts_dt = datetime.datetime.fromisoformat(clean_date_str)
+                if ts_dt.tzinfo is None:
+                    ts_dt = ts_dt.replace(tzinfo=datetime.timezone.utc)
+                timestamp = int(ts_dt.timestamp())
             except ValueError:
                 continue
 
@@ -100,26 +108,10 @@ class PokemonGo(commands.Cog):
 
             # Fix "Calculating..." time string by using Discord timestamp
             if "Calculating..." in time_str:
-                try:
-                    # Re-parse to get aware datetime for timestamp
-                    # If start_date_str had 'Z', clean_date_str is naive (implicit UTC)
-                    # If start_date_str had offset, clean_date_str has offset
-                    ts_dt = datetime.datetime.fromisoformat(clean_date_str)
-                    if ts_dt.tzinfo is None:
-                        ts_dt = ts_dt.replace(tzinfo=datetime.timezone.utc)
-
-                    timestamp = int(ts_dt.timestamp())
-                    time_str = f"<t:{timestamp}:f>"
-                except Exception as e:
-                    logger.error(f"Error calculating timestamp for {title}: {e}")
+                time_str = f"<t:{timestamp}:f>"
 
             heading_span = text_div.find(class_='event-tag-badge')
             heading = heading_span.text.strip() if heading_span else "Event"
-
-            # Calculate timestamp for Discord
-            # We reuse the logic from "Calculating..." block but apply it generally
-            # start_date is naive (local system time)
-            timestamp = int(start_date.timestamp())
 
             events.append({
                 'title': title,
