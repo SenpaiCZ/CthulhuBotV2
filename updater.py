@@ -10,6 +10,13 @@ import platform
 import argparse
 import datetime
 import signal
+import asyncio
+
+# Try to import aiofiles for async file I/O on Linux procfs
+try:
+    import aiofiles
+except ImportError:
+    aiofiles = None
 
 # Configuration
 REPO_URL = "https://github.com/SenpaiCZ/CthulhuBotV2/archive/refs/heads/main.zip"
@@ -54,17 +61,18 @@ def log(message):
     except Exception as e:
         print(f"Failed to write to updater.log: {e}", flush=True)
 
-def wait_for_pid(pid):
+async def wait_for_pid(pid):
     if not pid:
         return
     log(f"Waiting for process {pid} to exit...")
     try:
         import psutil
-        while psutil.pid_exists(pid):
+        while await asyncio.to_thread(psutil.pid_exists, pid):
             # If zombie, treat as exited
             try:
-                proc = psutil.Process(pid)
-                if proc.status() == psutil.STATUS_ZOMBIE:
+                proc = await asyncio.to_thread(psutil.Process, pid)
+                status = await asyncio.to_thread(proc.status)
+                if status == psutil.STATUS_ZOMBIE:
                     log(f"Process {pid} is a zombie. Proceeding.")
                     break
             except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -72,20 +80,26 @@ def wait_for_pid(pid):
                 break
             except Exception:
                 pass
-            time.sleep(1)
+            await asyncio.sleep(1)
     except ImportError:
         if platform.system() == "Windows":
-            time.sleep(5)
+            await asyncio.sleep(5)
         else:
             while os.path.exists(f"/proc/{pid}"):
                 # Check for zombie state manually
                 try:
-                    with open(f"/proc/{pid}/stat", 'r') as f:
-                        stat = f.read().split()
-                        # State is the 3rd field
-                        if len(stat) > 2 and stat[2] in ('Z', 'X', 'x', 'z'):
-                            log(f"Process {pid} is a zombie/dead. Proceeding.")
-                            break
+                    if aiofiles:
+                        async with aiofiles.open(f"/proc/{pid}/stat", 'r') as f:
+                            content = await f.read()
+                            stat = content.split()
+                    else:
+                        with open(f"/proc/{pid}/stat", 'r') as f:
+                            stat = f.read().split()
+
+                    # State is the 3rd field
+                    if len(stat) > 2 and stat[2] in ('Z', 'X', 'x', 'z'):
+                        log(f"Process {pid} is a zombie/dead. Proceeding.")
+                        break
                 except FileNotFoundError:
                     # Process disappeared
                     break
@@ -93,7 +107,7 @@ def wait_for_pid(pid):
                     # Could not read stat, maybe permission denied or transient
                     log(f"Error checking process state: {e}")
 
-                time.sleep(1)
+                await asyncio.sleep(1)
     log("Process exited.")
 
 def cleanup_old_updater():
@@ -286,7 +300,7 @@ def restart_bot(detached=True):
         # Just return, let the calling script handle it?
         pass
 
-if __name__ == "__main__":
+async def main():
     parser = argparse.ArgumentParser(description="CthulhuBotV2 Auto-Updater")
     parser.add_argument("pid", nargs='?', type=int, help="PID of the process to wait for")
     parser.add_argument("--no-restart", action="store_true", help="Do not restart the bot automatically")
@@ -305,26 +319,35 @@ if __name__ == "__main__":
     # 0. Cleanup old updater if exists
     cleanup_old_updater()
 
-    # 1. Wait
+    # Create tasks for parallel execution
+    tasks = []
+
+    # Parallelize waiting and downloading
+    download_task = asyncio.create_task(asyncio.to_thread(download_update))
+
+    # 1. Wait for process exit
     if args.pid:
-        wait_for_pid(args.pid)
-        time.sleep(2)
+        await wait_for_pid(args.pid)
+        await asyncio.sleep(2)
 
-    # 2. Backup
+    # 2. Backup (after process exit for safety)
     if not args.no_backup:
-        create_backup()
+        await asyncio.to_thread(create_backup)
 
-    # 3. Download
-    download_update()
+    # 3. Ensure download is complete
+    await download_task
 
     # 4. Apply (Sync + Update)
-    extract_and_apply()
+    await asyncio.to_thread(extract_and_apply)
 
     # 5. Dependencies
-    update_dependencies()
+    await asyncio.to_thread(update_dependencies)
 
     # 6. Restart
     if not args.no_restart:
         restart_bot(detached=True)
     else:
         log("Update finished. Please restart the bot manually.")
+
+if __name__ == "__main__":
+    asyncio.run(main())
