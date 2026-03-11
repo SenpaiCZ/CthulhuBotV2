@@ -321,19 +321,11 @@ async def load_rss_data():
     global _RSS_DATA_CACHE
     if _RSS_DATA_CACHE is None:
         _RSS_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'rss_data.json')
-    return _RSS_DATA_CACHE.copy() # List
+    return _RSS_DATA_CACHE
 
 async def save_rss_data(session_data):
     global _RSS_DATA_CACHE
-    # RSS Data is a dict or list? Usually dict {guild_id: [subs]}. But load_rss_data says "return json.loads(data)".
-    # If it's a dict, .copy() is shallow. But better than nothing.
-    # If it's a list, .copy() is shallow.
-    # To be safe for nested structures, deepcopy is needed but expensive.
-    # We'll stick to shallow copy as a first line of defense.
-    if isinstance(session_data, (dict, list)):
-        _RSS_DATA_CACHE = session_data.copy()
-    else:
-        _RSS_DATA_CACHE = session_data
+    _RSS_DATA_CACHE = session_data
     await _save_json_file(DATA_FOLDER, 'rss_data.json', session_data)
 
 # --- Soundboard Settings ---
