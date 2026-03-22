@@ -80,22 +80,57 @@ git add services/character_service.py
 git commit -m "feat: implement character service layer"
 ```
 
-### Task 5: Migration Utility
+### Task 5: Character Service Testing
+
+**Files:**
+- Create: `tests/test_character_service.py`
+
+- [ ] **Step 1: Write unit tests for skill point calculations**
+- [ ] **Step 2: Write integration tests for finalize_investigator (using in-memory SQLite)**
+- [ ] **Step 3: Run tests and verify coverage**
+Expected: Tests pass without requiring a Discord client.
+- [ ] **Step 4: Commit**
+```bash
+git add tests/test_character_service.py
+git commit -m "test: add unit and integration tests for character service"
+```
+
+### Task 6: Migration Utility & Verification
 
 **Files:**
 - Create: `tools/migrate_json_to_sql.py`
 
 - [ ] **Step 1: Implement JSON to SQL migration script**
 Read `player_stats.json` and `retired_characters_data.json` and insert into SQLite.
-- [ ] **Step 2: Run and verify migration**
-Expected: Data in SQLite matches JSON content.
-- [ ] **Step 3: Commit**
+- [ ] **Step 2: Implement a field-by-field verification step**
+Compare stats (STR, DEX, etc.) in JSON vs SQL and log any discrepancies.
+- [ ] **Step 3: Run and verify migration**
+Expected: Data in SQLite matches JSON content exactly.
+- [ ] **Step 4: Commit**
 ```bash
 git add tools/migrate_json_to_sql.py
-git commit -m "feat: add json-to-sql migration utility"
+git commit -m "feat: add json-to-sql migration utility with verification"
 ```
 
-### Task 6: Refactor Discord UI (Views)
+### Task 7: Update loadnsave.py & Dashboard Integration
+
+**Files:**
+- Modify: `loadnsave.py`
+- Modify: `dashboard/app.py`
+
+- [ ] **Step 1: Add "Database Switch" logic to loadnsave.py**
+Enable toggling between JSON and SQL for character data.
+- [ ] **Step 2: Refactor dashboard/app.py to use the new Service Layer**
+Replace manual JSON dictionary reads with calls to `character_service`.
+- [ ] **Step 3: Verify dashboard functionality**
+Expected: Characters are rendered correctly in the web UI using database data.
+- [ ] **Step 4: Commit**
+```bash
+git add loadnsave.py dashboard/app.py
+git commit -m "refactor: integrate database and service layer into dashboard and loadnsave"
+```
+
+### Task 8: Refactor Discord UI (Views)
 
 **Files:**
 - Create: `views/investigator_wizard.py`
