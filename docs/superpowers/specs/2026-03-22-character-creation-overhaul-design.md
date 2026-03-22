@@ -24,7 +24,18 @@ Refactor the character creation process (`newinvestigator.py`) to improve mainta
 4. Upon confirmation, the View calls `CharacterService.finalize_investigator()`.
 5. Service saves the data to SQLite via SQLAlchemy.
 
+## Migration Plan
+1. **JSON Migration Utility:** Create a standalone script `tools/migrate_json_to_sql.py` that reads existing `player_stats.json` and `retired_characters_data.json` files and populates the new SQLite database via SQLAlchemy models.
+2. **Backward Compatibility (Temporary):** Ensure `loadnsave.py` can still read from JSON while the migration is verified, with a "switch" to enable the database-backed service.
+3. **Verification:** Add a validation step to ensure character data (STR, DEX, Skills) matches exactly after migration.
+
+## Dependencies
+- `sqlalchemy`: For ORM and SQLite database management.
+- `pydantic`: For data validation and schema management.
+- `alembic` (Optional): To handle future database schema migrations.
+
 ## Success Criteria
 - JSON file dependencies for character creation are removed.
 - Character logic can be tested without Discord.
 - Dashboard can reuse the same logic for character editing.
+- Existing character data is successfully migrated without loss.
