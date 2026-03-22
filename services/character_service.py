@@ -12,6 +12,7 @@ class CharacterService:
         Create a new investigator in the database.
         """
         db_investigator = Investigator(
+            guild_id=data.guild_id,
             discord_user_id=data.discord_user_id,
             name=data.name,
             occupation=data.occupation,
@@ -25,6 +26,7 @@ class CharacterService:
             edu=data.edu,
             luck=data.luck,
             skills=data.skills,
+            extra_data=data.extra_data,
             is_retired=data.is_retired
         )
         db.add(db_investigator)
@@ -42,6 +44,104 @@ class CharacterService:
         if not db_investigator:
             raise ValueError(f"Investigator with ID {investigator_id} not found")
         return db_investigator
+
+    @staticmethod
+    def get_investigator_by_guild_and_user(db: Session, guild_id: str, discord_user_id: str) -> Optional[Investigator]:
+        """
+        Retrieve an active (non-retired) investigator by guild ID and Discord user ID.
+        """
+        return db.query(Investigator).filter(
+            Investigator.guild_id == guild_id,
+            Investigator.discord_user_id == discord_user_id,
+            Investigator.is_retired == False
+        ).first()
+
+    @staticmethod
+    def get_all_investigators(db: Session) -> list[Investigator]:
+        """
+        Retrieve all non-retired investigators.
+        """
+        return db.query(Investigator).filter(Investigator.is_retired == False).all()
+
+    @staticmethod
+    def get_retired_investigators(db: Session) -> list[Investigator]:
+        """
+        Retrieve all retired investigators.
+        """
+        return db.query(Investigator).filter(Investigator.is_retired == True).all()
+
+    @staticmethod
+    def calculate_derived_stats(characteristics: dict, game_mode: str = "Call of Cthulhu") -> dict:
+        """
+        Calculates derived stats (HP, MP, SAN, DB, Build, Move) from characteristics.
+        """
+        # Standardize keys to lowercase for internal processing
+        stats = {k.lower(): v for k, v in characteristics.items() if isinstance(v, int)}
+        
+        # Use aliases if common ones aren't present
+        str_stat = stats.get("str", stats.get("str_stat", 0))
+        con = stats.get("con", 0)
+        siz = stats.get("siz", 0)
+        dex = stats.get("dex", 0)
+        pow_stat = stats.get("pow", stats.get("pow_stat", 0))
+        app = stats.get("app", 0)
+        age = characteristics.get("age", characteristics.get("Age", 20))
+
+        # HP
+        if game_mode == "Pulp of Cthulhu":
+            hp = (con + siz) // 5
+        else:
+            hp = (con + siz) // 10
+            
+        # MP, SAN
+        mp = pow_stat // 5
+        san = pow_stat
+        
+        # Damage Bonus (DB) & Build
+        str_siz = str_stat + siz
+        if 2 <= str_siz <= 64:
+            db = "-2"; build = -2
+        elif 65 <= str_siz <= 84:
+            db = "-1"; build = -1
+        elif 85 <= str_siz <= 124:
+            db = "0"; build = 0
+        elif 125 <= str_siz <= 164:
+            db = "+1D4"; build = 1
+        elif 165 <= str_siz <= 204:
+            db = "+1D6"; build = 2
+        elif 205 <= str_siz <= 284:
+            db = "+2D6"; build = 3
+        elif 285 <= str_siz <= 364:
+            db = "+3D6"; build = 4
+        elif 365 <= str_siz <= 444:
+            db = "+4D6"; build = 5
+        elif 445 <= str_siz <= 524:
+            db = "+5D6"; build = 6
+        else:
+            db = "+6D6"; build = 7
+            
+        # Movement
+        mov = 8
+        if dex < siz and str_stat < siz:
+            mov = 7
+        elif dex > siz and str_stat > siz:
+            mov = 9
+            
+        # Age penalties to Move
+        if 40 <= age <= 49: mov -= 1
+        elif 50 <= age <= 59: mov -= 2
+        elif 60 <= age <= 69: mov -= 3
+        elif 70 <= age <= 79: mov -= 4
+        elif age >= 80: mov -= 5
+        
+        return {
+            "hp": hp,
+            "mp": mp,
+            "san": san,
+            "damage_bonus": db,
+            "build": build,
+            "move": max(0, mov)
+        }
 
     @staticmethod
     def update_investigator(db: Session, investigator_id: int, data: dict) -> Investigator:

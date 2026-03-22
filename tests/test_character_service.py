@@ -22,6 +22,7 @@ def db_session():
 
 def test_create_investigator(db_session: Session):
     data = InvestigatorCreate(
+        guild_id="987654321",
         discord_user_id="123456789",
         name="Test Investigator",
         occupation="Professor",
@@ -63,6 +64,7 @@ def test_calculate_skill_points():
 def test_update_investigator(db_session: Session):
     # First create one
     data = InvestigatorCreate(
+        guild_id="987654321",
         discord_user_id="123456789",
         name="Test Investigator",
         occupation="Professor",

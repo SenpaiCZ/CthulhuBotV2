@@ -5,6 +5,7 @@ class Investigator(Base):
     __tablename__ = 'investigators'
 
     id = Column(Integer, primary_key=True)
+    guild_id = Column(String, index=True)
     discord_user_id = Column(String, index=True)
     name = Column(String)
     occupation = Column(String)
@@ -21,4 +22,5 @@ class Investigator(Base):
     luck = Column(Integer)
     
     skills = Column(JSON)
+    extra_data = Column(JSON)
     is_retired = Column(Boolean, default=False)

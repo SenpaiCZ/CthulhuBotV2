@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 class InvestigatorBase(BaseModel):
     """
@@ -7,6 +7,7 @@ class InvestigatorBase(BaseModel):
     """
     model_config = ConfigDict(populate_by_name=True)
 
+    guild_id: str
     discord_user_id: str
     name: str
     occupation: Optional[str] = None
@@ -24,6 +25,7 @@ class InvestigatorBase(BaseModel):
     
     # Skills are stored as a dictionary of skill name to its percentage value
     skills: Dict[str, int] = Field(default_factory=dict)
+    extra_data: Dict[str, Any] = Field(default_factory=dict)
     is_retired: bool = False
 
     @field_validator("skills")
