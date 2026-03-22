@@ -40,7 +40,8 @@ from loadnsave import (
     load_inventions_data, load_years_data, load_occupations_data,
     load_bot_status, save_bot_status,
     load_fonts_config, save_fonts_config,
-    _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
+    _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER,
+    USE_DATABASE, _to_legacy_format
 )
 from .audio_mixer import MixingAudioSource
 from rss_utils import get_youtube_rss_url
@@ -624,15 +625,35 @@ async def delete_character():
 @app.route('/render/character/<guild_id>/<user_id>')
 async def render_character_view(guild_id, user_id):
     # This endpoint is intended for local bot use
-    stats = await load_player_stats()
-
-    guild_data = stats.get(str(guild_id))
-    if not guild_data:
-        return "Guild not found", 404
-
-    char_data = guild_data.get(str(user_id))
-    if not char_data:
-        return "Character not found", 404
+    if USE_DATABASE:
+        try:
+            from models.database import SessionLocal
+            from services.character_service import CharacterService
+            db = SessionLocal()
+            try:
+                inv = CharacterService.get_investigator_by_guild_and_user(db, str(guild_id), str(user_id))
+                if not inv:
+                    return "Character not found", 404
+                char_data = _to_legacy_format(inv)
+            finally:
+                db.close()
+        except ImportError:
+            # Fallback to legacy
+            stats = await load_player_stats()
+            guild_data = stats.get(str(guild_id))
+            if not guild_data:
+                return "Guild not found", 404
+            char_data = guild_data.get(str(user_id))
+            if not char_data:
+                return "Character not found", 404
+    else:
+        stats = await load_player_stats()
+        guild_data = stats.get(str(guild_id))
+        if not guild_data:
+            return "Guild not found", 404
+        char_data = guild_data.get(str(user_id))
+        if not char_data:
+            return "Character not found", 404
 
     return await render_template(
         'render_character.html',

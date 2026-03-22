@@ -6,11 +6,37 @@ import logging
 
 logger = logging.getLogger("loadnsave")
 
+USE_DATABASE = True
+
 DATA_FOLDER = "data"
 INFODATA_FOLDER = "infodata"
 GAMEDATA_FOLDER = "gamedata"
 
 _INFODATA_CACHE = {}
+
+def _to_legacy_format(inv):
+    """Converts an Investigator model to the legacy dictionary format."""
+    data = {
+        "NAME": inv.name,
+        "STR": inv.str,
+        "CON": inv.con,
+        "SIZ": inv.siz,
+        "DEX": inv.dex,
+        "APP": inv.app,
+        "INT": inv.int,
+        "POW": inv.pow,
+        "EDU": inv.edu,
+        "LUCK": inv.luck,
+        "Occupation": inv.occupation,
+        "is_retired": inv.is_retired
+    }
+    # Add skills
+    if inv.skills:
+        data.update(inv.skills)
+    # Add extra data
+    if inv.extra_data:
+        data.update(inv.extra_data)
+    return data
 
 async def _load_json_file(folder, filename):
     """Helper function to asynchronously load JSON data from a file."""
@@ -57,13 +83,102 @@ async def load_player_stats():
     if _PLAYER_STATS_CACHE is not None:
         return _PLAYER_STATS_CACHE
 
+    if USE_DATABASE:
+        try:
+            from models.database import SessionLocal
+            from services.character_service import CharacterService
+            db = SessionLocal()
+            try:
+                investigators = CharacterService.get_all_investigators(db)
+                stats = {}
+                for inv in investigators:
+                    guild_id = inv.guild_id
+                    user_id = inv.discord_user_id
+                    if guild_id not in stats:
+                        stats[guild_id] = {}
+                    stats[guild_id][user_id] = _to_legacy_format(inv)
+                _PLAYER_STATS_CACHE = stats
+                return _PLAYER_STATS_CACHE
+            finally:
+                db.close()
+        except ImportError:
+            logger.warning("Database models or services not found, falling back to JSON.")
+
     _PLAYER_STATS_CACHE = await _load_json_file(DATA_FOLDER, 'player_stats.json')
     return _PLAYER_STATS_CACHE
 
 async def save_player_stats(player_stats):
     global _PLAYER_STATS_CACHE
     _PLAYER_STATS_CACHE = player_stats
+
+    if USE_DATABASE:
+        try:
+            from models.database import SessionLocal
+            from services.character_service import CharacterService
+            from schemas.investigator import InvestigatorCreate
+            db = SessionLocal()
+            try:
+                for guild_id, users in player_stats.items():
+                    for user_id, char_data in users.items():
+                        inv = CharacterService.get_investigator_by_guild_and_user(db, str(guild_id), str(user_id))
+                        
+                        # Prepare update data
+                        standard_fields = ["NAME", "STR", "CON", "SIZ", "DEX", "APP", "INT", "POW", "EDU", "LUCK", "Occupation", "is_retired"]
+                        skills = {}
+                        extra_data = {}
+                        for k, v in char_data.items():
+                            if k in standard_fields: continue
+                            if isinstance(v, int): skills[k] = v
+                            else: extra_data[k] = v
+
+                        update_map = {
+                            "name": char_data.get("NAME"),
+                            "str": char_data.get("STR"),
+                            "con": char_data.get("CON"),
+                            "siz": char_data.get("SIZ"),
+                            "dex": char_data.get("DEX"),
+                            "app": char_data.get("APP"),
+                            "int": char_data.get("INT"),
+                            "pow": char_data.get("POW"),
+                            "edu": char_data.get("EDU"),
+                            "luck": char_data.get("LUCK"),
+                            "occupation": char_data.get("Occupation"),
+                            "skills": skills,
+                            "extra_data": extra_data,
+                            "is_retired": char_data.get("is_retired", False)
+                        }
+
+                        if inv:
+                            CharacterService.update_investigator(db, inv.id, update_map)
+                        else:
+                            # Create new
+                            new_inv_data = InvestigatorCreate(
+                                guild_id=str(guild_id),
+                                discord_user_id=str(user_id),
+                                name=char_data.get("NAME", "Unknown"),
+                                occupation=char_data.get("Occupation"),
+                                str=char_data.get("STR", 50),
+                                con=char_data.get("CON", 50),
+                                siz=char_data.get("SIZ", 50),
+                                dex=char_data.get("DEX", 50),
+                                app=char_data.get("APP", 50),
+                                int=char_data.get("INT", 50),
+                                pow=char_data.get("POW", 50),
+                                edu=char_data.get("EDU", 50),
+                                luck=char_data.get("LUCK", 50),
+                                skills=skills,
+                                extra_data=extra_data,
+                                is_retired=char_data.get("is_retired", False)
+                            )
+                            CharacterService.create_investigator(db, new_inv_data)
+                return # Successfully saved to DB
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Failed to save player stats to database: {e}")
+
     await _save_json_file(DATA_FOLDER, 'player_stats.json', player_stats)
+
 
 # --- Settings ---
 _SETTINGS_CACHE = None
