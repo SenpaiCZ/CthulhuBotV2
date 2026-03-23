@@ -27,10 +27,22 @@ Refactor the music and audio subsystems (`music.py`, `audio_mixer.py`, `app.py`)
 4. `MusicService` starts playback via `AudioService` using the shared `MixingAudioSource`.
 5. `AudioService` updates `GuildSettings.last_voice_channel_id` in the database.
 
+## Trade-off Analysis
+- **In-Memory Queue:** The music queue is kept in memory for performance and simplicity. **Trade-off:** All queued tracks are lost on bot restart, though the bot will automatically rejoin the last voice channel and can optionally resume the last played song if its URL is persisted.
+- **Service Layer Overhead:** Moving audio logic to `AudioService` adds complexity but ensures that the Web Dashboard and Discord commands share the same voice state and mixer.
+
+## Lifecycle & Resource Management
+- **Idle Timeout:** `AudioService` will implement a configurable idle timeout (default 10 minutes). If no audio is playing (music or soundboard), the bot will automatically disconnect from the voice channel to save resources.
+- **Cleanup Lifecycle:** `AudioService` is responsible for calling `MixingAudioSource.cleanup()` on every disconnection (manual or automatic) to ensure underlying FFmpeg processes are terminated.
+- **Error Handling:** The service will monitor for unexpected disconnections (e.g., bot kicked) and update the `GuildSettings` accordingly.
+
+## Staggered Rejoin Strategy
+- **Voice Monitor Task:** `tasks/voice_monitor.py` will use a staggered approach (e.g., 5-second delay between guilds) to avoid hitting Discord rate limits when rejoining voice channels on bot startup.
+
 ## Verification Plan
 1. **Service Tests:** Unit tests for `MusicService` (queue logic) and `AudioService` (mixer initialization).
-2. **Startup Verification:** Restart the bot and verify it automatically rejoins the last active voice channel.
-3. **Dashboard Parity:** Verify the web dashboard can correctly display the live music queue and trigger playback.
+2. **Resource Leak Check:** Verify that FFmpeg processes are correctly terminated after an idle timeout or manual stop.
+3. **Startup Verification:** Restart the bot and verify it automatically rejoins active voice channels with a staggered delay.
 
 ## Success Criteria
 - Audio logic is independent of Discord commands and can be controlled via the Web Dashboard.
