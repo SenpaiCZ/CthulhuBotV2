@@ -25,6 +25,13 @@ class GuildSettingsBase(BaseModel):
     reaction_roles: Dict[str, Any] = Field(default_factory=dict)
     luck_stats: Dict[str, Any] = Field(default_factory=dict)
     skill_settings: Dict[str, Any] = Field(default_factory=dict)
+    
+    # New fields for overhaul
+    admin_password: Optional[str] = Field(default=None)
+    dashboard_theme: str = Field(default="cthulhu")
+    dashboard_fonts: Dict[str, Any] = Field(default_factory=dict)
+    origin_fonts: Dict[str, Any] = Field(default_factory=dict)
+    prefix: str = Field(default="!")
 
 class GuildSettingsUpdate(BaseModel):
     """
@@ -48,6 +55,20 @@ class GuildSettingsUpdate(BaseModel):
     reaction_roles: Optional[Dict[str, Any]] = None
     luck_stats: Optional[Dict[str, Any]] = None
     skill_settings: Optional[Dict[str, Any]] = None
+
+    # New fields for overhaul
+    admin_password: Optional[str] = None
+    dashboard_theme: Optional[str] = None
+    dashboard_fonts: Optional[Dict[str, Any]] = None
+    origin_fonts: Optional[Dict[str, Any]] = None
+    prefix: Optional[str] = None
+
+class SettingUpdate(BaseModel):
+    """
+    Schema for updating a single setting key.
+    """
+    key: str
+    value: Any
 
 class GuildSettings(GuildSettingsBase):
     """

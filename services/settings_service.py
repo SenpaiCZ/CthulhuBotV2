@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from models.guild_settings import GuildSettings as GuildSettingsModel
 from schemas.settings import GuildSettingsUpdate, GuildSettingsBase
-from typing import Optional
+from typing import Optional, Any, Dict
 
 class SettingsService:
     @staticmethod
@@ -46,3 +46,40 @@ class SettingsService:
         db.commit()
         db.refresh(settings)
         return settings
+
+    @staticmethod
+    def get_setting(db: Session, guild_id: str, key: str, default: Any = None) -> Any:
+        """
+        Retrieve a specific setting value for a guild.
+        """
+        settings = SettingsService.get_guild_settings(db, guild_id)
+        return getattr(settings, key, default)
+
+    @staticmethod
+    def set_setting(db: Session, guild_id: str, key: str, value: Any) -> GuildSettingsModel:
+        """
+        Set a specific setting value for a guild.
+        """
+        settings = SettingsService.get_guild_settings(db, guild_id)
+        if hasattr(settings, key):
+            setattr(settings, key, value)
+            db.commit()
+            db.refresh(settings)
+        return settings
+
+    @staticmethod
+    def get_all_guild_settings(db: Session, key: str) -> Dict[str, Any]:
+        """
+        Returns a dict of guild_id -> value for a specific setting key across all guilds.
+        """
+        results = db.query(GuildSettingsModel).all()
+        return {r.guild_id: getattr(r, key) for r in results if hasattr(r, key)}
+
+    @staticmethod
+    def get_all_settings(db: Session, guild_id: str) -> Dict[str, Any]:
+        """
+        Returns all settings for a guild as a dictionary.
+        """
+        settings = SettingsService.get_guild_settings(db, guild_id)
+        # Convert SQLAlchemy model to dict
+        return {c.name: getattr(settings, c.name) for c in settings.__table__.columns}

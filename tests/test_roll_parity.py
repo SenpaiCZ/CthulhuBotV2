@@ -33,9 +33,19 @@ def legacy_roll_logic(skill_value, bonus=0, penalty=0, difficulty="Regular"):
     else:
         final_roll = possible_rolls[0]
 
-    # Instantiate Cog with mock bot
-    cog = get_mock_cog()
-    result_text, result_tier = cog.calculate_roll_result(final_roll, skill_value)
+    # Replicated legacy success level logic
+    is_fumble = False
+    if skill_value < 50:
+        if final_roll >= 96: is_fumble = True
+    else:
+        if final_roll == 100: is_fumble = True
+
+    if is_fumble: result_tier = 0
+    elif final_roll == 1: result_tier = 5
+    elif final_roll <= skill_value // 5: result_tier = 4
+    elif final_roll <= skill_value // 2: result_tier = 3
+    elif final_roll <= skill_value: result_tier = 2
+    else: result_tier = 1
     
     return final_roll, result_tier
 
@@ -66,8 +76,6 @@ def test_roll_parity(skill_value, bonus, penalty, difficulty):
 
 def test_critical_and_fumble_parity():
     # Test specific known cases or many random cases to find criticals/fumbles
-    cog = get_mock_cog()
-    
     test_cases = [
         (1, 50),   # Critical
         (100, 50), # Fumble (skill >= 50)
@@ -79,7 +87,20 @@ def test_critical_and_fumble_parity():
     ]
     
     for roll, skill in test_cases:
-        legacy_text, legacy_tier = cog.calculate_roll_result(roll, skill)
+        # Replicated legacy logic for comparison
+        is_fumble = False
+        if skill < 50:
+            if roll >= 96: is_fumble = True
+        else:
+            if roll == 100: is_fumble = True
+
+        if is_fumble: legacy_tier = 0
+        elif roll == 1: legacy_tier = 5
+        elif roll <= skill // 5: legacy_tier = 4
+        elif roll <= skill // 2: legacy_tier = 3
+        elif roll <= skill: legacy_tier = 2
+        else: legacy_tier = 1
+
         service_text, service_tier = RollService.calculate_roll_result_tier(roll, skill)
         
         assert legacy_tier == service_tier, f"Tier mismatch for roll={roll}, skill={skill}"

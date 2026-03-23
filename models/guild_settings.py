@@ -23,3 +23,10 @@ class GuildSettings(Base):
     reaction_roles = Column(JSON)
     luck_stats = Column(JSON)
     skill_settings = Column(JSON)
+
+    # New fields for overhaul
+    admin_password = Column(String)
+    dashboard_theme = Column(String)
+    dashboard_fonts = Column(JSON)
+    origin_fonts = Column(JSON)
+    prefix = Column(String)
