@@ -28,7 +28,11 @@ class CharacterService:
             luck=data.luck,
             skills=data.skills,
             extra_data=data.extra_data,
-            is_retired=data.is_retired
+            backstory=data.backstory,
+            biography=data.biography,
+            is_retired=data.is_retired,
+            retirement_date=data.retirement_date,
+            last_played=data.last_played or datetime.utcnow()
         )
         db.add(db_investigator)
         db.commit()

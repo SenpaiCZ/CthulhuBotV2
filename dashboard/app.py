@@ -547,23 +547,38 @@ async def delete_character():
         if not server_id or not user_id:
              return jsonify({"status": "error", "message": "Missing server_id or user_id"}), 400
 
-        stats = await load_player_stats()
-        if server_id in stats and user_id in stats[server_id]:
-            char_data = stats[server_id][user_id]
-            # Normalize names for comparison (strip whitespace)
-            if char_data.get('NAME', '').strip() != name_confirmation.strip():
-                return jsonify({"status": "error", "message": "Name confirmation failed. Names do not match."}), 400
-
-            del stats[server_id][user_id]
-
-            # Clean up empty guild entry
-            if not stats[server_id]:
-                del stats[server_id]
-
-            await save_player_stats(stats)
-            return jsonify({"status": "success"})
+        if USE_DATABASE:
+            from services.character_service import CharacterService
+            db = SessionLocal()
+            try:
+                inv = CharacterService.get_investigator_by_guild_and_user(db, str(server_id), str(user_id))
+                if inv:
+                    if inv.name.strip() != name_confirmation.strip():
+                        return jsonify({"status": "error", "message": "Name confirmation failed. Names do not match."}), 400
+                    CharacterService.delete_investigator(db, inv.id)
+                    return jsonify({"status": "success"})
+                else:
+                    return jsonify({"status": "error", "message": "Character not found"}), 404
+            finally:
+                db.close()
         else:
-            return jsonify({"status": "error", "message": "Character not found"}), 404
+            stats = await load_player_stats()
+            if server_id in stats and user_id in stats[server_id]:
+                char_data = stats[server_id][user_id]
+                # Normalize names for comparison (strip whitespace)
+                if char_data.get('NAME', '').strip() != name_confirmation.strip():
+                    return jsonify({"status": "error", "message": "Name confirmation failed. Names do not match."}), 400
+
+                del stats[server_id][user_id]
+
+                # Clean up empty guild entry
+                if not stats[server_id]:
+                    del stats[server_id]
+
+                await save_player_stats(stats)
+                return jsonify({"status": "success"})
+            else:
+                return jsonify({"status": "error", "message": "Character not found"}), 404
 
     elif char_type == 'retired':
         user_id = data.get('user_id')
@@ -598,6 +613,103 @@ async def delete_character():
 
     else:
         return jsonify({"status": "error", "message": "Invalid type"}), 400
+
+@app.route('/api/character/rename', methods=['POST'])
+async def rename_character():
+    if not is_admin(): return "Unauthorized", 401
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    user_id = data.get('user_id')
+    new_name = data.get('new_name')
+    
+    if not all([guild_id, user_id, new_name]):
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+        
+    if USE_DATABASE:
+        from services.character_service import CharacterService
+        db = SessionLocal()
+        try:
+            inv = CharacterService.get_investigator_by_guild_and_user(db, str(guild_id), str(user_id))
+            if not inv: return jsonify({"status": "error", "message": "Character not found"}), 404
+            CharacterService.rename_investigator(db, inv.id, new_name)
+            return jsonify({"status": "success"})
+        finally:
+            db.close()
+    else:
+        stats = await load_player_stats()
+        if str(guild_id) in stats and str(user_id) in stats[str(guild_id)]:
+            stats[str(guild_id)][str(user_id)]["NAME"] = new_name
+            await save_player_stats(stats)
+            return jsonify({"status": "success"})
+        return jsonify({"status": "error", "message": "Character not found"}), 404
+
+@app.route('/api/character/backstory', methods=['POST'])
+async def manage_backstory_api():
+    if not is_admin(): return "Unauthorized", 401
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    user_id = data.get('user_id')
+    category = data.get('category')
+    entry = data.get('entry')
+    action = data.get('action')
+    
+    if not all([guild_id, user_id, category, action]):
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+        
+    if USE_DATABASE:
+        from services.character_service import CharacterService
+        db = SessionLocal()
+        try:
+            inv = CharacterService.get_investigator_by_guild_and_user(db, str(guild_id), str(user_id))
+            if not inv: return jsonify({"status": "error", "message": "Character not found"}), 404
+            CharacterService.manage_backstory(db, inv.id, category, entry, action)
+            return jsonify({"status": "success"})
+        finally:
+            db.close()
+    else:
+        stats = await load_player_stats()
+        if str(guild_id) in stats and str(user_id) in stats[str(guild_id)]:
+            char = stats[str(guild_id)][str(user_id)]
+            if "Backstory" not in char: char["Backstory"] = {}
+            if category not in char["Backstory"]: char["Backstory"][category] = []
+            
+            if action == "add":
+                char["Backstory"][category].append(str(entry))
+            elif action == "remove":
+                if str(entry) in char["Backstory"][category]:
+                    char["Backstory"][category].remove(str(entry))
+            
+            await save_player_stats(stats)
+            return jsonify({"status": "success"})
+        return jsonify({"status": "error", "message": "Character not found"}), 404
+
+@app.route('/api/character/retire', methods=['POST'])
+async def retire_character_api():
+    if not is_admin(): return "Unauthorized", 401
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    user_id = data.get('user_id')
+    status = data.get('status', True)
+    
+    if not all([guild_id, user_id]):
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+        
+    if USE_DATABASE:
+        from services.character_service import CharacterService
+        from models.investigator import Investigator
+        db = SessionLocal()
+        try:
+            inv = db.query(Investigator).filter(
+                Investigator.guild_id == str(guild_id),
+                Investigator.discord_user_id == str(user_id)
+            ).first()
+            if not inv: return jsonify({"status": "error", "message": "Character not found"}), 404
+            CharacterService.toggle_retirement(db, inv.id, status)
+            return jsonify({"status": "success"})
+        finally:
+            db.close()
+    else:
+        return jsonify({"status": "error", "message": "Retirement only supported in Database mode"}), 400
 
 @app.route('/render/character/<guild_id>/<user_id>')
 async def render_character_view(guild_id, user_id):

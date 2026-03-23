@@ -67,7 +67,11 @@ def _to_legacy_format(inv):
         "EDU": inv.edu,
         "LUCK": inv.luck,
         "Occupation": inv.occupation,
-        "is_retired": inv.is_retired
+        "is_retired": inv.is_retired,
+        "backstory": inv.backstory,
+        "biography": inv.biography,
+        "retirement_date": inv.retirement_date.isoformat() if inv.retirement_date else None,
+        "last_played": inv.last_played.isoformat() if inv.last_played else None,
     }
     # Add skills
     if inv.skills:
@@ -155,6 +159,7 @@ async def save_player_stats(player_stats):
             from models.database import SessionLocal
             from services.character_service import CharacterService
             from schemas.investigator import InvestigatorCreate
+            from datetime import datetime
             db = SessionLocal()
             try:
                 for guild_id, users in player_stats.items():
@@ -162,7 +167,7 @@ async def save_player_stats(player_stats):
                         inv = CharacterService.get_investigator_by_guild_and_user(db, str(guild_id), str(user_id))
                         
                         # Prepare update data
-                        standard_fields = ["NAME", "STR", "CON", "SIZ", "DEX", "APP", "INT", "POW", "EDU", "LUCK", "Occupation", "is_retired"]
+                        standard_fields = ["NAME", "STR", "CON", "SIZ", "DEX", "APP", "INT", "POW", "EDU", "LUCK", "Occupation", "is_retired", "backstory", "biography", "retirement_date", "last_played"]
                         skills = {}
                         extra_data = {}
                         for k, v in char_data.items():
@@ -184,8 +189,20 @@ async def save_player_stats(player_stats):
                             "occupation": char_data.get("Occupation"),
                             "skills": skills,
                             "extra_data": extra_data,
-                            "is_retired": char_data.get("is_retired", False)
+                            "is_retired": char_data.get("is_retired", False),
+                            "backstory": char_data.get("backstory", {}),
+                            "biography": char_data.get("biography", {}),
                         }
+                        
+                        ret_date = char_data.get("retirement_date")
+                        if ret_date and isinstance(ret_date, str):
+                            try: update_map["retirement_date"] = datetime.fromisoformat(ret_date)
+                            except: pass
+                            
+                        lp_date = char_data.get("last_played")
+                        if lp_date and isinstance(lp_date, str):
+                            try: update_map["last_played"] = datetime.fromisoformat(lp_date)
+                            except: pass
 
                         if inv:
                             CharacterService.update_investigator(db, inv.id, update_map)
@@ -207,7 +224,11 @@ async def save_player_stats(player_stats):
                                 luck=char_data.get("LUCK", 50),
                                 skills=skills,
                                 extra_data=extra_data,
-                                is_retired=char_data.get("is_retired", False)
+                                is_retired=char_data.get("is_retired", False),
+                                backstory=update_map["backstory"],
+                                biography=update_map["biography"],
+                                retirement_date=update_map.get("retirement_date"),
+                                last_played=update_map.get("last_played")
                             )
                             CharacterService.create_investigator(db, new_inv_data)
                 return # Successfully saved to DB
@@ -717,13 +738,68 @@ _RETIRED_CHARACTERS_CACHE = None
 
 async def load_retired_characters_data():
     global _RETIRED_CHARACTERS_CACHE
-    if _RETIRED_CHARACTERS_CACHE is None:
-        _RETIRED_CHARACTERS_CACHE = await _load_json_file(DATA_FOLDER, 'retired_characters_data.json')
+    if _RETIRED_CHARACTERS_CACHE is not None and not USE_DATABASE:
+        return _RETIRED_CHARACTERS_CACHE
+
+    if USE_DATABASE:
+        try:
+            from models.database import SessionLocal
+            from services.character_service import CharacterService
+            db = SessionLocal()
+            try:
+                investigators = CharacterService.get_retired_investigators(db)
+                stats = {}
+                for inv in investigators:
+                    user_id = inv.discord_user_id
+                    if user_id not in stats:
+                        stats[user_id] = []
+                    # Include guild_id in the data for dashboard actions
+                    char_data = _to_legacy_format(inv)
+                    char_data["guild_id"] = inv.guild_id
+                    stats[user_id].append(char_data)
+                _RETIRED_CHARACTERS_CACHE = stats
+                return _RETIRED_CHARACTERS_CACHE
+            finally:
+                db.close()
+        except ImportError:
+            logger.warning("Database models or services not found for retired characters, falling back to JSON.")
+
+    _RETIRED_CHARACTERS_CACHE = await _load_json_file(DATA_FOLDER, 'retired_characters_data.json')
     return _RETIRED_CHARACTERS_CACHE
 
 async def save_retired_characters_data(session_data):
     global _RETIRED_CHARACTERS_CACHE
     _RETIRED_CHARACTERS_CACHE = session_data
+    
+    if USE_DATABASE:
+        # Saving retired characters to DB is mostly handled by CharacterService.toggle_retirement
+        # but if we are doing bulk updates via this legacy function:
+        try:
+            from models.database import SessionLocal
+            from services.character_service import CharacterService
+            db = SessionLocal()
+            try:
+                for user_id, char_list in session_data.items():
+                    for char_data in char_list:
+                        guild_id = char_data.get("guild_id")
+                        if not guild_id: continue
+                        
+                        inv = db.query(Investigator).filter(
+                            Investigator.guild_id == str(guild_id),
+                            Investigator.discord_user_id == str(user_id),
+                            Investigator.name == char_data.get("NAME")
+                        ).first()
+                        
+                        if inv:
+                            # Update retirement status if somehow out of sync
+                            if not inv.is_retired:
+                                CharacterService.toggle_retirement(db, inv.id, True)
+                return
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Failed to sync retired characters to database: {e}")
+
     await _save_json_file(DATA_FOLDER, 'retired_characters_data.json', session_data)
 
 # --- Gamemode Stats ---

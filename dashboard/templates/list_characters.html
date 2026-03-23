@@ -147,7 +147,8 @@
                         <th>Player</th>
                         <th>Character</th>
                         <th>Occupation</th>
-                        <th>View Sheet</th>
+                        <th>Last Played</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -161,10 +162,23 @@
                         <td>{{ char.get('NAME', 'Unknown') }}</td>
                         <td>{{ char.get('Occupation', 'Unknown') }}</td>
                         <td>
-                            <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#modal-{{server_id}}-{{user_id}}">
-                                <i class="bi bi-file-earmark-person"></i> View Sheet
+                            {% if char.get('last_played') %}
+                                <span class="small">{{ char.get('last_played')|replace('T', ' ')|truncate(16, True, '') }}</span>
+                            {% else %}
+                                <span class="text-muted small">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#modal-{{server_id}}-{{user_id}}" title="View Sheet">
+                                <i class="bi bi-file-earmark-person"></i>
                             </button>
                             {% if is_admin %}
+                            <button class="btn btn-sm btn-outline-info me-1" onclick="renameCharacter('{{server_id}}', '{{user_id}}', '{{char.get('NAME')}}')" title="Rename">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning me-1" onclick="retireCharacter('{{server_id}}', '{{user_id}}', '{{char.get('NAME')}}', true)" title="Retire">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                            </button>
                             <button class="btn btn-sm btn-danger"
                                     onclick='deleteCharacter({{ server_id|tojson }}, {{ user_id|tojson }}, "active", {{ char.get("NAME")|tojson }}, null)'
                                     aria-label="Delete {{ char.get('NAME') }}"
@@ -414,7 +428,8 @@
                 <th>Player</th>
                 <th>Character</th>
                 <th>Occupation</th>
-                <th>View Sheet</th>
+                <th>Retired On</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -429,10 +444,20 @@
                     <td>{{ char.get('NAME', 'Unknown') }}</td>
                     <td>{{ char.get('Occupation', 'Unknown') }}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#modal-ret-{{user_id}}-{{loop.index}}">
-                            <i class="bi bi-file-earmark-person"></i> View Sheet
+                        {% if char.get('retirement_date') %}
+                            <span class="small">{{ char.get('retirement_date')|replace('T', ' ')|truncate(16, True, '') }}</span>
+                        {% else %}
+                            <span class="text-muted small">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#modal-ret-{{user_id}}-{{loop.index}}" title="View Sheet">
+                            <i class="bi bi-file-earmark-person"></i>
                         </button>
                         {% if is_admin %}
+                        <button class="btn btn-sm btn-outline-success me-1" onclick="retireCharacter('{{char.get('guild_id', 'unknown')}}', '{{user_id}}', '{{char.get('NAME')}}', false)" title="Unretire">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
                         <button class="btn btn-sm btn-danger"
                                 onclick='deleteCharacter(null, {{ user_id|tojson }}, "retired", {{ char.get("NAME")|tojson }}, {{ loop.index0 }})'
                                 aria-label="Delete {{ char.get('NAME') }}"
@@ -708,6 +733,56 @@
             }
         } else if (confirmation !== null) {
             alert("Name did not match. Deletion cancelled.");
+        }
+    }
+
+    async function renameCharacter(guild_id, user_id, old_name) {
+        var new_name = prompt("Enter new name for character '" + old_name + "':", old_name);
+        if (new_name && new_name !== old_name) {
+            try {
+                const response = await fetch('/api/character/rename', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        guild_id: guild_id,
+                        user_id: user_id,
+                        new_name: new_name
+                    })
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('An error occurred.');
+            }
+        }
+    }
+
+    async function retireCharacter(guild_id, user_id, char_name, status) {
+        const action = status ? "RETIRE" : "UNRETIRE";
+        if (confirm("Are you sure you want to " + action + " character '" + char_name + "'?")) {
+            try {
+                const response = await fetch('/api/character/retire', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        guild_id: guild_id,
+                        user_id: user_id,
+                        status: status
+                    })
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('An error occurred.');
+            }
         }
     }
 
