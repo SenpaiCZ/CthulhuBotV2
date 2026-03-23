@@ -1,6 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
+from .base import Base
+from .investigator import Investigator
+from .guild_settings import GuildSettings
 
 DB_URL = "sqlite:///data/database.sqlite"
 
