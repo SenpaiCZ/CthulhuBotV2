@@ -40,19 +40,21 @@ Refactor the dice rolling (`roll.py`) and server settings (`gamesettings.py`) to
 - **Atomic Operations:** All database updates for settings and roll results will use SQLAlchemy's session management to ensure atomicity.
 
 ## Expanded Migration Scope
-Beyond luck and skill settings, the following files will be migrated to the `guild_settings` table (or specialized tables):
-- `karma_settings.json`
-- `loot_settings.json`
-- `pogo_settings.json`
-- `autorooms.json`
-- `rss_data.json`
+The following files will be migrated to the `guild_settings` table (or specialized tables):
+- `karma_settings.json`, `loot_settings.json`, `pogo_settings.json`
+- `autorooms.json`, `rss_data.json`, `gamerole_settings.json`
+- `enroll_settings.json`, `skill_sound_settings.json`, `fonts_config.json`
+- `soundboard_settings.json`, `server_volumes.json`, `smart_react.json`
+- `reaction_roles.json`, `luck_stats.json`, `skill_settings.json`, `gamemode.json`
 
 ## Verification Plan
-1. **Parallel Testing:** Compare roll results from `RollService` against the legacy `_perform_roll` logic in a controlled test environment.
-2. **Settings Parity:** A script will verify that every configuration in the legacy JSON files is correctly reflected in the database.
+1. **Parallel Testing with Deterministic Seeding:** Use a fixed RNG seed (e.g., `random.seed(42)`) to compare roll results from `RollService` against the legacy `_perform_roll` logic. This ensures bit-perfect parity for identical inputs.
+2. **Settings Parity Utility:** A script will verify that every configuration in the legacy JSON files is correctly reflected in the database.
+3. **Bridge Delegation:** `loadnsave.py` will be updated to delegate to `SettingsService` when `USE_DATABASE=True`, making the database the single source of truth for all migrated settings.
 
 ## Success Criteria
 - Dice logic is independent of Discord and can be tested or called from the Web Dashboard.
 - Server settings are centralized in the database instead of multiple JSON files.
 - The web dashboard can trigger rolls or edit server settings through shared services.
-- Zero data loss during the migration of 5+ settings files.
+- Zero data loss during the migration of all (15+) settings files.
+- Verified bit-perfect parity between new `RollService` and legacy dice logic using deterministic seeding.
