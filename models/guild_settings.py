@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, JSON
+from sqlalchemy import Column, Integer, String, JSON, Boolean
 from .base import Base
 
 class GuildSettings(Base):
@@ -30,3 +30,5 @@ class GuildSettings(Base):
     dashboard_fonts = Column(JSON)
     origin_fonts = Column(JSON)
     prefix = Column(String)
+    last_voice_channel_id = Column(String, nullable=True)
+    music_auto_resume = Column(Boolean, default=False)

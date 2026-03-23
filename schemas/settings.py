@@ -32,6 +32,8 @@ class GuildSettingsBase(BaseModel):
     dashboard_fonts: Dict[str, Any] = Field(default_factory=dict)
     origin_fonts: Dict[str, Any] = Field(default_factory=dict)
     prefix: str = Field(default="!")
+    last_voice_channel_id: Optional[str] = Field(default=None)
+    music_auto_resume: bool = Field(default=False)
 
 class GuildSettingsUpdate(BaseModel):
     """
@@ -62,6 +64,8 @@ class GuildSettingsUpdate(BaseModel):
     dashboard_fonts: Optional[Dict[str, Any]] = None
     origin_fonts: Optional[Dict[str, Any]] = None
     prefix: Optional[str] = None
+    last_voice_channel_id: Optional[str] = None
+    music_auto_resume: Optional[bool] = None
 
 class SettingUpdate(BaseModel):
     """
