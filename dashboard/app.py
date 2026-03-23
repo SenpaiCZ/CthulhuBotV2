@@ -16,6 +16,8 @@ import datetime
 import time
 from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort, send_from_directory
 from markupsafe import escape
+from models.database import SessionLocal
+from services.settings_service import SettingsService
 from loadnsave import (
     load_player_stats, save_player_stats, load_retired_characters_data, save_retired_characters_data, load_settings, load_settings_async, save_settings,
     load_soundboard_settings, save_soundboard_settings, load_music_blacklist, save_music_blacklist,
@@ -73,18 +75,23 @@ app.bot = None  # Placeholder for the Discord bot instance
 @app.before_serving
 async def app_startup():
     # Sentinel: Secure Default Password Check
-    settings = await load_settings_async()
-    admin_password = settings.get('admin_password')
-
-    if not admin_password or admin_password == "changeme":
-        new_password = secrets.token_urlsafe(16)
-        settings['admin_password'] = new_password
-        await save_settings(settings)
-        print("\n" + "="*60)
-        print("🛡️  SECURITY ALERT: Default or weak admin password detected.")
-        print(f"🔑  A new secure password has been generated: {new_password}")
-        print("📝  This password has been updated in config.json.")
-        print("="*60 + "\n")
+    db = SessionLocal()
+    try:
+        admin_password = SettingsService.get_setting(db, "global", "admin_password")
+        if not admin_password or admin_password == "changeme":
+            new_password = secrets.token_urlsafe(16)
+            SettingsService.set_setting(db, "global", "admin_password", new_password)
+            # Also update legacy config.json if needed
+            settings = await load_settings_async()
+            settings['admin_password'] = new_password
+            await save_settings(settings)
+            print("\n" + "="*60)
+            print("🛡️  SECURITY ALERT: Default or weak admin password detected.")
+            print(f"🔑  A new secure password has been generated: {new_password}")
+            print("📝  This password has been updated in database and config.json.")
+            print("="*60 + "\n")
+    finally:
+        db.close()
 
     global server_volumes
     loaded = await load_server_volumes()
@@ -316,18 +323,21 @@ def inject_user():
 
 @app.context_processor
 async def inject_theme():
-    settings = await load_settings_async()
-    theme = settings.get('dashboard_theme', 'cthulhu')
-    fonts = settings.get('dashboard_fonts', {
-        'headers': '',
-        'body': '',
-        'special': ''
-    })
-    origin_fonts = settings.get('origin_fonts', {
-        'headers': '',
-        'body': '',
-        'special': ''
-    })
+    db = SessionLocal()
+    try:
+        theme = SettingsService.get_setting(db, "global", "dashboard_theme", "cthulhu")
+        fonts = SettingsService.get_setting(db, "global", "dashboard_fonts", {
+            'headers': '',
+            'body': '',
+            'special': ''
+        })
+        origin_fonts = SettingsService.get_setting(db, "global", "origin_fonts", {
+            'headers': '',
+            'body': '',
+            'special': ''
+        })
+    finally:
+        db.close()
     return dict(dashboard_theme=theme, dashboard_fonts=fonts, origin_fonts=origin_fonts)
 
 @app.route('/api/status')
@@ -1342,15 +1352,17 @@ async def save_fonts():
     body_font = data.get('body')
     special_font = data.get('special')
 
-    settings = await load_settings_async()
-    if 'dashboard_fonts' not in settings:
-        settings['dashboard_fonts'] = {}
+    db = SessionLocal()
+    try:
+        fonts = {
+            'headers': headers_font,
+            'body': body_font,
+            'special': special_font
+        }
+        SettingsService.set_setting(db, "global", "dashboard_fonts", fonts)
+    finally:
+        db.close()
 
-    settings['dashboard_fonts']['headers'] = headers_font
-    settings['dashboard_fonts']['body'] = body_font
-    settings['dashboard_fonts']['special'] = special_font
-
-    await save_settings(settings)
     return jsonify({"status": "success"})
 
 @app.route('/api/design/save_origin_fonts', methods=['POST'])
@@ -1362,15 +1374,17 @@ async def save_origin_fonts():
     body_font = data.get('body')
     special_font = data.get('special')
 
-    settings = await load_settings_async()
-    if 'origin_fonts' not in settings:
-        settings['origin_fonts'] = {}
+    db = SessionLocal()
+    try:
+        fonts = {
+            'headers': headers_font,
+            'body': body_font,
+            'special': special_font
+        }
+        SettingsService.set_setting(db, "global", "origin_fonts", fonts)
+    finally:
+        db.close()
 
-    settings['origin_fonts']['headers'] = headers_font
-    settings['origin_fonts']['body'] = body_font
-    settings['origin_fonts']['special'] = special_font
-
-    await save_settings(settings)
     return jsonify({"status": "success"})
 
 @app.route('/api/design/save', methods=['POST'])
@@ -1383,9 +1397,11 @@ async def save_design():
     if not theme:
         return jsonify({"status": "error", "message": "Missing theme"}), 400
 
-    settings = await load_settings_async()
-    settings['dashboard_theme'] = theme
-    await save_settings(settings)
+    db = SessionLocal()
+    try:
+        SettingsService.set_setting(db, "global", "dashboard_theme", theme)
+    finally:
+        db.close()
 
     return jsonify({"status": "success"})
 
@@ -1585,8 +1601,15 @@ async def save_status():
     if not status_type or not status_text:
         return jsonify({"status": "error", "message": "Missing type or text"}), 400
 
-    # Save to file
+    # Save to database
     new_status = {"type": status_type, "text": status_text}
+    db = SessionLocal()
+    try:
+        SettingsService.set_setting(db, "global", "bot_status", new_status)
+    finally:
+        db.close()
+
+    # Also save to file for legacy
     await save_bot_status(new_status)
 
     # Update Bot Presence immediately
@@ -1617,6 +1640,13 @@ async def save_prefix():
     if not guild_id or not prefix:
         return jsonify({"status": "error", "message": "Missing arguments"}), 400
 
+    db = SessionLocal()
+    try:
+        SettingsService.set_setting(db, str(guild_id), "prefix", prefix)
+    finally:
+        db.close()
+
+    # Sync legacy cache
     server_stats = await load_server_stats()
     server_stats[str(guild_id)] = prefix
     await save_server_stats(server_stats)
@@ -1638,8 +1668,12 @@ async def game_settings_data():
     if not app.bot:
         return jsonify({"guilds": []})
 
-    luck_stats = await load_luck_stats()
-    skill_settings = await load_skill_settings()
+    db = SessionLocal()
+    try:
+        luck_stats = SettingsService.get_all_guild_settings(db, "luck_threshold")
+        skill_settings = SettingsService.get_all_guild_settings(db, "skill_settings")
+    finally:
+        db.close()
 
     guilds_data = []
 
@@ -1673,32 +1707,30 @@ async def save_general_settings():
     if not guild_id:
         return jsonify({"status": "error", "message": "Missing arguments"}), 400
 
-    # Save Luck
-    if luck_value is not None:
-        try:
-            luck_val = int(luck_value)
-            if luck_val < 0: raise ValueError
+    db = SessionLocal()
+    try:
+        # Save Luck
+        if luck_value is not None:
+            try:
+                luck_val = int(luck_value)
+                if luck_val < 0: raise ValueError
+                SettingsService.set_setting(db, str(guild_id), "luck_threshold", luck_val)
+            except ValueError:
+                return jsonify({"status": "error", "message": "Invalid luck value"}), 400
 
-            luck_stats = await load_luck_stats()
-            luck_stats[str(guild_id)] = luck_val
-            await save_luck_stats(luck_stats)
-        except ValueError:
-            return jsonify({"status": "error", "message": "Invalid luck value"}), 400
+        # Save Max Skill
+        if max_skill_value is not None:
+            try:
+                skill_val = int(max_skill_value)
+                if skill_val < 1 or skill_val > 99: raise ValueError
 
-    # Save Max Skill
-    if max_skill_value is not None:
-        try:
-            skill_val = int(max_skill_value)
-            if skill_val < 1 or skill_val > 99: raise ValueError
-
-            skill_settings = await load_skill_settings()
-            if str(guild_id) not in skill_settings:
-                skill_settings[str(guild_id)] = {}
-
-            skill_settings[str(guild_id)]["max_starting_skill"] = skill_val
-            await save_skill_settings(skill_settings)
-        except ValueError:
-            return jsonify({"status": "error", "message": "Invalid max skill value (1-99)"}), 400
+                current_skill_settings = SettingsService.get_setting(db, str(guild_id), "skill_settings", {})
+                current_skill_settings["max_starting_skill"] = skill_val
+                SettingsService.set_setting(db, str(guild_id), "skill_settings", current_skill_settings)
+            except ValueError:
+                return jsonify({"status": "error", "message": "Invalid max skill value (1-99)"}), 400
+    finally:
+        db.close()
 
     return jsonify({"status": "success"})
 
@@ -1708,7 +1740,16 @@ async def save_general_settings():
 async def game_loot_data():
     if not is_admin(): return "Unauthorized", 401
 
-    data = await load_loot_settings()
+    db = SessionLocal()
+    try:
+        data = SettingsService.get_setting(db, "global", "loot_settings")
+    finally:
+        db.close()
+
+    if not data:
+        # Fallback to legacy load
+        data = await load_loot_settings()
+
     return jsonify(data)
 
 @app.route('/api/game/loot/save', methods=['POST'])
@@ -1730,7 +1771,15 @@ async def game_loot_save():
             "num_items_max": int(data.get("num_items_max", 5))
         }
 
+        db = SessionLocal()
+        try:
+            SettingsService.set_setting(db, "global", "loot_settings", save_data)
+        finally:
+            db.close()
+
+        # Also save to legacy for sync
         await save_loot_settings(save_data)
+
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
@@ -1741,22 +1790,23 @@ async def game_loot_save():
 async def game_sounds_data():
     if not is_admin(): return "Unauthorized", 401
 
-    settings = await load_skill_sound_settings()
+    db = SessionLocal()
+    try:
+        settings = SettingsService.get_all_guild_settings(db, "skill_sound_settings")
+    finally:
+        db.close()
+
+    if not settings:
+        settings = await load_skill_sound_settings()
+
     files = await asyncio.to_thread(sync_get_soundboard_files, SOUNDBOARD_FOLDER)
 
     # Flatten files dict to list for easier consumption
-    # sync_get_soundboard_files returns a dict { "Folder": [ {name, path}, ... ] }
-
     flat_files = []
     for folder_name, file_list in files.items():
         if isinstance(file_list, list):
             for file_info in file_list:
                 if 'path' in file_info:
-                    # path is relative to SOUNDBOARD_FOLDER already (e.g. "Root/file.mp3" or just "file.mp3"?)
-                    # file_utils says:
-                    # Root: entry (just filename)
-                    # Subdir: os.path.join(entry, f) (subdir/filename)
-                    # So we just take 'path'.
                     flat_files.append(file_info['path'].replace("\\", "/"))
 
     flat_files.sort()
@@ -1776,21 +1826,22 @@ async def game_sounds_save():
     if not guild_id:
         return jsonify({"status": "error", "message": "Missing guild_id"}), 400
 
-    settings = await load_skill_sound_settings()
-
-    # Update for specific guild
-    # Structure:
-    # {
-    #   "default": { "critical": "file", ... },
-    #   "skills": { "Skill Name": { "critical": "file", ... }, ... }
-    # }
-
-    settings[str(guild_id)] = {
+    guild_sounds = {
         "default": data.get("default", {}),
         "skills": data.get("skills", {})
     }
 
+    db = SessionLocal()
+    try:
+        SettingsService.set_setting(db, str(guild_id), "skill_sound_settings", guild_sounds)
+    finally:
+        db.close()
+
+    # Sync legacy
+    settings = await load_skill_sound_settings()
+    settings[str(guild_id)] = guild_sounds
     await save_skill_sound_settings(settings)
+
     return jsonify({"status": "success"})
 
 # --- Karma Routes ---

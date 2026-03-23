@@ -14,6 +14,45 @@ GAMEDATA_FOLDER = "gamedata"
 
 _INFODATA_CACHE = {}
 
+def _get_db():
+    from models.database import SessionLocal
+    return SessionLocal()
+
+async def _db_get_setting(guild_id: str, key: str, default=None):
+    from services.settings_service import SettingsService
+    db = _get_db()
+    try:
+        val = SettingsService.get_setting(db, guild_id, key)
+        return val if val is not None else default
+    finally:
+        db.close()
+
+async def _db_save_setting(guild_id: str, key: str, value):
+    from services.settings_service import SettingsService
+    from schemas.settings import SettingUpdate
+    db = _get_db()
+    try:
+        SettingsService.set_setting(db, guild_id, key, value)
+    finally:
+        db.close()
+
+async def _db_get_all_guild_settings(key: str):
+    from services.settings_service import SettingsService
+    db = _get_db()
+    try:
+        return SettingsService.get_all_guild_settings(db, key)
+    finally:
+        db.close()
+
+async def _db_save_all_guild_settings(key: str, settings_dict: dict):
+    from services.settings_service import SettingsService
+    db = _get_db()
+    try:
+        for guild_id, value in settings_dict.items():
+            SettingsService.set_setting(db, str(guild_id), key, value)
+    finally:
+        db.close()
+
 def _to_legacy_format(inv):
     """Converts an Investigator model to the legacy dictionary format."""
     data = {
@@ -204,6 +243,20 @@ def load_settings():
     if os.getenv("DISCORD_TOKEN"):
         settings["token"] = os.getenv("DISCORD_TOKEN")
 
+    if USE_DATABASE:
+        try:
+            from models.database import SessionLocal
+            from services.settings_service import SettingsService
+            db = SessionLocal()
+            try:
+                db_settings = SettingsService.get_all_settings(db, "global")
+                if db_settings:
+                    settings.update(db_settings)
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f"Failed to load global settings from database: {e}")
+
     _SETTINGS_CACHE = settings
     return settings.copy()
 
@@ -219,13 +272,46 @@ async def load_settings_async():
     if os.getenv("DISCORD_TOKEN"):
         settings["token"] = os.getenv("DISCORD_TOKEN")
 
+    if USE_DATABASE:
+        db_settings = await _db_get_setting("global", "all_settings")
+        # SettingsService.get_setting(db, "global", "all_settings") might not be what we want if we want individual keys
+        # Actually, SettingsService.get_all_settings(db, "global") is better.
+        # Let's adjust _db_get_all_settings helper.
+        try:
+            from models.database import SessionLocal
+            from services.settings_service import SettingsService
+            db = SessionLocal()
+            try:
+                db_settings = SettingsService.get_all_settings(db, "global")
+                if db_settings:
+                    settings.update(db_settings)
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f"Failed to load global settings from database: {e}")
+
     _SETTINGS_CACHE = settings
     return settings.copy()
 
 async def save_settings(settings_data):
-    """Asynchronously save settings to config.json"""
+    """Asynchronously save settings to config.json and database"""
     global _SETTINGS_CACHE
     _SETTINGS_CACHE = settings_data.copy()
+
+    if USE_DATABASE:
+        try:
+            from models.database import SessionLocal
+            from services.settings_service import SettingsService
+            db = SessionLocal()
+            try:
+                # Save individual keys to "global" guild
+                for k, v in settings_data.items():
+                    SettingsService.set_setting(db, "global", k, v)
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Failed to save global settings to database: {e}")
+
     await _save_json_file('.', 'config.json', settings_data)
 
 # --- Bot Status ---
@@ -236,6 +322,12 @@ async def load_bot_status():
     if _BOT_STATUS_CACHE is not None:
         return _BOT_STATUS_CACHE.copy()
 
+    if USE_DATABASE:
+        db_status = await _db_get_setting("global", "bot_status")
+        if db_status:
+            _BOT_STATUS_CACHE = db_status
+            return _BOT_STATUS_CACHE.copy()
+
     data = await _load_json_file(DATA_FOLDER, 'bot_status.json')
     if not data:
         data = {"type": "playing", "text": "Call of Cthulhu"}
@@ -245,6 +337,10 @@ async def load_bot_status():
 async def save_bot_status(data):
     global _BOT_STATUS_CACHE
     _BOT_STATUS_CACHE = data.copy()
+
+    if USE_DATABASE:
+        await _db_save_setting("global", "bot_status", data)
+
     await _save_json_file(DATA_FOLDER, 'bot_status.json', data)
 
 # --- Server Stats ---
@@ -252,13 +348,25 @@ _SERVER_STATS_CACHE = None
 
 async def load_server_stats():
     global _SERVER_STATS_CACHE
-    if _SERVER_STATS_CACHE is None:
-        _SERVER_STATS_CACHE = await _load_json_file(DATA_FOLDER, 'server_stats.json')
+    if _SERVER_STATS_CACHE is not None:
+        return _SERVER_STATS_CACHE
+
+    if USE_DATABASE:
+        all_prefixes = await _db_get_all_guild_settings("prefix")
+        if all_prefixes:
+            _SERVER_STATS_CACHE = all_prefixes
+            return _SERVER_STATS_CACHE
+
+    _SERVER_STATS_CACHE = await _load_json_file(DATA_FOLDER, 'server_stats.json')
     return _SERVER_STATS_CACHE
 
 async def save_server_stats(server_stats):
     global _SERVER_STATS_CACHE
     _SERVER_STATS_CACHE = server_stats.copy()
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("prefix", server_stats)
+
     await _save_json_file(DATA_FOLDER, 'server_stats.json', server_stats)
 
 
@@ -267,13 +375,25 @@ _SERVER_VOLUMES_CACHE = None
 
 async def load_server_volumes():
     global _SERVER_VOLUMES_CACHE
-    if _SERVER_VOLUMES_CACHE is None:
-        _SERVER_VOLUMES_CACHE = await _load_json_file(DATA_FOLDER, 'server_volumes.json')
+    if _SERVER_VOLUMES_CACHE is not None:
+        return _SERVER_VOLUMES_CACHE.copy()
+
+    if USE_DATABASE:
+        all_volumes = await _db_get_all_guild_settings("volumes")
+        if all_volumes:
+            _SERVER_VOLUMES_CACHE = all_volumes
+            return _SERVER_VOLUMES_CACHE.copy()
+
+    _SERVER_VOLUMES_CACHE = await _load_json_file(DATA_FOLDER, 'server_volumes.json')
     return _SERVER_VOLUMES_CACHE.copy()
 
 async def save_server_volumes(volumes):
     global _SERVER_VOLUMES_CACHE
     _SERVER_VOLUMES_CACHE = volumes.copy()
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("volumes", volumes)
+
     await _save_json_file(DATA_FOLDER, 'server_volumes.json', volumes)
 
 # --- Smart React ---
@@ -281,13 +401,25 @@ _SMART_REACT_CACHE = None
 
 async def smartreact_load():
     global _SMART_REACT_CACHE
-    if _SMART_REACT_CACHE is None:
-        _SMART_REACT_CACHE = await _load_json_file(DATA_FOLDER, 'smart_react.json')
+    if _SMART_REACT_CACHE is not None:
+        return _SMART_REACT_CACHE.copy()
+
+    if USE_DATABASE:
+        all_smartreact = await _db_get_all_guild_settings("smart_react")
+        if all_smartreact:
+            _SMART_REACT_CACHE = all_smartreact
+            return _SMART_REACT_CACHE.copy()
+
+    _SMART_REACT_CACHE = await _load_json_file(DATA_FOLDER, 'smart_react.json')
     return _SMART_REACT_CACHE.copy()
 
 async def smartreact_save(smart_react):
     global _SMART_REACT_CACHE
     _SMART_REACT_CACHE = smart_react.copy()
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("smart_react", smart_react)
+
     await _save_json_file(DATA_FOLDER, 'smart_react.json', smart_react, ensure_ascii=False)
 
 # --- Auto Room ---
@@ -295,13 +427,25 @@ _AUTOROOM_CACHE = None
 
 async def autoroom_load():
     global _AUTOROOM_CACHE
-    if _AUTOROOM_CACHE is None:
-        _AUTOROOM_CACHE = await _load_json_file(DATA_FOLDER, 'autorooms.json')
+    if _AUTOROOM_CACHE is not None:
+        return _AUTOROOM_CACHE.copy()
+
+    if USE_DATABASE:
+        all_autorooms = await _db_get_all_guild_settings("autorooms")
+        if all_autorooms:
+            _AUTOROOM_CACHE = all_autorooms
+            return _AUTOROOM_CACHE.copy()
+
+    _AUTOROOM_CACHE = await _load_json_file(DATA_FOLDER, 'autorooms.json')
     return _AUTOROOM_CACHE.copy()
 
 async def autoroom_save(autorooms):
     global _AUTOROOM_CACHE
     _AUTOROOM_CACHE = autorooms.copy()
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("autorooms", autorooms)
+
     await _save_json_file(DATA_FOLDER, 'autorooms.json', autorooms)
 
 # --- Session Data ---
@@ -378,13 +522,25 @@ _LUCK_STATS_CACHE = None
 
 async def load_luck_stats():
     global _LUCK_STATS_CACHE
-    if _LUCK_STATS_CACHE is None:
-        _LUCK_STATS_CACHE = await _load_json_file(DATA_FOLDER, 'luck_stats.json')
+    if _LUCK_STATS_CACHE is not None:
+        return _LUCK_STATS_CACHE.copy()
+
+    if USE_DATABASE:
+        all_luck = await _db_get_all_guild_settings("luck_threshold")
+        if all_luck:
+            _LUCK_STATS_CACHE = all_luck
+            return _LUCK_STATS_CACHE.copy()
+
+    _LUCK_STATS_CACHE = await _load_json_file(DATA_FOLDER, 'luck_stats.json')
     return _LUCK_STATS_CACHE.copy()
 
 async def save_luck_stats(server_stats):
     global _LUCK_STATS_CACHE
     _LUCK_STATS_CACHE = server_stats.copy()
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("luck_threshold", server_stats)
+
     await _save_json_file(DATA_FOLDER, 'luck_stats.json', server_stats)
 
 # --- Skill Settings ---
@@ -392,13 +548,25 @@ _SKILL_SETTINGS_CACHE = None
 
 async def load_skill_settings():
     global _SKILL_SETTINGS_CACHE
-    if _SKILL_SETTINGS_CACHE is None:
-        _SKILL_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'skill_settings.json')
+    if _SKILL_SETTINGS_CACHE is not None:
+        return _SKILL_SETTINGS_CACHE.copy()
+
+    if USE_DATABASE:
+        all_skills = await _db_get_all_guild_settings("skill_settings")
+        if all_skills:
+            _SKILL_SETTINGS_CACHE = all_skills
+            return _SKILL_SETTINGS_CACHE.copy()
+
+    _SKILL_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'skill_settings.json')
     return _SKILL_SETTINGS_CACHE.copy()
 
 async def save_skill_settings(settings):
     global _SKILL_SETTINGS_CACHE
     _SKILL_SETTINGS_CACHE = settings.copy()
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("skill_settings", settings)
+
     await _save_json_file(DATA_FOLDER, 'skill_settings.json', settings)
 
 # --- Chase Data ---
@@ -534,9 +702,17 @@ async def save_gamemode_stats(server_stats):
 
 # --- Karma System ---
 async def load_karma_settings():
+    if USE_DATABASE:
+        all_karma = await _db_get_all_guild_settings("karma_settings")
+        if all_karma:
+            return all_karma
+
     return await _load_json_file(DATA_FOLDER, 'karma_settings.json')
 
 async def save_karma_settings(settings):
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("karma_settings", settings)
+
     await _save_json_file(DATA_FOLDER, 'karma_settings.json', settings)
 
 async def load_karma_stats():
@@ -565,13 +741,25 @@ _POGO_EVENTS_CACHE = None
 
 async def load_pogo_settings():
     global _POGO_SETTINGS_CACHE
-    if _POGO_SETTINGS_CACHE is None:
-        _POGO_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'pogo_settings.json')
+    if _POGO_SETTINGS_CACHE is not None:
+        return _POGO_SETTINGS_CACHE
+
+    if USE_DATABASE:
+        pogo_settings = await _db_get_setting("global", "pogo_settings")
+        if pogo_settings:
+            _POGO_SETTINGS_CACHE = pogo_settings
+            return _POGO_SETTINGS_CACHE
+
+    _POGO_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'pogo_settings.json')
     return _POGO_SETTINGS_CACHE
 
 async def save_pogo_settings(settings):
     global _POGO_SETTINGS_CACHE
     _POGO_SETTINGS_CACHE = settings
+
+    if USE_DATABASE:
+        await _db_save_setting("global", "pogo_settings", settings)
+
     await _save_json_file(DATA_FOLDER, 'pogo_settings.json', settings)
 
 async def load_pogo_events():
@@ -632,13 +820,25 @@ _GAMEROLE_SETTINGS_CACHE = None
 
 async def load_gamerole_settings():
     global _GAMEROLE_SETTINGS_CACHE
-    if _GAMEROLE_SETTINGS_CACHE is None:
-        _GAMEROLE_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'gamerole_settings.json')
+    if _GAMEROLE_SETTINGS_CACHE is not None:
+        return _GAMEROLE_SETTINGS_CACHE
+
+    if USE_DATABASE:
+        all_gameroles = await _db_get_all_guild_settings("gamerole_settings")
+        if all_gameroles:
+            _GAMEROLE_SETTINGS_CACHE = all_gameroles
+            return _GAMEROLE_SETTINGS_CACHE
+
+    _GAMEROLE_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'gamerole_settings.json')
     return _GAMEROLE_SETTINGS_CACHE
 
 async def save_gamerole_settings(data):
     global _GAMEROLE_SETTINGS_CACHE
     _GAMEROLE_SETTINGS_CACHE = data
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("gamerole_settings", data)
+
     await _save_json_file(DATA_FOLDER, 'gamerole_settings.json', data)
 
 # --- Enroll Wizard Settings ---
@@ -646,13 +846,25 @@ _ENROLL_SETTINGS_CACHE = None
 
 async def load_enroll_settings():
     global _ENROLL_SETTINGS_CACHE
-    if _ENROLL_SETTINGS_CACHE is None:
-        _ENROLL_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'enroll_settings.json')
+    if _ENROLL_SETTINGS_CACHE is not None:
+        return _ENROLL_SETTINGS_CACHE
+
+    if USE_DATABASE:
+        all_enroll = await _db_get_all_guild_settings("enroll_settings")
+        if all_enroll:
+            _ENROLL_SETTINGS_CACHE = all_enroll
+            return _ENROLL_SETTINGS_CACHE
+
+    _ENROLL_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'enroll_settings.json')
     return _ENROLL_SETTINGS_CACHE
 
 async def save_enroll_settings(data):
     global _ENROLL_SETTINGS_CACHE
     _ENROLL_SETTINGS_CACHE = data
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("enroll_settings", data)
+
     await _save_json_file(DATA_FOLDER, 'enroll_settings.json', data)
 
 # --- Loot Settings ---
@@ -753,6 +965,12 @@ async def load_loot_settings():
     if _LOOT_SETTINGS_CACHE is not None:
         return _LOOT_SETTINGS_CACHE
 
+    if USE_DATABASE:
+        loot_settings = await _db_get_setting("global", "loot_settings")
+        if loot_settings:
+            _LOOT_SETTINGS_CACHE = loot_settings
+            return _LOOT_SETTINGS_CACHE
+
     data = await _load_json_file(DATA_FOLDER, 'loot_settings.json')
     if not data:
         # Return defaults
@@ -771,6 +989,10 @@ async def load_loot_settings():
 async def save_loot_settings(data):
     global _LOOT_SETTINGS_CACHE
     _LOOT_SETTINGS_CACHE = data
+
+    if USE_DATABASE:
+        await _db_save_setting("global", "loot_settings", data)
+
     await _save_json_file(DATA_FOLDER, 'loot_settings.json', data)
 
 # --- Skill Sound Settings ---
@@ -778,13 +1000,25 @@ _SKILL_SOUND_SETTINGS_CACHE = None
 
 async def load_skill_sound_settings():
     global _SKILL_SOUND_SETTINGS_CACHE
-    if _SKILL_SOUND_SETTINGS_CACHE is None:
-        _SKILL_SOUND_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'skill_sound_settings.json')
+    if _SKILL_SOUND_SETTINGS_CACHE is not None:
+        return _SKILL_SOUND_SETTINGS_CACHE.copy()
+
+    if USE_DATABASE:
+        all_sounds = await _db_get_all_guild_settings("skill_sound_settings")
+        if all_sounds:
+            _SKILL_SOUND_SETTINGS_CACHE = all_sounds
+            return _SKILL_SOUND_SETTINGS_CACHE.copy()
+
+    _SKILL_SOUND_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'skill_sound_settings.json')
     return _SKILL_SOUND_SETTINGS_CACHE.copy()
 
 async def save_skill_sound_settings(data):
     global _SKILL_SOUND_SETTINGS_CACHE
     _SKILL_SOUND_SETTINGS_CACHE = data
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("skill_sound_settings", data)
+
     await _save_json_file(DATA_FOLDER, 'skill_sound_settings.json', data)
 
 # --- Fonts Config ---
@@ -792,11 +1026,23 @@ _FONTS_CONFIG_CACHE = None
 
 async def load_fonts_config():
     global _FONTS_CONFIG_CACHE
-    if _FONTS_CONFIG_CACHE is None:
-        _FONTS_CONFIG_CACHE = await _load_json_file(DATA_FOLDER, 'fonts_config.json')
+    if _FONTS_CONFIG_CACHE is not None:
+        return _FONTS_CONFIG_CACHE.copy()
+
+    if USE_DATABASE:
+        fonts_config = await _db_get_setting("global", "fonts_config")
+        if fonts_config:
+            _FONTS_CONFIG_CACHE = fonts_config
+            return _FONTS_CONFIG_CACHE.copy()
+
+    _FONTS_CONFIG_CACHE = await _load_json_file(DATA_FOLDER, 'fonts_config.json')
     return _FONTS_CONFIG_CACHE.copy()
 
 async def save_fonts_config(data):
     global _FONTS_CONFIG_CACHE
     _FONTS_CONFIG_CACHE = data
+
+    if USE_DATABASE:
+        await _db_save_setting("global", "fonts_config", data)
+
     await _save_json_file(DATA_FOLDER, 'fonts_config.json', data)
