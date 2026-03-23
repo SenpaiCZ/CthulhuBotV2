@@ -70,20 +70,23 @@ def migrate_file(db, file_path, is_retired_default=False):
         # Some formats might be {server_id: {user_id: {data}}}
         if isinstance(first_val, dict) and any(isinstance(v, dict) and ("name" in v or "characteristics" in v) for v in first_val.values()):
             # Nested structure
+            guild_id = str(first_key)
             for user_id, char_data in first_val.items():
                 if isinstance(char_data, dict):
-                    migrate_character(db, user_id, char_data, is_retired_default)
+                    migrate_character(db, user_id, char_data, is_retired_default, guild_id=guild_id)
                     count += 1
         else:
             # Single level structure {user_id: {data}}
             if isinstance(first_val, dict):
-                migrate_character(db, first_key, first_val, is_retired_default)
+                # Try to get guild_id from data if it's not nested
+                guild_id = str(first_val.get("guild_id", "global"))
+                migrate_character(db, first_key, first_val, is_retired_default, guild_id=guild_id)
                 count += 1
     
     print(f"Migrated {count} investigators from {file_path}.")
     return count
 
-def migrate_character(db, user_id, data, is_retired_default):
+def migrate_character(db, user_id, data, is_retired_default, guild_id="global"):
     characteristics = data.get("characteristics", {})
     
     # Helper to get stat from characteristics dict or top level
@@ -98,8 +101,17 @@ def migrate_character(db, user_id, data, is_retired_default):
         except:
             return default
 
+    # Extract extra data (non-standard fields)
+    standard_fields = ["name", "occupation", "characteristics", "skills", "is_retired", "guild_id", "backstory", "biography"]
+    extra_data = {k: v for k, v in data.items() if k not in standard_fields}
+    # Also add characteristics that might be extra
+    for k, v in characteristics.items():
+        if k not in ["str", "con", "siz", "dex", "app", "int", "pow", "edu", "luck"]:
+            extra_data[k] = v
+
     try:
         investigator_data = InvestigatorCreate(
+            guild_id=guild_id,
             discord_user_id=str(user_id),
             name=data.get("name", "Unknown"),
             occupation=data.get("occupation"),
@@ -113,7 +125,10 @@ def migrate_character(db, user_id, data, is_retired_default):
             edu=get_stat("edu"),
             luck=get_stat("luck"),
             skills=data.get("skills", {}),
-            is_retired=data.get("is_retired", is_retired_default)
+            extra_data=extra_data,
+            is_retired=data.get("is_retired", is_retired_default),
+            backstory=data.get("backstory", {}),
+            biography=data.get("biography", {})
         )
         
         CharacterService.create_investigator(db, investigator_data)

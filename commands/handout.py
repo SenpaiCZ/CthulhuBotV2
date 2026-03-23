@@ -13,7 +13,7 @@ class HandoutModal(discord.ui.Modal):
         self.handout_type = handout_type
         self.inputs = {}
         for label, default in fields.items():
-            self.inputs[label] = discord.ui.TextInput(label=label, default=default, style=discord.TextStyle.paragraph if len(default) > 50 else discord.ui.TextStyle.short)
+            self.inputs[label] = discord.ui.TextInput(label=label, default=default, style=discord.TextStyle.paragraph if len(default) > 50 else discord.TextStyle.short)
             self.add_item(self.inputs[label])
 
     async def on_submit(self, interaction: discord.Interaction):
