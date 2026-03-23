@@ -46,21 +46,15 @@ from loadnsave import (
     USE_DATABASE, _to_legacy_format
 )
 from .audio_mixer import MixingAudioSource
+from services.audio_service import AudioService
+from services.music_service import MusicService
 from rss_utils import get_youtube_rss_url
-from .file_utils import (
-    sanitize_filename, sync_get_soundboard_files, sync_save_bytes,
-    sync_extract_zip, sync_delete_path, sync_rename_path, sync_create_directory,
-    ALLOWED_AUDIO_EXTENSIONS as ALLOWED_EXTENSIONS,
-    ALLOWED_IMAGE_EXTENSIONS
-)
 
 SOUNDBOARD_FOLDER = "soundboard"
 BACKUP_FOLDER = "backups"
 IMAGES_FOLDER = "images"
 FONTS_FOLDER = os.path.join("data", "fonts")
 OLD_FONTS_FOLDER = os.path.join("dashboard", "static", "fonts")
-server_volumes = {} # guild_id (str) -> {'music': 1.0, 'soundboard': 0.5}
-guild_mixers = {} # guild_id (str) -> MixingAudioSource
 _failed_login_attempts = {} # ip (str) -> [timestamp, ...]
 
 BASIC_FONTS = [
@@ -93,9 +87,10 @@ async def app_startup():
     finally:
         db.close()
 
-    global server_volumes
-    loaded = await load_server_volumes()
-    server_volumes.update(loaded)
+    # Initialize Services
+    if app.bot:
+        app.bot.audio_service = AudioService(app.bot)
+        app.bot.music_service = MusicService()
 
     # Ensure images folder exists
     if not os.path.exists(IMAGES_FOLDER):
@@ -279,43 +274,15 @@ def get_image_url(type_slug, name):
 import asyncio
 
 async def get_or_join_voice_channel(guild_id, channel_id):
-    if not app.bot:
-        return None, "Bot not initialized"
+    if not app.bot or not hasattr(app.bot, 'audio_service'):
+        return None, "Audio service not initialized"
 
     guild = app.bot.get_guild(int(guild_id))
     if not guild:
         return None, "Guild not found"
 
-    channel = guild.get_channel(int(channel_id))
-    if not channel:
-        return None, "Channel not found"
-
-    voice_client = guild.voice_client
-
-    try:
-        if voice_client:
-            if not voice_client.is_connected():
-                # Stale connection object? try to cleanup and reconnect
-                try:
-                    await voice_client.disconnect(force=True)
-                except Exception as e:
-                    print(f"[Dashboard] Error forcefully disconnecting stale voice client: {e}")
-                voice_client = await channel.connect(timeout=60.0, reconnect=True)
-            elif voice_client.channel.id != channel.id:
-                await voice_client.move_to(channel)
-        else:
-            voice_client = await channel.connect(timeout=60.0, reconnect=True)
-    except asyncio.TimeoutError:
-        print(f"[Dashboard] Timeout connecting to voice channel in guild {guild_id}. UDP blocked?")
-        return None, "Connection timed out. This may indicate a network issue (e.g. UDP ports blocked) on the server hosting the bot."
-    except Exception as e:
-        print(f"[Dashboard] Unexpected error connecting to voice in guild {guild_id}: {e}")
-        return None, str(e)
-
-    if voice_client is None or not voice_client.is_connected():
-        return None, "Failed to establish a stable connection to the voice channel."
-
-    return voice_client, None
+    # AudioService handles connection and mixer initialization
+    return await app.bot.audio_service.connect_to_voice(guild, int(channel_id))
 
 @app.context_processor
 def inject_user():
@@ -2091,7 +2058,7 @@ async def soundboard_data():
         voice_client = guild.voice_client
 
         # Get active tracks
-        mixer = guild_mixers.get(str(guild.id))
+        mixer = app.bot.audio_service.get_mixer(guild.id)
         tracks = []
         if mixer:
             # Filter out finished tracks that might be lingering before cleanup
@@ -2105,7 +2072,7 @@ async def soundboard_data():
                     "paused": t.paused
                 })
 
-        vol_data = server_volumes.get(str(guild.id), {'music': 1.0, 'soundboard': 0.5})
+        vol_data = app.bot.audio_service._server_volumes.get(guild.id, {'music': 1.0, 'soundboard': 0.5})
         sb_vol = vol_data.get('soundboard', 0.5)
         status = {
             "is_connected": voice_client is not None,
@@ -2222,45 +2189,7 @@ async def soundboard_play():
     if error:
         return jsonify({"status": "error", "message": error}), 500
 
-    # Get or create mixer
-    mixer = guild_mixers.get(str(guild_id))
-    if not mixer:
-        mixer = MixingAudioSource()
-        guild_mixers[str(guild_id)] = mixer
-
-    # Check if we are playing the mixer
-    is_playing_mixer = False
-    if voice_client.is_playing() and isinstance(voice_client.source, discord.PCMVolumeTransformer):
-         if voice_client.source.original == mixer:
-             is_playing_mixer = True
-
-    if not is_playing_mixer:
-        if voice_client.is_playing():
-            voice_client.stop()
-
-        # Wait a moment for stop to propagate?
-        # Usually fine.
-
-        # Mixer handles volume per track now
-        source = discord.PCMVolumeTransformer(mixer, volume=1.0)
-
-        try:
-            if not voice_client.is_connected():
-                print(f"[Dashboard] Bot disconnected right before play in guild {guild_id}. Attempting to forcefully disconnect...")
-                import discord
-                try:
-                    # Non-blocking forceful disconnect
-                    if app.bot:
-                        app.bot.loop.create_task(voice_client.disconnect(force=True))
-                except Exception as ex:
-                    print(f"[Dashboard] Error forcefully disconnecting voice client: {ex}")
-                raise discord.ClientException("Bot is not connected to voice anymore.")
-            voice_client.play(source)
-        except Exception as e:
-            print(f"[Dashboard] Playback error in guild {guild_id}: {e}")
-            return jsonify({"status": "error", "message": f"Playback error: {e}"}), 500
-
-    # Add track
+    # Add track via AudioService
     loop_setting = data.get('loop', True)
     volume_modifier = data.get('volume_modifier', 1.0) # Individual file volume modifier
 
@@ -2270,19 +2199,11 @@ async def soundboard_play():
     except ValueError:
         volume_modifier = 1.0
 
-    vol_data = server_volumes.get(str(guild_id), {'music': 1.0, 'soundboard': 0.5})
-    sb_vol = vol_data.get('soundboard', 0.5)
-
-    final_vol = sb_vol * volume_modifier
-
-    mixer.add_track(
-        full_path,
-        volume=final_vol,
+    app.bot.audio_service.play_soundboard(
+        guild_id=int(guild_id),
+        sound_path=full_path,
         loop=loop_setting,
-        metadata={
-            'type': 'soundboard',
-            'volume_modifier': volume_modifier
-        }
+        volume_modifier=volume_modifier
     )
 
     return jsonify({"status": "success"})
@@ -2316,10 +2237,7 @@ async def soundboard_leave():
 
     guild = app.bot.get_guild(int(guild_id))
     if guild and guild.voice_client:
-        await guild.voice_client.disconnect()
-        # Clean up mixer
-        mixer = guild_mixers.pop(str(guild_id), None)
-        if mixer: mixer.cleanup()
+        await app.bot.audio_service.disconnect_from_voice(guild)
 
     return jsonify({"status": "success"})
 
@@ -2334,8 +2252,8 @@ async def soundboard_stop():
     if not guild_id:
         return jsonify({"status": "error", "message": "Missing guild_id"}), 400
 
-    # Just clear the tracks in the mixer
-    mixer = guild_mixers.get(str(guild_id))
+    # Just clear the tracks in the mixer via AudioService
+    mixer = app.bot.audio_service.get_mixer(int(guild_id))
     if mixer:
         mixer.cleanup() # Clears tracks
 
@@ -2359,22 +2277,7 @@ async def soundboard_volume():
         vol_float = float(volume) / 100.0
         vol_float = max(0.0, min(1.0, vol_float))
 
-        if str(guild_id) not in server_volumes:
-            server_volumes[str(guild_id)] = {'music': 1.0, 'soundboard': 0.5}
-
-        server_volumes[str(guild_id)]['soundboard'] = vol_float
-        await save_server_volumes(server_volumes)
-
-        # Update active soundboard tracks
-        mixer = guild_mixers.get(str(guild_id))
-        if mixer:
-            with mixer.lock:
-                for track in mixer.tracks:
-                    if track.metadata.get('type') == 'soundboard':
-                        mod = track.metadata.get('volume_modifier', 1.0)
-                        track.volume = vol_float * mod
-
-        # Note: We do NOT update the PCMVolumeTransformer volume anymore, as it stays at 1.0.
+        await app.bot.audio_service.set_volume(int(guild_id), vol_float)
 
         return jsonify({"status": "success"})
     except ValueError:
@@ -2617,7 +2520,10 @@ async def track_volume():
     track_id = data.get('track_id')
     volume = data.get('volume') # 0-100
 
-    mixer = guild_mixers.get(str(guild_id))
+    if not app.bot or not hasattr(app.bot, 'audio_service'):
+        return jsonify({"status": "error", "message": "Audio service not ready"}), 500
+
+    mixer = app.bot.audio_service.get_mixer(int(guild_id))
     if not mixer:
         return jsonify({"status": "error", "message": "No active mixer"}), 404
 
@@ -2641,7 +2547,10 @@ async def track_loop():
     track_id = data.get('track_id')
     loop = data.get('loop') # boolean
 
-    mixer = guild_mixers.get(str(guild_id))
+    if not app.bot or not hasattr(app.bot, 'audio_service'):
+        return jsonify({"status": "error", "message": "Audio service not ready"}), 500
+
+    mixer = app.bot.audio_service.get_mixer(int(guild_id))
     if not mixer: return jsonify({"status": "error", "message": "No active mixer"}), 404
 
     track = mixer.get_track(track_id)
@@ -2659,7 +2568,10 @@ async def track_pause():
     track_id = data.get('track_id')
     paused = data.get('paused') # boolean
 
-    mixer = guild_mixers.get(str(guild_id))
+    if not app.bot or not hasattr(app.bot, 'audio_service'):
+        return jsonify({"status": "error", "message": "Audio service not ready"}), 500
+
+    mixer = app.bot.audio_service.get_mixer(int(guild_id))
     if not mixer: return jsonify({"status": "error", "message": "No active mixer"}), 404
 
     track = mixer.get_track(track_id)
@@ -2676,7 +2588,10 @@ async def track_remove():
     guild_id = data.get('guild_id')
     track_id = data.get('track_id')
 
-    mixer = guild_mixers.get(str(guild_id))
+    if not app.bot or not hasattr(app.bot, 'audio_service'):
+        return jsonify({"status": "error", "message": "Audio service not ready"}), 500
+
+    mixer = app.bot.audio_service.get_mixer(int(guild_id))
     if not mixer: return jsonify({"status": "error", "message": "No active mixer"}), 404
 
     if mixer.remove_track(track_id):
@@ -2946,49 +2861,53 @@ async def music_dashboard():
 async def music_data():
     if not is_admin(): return "Unauthorized", 401
 
-    if not app.bot or not hasattr(app.bot, 'music_cog'):
+    if not app.bot or not hasattr(app.bot, 'music_service'):
         return jsonify({"guilds": {}})
 
-    music_cog = app.bot.music_cog
+    ms = app.bot.music_service
     data = {}
 
     for guild in app.bot.guilds:
-        guild_id = str(guild.id)
+        guild_id = guild.id
 
         # Current Track
         current_track_info = None
-        if guild_id in music_cog.current_track:
-            track = music_cog.current_track[guild_id]
-            # Ensure track is not finished (prevents desync)
-            if not track.finished:
-                current_track_info = {
-                    "title": track.metadata.get('title', 'Unknown'),
-                    "url": track.metadata.get('original_url', ''),
-                    "thumbnail": track.metadata.get('thumbnail', ''),
-                    "volume": int(track.volume * 100),
-                    "loop": track.loop,
-                    "paused": track.paused
-                }
+        track = ms.get_current_track(guild_id)
+        if track and not track.finished:
+            current_track_info = {
+                "title": track.metadata.get('title', 'Unknown'),
+                "url": track.metadata.get('original_url', ''),
+                "thumbnail": track.metadata.get('thumbnail', ''),
+                "volume": int(track.volume * 100),
+                "loop": track.loop,
+                "paused": track.paused
+            }
 
         # Queue
         queue = []
-        if guild_id in music_cog.queue:
-            for song in music_cog.queue[guild_id]:
-                queue.append({
-                    "title": song['title'],
-                    "url": song['original_url'],
-                    "thumbnail": song.get('thumbnail', '')
-                })
+        for song in ms.get_queue(guild_id):
+            queue.append({
+                "title": song['title'],
+                "url": song['original_url'],
+                "thumbnail": song.get('thumbnail', '')
+            })
 
-        data[guild_id] = {
+        data[str(guild_id)] = {
             "name": guild.name,
             "current_track": current_track_info,
             "queue": queue
         }
 
+    # Retrieve blacklist from legacy or service if added there
+    blacklist = []
+    if hasattr(app.bot, 'music_cog'):
+        blacklist = app.bot.music_cog.blacklist
+    else:
+        blacklist = await load_music_blacklist()
+
     return jsonify({
         "guilds": data,
-        "blacklist": music_cog.blacklist
+        "blacklist": blacklist
     })
 
 @app.route('/api/music/control', methods=['POST'])
@@ -2999,38 +2918,48 @@ async def music_control():
     action = data.get('action')
     guild_id = data.get('guild_id')
 
-    if not app.bot or not hasattr(app.bot, 'music_cog'):
+    if not app.bot or not hasattr(app.bot, 'music_service'):
         return jsonify({"status": "error", "message": "Music system not ready"}), 500
 
-    music_cog = app.bot.music_cog
+    ms = app.bot.music_service
+    gid = int(guild_id)
 
     if action == 'skip':
-        track = music_cog.current_track.get(guild_id)
-        if track:
-            track.finished = True
-            await music_cog._process_queue(guild_id)
+        ms.skip_track(gid)
     elif action == 'loop':
-        track = music_cog.current_track.get(guild_id)
-        if track:
-            track.loop = not track.loop
+        ms.toggle_loop(gid)
     elif action == 'volume':
         vol = data.get('volume')
-        new_vol = max(0, min(100, int(vol))) / 100
+        new_vol = max(0, min(100, int(vol))) / 100.0
 
-        if str(guild_id) not in server_volumes:
-            server_volumes[str(guild_id)] = {'music': 1.0, 'soundboard': 0.5}
+        # We update the AudioService cache and DB
+        # AudioService.set_volume currently only updates soundboard tracks.
+        # We need to ensure it updates music tracks too if we want immediate effect.
+        # Let's check AudioService.set_volume again.
+        # Actually, let's just use a helper or update it here.
+        
+        db_vols = app.bot.audio_service._server_volumes.get(gid, {'music': 1.0, 'soundboard': 0.5})
+        db_vols['music'] = new_vol
+        app.bot.audio_service._server_volumes[gid] = db_vols
+        
+        # Save to DB
+        db = SessionLocal()
+        try:
+            SettingsService.set_setting(db, str(gid), "server_volumes", db_vols)
+        finally:
+            db.close()
 
-        server_volumes[str(guild_id)]['music'] = new_vol
-        await save_server_volumes(server_volumes)
-
-        track = music_cog.current_track.get(guild_id)
+        # Update current track volume if it exists
+        track = ms.get_current_track(gid)
         if track:
              track.volume = new_vol
+             
     elif action == 'remove':
         # Remove from queue
         index = data.get('index')
-        if guild_id in music_cog.queue and 0 <= index < len(music_cog.queue[guild_id]):
-            music_cog.queue[guild_id].pop(index)
+        queue = ms.get_queue(gid)
+        if 0 <= index < len(queue):
+            queue.pop(index)
 
     return jsonify({"status": "success"})
 
@@ -3044,19 +2973,24 @@ async def music_ban():
     if not url:
         return jsonify({"status": "error", "message": "Missing URL"}), 400
 
-    if not app.bot or not hasattr(app.bot, 'music_cog'):
+    if not app.bot or not hasattr(app.bot, 'music_service'):
         return jsonify({"status": "error", "message": "Music system not ready"}), 500
 
-    music_cog = app.bot.music_cog
-
-    if url not in music_cog.blacklist:
-        music_cog.blacklist.append(url)
-        await save_music_blacklist(music_cog.blacklist)
+    ms = app.bot.music_service
+    
+    # We manage blacklist via loadnsave/cog for now as MusicService doesn't have it yet
+    blacklist = await load_music_blacklist()
+    if url not in blacklist:
+        blacklist.append(url)
+        await save_music_blacklist(blacklist)
+        if hasattr(app.bot, 'music_cog'):
+            app.bot.music_cog.blacklist = blacklist
 
         # If currently playing, skip it
-        for guild_id, track in music_cog.current_track.items():
-            if track.metadata.get('original_url') == url or track.metadata.get('url') == url:
-                 track.finished = True
+        for guild in app.bot.guilds:
+            track = ms.get_current_track(guild.id)
+            if track and (track.metadata.get('original_url') == url or track.metadata.get('url') == url):
+                 ms.skip_track(guild.id)
 
     return jsonify({"status": "success"})
 

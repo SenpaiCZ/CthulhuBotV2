@@ -379,10 +379,24 @@ async def load_server_volumes():
         return _SERVER_VOLUMES_CACHE.copy()
 
     if USE_DATABASE:
-        all_volumes = await _db_get_all_guild_settings("volumes")
-        if all_volumes:
-            _SERVER_VOLUMES_CACHE = all_volumes
-            return _SERVER_VOLUMES_CACHE.copy()
+        try:
+            from services.audio_service import AudioService
+            if AudioService._server_volumes:
+                # Convert int keys to str for legacy compatibility
+                _SERVER_VOLUMES_CACHE = {str(k): v for k, v in AudioService._server_volumes.items()}
+                return _SERVER_VOLUMES_CACHE.copy()
+            
+            all_volumes = await _db_get_all_guild_settings("server_volumes")
+            if all_volumes:
+                _SERVER_VOLUMES_CACHE = all_volumes
+                # Seed AudioService cache
+                for gid, vols in all_volumes.items():
+                    try:
+                        AudioService._server_volumes[int(gid)] = vols
+                    except: continue
+                return _SERVER_VOLUMES_CACHE.copy()
+        except ImportError:
+            pass
 
     _SERVER_VOLUMES_CACHE = await _load_json_file(DATA_FOLDER, 'server_volumes.json')
     return _SERVER_VOLUMES_CACHE.copy()
@@ -392,7 +406,33 @@ async def save_server_volumes(volumes):
     _SERVER_VOLUMES_CACHE = volumes.copy()
 
     if USE_DATABASE:
-        await _db_save_all_guild_settings("volumes", volumes)
+        try:
+            from services.audio_service import AudioService
+            for guild_id, vol_data in volumes.items():
+                # This will save to DB and update active mixer tracks via AudioService logic
+                # We use set_volume but it only handles soundboard in AudioService currently.
+                # Actually, AudioService.set_volume only takes a float.
+                # Let's just update the cache and DB directly here if we have to, 
+                # or better, use AudioService if it's available.
+                gid = int(guild_id)
+                AudioService._server_volumes[gid] = vol_data
+                
+                # Update DB
+                await _db_save_setting(str(guild_id), "server_volumes", vol_data)
+                
+                # Update active tracks if mixer exists
+                mixer = AudioService._guild_mixers.get(gid)
+                if mixer:
+                    sb_vol = vol_data.get('soundboard', 0.5)
+                    with mixer.lock:
+                        for track in mixer.tracks:
+                            if track.metadata.get('type') == 'soundboard':
+                                mod = track.metadata.get('volume_modifier', 1.0)
+                                track.volume = sb_vol * mod
+            return
+        except (ImportError, ValueError):
+            pass
+        await _db_save_all_guild_settings("server_volumes", volumes)
 
     await _save_json_file(DATA_FOLDER, 'server_volumes.json', volumes)
 
