@@ -31,7 +31,28 @@ Refactor the dice rolling (`roll.py`) and server settings (`gamesettings.py`) to
 1. **Settings Migration Utility:** Create `tools/migrate_settings_to_sql.py` to move existing JSON configurations (`luck_stats.json`, `skill_settings.json`, `gamemode.json`) into the new `guild_settings` table.
 2. **Backward Compatibility:** Update `loadnsave.py` to bridge to the new services if `USE_DATABASE` is enabled.
 
+## Trade-off Analysis
+- **Database vs. JSON:** Centralizing into a database improves data integrity and allows the Web Dashboard to query settings efficiently. The trade-off is higher initial complexity and the need for a migration script.
+- **Service Layer Overhead:** Introducing `RollService` and `SettingsService` adds more files but enables unit testing of core game logic without a Discord client or active bot session.
+
+## Cache Safety & Data Integrity
+- **LoadNSave Bridge:** `loadnsave.py` will serve as the primary bridge. When `USE_DATABASE` is enabled, the JSON cache in `loadnsave.py` must be kept in sync with the database to prevent desynchronization.
+- **Atomic Operations:** All database updates for settings and roll results will use SQLAlchemy's session management to ensure atomicity.
+
+## Expanded Migration Scope
+Beyond luck and skill settings, the following files will be migrated to the `guild_settings` table (or specialized tables):
+- `karma_settings.json`
+- `loot_settings.json`
+- `pogo_settings.json`
+- `autorooms.json`
+- `rss_data.json`
+
+## Verification Plan
+1. **Parallel Testing:** Compare roll results from `RollService` against the legacy `_perform_roll` logic in a controlled test environment.
+2. **Settings Parity:** A script will verify that every configuration in the legacy JSON files is correctly reflected in the database.
+
 ## Success Criteria
 - Dice logic is independent of Discord and can be tested or called from the Web Dashboard.
 - Server settings are centralized in the database instead of multiple JSON files.
 - The web dashboard can trigger rolls or edit server settings through shared services.
+- Zero data loss during the migration of 5+ settings files.
