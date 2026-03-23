@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 from sqlalchemy.orm import Session
 from models.investigator import Investigator
 from schemas.investigator import InvestigatorCreate
@@ -43,6 +44,84 @@ class CharacterService:
         db_investigator = db.query(Investigator).filter(Investigator.id == investigator_id).first()
         if not db_investigator:
             raise ValueError(f"Investigator with ID {investigator_id} not found")
+        return db_investigator
+
+    @staticmethod
+    def rename_investigator(db: Session, investigator_id: int, new_name: str) -> Investigator:
+        """
+        Update the name of an investigator and refresh their last_played timestamp.
+        """
+        db_investigator = CharacterService.get_investigator(db, investigator_id)
+        db_investigator.name = new_name
+        db_investigator.last_played = datetime.utcnow()
+        db.commit()
+        db.refresh(db_investigator)
+        return db_investigator
+
+    @staticmethod
+    def rename_skill(db: Session, investigator_id: int, old_skill: str, new_skill: str) -> Investigator:
+        """
+        Safely rename a skill in the investigator's skills JSON column.
+        """
+        db_investigator = CharacterService.get_investigator(db, investigator_id)
+        if db_investigator.skills and old_skill in db_investigator.skills:
+            # Create a copy to trigger SQLAlchemy JSON change detection
+            skills = dict(db_investigator.skills)
+            skills[new_skill] = skills.pop(old_skill)
+            db_investigator.skills = skills
+            db.commit()
+            db.refresh(db_investigator)
+        return db_investigator
+
+    @staticmethod
+    def manage_backstory(db: Session, investigator_id: int, category: str, entry: Any, action: str) -> Investigator:
+        """
+        Manage backstory entries. 
+        Actions: 'add', 'remove', 'edit'.
+        For 'edit', entry can be a tuple of (index_or_old_value, new_value).
+        Backstory structure: {category: [list of entries]}.
+        """
+        db_investigator = CharacterService.get_investigator(db, investigator_id)
+        # Create a copy to ensure SQLAlchemy detects changes in the JSON column
+        backstory = dict(db_investigator.backstory) if db_investigator.backstory else {}
+        
+        if category not in backstory:
+            backstory[category] = []
+        elif not isinstance(backstory[category], list):
+            # Migration/Cleanup: convert single string entries to list
+            backstory[category] = [str(backstory[category])]
+            
+        if action == "add":
+            backstory[category].append(str(entry))
+        elif action == "remove":
+            if isinstance(entry, int) and 0 <= entry < len(backstory[category]):
+                backstory[category].pop(entry)
+            elif str(entry) in backstory[category]:
+                backstory[category].remove(str(entry))
+        elif action == "edit":
+            if isinstance(entry, (list, tuple)) and len(entry) == 2:
+                target, new_value = entry
+                if isinstance(target, int) and 0 <= target < len(backstory[category]):
+                    backstory[category][target] = str(new_value)
+                elif str(target) in backstory[category]:
+                    idx = backstory[category].index(str(target))
+                    backstory[category][idx] = str(new_value)
+        
+        db_investigator.backstory = backstory
+        db.commit()
+        db.refresh(db_investigator)
+        return db_investigator
+
+    @staticmethod
+    def toggle_retirement(db: Session, investigator_id: int, status: bool) -> Investigator:
+        """
+        Toggle the retirement status of an investigator and update retirement_date.
+        """
+        db_investigator = CharacterService.get_investigator(db, investigator_id)
+        db_investigator.is_retired = status
+        db_investigator.retirement_date = datetime.utcnow() if status else None
+        db.commit()
+        db.refresh(db_investigator)
         return db_investigator
 
     @staticmethod
