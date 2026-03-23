@@ -1,7 +1,9 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from loadnsave import load_skill_settings, save_skill_settings
+from services.settings_service import SettingsService
+from schemas.settings import GuildSettingsUpdate
+from models.database import SessionLocal
 
 class GameSettings(commands.Cog):
     def __init__(self, bot):
@@ -19,15 +21,16 @@ class GameSettings(commands.Cog):
             return
 
         guild_id = str(interaction.guild.id)
-        settings = await load_skill_settings()
-
-        if guild_id not in settings:
-            settings[guild_id] = {}
-
-        settings[guild_id]["max_starting_skill"] = value
-        await save_skill_settings(settings)
-
-        await interaction.response.send_message(f"Max starting skill points set to **{value}** for this server.", ephemeral=True)
+        db = SessionLocal()
+        
+        try:
+            update_data = GuildSettingsUpdate(max_starting_skill=value)
+            SettingsService.update_guild_settings(db, guild_id, update_data)
+            await interaction.response.send_message(f"Max starting skill points set to **{value}** for this server.", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"Error updating settings: {e}", ephemeral=True)
+        finally:
+            db.close()
 
 async def setup(bot):
     await bot.add_cog(GameSettings(bot))
