@@ -2,784 +2,95 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord import ui
-import datetime
 import os
-from loadnsave import load_journal_data, save_journal_data
+import uuid
+from models.database import SessionLocal
+from services.campaign_service import CampaignService
+from services.character_service import CharacterService
+from views.campaign_dashboard import CampaignDashboardView
+from schemas.campaign import JournalEntryCreate
 
 class JournalEntryModal(ui.Modal, title="New Journal Entry"):
-    def __init__(self, journal_cog, mode, target_user_id=None, entry_index=None, original_entry=None, parent_view=None, title=None, image_attachments=None):
-        super().__init__(title=title or "New Journal Entry")
-        self.journal_cog = journal_cog
-        self.mode = mode # 'personal' or 'master'
-        self.target_user_id = target_user_id # Only relevant if mode='personal' (user viewing own)
-        self.entry_index = entry_index
-        self.original_entry = original_entry
-        self.parent_view = parent_view
+    def __init__(self, journal_type="Personal", image_attachments=None, target_user_id=None):
+        super().__init__()
+        self.journal_type = journal_type
         self.image_attachments = image_attachments or []
-
-        if self.entry_index is not None:
-            self.title = "Edit Journal Entry"
-
-        label = "Date / Title"
-        if mode == "master":
-            label = "Date (e.g. October 24, 1925)"
-
-        default_title = original_entry.get("title", "") if original_entry else ""
-        default_content = original_entry.get("content", "") if original_entry else ""
-
-        self.entry_title = ui.TextInput(label=label, style=discord.TextStyle.short, placeholder="Enter date or title...", max_length=100, default=default_title)
-
-        # Make content optional if we have images
-        content_required = True
-        if self.image_attachments:
-            content_required = False
-
-        self.entry_content = ui.TextInput(label="Entry Content", style=discord.TextStyle.paragraph, placeholder="Write your notes here...", max_length=2000, default=default_content, required=content_required)
-
+        self.target_user_id = target_user_id
+        
+        self.entry_title = ui.TextInput(label="Title", placeholder="Entry title...", max_length=100)
+        self.entry_content = ui.TextInput(label="Content", style=discord.TextStyle.paragraph, placeholder="Write your notes here...", max_length=2000)
         self.add_item(self.entry_title)
         self.add_item(self.entry_content)
 
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
-
-        guild_id = str(interaction.guild_id)
-        user_id = str(interaction.user.id)
-
-        data = await load_journal_data()
-        if guild_id not in data:
-            data[guild_id] = {"master": {"access": [], "entries": []}, "personal": {}}
-
-        # Construct new entry data
-        timestamp = datetime.datetime.now().timestamp()
-        author = user_id
-
-        saved_images = []
-
-        # Preserve existing images if editing
-        if self.original_entry:
-            saved_images = self.original_entry.get("images", []).copy()
-            # Preserve original timestamp and author if editing
-            timestamp = self.original_entry.get("timestamp", timestamp)
-            author = self.original_entry.get("author_id", author)
-
-        # Process new image attachments
-        if self.image_attachments:
-            # Create directory if needed
-            folder_path = os.path.join("data", "journal_images")
-            os.makedirs(folder_path, exist_ok=True)
-
-            for i, attachment in enumerate(self.image_attachments):
-                # Generate unique filename
-                # extension
-                filename = attachment.filename
-                ext = os.path.splitext(filename)[1]
-                if not ext:
-                    ext = ".png" # default fallback
-
-                unique_name = f"{guild_id}_{int(timestamp)}_{i}{ext}"
-                file_path = os.path.join(folder_path, unique_name)
-
-                try:
-                    await attachment.save(file_path)
-                    saved_images.append(unique_name)
-                except Exception as e:
-                    print(f"Error saving journal image {filename}: {e}")
-                    await interaction.followup.send(f"⚠️ Failed to save image: {filename}", ephemeral=True)
-
-        entry = {
-            "title": self.entry_title.value,
-            "content": self.entry_content.value,
-            "author_id": author,
-            "timestamp": timestamp,
-            "images": saved_images
-        }
-
-        if self.mode == "master":
-            if not interaction.permissions.administrator:
-                return await interaction.followup.send("❌ Only Game Masters (Admins) can write to the Master Journal.", ephemeral=True)
-
-            if "master" not in data[guild_id]:
-                 data[guild_id]["master"] = {"access": [], "entries": []}
-
-            entries_list = data[guild_id]["master"]["entries"]
-            if self.entry_index is not None:
-                if 0 <= self.entry_index < len(entries_list):
-                    entries_list[self.entry_index] = entry
-                    message = "✅ Updated entry in **Master Journal**."
-                else:
-                    return await interaction.followup.send("❌ Error: Entry not found or index out of bounds.", ephemeral=True)
-            else:
-                entries_list.append(entry)
-                message = "✅ Added entry to **Master Journal**."
-
-        elif self.mode in ["personal", "inspect"]:
-            # If mode is inspect, target_user_id is the owner. If personal, target_user_id might be None (so use user_id) or set.
-            # In inspect, admin is editing. In personal, user is editing.
-
-            target = self.target_user_id or user_id
-
-            # Permission check for Inspect mode (Admin editing other's journal)
-            if self.mode == "inspect" and not interaction.permissions.administrator:
-                 return await interaction.followup.send("❌ Only Game Masters (Admins) can edit player journals.", ephemeral=True)
-
-            # Ensure personal structure exists
-            if "personal" not in data[guild_id]:
-                data[guild_id]["personal"] = {}
-            if target not in data[guild_id]["personal"]:
-                data[guild_id]["personal"][target] = {"entries": []}
-
-            entries_list = data[guild_id]["personal"][target]["entries"]
-            if self.entry_index is not None:
-                if 0 <= self.entry_index < len(entries_list):
-                    entries_list[self.entry_index] = entry
-                    message = f"✅ Updated entry in **{target}'s Journal**." if self.mode == "inspect" else "✅ Updated entry in **Personal Journal**."
-                else:
-                    return await interaction.followup.send("❌ Error: Entry not found or index out of bounds.", ephemeral=True)
-            else:
-                entries_list.append(entry)
-                message = "✅ Added entry to **Personal Journal**."
-
-        await save_journal_data(data)
-        await interaction.followup.send(message, ephemeral=True)
-
-        # Refresh parent view if available
-        if hasattr(self, 'journal_cog') and hasattr(self, 'parent_view') and self.parent_view:
-             await self.parent_view.external_refresh()
-
-class DeleteConfirmationView(ui.View):
-    def __init__(self, mode, target_user_id, entry_index, parent_view):
-        super().__init__(timeout=60)
-        self.mode = mode
-        self.target_user_id = target_user_id
-        self.entry_index = entry_index
-        self.parent_view = parent_view
-
-    @discord.ui.button(label="Confirm Delete", style=discord.ButtonStyle.danger)
-    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer(ephemeral=True)
-
-        guild_id = str(interaction.guild_id)
-        data = await load_journal_data()
-
-        deleted = False
-        if self.mode == "master":
-             if guild_id in data and "master" in data[guild_id]:
-                  entries = data[guild_id]["master"]["entries"]
-                  if 0 <= self.entry_index < len(entries):
-                      entries.pop(self.entry_index)
-                      deleted = True
-
-        elif self.mode in ["personal", "inspect"]:
-             target = self.target_user_id
-             if guild_id in data and "personal" in data[guild_id] and target in data[guild_id]["personal"]:
-                  entries = data[guild_id]["personal"][target]["entries"]
-                  if 0 <= self.entry_index < len(entries):
-                      entries.pop(self.entry_index)
-                      deleted = True
-
-        if deleted:
-            await save_journal_data(data)
-            await interaction.followup.send("🗑️ Entry deleted.", ephemeral=True)
-            if hasattr(self.parent_view, 'external_refresh'):
-                await self.parent_view.external_refresh()
-        else:
-            await interaction.followup.send("❌ Error: Could not find entry to delete.", ephemeral=True)
-
-        self.stop()
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("❌ Deletion cancelled.", ephemeral=True)
-        self.stop()
-
-class ImageManageView(ui.View):
-    def __init__(self, mode, target_user_id, entry_index, images, parent_view):
-        super().__init__(timeout=60)
-        self.mode = mode
-        self.target_user_id = target_user_id
-        self.entry_index = entry_index
-        self.images = images
-        self.parent_view = parent_view
-
-        options = []
-        for i, img in enumerate(self.images):
-            options.append(discord.SelectOption(label=f"Image {i+1}", value=str(i), description=img))
-
-        if options:
-            self.select_menu = ui.Select(placeholder="Select an image to delete...", options=options, min_values=1, max_values=1)
-            self.select_menu.callback = self.select_callback
-            self.add_item(self.select_menu)
-
-    async def select_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
-        selected_index = int(self.select_menu.values[0])
-
-        guild_id = str(interaction.guild_id)
-        data = await load_journal_data()
-
-        entries_list = None
-        if self.mode == "master":
-             if guild_id in data and "master" in data[guild_id]:
-                  entries_list = data[guild_id]["master"]["entries"]
-        elif self.mode in ["personal", "inspect"]:
-             target = self.target_user_id
-             if guild_id in data and "personal" in data[guild_id] and target in data[guild_id]["personal"]:
-                  entries_list = data[guild_id]["personal"][target]["entries"]
-
-        if entries_list and 0 <= self.entry_index < len(entries_list):
-            entry = entries_list[self.entry_index]
-            if "images" in entry and 0 <= selected_index < len(entry["images"]):
-                filename = entry["images"].pop(selected_index)
-
-                # Delete file
-                try:
-                    path = os.path.join("data", "journal_images", filename)
-                    if os.path.exists(path):
-                        os.remove(path)
-                except Exception as e:
-                    print(f"Failed to delete file {filename}: {e}")
-
-                await save_journal_data(data)
-                await interaction.followup.send("🗑️ Image deleted.", ephemeral=True)
-
-                if hasattr(self.parent_view, 'external_refresh'):
-                    await self.parent_view.external_refresh()
-            else:
-                 await interaction.followup.send("❌ Image not found.", ephemeral=True)
-        else:
-            await interaction.followup.send("❌ Entry not found.", ephemeral=True)
-
-        self.stop()
-
-class DeleteImageConfirmationView(ui.View):
-    def __init__(self, mode, target_user_id, entry_index, image_filename, parent_view):
-        super().__init__(timeout=60)
-        self.mode = mode
-        self.target_user_id = target_user_id
-        self.entry_index = entry_index
-        self.image_filename = image_filename
-        self.parent_view = parent_view
-
-    @discord.ui.button(label="Confirm Delete", style=discord.ButtonStyle.danger)
-    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer(ephemeral=True)
-
-        guild_id = str(interaction.guild_id)
-        data = await load_journal_data()
-
-        entries_list = None
-        if self.mode == "master":
-             if guild_id in data and "master" in data[guild_id]:
-                  entries_list = data[guild_id]["master"]["entries"]
-        elif self.mode in ["personal", "inspect"]:
-             target = self.target_user_id
-             if guild_id in data and "personal" in data[guild_id] and target in data[guild_id]["personal"]:
-                  entries_list = data[guild_id]["personal"][target]["entries"]
-
-        if entries_list and 0 <= self.entry_index < len(entries_list):
-            entry = entries_list[self.entry_index]
-            if "images" in entry and self.image_filename in entry["images"]:
-                entry["images"].remove(self.image_filename)
-
-                try:
-                    path = os.path.join("data", "journal_images", self.image_filename)
-                    if os.path.exists(path):
-                        os.remove(path)
-                except Exception as e:
-                    print(f"Failed to delete file {self.image_filename}: {e}")
-
-                await save_journal_data(data)
-                await interaction.followup.send("🗑️ Image deleted.", ephemeral=True)
-
-                if hasattr(self.parent_view, 'external_refresh'):
-                    await self.parent_view.external_refresh()
-            else:
-                 await interaction.followup.send("❌ Image not found in entry.", ephemeral=True)
-        else:
-            await interaction.followup.send("❌ Entry not found.", ephemeral=True)
-
-        self.stop()
-
-    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("❌ Deletion cancelled.", ephemeral=True)
-        self.stop()
-
-class JournalView(ui.View):
-    def __init__(self, cog, interaction, mode="personal", target_user_id=None):
-        super().__init__(timeout=300)
-        self.cog = cog
-        self.interaction = interaction
-        self.mode = mode # 'personal', 'master', 'inspect'
-        self.target_user_id = str(target_user_id) if target_user_id else str(interaction.user.id)
-        self.current_page = 0
-        self.data = None
-        self.message = None
-
-    async def load_entries(self):
-        guild_id = str(self.interaction.guild_id)
-        raw_data = await load_journal_data()
-
-        if guild_id not in raw_data:
-             return []
-
-        if self.mode == "master":
-            return raw_data[guild_id].get("master", {}).get("entries", [])
-        elif self.mode in ["personal", "inspect"]:
-            personal_data = raw_data[guild_id].get("personal", {})
-            user_data = personal_data.get(self.target_user_id, {})
-            return user_data.get("entries", [])
-        return []
-
-    async def get_embed(self):
-        entries = await self.load_entries()
-        total_pages = len(entries)
-
-        if self.mode == "master":
-            title = "📜 Master Journal"
-            color = discord.Color.gold()
-        elif self.mode == "inspect":
-            member = self.interaction.guild.get_member(int(self.target_user_id))
-            name = member.display_name if member else "Unknown"
-            title = f"📓 Player Journal: {name}"
-            color = discord.Color.blue()
-        else:
-            title = "📓 Personal Journal"
-            color = discord.Color.blue()
-
-        embed = discord.Embed(title=title, color=color)
-
-        if not entries:
-            embed.description = "*This journal is empty.*"
-            if self.mode == "personal" or (self.mode == "master" and self.interaction.user.guild_permissions.administrator):
-                embed.set_footer(text="Use the 'Add Entry' button to start writing.")
-            return embed
-
-        # Sort entries? Usually chronological is best for journals.
-        # Assuming appended in order, so index 0 is oldest.
-        # Maybe show newest first?
-        # Let's show newest first by reversing index access logic or reversing list.
-        # Reversing list is easier.
-        reversed_entries = list(reversed(entries))
-
-        # Pagination
-        self.current_page = max(0, min(self.current_page, total_pages - 1))
-        entry = reversed_entries[self.current_page]
-
-        embed.title = f"{title} - {entry['title']}"
-        embed.description = entry['content']
-
-        if entry.get("images"):
-            # Set the first image as the main image
-            first_image = entry["images"][0]
-            embed.set_image(url=f"attachment://{first_image}")
-
-        timestamp = entry.get('timestamp')
-        date_str = ""
-        if timestamp:
-            date_str = f"<t:{int(timestamp)}:D>"
-
-        footer_text = f"Entry {self.current_page + 1}/{total_pages}"
-        if timestamp:
-            footer_text += f" • Written: {datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')}"
-
-        embed.set_footer(text=footer_text)
-
-        # Add author info for Master Journal if relevant (though usually GM is author)
-        if self.mode == "master":
-            author_id = entry.get('author_id')
-            if author_id:
-                embed.set_footer(text=f"{footer_text} • Author ID: {author_id}")
-
-        return embed
-
-
-    @discord.ui.button(label="Previous", style=discord.ButtonStyle.primary, row=0)
-    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.interaction.user.id: return
-        entries = await self.load_entries()
-        if not entries: return
-
-        self.current_page = max(0, self.current_page - 1)
-        await self.refresh(interaction)
-
-    @discord.ui.button(label="Next", style=discord.ButtonStyle.primary, row=0)
-    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.interaction.user.id: return
-        entries = await self.load_entries()
-        if not entries: return
-
-        # Total pages based on reversed list
-        total_pages = len(entries)
-        self.current_page = min(total_pages - 1, self.current_page + 1)
-        await self.refresh(interaction)
-
-    @discord.ui.button(label="Add Entry", style=discord.ButtonStyle.success, row=0)
-    async def add_entry_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.interaction.user.id: return
-
-        # Permission check again, just in case
-        if self.mode == "inspect" and not interaction.user.guild_permissions.administrator:
-             return await interaction.response.send_message("You cannot write to another player's journal.", ephemeral=True)
-
-        modal = JournalEntryModal(self.cog, self.mode, self.target_user_id, parent_view=self)
-        await interaction.response.send_modal(modal)
-
-    @discord.ui.button(label="Refresh", style=discord.ButtonStyle.secondary, emoji="🔄", row=0)
-    async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.refresh(interaction)
-
-    @discord.ui.button(label="Edit", style=discord.ButtonStyle.primary, row=1)
-    async def edit_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.interaction.user.id: return
-
-        entries = await self.load_entries()
-        if not entries: return
-
-        reversed_entries = list(reversed(entries))
-        if not (0 <= self.current_page < len(reversed_entries)):
-            return
-
-        entry = reversed_entries[self.current_page]
-        real_index = len(entries) - 1 - self.current_page
-
-        modal = JournalEntryModal(self.cog, self.mode, self.target_user_id, entry_index=real_index, original_entry=entry, parent_view=self)
-        await interaction.response.send_modal(modal)
-
-    @discord.ui.button(label="Delete", style=discord.ButtonStyle.danger, row=1)
-    async def delete_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.interaction.user.id: return
-
-        entries = await self.load_entries()
-        if not entries: return
-
-        real_index = len(entries) - 1 - self.current_page
-
-        view = DeleteConfirmationView(self.mode, self.target_user_id, real_index, self)
-        await interaction.response.send_message("⚠️ Are you sure you want to delete this entry?", view=view, ephemeral=True)
-
-    @discord.ui.button(label="Delete Image", style=discord.ButtonStyle.danger, row=1)
-    async def delete_image_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.interaction.user.id: return
-
-        entries = await self.load_entries()
-        if not entries: return
-
-        reversed_entries = list(reversed(entries))
-        if not (0 <= self.current_page < len(reversed_entries)):
-            return
-
-        entry = reversed_entries[self.current_page]
-        real_index = len(entries) - 1 - self.current_page
-
-        images = entry.get("images", [])
-        if not images:
-            return await interaction.response.send_message("❌ No images to delete.", ephemeral=True)
-
-        if len(images) == 1:
-            view = DeleteImageConfirmationView(self.mode, self.target_user_id, real_index, images[0], self)
-            await interaction.response.send_message("⚠️ Delete this image?", view=view, ephemeral=True)
-        else:
-            view = ImageManageView(self.mode, self.target_user_id, real_index, images, self)
-            await interaction.response.send_message("Select an image to delete:", view=view, ephemeral=True)
-
-    @discord.ui.button(label="Switch Journal", style=discord.ButtonStyle.secondary, row=1)
-    async def switch_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user.id != self.interaction.user.id: return
-
-        # Toggle logic
-        new_mode = "personal"
-        if self.mode == "personal":
-            # Check if can access master
-            guild_id = str(interaction.guild_id)
-            user_id = str(interaction.user.id)
-            data = await load_journal_data()
-            master_data = data.get(guild_id, {}).get("master", {})
-            access_list = master_data.get("access", [])
-
-            is_admin = interaction.user.guild_permissions.administrator
-            if is_admin or str(user_id) in access_list:
-                new_mode = "master"
-            else:
-                return await interaction.response.send_message("⛔ You do not have access to the Master Journal.", ephemeral=True)
-        elif self.mode == "master":
-            new_mode = "personal"
-        elif self.mode == "inspect":
-            new_mode = "personal" # Back to own
-
-        if new_mode == "personal":
-            self.target_user_id = str(interaction.user.id)
-
-        self.mode = new_mode
-        self.current_page = 0
-        await self.refresh(interaction)
-
-    def get_files_for_current_page(self, entries):
-        files = []
-        reversed_entries = list(reversed(entries))
-        if 0 <= self.current_page < len(reversed_entries):
-            entry = reversed_entries[self.current_page]
-            if entry.get("images"):
-                for img_filename in entry["images"]:
-                     path = os.path.join("data", "journal_images", img_filename)
-                     if os.path.exists(path):
-                         files.append(discord.File(path, filename=img_filename))
-        return files
-
-    async def external_refresh(self):
-        """Refreshes the view from an external event (e.g. Modal submit or Delete)."""
-        if not self.message:
-            return
-
-        embed = await self.get_embed()
-        entries = await self.load_entries()
-        self._update_buttons(entries)
-
-        files = self.get_files_for_current_page(entries)
-
+        db = SessionLocal()
         try:
-            await self.message.edit(embed=embed, view=self, attachments=[], files=files)
-        except discord.NotFound:
-            pass # Message deleted
-        except Exception as e:
-            print(f"Error refreshing journal view: {e}")
+            saved_images = []
+            if self.image_attachments:
+                folder_path = os.path.join("data", "journal_images")
+                os.makedirs(folder_path, exist_ok=True)
+                for attachment in self.image_attachments:
+                    filename = f"{uuid.uuid4()}{os.path.splitext(attachment.filename)[1]}"
+                    await attachment.save(os.path.join(folder_path, filename))
+                    saved_images.append(filename)
 
-    async def refresh(self, interaction):
-        embed = await self.get_embed()
-        entries = await self.load_entries()
-
-        self._update_buttons(entries)
-
-        files = self.get_files_for_current_page(entries)
-
-        if interaction.response.is_done():
-            await interaction.edit_original_response(embed=embed, view=self, attachments=[], files=files)
-        else:
-            await interaction.response.edit_message(embed=embed, view=self, attachments=[], files=files)
-
-    def _update_buttons(self, entries):
-        has_entries = len(entries) > 0
-        total_pages = len(entries)
-
-        self.prev_button.disabled = (self.current_page == 0)
-        self.next_button.disabled = (self.current_page >= total_pages - 1) or not has_entries
-
-        # Update Switch Label
-        if self.mode == "personal":
-            self.switch_button.label = "Switch to Master Journal"
-        else:
-            self.switch_button.label = "Switch to Personal Journal"
-
-        # Permission check for Write Access
-        can_write = False
-        is_admin = self.interaction.user.guild_permissions.administrator
-
-        if self.mode == "personal":
-            can_write = True # User owns their personal journal
-        elif self.mode == "master" and is_admin:
-            can_write = True
-        elif self.mode == "inspect" and is_admin:
-            can_write = True
-
-        self.add_entry_button.disabled = not can_write
-        self.add_entry_button.style = discord.ButtonStyle.success if can_write else discord.ButtonStyle.secondary
-
-        # Edit/Delete Buttons
-        # Only show/enable if there are entries and user has write access
-        self.edit_button.disabled = not (can_write and has_entries)
-        self.delete_button.disabled = not (can_write and has_entries)
-
-        # Delete Image Button
-        # Check if current entry has images
-        has_images = False
-        reversed_entries = list(reversed(entries))
-        if 0 <= self.current_page < len(reversed_entries):
-            entry = reversed_entries[self.current_page]
-            if entry.get("images"):
-                has_images = True
-
-        if can_write and has_images:
-            self.delete_image_button.disabled = False
-            self.delete_image_button.style = discord.ButtonStyle.danger
-        else:
-            self.delete_image_button.disabled = True
-            self.delete_image_button.style = discord.ButtonStyle.secondary
-
-class ClueTargetSelect(ui.UserSelect):
-    def __init__(self, cog, original_entry, image_attachments):
-        super().__init__(placeholder="Select a player...", min_values=1, max_values=1)
-        self.cog = cog
-        self.original_entry = original_entry
-        self.image_attachments = image_attachments
-
-    async def callback(self, interaction: discord.Interaction):
-        target_user = self.values[0]
-        # Open modal for that user (using 'personal' mode but targeting them, effectively 'inspect' mode logic but for writing new entry)
-        # Wait, JournalEntryModal mode="personal" uses target_user_id or self.user.id
-        # If I am Admin giving to Player, I should use mode="personal" (it goes to their personal) and target_user_id = their ID.
-        # But JournalEntryModal logic says:
-        # if mode in ["personal", "inspect"]:
-        #    target = self.target_user_id or user_id
-        #    if self.mode == "inspect" and not admin: fail
-        # So I should use "inspect" mode to allow Admin to write to their journal?
-        # Or "personal" if I am the user.
-        # If I am Admin writing to THEIR journal, I need to pass permissions check.
-        # If I use "inspect", it requires Admin.
-        # So let's use "inspect" mode, which semantically means "Admin viewing/editing another's journal".
-
-        modal = JournalEntryModal(
-            self.cog,
-            mode="inspect",
-            target_user_id=str(target_user.id),
-            original_entry=self.original_entry,
-            title="Give Clue",
-            image_attachments=self.image_attachments
-        )
-        await interaction.response.send_modal(modal)
-
-class ClueDestinationView(ui.View):
-    def __init__(self, cog, original_entry, image_attachments):
-        super().__init__(timeout=60)
-        self.cog = cog
-        self.original_entry = original_entry
-        self.image_attachments = image_attachments
-
-    @discord.ui.button(label="Personal Journal", style=discord.ButtonStyle.primary, emoji="📓")
-    async def personal(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = JournalEntryModal(self.cog, "personal", original_entry=self.original_entry, title="Save Clue", image_attachments=self.image_attachments)
-        await interaction.response.send_modal(modal)
-        self.stop()
-
-    @discord.ui.button(label="Master Journal", style=discord.ButtonStyle.success, emoji="📜")
-    async def master(self, interaction: discord.Interaction, button: discord.ui.Button):
-        modal = JournalEntryModal(self.cog, "master", original_entry=self.original_entry, title="Save Clue", image_attachments=self.image_attachments)
-        await interaction.response.send_modal(modal)
-        self.stop()
-
-    @discord.ui.button(label="Give to Player", style=discord.ButtonStyle.success, emoji="🎁")
-    async def give(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # Replace view with user select
-        view = ui.View()
-        view.add_item(ClueTargetSelect(self.cog, self.original_entry, self.image_attachments))
-        await interaction.response.edit_message(content="Select a player to receive this clue:", view=view)
+            owner_id = self.target_user_id or str(interaction.user.id)
+            data = JournalEntryCreate(
+                guild_id=str(interaction.guild_id),
+                journal_type=self.journal_type,
+                author_id=str(interaction.user.id),
+                owner_id=owner_id if self.journal_type == "Personal" else None,
+                title=self.entry_title.value,
+                content=self.entry_content.value,
+                images=saved_images
+            )
+            CampaignService.add_journal_entry(db, data)
+            await interaction.followup.send(f"✅ Added entry to {self.journal_type} Journal.", ephemeral=True)
+        finally:
+            db.close()
 
 class Journal(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.ctx_menu = app_commands.ContextMenu(
-            name='Save as Clue',
-            callback=self.save_clue_context,
-        )
+        self.ctx_menu = app_commands.ContextMenu(name='Save as Clue', callback=self.save_clue_context)
         self.bot.tree.add_command(self.ctx_menu)
 
     def cog_unload(self):
         self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
 
+    async def save_clue_context(self, interaction: discord.Interaction, message: discord.Message):
+        images = [a for a in message.attachments if a.content_type and a.content_type.startswith('image/')]
+        modal = JournalEntryModal(journal_type="Personal", image_attachments=images)
+        modal.entry_title.default = f"Clue: {message.author.display_name}"
+        modal.entry_content.default = message.content[:2000]
+        await interaction.response.send_modal(modal)
+
     journal_group = app_commands.Group(name="journal", description="📔 Manage and view journals")
 
-    async def save_clue_context(self, interaction: discord.Interaction, message: discord.Message):
-        """
-        Context Menu: Right-click a message -> Apps -> Save as Clue.
-        Opens a modal to save the message content as a journal entry.
-        """
-        # Prepare pre-filled data
-        # Truncate content if too long for modal (4000 char limit usually, but field is 2000)
-        content = message.content
-        if len(content) > 2000:
-            content = content[:1997] + "..."
-
-        # Check for image attachments
-        image_attachments = []
-        if message.attachments:
-            for attachment in message.attachments:
-                if attachment.content_type and attachment.content_type.startswith('image/'):
-                    image_attachments.append(attachment)
-
-        # We use a trick here: passing 'original_entry' populates the fields,
-        # but since it lacks 'timestamp' and 'author_id', on_submit will treat it as a NEW entry.
-        pre_filled_data = {
-            "title": f"Clue from {message.author.display_name}",
-            "content": content
-        }
-
-        # Check for Admin permissions to offer advanced options
-        is_admin = interaction.user.guild_permissions.administrator
-
-        if is_admin:
-             view = ClueDestinationView(self, pre_filled_data, image_attachments)
-             await interaction.response.send_message("Where should this clue be saved?", view=view, ephemeral=True)
-        else:
-             # Default to Personal
-             modal = JournalEntryModal(self, "personal", target_user_id=None, original_entry=pre_filled_data, title="Save Clue", image_attachments=image_attachments)
-             await interaction.response.send_modal(modal)
-
-    @journal_group.command(name="open", description="📖 Open your journal (Personal or Master).")
+    @journal_group.command(name="open", description="📖 Open your campaign dashboard on the Journal tab.")
     async def open_journal(self, interaction: discord.Interaction):
-        view = JournalView(self, interaction, mode="personal")
-        embed = await view.get_embed()
+        db = SessionLocal()
+        try:
+            investigator = CharacterService.get_investigator_by_guild_and_user(db, str(interaction.guild_id), str(interaction.user.id))
+            if not investigator:
+                return await interaction.response.send_message("❌ You don't have an active investigator.", ephemeral=True)
+            
+            view = CampaignDashboardView(str(interaction.guild_id), str(interaction.user.id), investigator.id)
+            view.current_tab = "Journal"
+            await interaction.response.send_message(embed=view.get_embed(), view=view, ephemeral=True)
+        finally:
+            db.close()
 
-        # Update buttons initial state
-        entries = await view.load_entries()
-        view._update_buttons(entries)
-
-        files = view.get_files_for_current_page(entries)
-
-        await interaction.response.send_message(embed=embed, view=view, files=files, ephemeral=True)
-        view.message = await interaction.original_response()
-
-    @journal_group.command(name="grant", description="🔓 Grant a user access to the Master Journal (Admin only).")
-    @app_commands.describe(user="The user to grant access to")
-    @app_commands.checks.has_permissions(administrator=True)
-    async def grant_access(self, interaction: discord.Interaction, user: discord.Member):
-        guild_id = str(interaction.guild_id)
-        user_id = str(user.id)
-
-        data = await load_journal_data()
-        if guild_id not in data:
-            data[guild_id] = {"master": {"access": [], "entries": []}, "personal": {}}
-
-        if "master" not in data[guild_id]:
-             data[guild_id]["master"] = {"access": [], "entries": []}
-
-        if user_id not in data[guild_id]["master"]["access"]:
-            data[guild_id]["master"]["access"].append(user_id)
-            await save_journal_data(data)
-            await interaction.response.send_message(f"✅ Granted **{user.display_name}** access to the Master Journal.", ephemeral=True)
-        else:
-            await interaction.response.send_message(f"ℹ️ **{user.display_name}** already has access.", ephemeral=True)
-
-    @journal_group.command(name="revoke", description="🔒 Revoke a user's access to the Master Journal (Admin only).")
-    @app_commands.describe(user="The user to revoke access from")
-    @app_commands.checks.has_permissions(administrator=True)
-    async def revoke_access(self, interaction: discord.Interaction, user: discord.Member):
-        guild_id = str(interaction.guild_id)
-        user_id = str(user.id)
-
-        data = await load_journal_data()
-        if guild_id in data and "master" in data[guild_id]:
-            if user_id in data[guild_id]["master"]["access"]:
-                data[guild_id]["master"]["access"].remove(user_id)
-                await save_journal_data(data)
-                await interaction.response.send_message(f"🚫 Revoked access for **{user.display_name}**.", ephemeral=True)
-                return
-
-        await interaction.response.send_message(f"ℹ️ **{user.display_name}** does not have access.", ephemeral=True)
-
-    @journal_group.command(name="inspect", description="🧐 View a player's personal journal (Admin only).")
-    @app_commands.describe(user="The player whose journal you want to read")
-    @app_commands.checks.has_permissions(administrator=True)
-    async def inspect_journal(self, interaction: discord.Interaction, user: discord.Member):
-        view = JournalView(self, interaction, mode="inspect", target_user_id=user.id)
-        embed = await view.get_embed()
-
-        # Update buttons initial state
-        entries = await view.load_entries()
-        view._update_buttons(entries)
-
-        files = view.get_files_for_current_page(entries)
-
-        await interaction.response.send_message(embed=embed, view=view, files=files, ephemeral=True)
-        view.message = await interaction.original_response()
+    @journal_group.command(name="add", description="✍️ Add a new entry to your journal.")
+    @app_commands.choices(journal_type=[
+        app_commands.Choice(name="Personal", value="Personal"),
+        app_commands.Choice(name="Master", value="Master")
+    ])
+    async def add_entry(self, interaction: discord.Interaction, journal_type: str = "Personal"):
+        if journal_type == "Master" and not interaction.user.guild_permissions.administrator:
+            return await interaction.response.send_message("❌ Only GMs can write to the Master Journal.", ephemeral=True)
+        await interaction.response.send_modal(JournalEntryModal(journal_type=journal_type))
 
 async def setup(bot):
     await bot.add_cog(Journal(bot))

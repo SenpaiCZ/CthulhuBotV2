@@ -2,351 +2,53 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import urllib.parse
-import random
-import os
-from loadnsave import load_fonts_config
+from models.database import SessionLocal
+from services.campaign_service import CampaignService
+from schemas.campaign import HandoutCreate
 
-def get_available_fonts():
-    fonts_dir = os.path.join("data", "fonts")
-    if not os.path.exists(fonts_dir):
-        return []
-    fonts = [f for f in os.listdir(fonts_dir) if f.lower().endswith(('.ttf', '.otf', '.woff', '.woff2'))]
-    fonts.sort()
-    return fonts
-
-class HandoutBaseModal(discord.ui.Modal):
-    def __init__(self, bot, title):
-        super().__init__(title=title)
+class HandoutModal(discord.ui.Modal):
+    def __init__(self, bot, handout_type, fields):
+        super().__init__(title=f"{handout_type.capitalize()} Handout")
         self.bot = bot
-
-    async def _render(self, interaction, url, name, type_slug):
-        # Defer immediately as rendering takes time.
-        # But wait, _render_poster defers if not done.
-        # However, for Modals, we MUST respond to the interaction.
-        # _render_poster checks if response is done.
-        # So we can just call it.
-
-        codex_cog = self.bot.get_cog("Codex")
-        if codex_cog:
-            await codex_cog._render_poster(
-                interaction,
-                url,
-                name,
-                type_slug,
-                ephemeral=False
-            )
-        else:
-            await interaction.response.send_message("Error: Codex system not available.", ephemeral=True)
-
-class NewspaperModal(HandoutBaseModal):
-    def __init__(self, bot):
-        super().__init__(bot, "Newspaper Generator")
-
-    name = discord.ui.Label(text="Newspaper Name", component=discord.ui.TextInput(placeholder="The Arkham Advertiser", default="The Arkham Advertiser", max_length=50))
-    city = discord.ui.Label(text="City", component=discord.ui.TextInput(placeholder="Arkham", default="Arkham", max_length=50))
-    date_field = discord.ui.Label(text="Date", component=discord.ui.TextInput(placeholder="October 24, 1929", default="October 24, 1929", max_length=30))
-    headline = discord.ui.Label(text="Headline", component=discord.ui.TextInput(placeholder="MYSTERIOUS LIGHTS SEEN...", style=discord.TextStyle.paragraph, max_length=100))
-    body = discord.ui.Label(text="Article Body", component=discord.ui.TextInput(placeholder="Residents were awoken...", style=discord.TextStyle.paragraph, max_length=2000))
+        self.handout_type = handout_type
+        self.inputs = {}
+        for label, default in fields.items():
+            self.inputs[label] = discord.ui.TextInput(label=label, default=default, style=discord.TextStyle.paragraph if len(default) > 50 else discord.ui.TextStyle.short)
+            self.add_item(self.inputs[label])
 
     async def on_submit(self, interaction: discord.Interaction):
-        width = random.randint(450, 650)
-        # Generate clip path (random jagged edges)
-        points = []
-        # Top
-        top = [f"{i}% {random.uniform(0, 1.5):.1f}%" for i in range(0, 101, 5)]
-        # Right
-        right = [f"{100 - random.uniform(0, 1.5):.1f}% {i}%" for i in range(0, 101, 5)]
-        # Bottom
-        bottom = [f"{i}% {100 - random.uniform(0, 1.5):.1f}%" for i in range(100, -1, -5)]
-        # Left
-        left = [f"{random.uniform(0, 1.5):.1f}% {i}%" for i in range(100, -1, -5)]
-
-        clip_path = ", ".join(top + right + bottom + left)
-
-        params = {
-            "name": self.name.component.value,
-            "city": self.city.component.value,
-            "date": self.date_field.component.value,
-            "headline": self.headline.component.value,
-            "body": self.body.component.value,
-            "width": width,
-            "clip_path": clip_path
-        }
+        params = {k: v.value for k, v in self.inputs.items()}
         query = urllib.parse.urlencode(params)
-        await self._render(interaction, f"/render/newspaper?{query}", self.headline.component.value[:50], "newspaper")
+        url = f"/render/{self.handout_type}?{query}"
+        
+        db = SessionLocal()
+        try:
+            title = self.inputs.get("Headline", self.inputs.get("Title", f"{self.handout_type.capitalize()} Handout")).value[:100]
+            content = "\n".join([f"{k}: {v.value}" for k, v in self.inputs.items()])
+            CampaignService.create_handout(db, HandoutCreate(guild_id=str(interaction.guild_id), title=title, content=content, image_url=url))
+        finally: db.close()
 
-class TelegramModal(HandoutBaseModal):
-    def __init__(self, bot):
-        super().__init__(bot, "Telegram Generator")
-
-    origin = discord.ui.Label(text="Origin", component=discord.ui.TextInput(placeholder="ARKHAM", default="ARKHAM", max_length=50))
-    date_field = discord.ui.Label(text="Date", component=discord.ui.TextInput(placeholder="OCT 24 1929", default="OCT 24 1929", max_length=30))
-    recipient = discord.ui.Label(text="Recipient", component=discord.ui.TextInput(placeholder="INVESTIGATOR", default="INVESTIGATOR", max_length=50))
-    sender = discord.ui.Label(text="Sender", component=discord.ui.TextInput(placeholder="UNKNOWN", default="UNKNOWN", max_length=50))
-    body = discord.ui.Label(text="Message", component=discord.ui.TextInput(placeholder="STOP", style=discord.TextStyle.paragraph, max_length=500))
-
-    async def on_submit(self, interaction: discord.Interaction):
-        params = {
-            "origin": self.origin.component.value,
-            "date": self.date_field.component.value,
-            "recipient": self.recipient.component.value,
-            "sender": self.sender.component.value,
-            "body": self.body.component.value
-        }
-        query = urllib.parse.urlencode(params)
-        await self._render(interaction, f"/render/telegram?{query}", "Telegram", "telegram")
-
-class LetterModal(HandoutBaseModal):
-    def __init__(self, bot):
-        super().__init__(bot, "Letter Generator")
-
-    date_field = discord.ui.Label(text="Date", component=discord.ui.TextInput(placeholder="October 24, 1929", default="October 24, 1929", max_length=50))
-    salutation = discord.ui.Label(text="Salutation", component=discord.ui.TextInput(placeholder="Dear Friend,", default="Dear Friend,", max_length=50))
-    body = discord.ui.Label(text="Body", component=discord.ui.TextInput(placeholder="I write to you...", style=discord.TextStyle.paragraph, max_length=2000))
-    signature = discord.ui.Label(text="Signature", component=discord.ui.TextInput(placeholder="Sincerely, H.P.L.", default="Sincerely, H.P.L.", max_length=50))
-
-    async def on_submit(self, interaction: discord.Interaction):
-        params = {
-            "date": self.date_field.component.value,
-            "salutation": self.salutation.component.value,
-            "body": self.body.component.value,
-            "signature": self.signature.component.value
-        }
-        query = urllib.parse.urlencode(params)
-        await self._render(interaction, f"/render/letter?{query}", "Letter", "letter")
-
-class ScriptModal(HandoutBaseModal):
-    def __init__(self, bot, font_name):
-        super().__init__(bot, f"Script Generator ({font_name})")
-        self.font_name = font_name
-
-    text = discord.ui.Label(text="Text to Transcribe", component=discord.ui.TextInput(style=discord.TextStyle.paragraph, max_length=1000))
-
-    async def on_submit(self, interaction: discord.Interaction):
-        params = {
-            "text": self.text.component.value,
-            "font": self.font_name
-        }
-        query = urllib.parse.urlencode(params)
-        await self._render(interaction, f"/render/script?{query}", "Script", "script")
-
-class MorseModal(HandoutBaseModal):
-    def __init__(self, bot, font_name):
-        super().__init__(bot, f"Morse Code Generator ({font_name})")
-        self.font_name = font_name
-
-    text = discord.ui.Label(text="Text to Convert", component=discord.ui.TextInput(style=discord.TextStyle.paragraph, max_length=1000))
-
-    async def on_submit(self, interaction: discord.Interaction):
-        params = {
-            "text": self.text.component.value,
-            "font": self.font_name
-        }
-        query = urllib.parse.urlencode(params)
-        await self._render(interaction, f"/render/morse?{query}", "Morse Code", "morse")
-
-class ScriptFontSelectView(discord.ui.View):
-    def __init__(self, bot, user, fonts):
-        super().__init__(timeout=60)
-        self.bot = bot
-        self.user = user
-
-        # Paginate or limit to 25
-        options = []
-        for f in fonts[:25]:
-            # Use filename as value, label without extension
-            label = os.path.splitext(f)[0]
-            options.append(discord.SelectOption(label=label, value=f))
-
-        if not options:
-             select = discord.ui.Select(placeholder="No fonts available", options=[discord.SelectOption(label="None", value="none")], disabled=True)
-        else:
-             select = discord.ui.Select(placeholder="Select a Font", options=options)
-             select.callback = self.select_callback
-
-        self.add_item(select)
-
-    async def select_callback(self, interaction: discord.Interaction):
-        if interaction.user != self.user:
-            return await interaction.response.send_message("This isn't for you!", ephemeral=True)
-
-        selected_font = interaction.data['values'][0]
-        modal = ScriptModal(self.bot, selected_font)
-        await interaction.response.send_modal(modal)
-
-class MorseFontSelectView(discord.ui.View):
-    def __init__(self, bot, user, fonts):
-        super().__init__(timeout=60)
-        self.bot = bot
-        self.user = user
-
-        # Paginate or limit to 25
-        options = []
-        for f in fonts[:25]:
-            # Use filename as value, label without extension
-            label = os.path.splitext(f)[0]
-            options.append(discord.SelectOption(label=label, value=f))
-
-        if not options:
-             select = discord.ui.Select(placeholder="No decorative fonts available", options=[discord.SelectOption(label="Default", value="default")])
-        else:
-             select = discord.ui.Select(placeholder="Select a Decorative Font", options=options)
-
-        select.callback = self.select_callback
-        self.add_item(select)
-
-    async def select_callback(self, interaction: discord.Interaction):
-        if interaction.user != self.user:
-            return await interaction.response.send_message("This isn't for you!", ephemeral=True)
-
-        selected_font = interaction.data['values'][0]
-        modal = MorseModal(self.bot, selected_font)
-        await interaction.response.send_modal(modal)
-
-class ScriptCategorySelectView(discord.ui.View):
-    def __init__(self, bot, user):
-        super().__init__(timeout=60)
-        self.bot = bot
-        self.user = user
-
-    async def _handle_category(self, interaction, category):
-        if interaction.user != self.user:
-             return await interaction.response.send_message("This isn't for you!", ephemeral=True)
-
-        # Defer to allow async loading
-        await interaction.response.defer(ephemeral=True)
-
-        fonts = get_available_fonts()
-        config = await load_fonts_config()
-
-        filtered_fonts = []
-        for f in fonts:
-            # Default to Decorative
-            font_cat = config.get(f, "Decorative")
-            if font_cat == category:
-                filtered_fonts.append(f)
-
-        if not filtered_fonts:
-             await interaction.followup.send(f"No fonts found for category '{category}'.", ephemeral=True)
-             return
-
-        view = ScriptFontSelectView(self.bot, self.user, filtered_fonts)
-        await interaction.followup.send(f"Select a {category} Font:", view=view, ephemeral=True)
-
-    @discord.ui.button(label="Decorative", style=discord.ButtonStyle.primary)
-    async def decorative_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self._handle_category(interaction, "Decorative")
-
-    @discord.ui.button(label="Cryptic", style=discord.ButtonStyle.secondary)
-    async def cryptic_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self._handle_category(interaction, "Cryptic")
-
-class HandoutTypeSelectView(discord.ui.View):
-    def __init__(self, bot, user):
-        super().__init__(timeout=60)
-        self.bot = bot
-        self.user = user
-
-    async def _launch_modal(self, interaction, modal_cls):
-        if interaction.user != self.user:
-            return await interaction.response.send_message("This isn't for you!", ephemeral=True)
-        modal = modal_cls(self.bot)
-        await interaction.response.send_modal(modal)
-
-    @discord.ui.button(label="Newspaper", style=discord.ButtonStyle.primary, emoji="📰")
-    async def newspaper_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self._launch_modal(interaction, NewspaperModal)
-
-    @discord.ui.button(label="Telegram", style=discord.ButtonStyle.secondary, emoji="📨")
-    async def telegram_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self._launch_modal(interaction, TelegramModal)
-
-    @discord.ui.button(label="Letter", style=discord.ButtonStyle.secondary, emoji="✉️")
-    async def letter_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self._launch_modal(interaction, LetterModal)
-
-    @discord.ui.button(label="Occult Script", style=discord.ButtonStyle.danger, emoji="📜")
-    async def script_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user:
-            return await interaction.response.send_message("This isn't for you!", ephemeral=True)
-
-        fonts = get_available_fonts()
-        if not fonts:
-             modal = ScriptModal(self.bot, "default")
-             await interaction.response.send_modal(modal)
-             return
-
-        view = ScriptCategorySelectView(self.bot, self.user)
-        await interaction.response.send_message("Select a font category:", view=view, ephemeral=True)
-
-    @discord.ui.button(label="Morse Code", style=discord.ButtonStyle.success, emoji="➖")
-    async def morse_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user:
-            return await interaction.response.send_message("This isn't for you!", ephemeral=True)
-
-        await interaction.response.defer(ephemeral=True)
-
-        fonts = get_available_fonts()
-        config = await load_fonts_config()
-
-        decorative_fonts = []
-        for f in fonts:
-            if config.get(f, "Decorative") == "Decorative":
-                decorative_fonts.append(f)
-
-        view = MorseFontSelectView(self.bot, self.user, decorative_fonts)
-        await interaction.followup.send("Select a font for Morse Code:", view=view, ephemeral=True)
+        codex = self.bot.get_cog("Codex")
+        if codex: await codex._render_poster(interaction, url, title, self.handout_type)
+        else: await interaction.response.send_message("Error: Codex system not found.", ephemeral=True)
 
 class Handout(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.help_category = "Keeper"
 
-    @app_commands.command(description="📄 Create a prop/handout (Newspaper, Telegram, Letter, Script, Morse).")
-    @app_commands.describe(type="The type of handout to create")
-    @app_commands.choices(type=[
+    @app_commands.command(name="handout", description="📄 Create a prop/handout.")
+    @app_commands.choices(handout_type=[
         app_commands.Choice(name="Newspaper", value="newspaper"),
         app_commands.Choice(name="Telegram", value="telegram"),
-        app_commands.Choice(name="Letter", value="letter"),
-        app_commands.Choice(name="Occult Script", value="script"),
-        app_commands.Choice(name="Morse Code", value="morse")
+        app_commands.Choice(name="Letter", value="letter")
     ])
-    async def handout(self, interaction: discord.Interaction, type: app_commands.Choice[str] = None):
-        """Starts the Handout Wizard."""
-
-        selected_value = type.value if type else None
-
-        if selected_value == "newspaper":
-            await interaction.response.send_modal(NewspaperModal(self.bot))
-
-        elif selected_value == "telegram":
-            await interaction.response.send_modal(TelegramModal(self.bot))
-
-        elif selected_value == "letter":
-            await interaction.response.send_modal(LetterModal(self.bot))
-
-        elif selected_value == "script":
-            fonts = get_available_fonts()
-            if not fonts:
-                await interaction.response.send_modal(ScriptModal(self.bot, "default"))
-            else:
-                view = ScriptCategorySelectView(self.bot, interaction.user)
-                await interaction.response.send_message("Select a font category:", view=view, ephemeral=True)
-
-        elif selected_value == "morse":
-            fonts = get_available_fonts()
-            if not fonts:
-                await interaction.response.send_modal(MorseModal(self.bot, "default"))
-            else:
-                config = await load_fonts_config()
-                decorative_fonts = [f for f in fonts if config.get(f, "Decorative") == "Decorative"]
-                view = MorseFontSelectView(self.bot, interaction.user, decorative_fonts)
-                await interaction.response.send_message("Select a font for Morse Code:", view=view, ephemeral=True)
-
-        else:
-            # No argument provided, show selection view
-            view = HandoutTypeSelectView(self.bot, interaction.user)
-            await interaction.response.send_message("Select a handout type:", view=view)
+    async def handout(self, interaction: discord.Interaction, handout_type: app_commands.Choice[str]):
+        fields = {
+            "newspaper": {"Name": "The Arkham Advertiser", "City": "Arkham", "Date": "Oct 24, 1929", "Headline": "Strange Lights", "Body": "..."},
+            "telegram": {"Origin": "Arkham", "Date": "Oct 24, 1929", "Recipient": "Investigator", "Sender": "Unknown", "Body": "STOP"},
+            "letter": {"Date": "Oct 24, 1929", "Salutation": "Dear Friend,", "Body": "...", "Signature": "Sincerely,"}
+        }[handout_type.value]
+        await interaction.response.send_modal(HandoutModal(self.bot, handout_type.value, fields))
 
 async def setup(bot):
     await bot.add_cog(Handout(bot))

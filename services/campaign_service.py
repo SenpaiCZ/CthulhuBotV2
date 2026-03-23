@@ -122,3 +122,54 @@ class CampaignService:
         Retrieve all handouts for a specific guild.
         """
         return db.query(Handout).filter(Handout.guild_id == guild_id).all()
+
+    @staticmethod
+    async def generate_random_loot():
+        """
+        Generate random loot based on settings.
+        """
+        from loadnsave import load_loot_settings
+        import random
+        
+        settings = await load_loot_settings()
+        items_pool = settings.get("items", ["Nothing found."])
+        money_chance = settings.get("money_chance", 25)
+        money_min = settings.get("money_min", 0.01)
+        money_max = settings.get("money_max", 5.00)
+        currency_symbol = settings.get("currency_symbol", "$")
+        min_items = settings.get("num_items_min", 1)
+        max_items = settings.get("num_items_max", 5)
+
+        money_str = None
+        if random.randint(1, 100) <= money_chance:
+            money_str = f"{currency_symbol}{random.uniform(money_min, money_max):.2f}"
+
+        num_items = random.randint(min_items, max(min_items, min(max_items, len(items_pool))))
+        chosen_items = random.sample(items_pool, num_items) if items_pool else []
+
+        flavor_texts = [
+            "You pry open the dusty crate...", "You search the body...",
+            "Hidden under the floorboards...", "Inside the forgotten cabinet...",
+            "Scattered on the table...", "In the pockets of the coat..."
+        ]
+        desc = random.choice(flavor_texts)
+        if not chosen_items and not money_str:
+            desc = "You search thoroughly, but find nothing of value."
+            
+        return chosen_items, money_str, desc
+
+    @staticmethod
+    def bulk_add_inventory_items(db: Session, investigator_id: int, items: List[InventoryItemCreate]):
+        """
+        Add multiple items to an investigator's inventory.
+        """
+        for item_data in items:
+            db_item = InventoryItem(
+                investigator_id=investigator_id,
+                name=item_data.name,
+                description=item_data.description,
+                quantity=item_data.quantity,
+                is_macguffin=item_data.is_macguffin
+            )
+            db.add(db_item)
+        db.commit()
