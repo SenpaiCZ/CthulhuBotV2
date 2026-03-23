@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Dict, Optional, Any
+from datetime import datetime
 
 class InvestigatorBase(BaseModel):
     """
@@ -26,7 +27,11 @@ class InvestigatorBase(BaseModel):
     # Skills are stored as a dictionary of skill name to its percentage value
     skills: Dict[str, int] = Field(default_factory=dict)
     extra_data: Dict[str, Any] = Field(default_factory=dict)
+    backstory: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    biography: Optional[Dict[str, Any]] = Field(default_factory=dict)
     is_retired: bool = False
+    retirement_date: Optional[datetime] = None
+    last_played: Optional[datetime] = None
 
     @field_validator("skills")
     @classmethod
@@ -44,6 +49,31 @@ class InvestigatorCreate(InvestigatorBase):
     Schema for creating a new Investigator.
     """
     pass
+
+class InvestigatorUpdate(BaseModel):
+    """
+    Schema for updating an existing Investigator. All fields are optional.
+    """
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: Optional[str] = None
+    occupation: Optional[str] = None
+    str_stat: Optional[int] = Field(None, alias="str", ge=15, le=90)
+    con: Optional[int] = Field(None, ge=15, le=90)
+    siz: Optional[int] = Field(None, ge=15, le=90)
+    dex: Optional[int] = Field(None, ge=15, le=90)
+    app: Optional[int] = Field(None, ge=15, le=90)
+    int_stat: Optional[int] = Field(None, alias="int", ge=15, le=90)
+    pow_stat: Optional[int] = Field(None, alias="pow", ge=15, le=90)
+    edu: Optional[int] = Field(None, ge=15, le=90)
+    luck: Optional[int] = Field(None, ge=15, le=90)
+    skills: Optional[Dict[str, int]] = None
+    extra_data: Optional[Dict[str, Any]] = None
+    backstory: Optional[Dict[str, Any]] = None
+    biography: Optional[Dict[str, Any]] = None
+    is_retired: Optional[bool] = None
+    retirement_date: Optional[datetime] = None
+    last_played: Optional[datetime] = None
 
 class Investigator(InvestigatorBase):
     """

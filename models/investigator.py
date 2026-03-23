@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, JSON
+from sqlalchemy import Column, Integer, String, Boolean, JSON, DateTime
+from datetime import datetime
 from .base import Base
 
 class Investigator(Base):
@@ -23,4 +24,8 @@ class Investigator(Base):
     
     skills = Column(JSON)
     extra_data = Column(JSON)
+    backstory = Column(JSON, default=dict)
+    biography = Column(JSON, default=dict)
     is_retired = Column(Boolean, default=False)
+    retirement_date = Column(DateTime, nullable=True)
+    last_played = Column(DateTime, default=datetime.utcnow)
