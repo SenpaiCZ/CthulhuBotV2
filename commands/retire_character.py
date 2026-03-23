@@ -2,44 +2,63 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, Select, Button
-from loadnsave import load_player_stats, save_player_stats, load_retired_characters_data, save_retired_characters_data
-import asyncio
+from models.database import SessionLocal
+from services.character_service import CharacterService
 
 class RetireConfirmationView(View):
-    def __init__(self):
+    def __init__(self, investigator_id, user_id):
         super().__init__(timeout=60)
+        self.investigator_id = investigator_id
+        self.user_id = user_id
         self.confirmed = False
 
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.danger, emoji="✅")
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.confirmed = True
-        await interaction.response.defer()
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This isn't for you!", ephemeral=True)
+            return
+        
+        db = SessionLocal()
+        try:
+            CharacterService.toggle_retirement(db, self.investigator_id, True)
+            self.confirmed = True
+            await interaction.response.edit_message(content="Your character has been retired successfully. You can now create a new character.", view=None)
+        finally:
+            db.close()
         self.stop()
 
     @discord.ui.button(label="No", style=discord.ButtonStyle.secondary, emoji="❌")
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.confirmed = False
-        await interaction.response.defer()
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This isn't for you!", ephemeral=True)
+            return
+        await interaction.response.edit_message(content="Retirement cancelled.", view=None)
         self.stop()
 
 class UnretireSelect(Select):
     def __init__(self, characters):
         options = []
-        for i, char in enumerate(characters):
-            # Ensure unique value for each option
-            options.append(discord.SelectOption(label=char.get('NAME', 'Unknown'), value=str(i)))
+        for char in characters:
+            options.append(discord.SelectOption(label=char.name, value=str(char.id)))
         super().__init__(placeholder="Select a character to unretire...", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        self.view.selected_index = int(self.values[0])
+        self.view.selected_id = int(self.values[0])
         await interaction.response.defer()
         self.view.stop()
 
 class UnretireView(View):
-    def __init__(self, characters):
+    def __init__(self, characters, user_id):
         super().__init__(timeout=60)
-        self.selected_index = None
+        self.user_id = user_id
+        self.selected_id = None
         self.add_item(UnretireSelect(characters))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This isn't for you!", ephemeral=True)
+            return False
+        return True
 
 class CharacterManagement(commands.Cog):
     def __init__(self, bot):
@@ -48,74 +67,53 @@ class CharacterManagement(commands.Cog):
     @app_commands.command(name="retire", description="👋 Retire your current character.")
     async def retire(self, interaction: discord.Interaction):
         """Retire your current character."""
-        server_id = str(interaction.guild_id)
-        player_id = str(interaction.user.id)
-        player_stats = await load_player_stats()
+        db = SessionLocal()
+        try:
+            investigator = CharacterService.get_investigator_by_guild_and_user(
+                db, str(interaction.guild_id), str(interaction.user.id)
+            )
 
-        if server_id not in player_stats or player_id not in player_stats[server_id]:
-            await interaction.response.send_message("You do not have an active character to retire.", ephemeral=True)
-            return
+            if not investigator:
+                await interaction.response.send_message("You do not have an active character to retire.", ephemeral=True)
+                return
 
-        view = RetireConfirmationView()
-        await interaction.response.send_message("Are you sure you want to retire your character?", view=view, ephemeral=True)
-        await view.wait()
-
-        if view.confirmed:
-            character_data = player_stats[server_id].pop(player_id)
-            retired_characters = await load_retired_characters_data()
-
-            if player_id not in retired_characters:
-                retired_characters[player_id] = []
-
-            retired_characters[player_id].append(character_data)
-            await save_retired_characters_data(retired_characters)
-            await save_player_stats(player_stats)
-
-            await interaction.followup.send("Your character has been retired successfully. You can now create a new character.", ephemeral=True)
-        else:
-            await interaction.followup.send("Retirement cancelled.", ephemeral=True)
+            view = RetireConfirmationView(investigator.id, interaction.user.id)
+            await interaction.response.send_message("Are you sure you want to retire your character?", view=view, ephemeral=True)
+        finally:
+            db.close()
 
     @app_commands.command(name="unretire", description="🔙 Unretire a character.")
     async def unretire(self, interaction: discord.Interaction):
         """Unretire a character."""
-        server_id = str(interaction.guild_id)
-        player_id = str(interaction.user.id)
-        player_stats = await load_player_stats()
+        db = SessionLocal()
+        try:
+            active = CharacterService.get_investigator_by_guild_and_user(
+                db, str(interaction.guild_id), str(interaction.user.id)
+            )
+            if active:
+                await interaction.response.send_message("You already have an active character. Please retire your current character first.", ephemeral=True)
+                return
 
-        if server_id in player_stats and player_id in player_stats[server_id]:
-            await interaction.response.send_message("You already have an active character. Please retire your current character first.", ephemeral=True)
-            return
+            retired = CharacterService.get_retired_investigators_by_guild_and_user(
+                db, str(interaction.guild_id), str(interaction.user.id)
+            )
+            if not retired:
+                await interaction.response.send_message("You do not have any retired characters.", ephemeral=True)
+                return
 
-        retired_characters = await load_retired_characters_data()
-        if player_id not in retired_characters or not retired_characters[player_id]:
-            await interaction.response.send_message("You do not have any retired characters.", ephemeral=True)
-            return
+            view = UnretireView(retired, interaction.user.id)
+            await interaction.response.send_message("Please select a character to unretire:", view=view, ephemeral=True)
+            await view.wait()
 
-        characters = retired_characters[player_id]
-        view = UnretireView(characters)
-        await interaction.response.send_message("Please select a character to unretire:", view=view, ephemeral=True)
-        await view.wait()
-
-        if view.selected_index is not None:
-            if 0 <= view.selected_index < len(characters):
-                selected_character = retired_characters[player_id].pop(view.selected_index)
-
-                if server_id not in player_stats:
-                    player_stats[server_id] = {}
-
-                player_stats[server_id][player_id] = selected_character
-
-                # If list is empty for user, remove key? optional but cleaner
-                if not retired_characters[player_id]:
-                    del retired_characters[player_id]
-
-                await save_retired_characters_data(retired_characters)
-                await save_player_stats(player_stats)
-                await interaction.followup.send(f"Character '**{selected_character.get('NAME', 'Unknown')}**' has been unretired and is now active.", ephemeral=True)
+            if view.selected_id is not None:
+                CharacterService.toggle_retirement(db, view.selected_id, False)
+                # Get the name for the message
+                char = CharacterService.get_investigator(db, view.selected_id)
+                await interaction.followup.send(f"Character '**{char.name}**' has been unretired and is now active.", ephemeral=True)
             else:
-                 await interaction.followup.send("Invalid selection.", ephemeral=True)
-        else:
-             await interaction.followup.send("No selection made or timed out.", ephemeral=True)
+                 await interaction.followup.send("No selection made or timed out.", ephemeral=True)
+        finally:
+            db.close()
 
 async def setup(bot):
     await bot.add_cog(CharacterManagement(bot))

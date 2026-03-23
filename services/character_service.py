@@ -74,6 +74,33 @@ class CharacterService:
         return db_investigator
 
     @staticmethod
+    def add_skill(db: Session, investigator_id: int, skill_name: str, value: int) -> Investigator:
+        """
+        Add a new skill or update an existing one.
+        """
+        db_investigator = CharacterService.get_investigator(db, investigator_id)
+        skills = dict(db_investigator.skills) if db_investigator.skills else {}
+        skills[skill_name] = value
+        db_investigator.skills = skills
+        db.commit()
+        db.refresh(db_investigator)
+        return db_investigator
+
+    @staticmethod
+    def remove_skill(db: Session, investigator_id: int, skill_name: str) -> Investigator:
+        """
+        Remove a skill from the investigator's skills.
+        """
+        db_investigator = CharacterService.get_investigator(db, investigator_id)
+        if db_investigator.skills and skill_name in db_investigator.skills:
+            skills = dict(db_investigator.skills)
+            del skills[skill_name]
+            db_investigator.skills = skills
+            db.commit()
+            db.refresh(db_investigator)
+        return db_investigator
+
+    @staticmethod
     def manage_backstory(db: Session, investigator_id: int, category: str, entry: Any, action: str) -> Investigator:
         """
         Manage backstory entries. 
@@ -148,6 +175,17 @@ class CharacterService:
         Retrieve all retired investigators.
         """
         return db.query(Investigator).filter(Investigator.is_retired == True).all()
+
+    @staticmethod
+    def get_retired_investigators_by_guild_and_user(db: Session, guild_id: str, discord_user_id: str) -> list[Investigator]:
+        """
+        Retrieve all retired investigators for a specific user in a guild.
+        """
+        return db.query(Investigator).filter(
+            Investigator.guild_id == guild_id,
+            Investigator.discord_user_id == discord_user_id,
+            Investigator.is_retired == True
+        ).all()
 
     @staticmethod
     def calculate_derived_stats(characteristics: dict, game_mode: str = "Call of Cthulhu") -> dict:
@@ -239,6 +277,18 @@ class CharacterService:
         db.commit()
         db.refresh(db_investigator)
         return db_investigator
+
+    @staticmethod
+    def delete_investigator(db: Session, investigator_id: int) -> bool:
+        """
+        Permanently delete an investigator from the database.
+        """
+        db_investigator = db.query(Investigator).filter(Investigator.id == investigator_id).first()
+        if db_investigator:
+            db.delete(db_investigator)
+            db.commit()
+            return True
+        return False
 
     @staticmethod
     def calculate_skill_points(characteristics: dict, occupation: str) -> int:

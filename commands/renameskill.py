@@ -2,119 +2,107 @@ import discord
 import re
 from discord.ext import commands
 from discord import app_commands
-from collections import OrderedDict
-from loadnsave import load_player_stats, save_player_stats, load_server_stats
 from rapidfuzz import process, fuzz
-
+from models.database import SessionLocal
+from services.character_service import CharacterService
 
 class renameskill(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
 
-  def __init__(self, bot):
-    self.bot = bot
+    @app_commands.command(description="✏️ Rename a skill on your character sheet.")
+    @app_commands.describe(skill_name="The current name of the skill to rename", new_name="The new name for the skill")
+    async def renameskill(self, interaction: discord.Interaction, skill_name: str, new_name: str):
+        """
+        Rename a skill on your character sheet.
+        """
+        # Restricted skills that cannot be renamed
+        restricted_skills = {
+            "NAME", "STR", "DEX", "CON", "INT", "POW", "EDU", "SIZ", "APP", 
+            "SAN", "HP", "MP", "LUCK", "MOV", "BUILD", "DAMAGE BONUS", "AGE", "DODGE"
+        }
 
-  @app_commands.command(description="✏️ Rename a skill on your character sheet.")
-  @app_commands.describe(skill_name="The current name of the skill to rename", new_name="The new name for the skill")
-  async def renameskill(self, interaction: discord.Interaction, skill_name: str, new_name: str):
-      """
-      Rename a skill on your character sheet.
-      """
-      server_id = str(interaction.guild.id)
-      server_prefixes = await load_server_stats()
-      prefix = server_prefixes.get(server_id, "!") if server_id else "!"
+        db = SessionLocal()
+        try:
+            investigator = CharacterService.get_investigator_by_guild_and_user(
+                db, str(interaction.guild_id), str(interaction.user.id)
+            )
 
-      # Restricted skills that cannot be renamed
-      restricted_skills = {"NAME","STR", "DEX", "CON", "INT", "POW", "EDU", "SIZ", "APP", "SAN","HP", "MP", "LUCK", "MOV", "BUILD", "DAMAGE BONUS", "AGE", "DODGE"}
+            if not investigator:
+                await interaction.response.send_message(
+                    f"{interaction.user.display_name} doesn't have an investigator. Use `/newinvestigator` for creating a new investigator.",
+                    ephemeral=True
+                )
+                return
 
-      user_id = str(interaction.user.id)
-      player_stats = await load_player_stats()
-  
-      if user_id not in player_stats.get(server_id, {}):
-          await interaction.response.send_message(
-              f"{interaction.user.display_name} doesn't have an investigator. Use `/newinvestigator` for creating a new investigator.",
-              ephemeral=True
-          )
-          return
+            # Clean up skill_name from autocomplete (e.g. "Spot Hidden (50)" -> "Spot Hidden")
+            clean_skill_name = skill_name
+            match = re.match(r"^(.*?)\s*\(\d+\)$", skill_name)
+            if match:
+                clean_skill_name = match.group(1)
 
-      # Clean up skill_name from autocomplete (e.g. "Spot Hidden (50)" -> "Spot Hidden")
-      clean_skill_name = skill_name
-      match = re.match(r"^(.*?)\s*\(\d+\)$", skill_name)
-      if match:
-          clean_skill_name = match.group(1)
+            user_skills = investigator.skills or {}
+            target_skill_key = None
 
-      # 1. Exact match (case insensitive) search for the old skill
-      user_skills = player_stats[server_id][user_id]
-      target_skill_key = None
+            # 1. Exact match (case insensitive) search for the old skill
+            for key in user_skills.keys():
+                if key.lower() == clean_skill_name.lower():
+                    target_skill_key = key
+                    break
 
-      for key in user_skills.keys():
-          if key.lower() == clean_skill_name.lower():
-              target_skill_key = key
-              break
+            # 2. Fuzzy match if no exact match found
+            if not target_skill_key:
+                choices = list(user_skills.keys())
+                extract = process.extractOne(clean_skill_name, choices, scorer=fuzz.WRatio)
+                if extract:
+                    match_key, score, _ = extract
+                    if score > 80:
+                        target_skill_key = match_key
 
-      # 2. Fuzzy match if no exact match found
-      if not target_skill_key:
-          choices = list(user_skills.keys())
-          extract = process.extractOne(clean_skill_name, choices, scorer=fuzz.WRatio)
-          if extract:
-              match_key, score, _ = extract
-              if score > 80:
-                  target_skill_key = match_key
+            if not target_skill_key:
+                await interaction.response.send_message(f"Skill '{clean_skill_name}' not found in your skills list.", ephemeral=True)
+                return
 
-      if not target_skill_key:
-          await interaction.response.send_message(f"Skill '{clean_skill_name}' not found in your skills list.", ephemeral=True)
-          return
+            # Check for restricted skills
+            if target_skill_key.upper() in restricted_skills:
+                await interaction.response.send_message(f"You cannot rename the skill '{target_skill_key}' as it's a restricted skill.", ephemeral=True)
+                return
 
-      # Check for restricted skills
-      if target_skill_key.upper() in restricted_skills:
-          await interaction.response.send_message(f"You cannot rename the skill '{target_skill_key}' as it's a restricted skill.", ephemeral=True)
-          return
+            # Check if new name already exists
+            for key in user_skills.keys():
+                if key.lower() == new_name.lower():
+                    await interaction.response.send_message(f"Skill with the name '{key}' already exists. Choose a different name.", ephemeral=True)
+                    return
 
-      # Check if new name already exists
-      # We check case-insensitive match for new name to avoid duplicates like "jump" vs "Jump"
-      for key in user_skills.keys():
-          if key.lower() == new_name.lower():
-               await interaction.response.send_message(f"Skill with the name '{key}' already exists. Choose a different name.", ephemeral=True)
-               return
+            # Proceed with rename
+            new_skill_name_formatted = new_name.strip()
+            CharacterService.rename_skill(db, investigator.id, target_skill_key, new_skill_name_formatted)
+            
+            await interaction.response.send_message(f"Your skill '{target_skill_key}' has been updated to '{new_skill_name_formatted}'.")
 
-      # Proceed with rename
-      new_skill_name_formatted = new_name.strip()
+        except Exception as e:
+            await interaction.response.send_message(f"An error occurred: {str(e)}", ephemeral=True)
+        finally:
+            db.close()
 
-      try:
-          # Create an ordered dictionary to maintain the skill order
-          ordered_skills = OrderedDict()
+    @renameskill.autocomplete('skill_name')
+    async def skill_autocomplete(self, interaction: discord.Interaction, current: str):
+        db = SessionLocal()
+        try:
+            investigator = CharacterService.get_investigator_by_guild_and_user(
+                db, str(interaction.guild_id), str(interaction.user.id)
+            )
+            if not investigator or not investigator.skills:
+                return []
 
-          # Add skills to the ordered dictionary, replacing the old key with the new key
-          for skill_key, skill_value in user_skills.items():
-              if skill_key == target_skill_key:
-                  ordered_skills[new_skill_name_formatted] = skill_value
-              else:
-                  ordered_skills[skill_key] = skill_value
+            choices = [f"{k} ({v})" for k, v in investigator.skills.items()]
+            if not current:
+                return [app_commands.Choice(name=c, value=c) for c in sorted(choices)[:25]]
 
-          player_stats[server_id][user_id] = ordered_skills
-
-          await save_player_stats(player_stats)
-          await interaction.response.send_message(f"Your skill '{target_skill_key}' has been updated to '{new_skill_name_formatted}'.")
-
-      except Exception:
-          await interaction.response.send_message("An error occurred while updating the skill. Please try again.", ephemeral=True)
-
-  @renameskill.autocomplete('skill_name')
-  async def skill_autocomplete(self, interaction: discord.Interaction, current: str):
-      server_id = str(interaction.guild_id)
-      user_id = str(interaction.user.id)
-      player_stats = await load_player_stats()
-
-      if server_id not in player_stats or user_id not in player_stats[server_id]:
-          return []
-
-      user_stats = player_stats[server_id][user_id]
-      choices = [f"{k} ({v})" for k, v in user_stats.items()]
-
-      if not current:
-          return [app_commands.Choice(name=c, value=c) for c in sorted(choices)[:25]]
-
-      matches = process.extract(current, choices, scorer=fuzz.WRatio, limit=25)
-      return [app_commands.Choice(name=m[0], value=m[0]) for m in matches]
-
+            matches = process.extract(current, choices, scorer=fuzz.WRatio, limit=25)
+            return [app_commands.Choice(name=m[0], value=m[0]) for m in matches]
+        finally:
+            db.close()
 
 async def setup(bot):
-  await bot.add_cog(renameskill(bot))
+    await bot.add_cog(renameskill(bot))

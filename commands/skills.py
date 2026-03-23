@@ -2,9 +2,11 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from discord import ui
-from loadnsave import load_player_stats, save_player_stats
 from rapidfuzz import process, fuzz
 import re
+from models.database import SessionLocal
+from services.character_service import CharacterService
+from views.character_profile import CharacterProfileView
 
 # Restricted skills that cannot be removed
 RESTRICTED_SKILLS = {
@@ -16,84 +18,63 @@ RESTRICTED_SKILLS = {
 }
 
 class AddSkillModal(ui.Modal, title="Add Custom Skill"):
-    skill_name = ui.Label(text="Skill Name", component=ui.TextInput(placeholder="e.g. Drive (Tank)", min_length=1, max_length=100))
-    skill_value = ui.Label(text="Starting Value", component=ui.TextInput(placeholder="e.g. 40", min_length=1, max_length=3))
-    emoji_input = ui.Label(text="Emoji (Optional)", component=ui.TextInput(placeholder="Paste emoji here", required=False, max_length=5))
+    skill_name_input = ui.TextInput(label="Skill Name", placeholder="e.g. Drive (Tank)", min_length=1, max_length=100)
+    skill_value_input = ui.TextInput(label="Starting Value", placeholder="e.g. 40", min_length=1, max_length=3)
+    # emoji_input = ui.TextInput(label="Emoji (Optional)", placeholder="Paste emoji here", required=False, max_length=5)
 
-    def __init__(self, bot):
+    def __init__(self, investigator_id):
         super().__init__()
-        self.bot = bot
+        self.investigator_id = investigator_id
 
     async def on_submit(self, interaction: discord.Interaction):
-        if interaction.guild is None:
-            await interaction.response.send_message("This command is not allowed in DMs.", ephemeral=True)
-            return
+        skill_name = self.skill_name_input.value.strip()
+        skill_value_str = self.skill_value_input.value.strip()
 
-        skill_name = self.skill_name.component.value.strip()
-        skill_value_str = self.skill_value.component.value.strip()
-
-        # Validate Value
         if not skill_value_str.isdigit():
              await interaction.response.send_message("Skill value must be a number (0-100).", ephemeral=True)
              return
 
         skill_value = int(skill_value_str)
-        # Allow >100? CoC skills can go above 100.
-        # But "Starting Value" usually implies base.
-        # Let's trust user, but maybe warn if excessive.
-        # Keeping it simple for now, maybe just check non-negative.
         if skill_value < 0:
              await interaction.response.send_message("Skill value cannot be negative.", ephemeral=True)
              return
 
-        server_id = str(interaction.guild.id)
-        user_id = str(interaction.user.id)
-        player_stats = await load_player_stats()
+        db = SessionLocal()
+        try:
+            investigator = CharacterService.get_investigator(db, self.investigator_id)
+            user_skills = investigator.skills or {}
 
-        if server_id not in player_stats or user_id not in player_stats[server_id]:
-             await interaction.response.send_message("You don't have an investigator. Use `/newinvestigator` first.", ephemeral=True)
-             return
+            # Check if skill exists (case-insensitive)
+            existing_skill = next((k for k in user_skills.keys() if k.lower() == skill_name.lower()), None)
 
-        user_stats = player_stats[server_id][user_id]
+            if existing_skill:
+                await interaction.response.send_message(f"Skill '{existing_skill}' already exists with value {user_skills[existing_skill]}. Use `/stat` to update it.", ephemeral=True)
+                return
 
-        # Check if skill exists (case-insensitive)
-        existing_skill = next((k for k in user_stats.keys() if k.lower() == skill_name.lower()), None)
-
-        if existing_skill:
-            await interaction.response.send_message(f"Skill '{existing_skill}' already exists with value {user_stats[existing_skill]}. Use `/stat` to update it.", ephemeral=True)
-            return
-
-        # Add Skill
-        player_stats[server_id][user_id][skill_name] = skill_value
-
-        # Handle Emoji
-        emoji_char = self.emoji_input.component.value.strip()
-        if emoji_char:
-            if "Custom Emojis" not in user_stats:
-                player_stats[server_id][user_id]["Custom Emojis"] = {}
-            player_stats[server_id][user_id]["Custom Emojis"][skill_name] = emoji_char
-
-        await save_player_stats(player_stats)
-
-        msg = f"Added skill **{skill_name}** with value **{skill_value}**."
-        if emoji_char:
-            msg += f" Emoji: {emoji_char}"
-
-        await interaction.response.send_message(msg, ephemeral=True)
+            CharacterService.add_skill(db, self.investigator_id, skill_name, skill_value)
+            await interaction.response.send_message(f"Added skill **{skill_name}** with value **{skill_value}**.", ephemeral=True)
+        finally:
+            db.close()
 
 class RemoveSkillView(ui.View):
-    def __init__(self, skill_name, user_id, confirm_callback):
+    def __init__(self, investigator_id, skill_name, user_id):
         super().__init__(timeout=60)
+        self.investigator_id = investigator_id
         self.skill_name = skill_name
         self.user_id = user_id
-        self.confirm_callback = confirm_callback
 
     @ui.button(label="Yes, Remove Skill", style=discord.ButtonStyle.danger)
     async def confirm(self, interaction: discord.Interaction, button: ui.Button):
         if interaction.user.id != self.user_id:
             await interaction.response.send_message("This isn't for you!", ephemeral=True)
             return
-        await self.confirm_callback(interaction)
+        
+        db = SessionLocal()
+        try:
+            CharacterService.remove_skill(db, self.investigator_id, self.skill_name)
+            await interaction.response.edit_message(content=f"Removed skill **{self.skill_name}**.", view=None)
+        finally:
+            db.close()
         self.stop()
 
     @ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
@@ -109,99 +90,101 @@ class skills(commands.Cog):
         self.bot = bot
         self.help_category = "Player"
 
+    @app_commands.command(name="skills", description="📜 View your character's skills.")
+    async def skills_view(self, interaction: discord.Interaction):
+        db = SessionLocal()
+        try:
+            investigator = CharacterService.get_investigator_by_guild_and_user(
+                db, str(interaction.guild_id), str(interaction.user.id)
+            )
+            if not investigator:
+                await interaction.response.send_message("You don't have an investigator.", ephemeral=True)
+                return
+
+            view = CharacterProfileView(investigator.id, interaction.user)
+            view.current_tab = "Skills"
+            await interaction.response.send_message(embed=view.get_embed(), view=view)
+        finally:
+            db.close()
+
     @app_commands.command(name="addskill", description="✨ Add a new custom skill to your character sheet.")
     async def addskill(self, interaction: discord.Interaction):
-        if interaction.guild is None:
-            await interaction.response.send_message("This command is not allowed in DMs.", ephemeral=True)
-            return
-        await interaction.response.send_modal(AddSkillModal(self.bot))
+        db = SessionLocal()
+        try:
+            investigator = CharacterService.get_investigator_by_guild_and_user(
+                db, str(interaction.guild_id), str(interaction.user.id)
+            )
+            if not investigator:
+                await interaction.response.send_message("You don't have an investigator. Use `/newinvestigator` first.", ephemeral=True)
+                return
+            await interaction.response.send_modal(AddSkillModal(investigator.id))
+        finally:
+            db.close()
 
     @app_commands.command(name="removeskill", description="❌ Remove a skill from your character sheet.")
     @app_commands.describe(skill_name="The name of the skill to remove")
     async def removeskill(self, interaction: discord.Interaction, skill_name: str):
-        if interaction.guild is None:
-            await interaction.response.send_message("This command is not allowed in DMs.", ephemeral=True)
-            return
+        db = SessionLocal()
+        try:
+            investigator = CharacterService.get_investigator_by_guild_and_user(
+                db, str(interaction.guild_id), str(interaction.user.id)
+            )
+            if not investigator:
+                await interaction.response.send_message("You don't have an investigator.", ephemeral=True)
+                return
 
-        server_id = str(interaction.guild.id)
-        user_id = str(interaction.user.id)
-        player_stats = await load_player_stats()
+            # Clean up skill_name input
+            clean_skill_name = skill_name
+            match = re.match(r"^(.*?)\s*\(\d+\)$", skill_name)
+            if match:
+                clean_skill_name = match.group(1)
 
-        if server_id not in player_stats or user_id not in player_stats[server_id]:
-             await interaction.response.send_message("You don't have an investigator.", ephemeral=True)
-             return
+            user_skills = investigator.skills or {}
+            target_skill = None
+            for key in user_skills.keys():
+                if key.lower() == clean_skill_name.lower():
+                    target_skill = key
+                    break
 
-        user_stats = player_stats[server_id][user_id]
+            if not target_skill:
+                 choices = list(user_skills.keys())
+                 extract = process.extractOne(clean_skill_name, choices, scorer=fuzz.WRatio)
+                 if extract:
+                     match_key, score, _ = extract
+                     if score > 80:
+                         target_skill = match_key
 
-        # Clean up skill_name input
-        clean_skill_name = skill_name
-        match = re.match(r"^(.*?)\s*\(\d+\)$", skill_name)
-        if match:
-            clean_skill_name = match.group(1)
+            if not target_skill:
+                 await interaction.response.send_message(f"Skill '{clean_skill_name}' not found.", ephemeral=True)
+                 return
 
-        # Find the skill
-        target_skill = None
-        # Exact match
-        for key in user_stats.keys():
-            if key.lower() == clean_skill_name.lower():
-                target_skill = key
-                break
+            if target_skill.upper() in RESTRICTED_SKILLS:
+                 await interaction.response.send_message(f"Cannot remove restricted skill/stat **{target_skill}**.", ephemeral=True)
+                 return
 
-        # Fuzzy match
-        if not target_skill:
-             choices = list(user_stats.keys())
-             extract = process.extractOne(clean_skill_name, choices, scorer=fuzz.WRatio)
-             if extract:
-                 match_key, score, _ = extract
-                 if score > 80:
-                     target_skill = match_key
-
-        if not target_skill:
-             await interaction.response.send_message(f"Skill '{clean_skill_name}' not found.", ephemeral=True)
-             return
-
-        # Check Restricted
-        if target_skill.upper() in RESTRICTED_SKILLS:
-             await interaction.response.send_message(f"Cannot remove restricted skill/stat **{target_skill}**.", ephemeral=True)
-             return
-
-        # Callback for confirmation
-        async def delete_callback(intx: discord.Interaction):
-            # Re-fetch stats to be safe? Or assume consistency.
-            # In async environment, it's possible it changed, but unlikely for this use case.
-            # Using the reference we have.
-            try:
-                del player_stats[server_id][user_id][target_skill]
-                await save_player_stats(player_stats)
-                await intx.response.edit_message(content=f"Removed skill **{target_skill}**.", view=None)
-            except KeyError:
-                await intx.response.edit_message(content=f"Skill **{target_skill}** was already removed or not found.", view=None)
-
-        view = RemoveSkillView(target_skill, interaction.user.id, delete_callback)
-        await interaction.response.send_message(f"Are you sure you want to remove **{target_skill}**? This cannot be undone.", view=view, ephemeral=True)
+            view = RemoveSkillView(investigator.id, target_skill, interaction.user.id)
+            await interaction.response.send_message(f"Are you sure you want to remove **{target_skill}**? This cannot be undone.", view=view, ephemeral=True)
+        finally:
+            db.close()
 
     @removeskill.autocomplete('skill_name')
     async def skill_autocomplete(self, interaction: discord.Interaction, current: str):
-        if interaction.guild is None:
-            return []
+        db = SessionLocal()
+        try:
+            investigator = CharacterService.get_investigator_by_guild_and_user(
+                db, str(interaction.guild_id), str(interaction.user.id)
+            )
+            if not investigator or not investigator.skills:
+                return []
 
-        server_id = str(interaction.guild_id)
-        user_id = str(interaction.user.id)
-        player_stats = await load_player_stats()
+            choices = [f"{k} ({v})" for k, v in investigator.skills.items() if k.upper() not in RESTRICTED_SKILLS]
+            if not current:
+                return [app_commands.Choice(name=c, value=c) for c in sorted(choices)[:25]]
 
-        if server_id not in player_stats or user_id not in player_stats[server_id]:
-            return []
-
-        user_stats = player_stats[server_id][user_id]
-
-        # Filter out restricted skills from autocomplete
-        choices = [f"{k} ({v})" for k, v in user_stats.items() if k.upper() not in RESTRICTED_SKILLS]
-
-        if not current:
-            return [app_commands.Choice(name=c, value=c) for c in sorted(choices)[:25]]
-
-        matches = process.extract(current, choices, scorer=fuzz.WRatio, limit=25)
-        return [app_commands.Choice(name=m[0], value=m[0]) for m in matches]
+            matches = process.extract(current, choices, scorer=fuzz.WRatio, limit=25)
+            return [app_commands.Choice(name=m[0], value=m[0]) for m in matches]
+        finally:
+            db.close()
 
 async def setup(bot):
     await bot.add_cog(skills(bot))
