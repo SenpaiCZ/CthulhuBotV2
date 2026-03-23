@@ -4,6 +4,8 @@ import os
 from .base import Base
 from .investigator import Investigator
 from .guild_settings import GuildSettings
+from .campaign import JournalEntry, KarmaStat
+from .inventory import InventoryItem, Handout
 
 DB_URL = "sqlite:///data/database.sqlite"
 
