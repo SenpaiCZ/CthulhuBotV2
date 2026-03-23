@@ -6,6 +6,8 @@ from loadnsave import load_settings, load_server_stats
 from dashboard.app import app
 from hypercorn.asyncio import serve
 from hypercorn.config import Config
+from services.audio_service import AudioService
+from tasks.voice_monitor import voice_rejoin_task
 
 # Load the settings
 settings = load_settings()
@@ -31,6 +33,11 @@ bot.failed_extensions = []
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
+
+    # Initialize AudioService and start background tasks
+    audio_service = AudioService(bot)
+    asyncio.create_task(voice_rejoin_task(bot, audio_service))
+    asyncio.create_task(AudioService.idle_timeout_task())
 
     if hasattr(bot, 'failed_extensions') and bot.failed_extensions:
         try:
