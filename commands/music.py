@@ -8,7 +8,7 @@ from functools import partial
 from dashboard.app import guild_mixers, server_volumes
 from dashboard.audio_mixer import MixingAudioSource
 from loadnsave import load_music_blacklist, save_music_blacklist, load_server_volumes, save_server_volumes
-from commands._music_view import MusicView
+from views.music_player import MusicPlayerView
 from services.music_service import MusicService
 from services.audio_service import AudioService
 
@@ -43,34 +43,24 @@ class Music(commands.Cog):
     def cog_unload(self):
         pass
 
-    @property
-    def queue(self):
-        """Bridge for MusicView compatibility."""
-        return {str(gid): q for gid, q in MusicService._queues.items()}
-
-    @property
-    def current_track(self):
-        """Bridge for MusicView compatibility."""
-        return {str(gid): t for gid, t in MusicService._current_tracks.items()}
-
     # --- Dashboard Helpers ---
 
     async def refresh_dashboard(self, interaction=None, guild_id=None):
         if interaction:
-            guild_id = str(interaction.guild.id)
+            guild_id = interaction.guild.id
 
         if not guild_id: return
 
         # 1. Update Existing Message
-        message = self.dashboard_messages.get(guild_id)
-        view = MusicView(self, guild_id)
+        message = self.dashboard_messages.get(str(guild_id))
+        view = MusicPlayerView(guild_id)
         embed = view.get_embed()
 
         if message:
             try:
                 await message.edit(embed=embed, view=view)
             except discord.NotFound:
-                self.dashboard_messages.pop(guild_id, None)
+                self.dashboard_messages.pop(str(guild_id), None)
                 message = None
             except Exception as e:
                 print(f"Error updating dashboard: {e}")
@@ -83,66 +73,7 @@ class Music(commands.Cog):
                 else:
                     # If message was lost, send new one as response
                     await interaction.response.send_message(embed=embed, view=view)
-                    self.dashboard_messages[guild_id] = await interaction.original_response()
-
-    async def toggle_pause(self, interaction):
-        guild_id = interaction.guild.id
-        state = MusicService.toggle_pause(guild_id)
-        
-        if state is not None:
-            msg = "Paused" if state else "Resumed"
-            if not interaction.response.is_done():
-                await interaction.response.send_message(f"⏯️ {msg}.", ephemeral=True)
-            await self.refresh_dashboard(interaction)
-        else:
-            if not interaction.response.is_done():
-                await interaction.response.send_message("Nothing is playing.", ephemeral=True)
-
-    async def skip_track(self, interaction):
-        guild_id = interaction.guild.id
-        track = MusicService.get_current_track(guild_id)
-        if track:
-            MusicService.skip_track(guild_id)
-            if not interaction.response.is_done():
-                await interaction.response.send_message("⏭️ Skipped.", ephemeral=True)
-            # MusicService._on_track_finish will handle the next track
-        else:
-            if not interaction.response.is_done():
-                await interaction.response.send_message("Nothing is playing.", ephemeral=True)
-
-    async def stop_music(self, interaction):
-        guild_id = interaction.guild.id
-
-        # Stop via MusicService
-        MusicService.stop_music(guild_id)
-
-        # Disconnect via AudioService
-        await AudioService.disconnect_from_voice(interaction.guild)
-
-        if not interaction.response.is_done():
-            await interaction.response.send_message("Stop.", ephemeral=True)
-
-        await self.refresh_dashboard(interaction)
-
-    async def toggle_loop(self, interaction):
-        guild_id = interaction.guild.id
-        state = MusicService.toggle_loop(guild_id)
-        msg = "ON" if state else "OFF"
-        if not interaction.response.is_done():
-            await interaction.response.send_message(f"🔁 Loop {msg}.", ephemeral=True)
-        await self.refresh_dashboard(interaction)
-
-    async def shuffle_queue(self, interaction):
-        guild_id = interaction.guild.id
-        q = MusicService.get_queue(guild_id)
-        if len(q) > 1:
-            MusicService.shuffle_queue(guild_id)
-            if not interaction.response.is_done():
-                await interaction.response.send_message("🔀 Queue shuffled.", ephemeral=True)
-            await self.refresh_dashboard(interaction)
-        else:
-            if not interaction.response.is_done():
-                await interaction.response.send_message("Not enough songs to shuffle.", ephemeral=True)
+                    self.dashboard_messages[str(guild_id)] = await interaction.original_response()
 
     # --- Slash Commands ---
 
@@ -182,18 +113,18 @@ class Music(commands.Cog):
             song_info['requested_by'] = interaction.user.display_name
 
             # Send Dashboard
-            guild_id_str = str(interaction.guild.id)
-            view = MusicView(self, guild_id_str)
+            guild_id = interaction.guild.id
+            view = MusicPlayerView(guild_id)
             embed = view.get_embed()
 
             # If we already have a dashboard, delete it to send a fresh one at bottom
-            old_msg = self.dashboard_messages.get(guild_id_str)
+            old_msg = self.dashboard_messages.get(str(guild_id))
             if old_msg:
                 try: await old_msg.delete()
                 except: pass
 
             msg = await interaction.followup.send(embed=embed, view=view)
-            self.dashboard_messages[guild_id_str] = msg
+            self.dashboard_messages[str(guild_id)] = msg
 
             # Trigger play if nothing is playing
             if not MusicService.get_current_track(interaction.guild.id):
@@ -205,27 +136,59 @@ class Music(commands.Cog):
     @app_commands.command(name="skip", description="⏭️ Skips the current song.")
     async def skip(self, interaction: discord.Interaction):
         """⏭️ Skips the current song."""
-        await self.skip_track(interaction)
+        guild_id = interaction.guild.id
+        track = MusicService.get_current_track(guild_id)
+        if track or MusicService.get_queue(guild_id):
+            MusicService.skip_track(guild_id)
+            await interaction.response.send_message("⏭️ Skipped.", ephemeral=True)
+            await self.refresh_dashboard(guild_id=guild_id)
+        else:
+            await interaction.response.send_message("Nothing is playing.", ephemeral=True)
 
     @app_commands.command(name="stop", description="🛑 Stops music, clears queue, and disconnects.")
     async def stop(self, interaction: discord.Interaction):
         """🛑 Stops music, clears queue, and disconnects."""
-        await self.stop_music(interaction)
+        guild_id = interaction.guild.id
+        MusicService.stop_music(guild_id)
+        await AudioService.disconnect_from_voice(interaction.guild)
+        await interaction.response.send_message("🛑 Stopped.", ephemeral=True)
+        await self.refresh_dashboard(guild_id=guild_id)
 
     @app_commands.command(name="pause", description="⏸️ Pauses the current song.")
     async def pause(self, interaction: discord.Interaction):
         """⏸️ Pauses the current song."""
-        await self.toggle_pause(interaction)
+        guild_id = interaction.guild.id
+        state = MusicService.toggle_pause(guild_id)
+        if state is not None:
+            msg = "Paused" if state else "Resumed"
+            await interaction.response.send_message(f"⏸️ {msg}.", ephemeral=True)
+            await self.refresh_dashboard(guild_id=guild_id)
+        else:
+            await interaction.response.send_message("Nothing is playing.", ephemeral=True)
 
     @app_commands.command(name="resume", description="▶️ Resumes the current song.")
     async def resume(self, interaction: discord.Interaction):
         """▶️ Resumes the current song."""
-        await self.toggle_pause(interaction)
+        guild_id = interaction.guild.id
+        state = MusicService.toggle_pause(guild_id)
+        if state is not None:
+            msg = "Resumed" if not state else "Paused"
+            await interaction.response.send_message(f"▶️ {msg}.", ephemeral=True)
+            await self.refresh_dashboard(guild_id=guild_id)
+        else:
+            await interaction.response.send_message("Nothing is playing.", ephemeral=True)
 
     @app_commands.command(name="shuffle", description="🔀 Shuffles the queue.")
     async def shuffle(self, interaction: discord.Interaction):
         """🔀 Shuffles the queue."""
-        await self.shuffle_queue(interaction)
+        guild_id = interaction.guild.id
+        q = MusicService.get_queue(guild_id)
+        if len(q) > 1:
+            MusicService.shuffle_queue(guild_id)
+            await interaction.response.send_message("🔀 Queue shuffled.", ephemeral=True)
+            await self.refresh_dashboard(guild_id=guild_id)
+        else:
+            await interaction.response.send_message("Not enough songs to shuffle.", ephemeral=True)
 
     @app_commands.command(name="volume", description="🔊 Sets the music volume (0-100). Persists per server.")
     @app_commands.describe(vol="Volume level (0-100)")
@@ -244,8 +207,7 @@ class Music(commands.Cog):
         
         AudioService._server_volumes[guild_id]['music'] = new_vol
         
-        # Save to database (using AudioService.set_volume but that sets soundboard)
-        # We need a way to set music volume in AudioService
+        # Save to database
         from models.database import SessionLocal
         from services.settings_service import SettingsService
         db = SessionLocal()
@@ -257,28 +219,33 @@ class Music(commands.Cog):
         track = MusicService.get_current_track(guild_id)
         if track:
             track.volume = new_vol
-            await self.refresh_dashboard(interaction)
+            await interaction.response.send_message(f"🔊 Music volume set to {vol}%", ephemeral=True)
+            await self.refresh_dashboard(guild_id=guild_id)
         else:
             await interaction.response.send_message(f"🔊 Music volume set to {vol}% (will apply to next song)", ephemeral=True)
 
     @app_commands.command(name="loop", description="🔁 Toggles loop for the current song.")
     async def loop(self, interaction: discord.Interaction):
         """🔁 Toggles loop for the current song."""
-        await self.toggle_loop(interaction)
+        guild_id = interaction.guild.id
+        state = MusicService.toggle_loop(guild_id)
+        msg = "ON" if state else "OFF"
+        await interaction.response.send_message(f"🔁 Loop {msg}.", ephemeral=True)
+        await self.refresh_dashboard(guild_id=guild_id)
 
     @app_commands.command(name="queue", description="🎼 Shows the current queue.")
     async def queue(self, interaction: discord.Interaction):
         """🎼 Shows the current queue."""
-        guild_id_str = str(interaction.guild.id)
-        view = MusicView(self, guild_id_str)
+        guild_id = interaction.guild.id
+        view = MusicPlayerView(guild_id)
         embed = view.get_embed()
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name="nowplaying", description="🎵 Shows the currently playing song.")
     async def nowplaying(self, interaction: discord.Interaction):
         """💿 Shows the currently playing song."""
-        guild_id_str = str(interaction.guild.id)
-        view = MusicView(self, guild_id_str)
+        guild_id = interaction.guild.id
+        view = MusicPlayerView(guild_id)
         embed = view.get_embed()
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
