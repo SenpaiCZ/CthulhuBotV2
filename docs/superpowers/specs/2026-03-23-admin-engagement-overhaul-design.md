@@ -15,8 +15,12 @@ Finalize the architectural transition by refactoring all administrative and soci
 1. **Database Tables**:
     - `polls`: `message_id`, `guild_id`, `question`, `options` (JSON), `votes` (JSON).
     - `giveaways`: `message_id`, `guild_id`, `title`, `prize`, `end_time`, `participants` (JSON).
-    - `reminders`: `id`, `user_id`, `guild_id`, `message`, `due_at`.
+    - `reminders`: `id`, `user_id`, `guild_id`, `channel_id`, `message`, `due_at`.
     - `rss_feeds`: `id`, `guild_id`, `channel_id`, `url`, `last_item_id`.
+    - `autorooms`: `id`, `guild_id`, `creator_id`, `channel_id`, `name_format`.
+    - `pogo_events`: `id`, `guild_id`, `name`, `timestamp`, `location`.
+    - `gameroles`: `id`, `guild_id`, `role_id`, `category`.
+    - `deleter_jobs`: `id`, `guild_id`, `channel_id`, `user_id`, `status`.
 2. `services/engagement_service.py`: Centralized logic for social mechanics and automated feed polling.
 3. `services/admin_service.py`: Logic for bot maintenance and system-level operations.
 4. `views/poll_view.py`: Reusable interactive voting component.
