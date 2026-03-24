@@ -8,6 +8,8 @@ from .campaign import JournalEntry, KarmaStat
 from .inventory import InventoryItem, Handout
 from .codex import CodexEntry
 from .game_state import CombatSession, CombatParticipant, SessionLog
+from .admin import AutoRoom, DeleterJob, RSSFeed
+from .social import Poll, Giveaway, Reminder, PogoEvent, GamerRole
 
 DB_URL = "sqlite:///data/database.sqlite"
 
