@@ -48,6 +48,68 @@ class AdminService:
         return False
 
     @staticmethod
+    def parse_duration(duration_str: str) -> int:
+        """
+        Parses a duration string (e.g. 1h 30m) into seconds.
+        """
+        import re
+        total_seconds = 0
+        text = duration_str.lower().strip()
+
+        # Keyword support
+        if text in ['tomorrow', 'tmrw']:
+            return 86400
+        if text in ['week', 'next week']:
+            return 604800
+        if text in ['hour', '1h']:
+            return 3600
+
+        # Regex for structured duration
+        matches = re.findall(r'(\d+)\s*([dhms])', text)
+        for amount, unit in matches:
+            amount = int(amount)
+            if unit == 'd': total_seconds += amount * 86400
+            elif unit == 'h': total_seconds += amount * 3600
+            elif unit == 'm': total_seconds += amount * 60
+            elif unit == 's': total_seconds += amount
+
+        return total_seconds
+
+    @staticmethod
+    async def create_reminder_api(reminders_dict, guild_id, channel_id, user_id, message, seconds):
+        """
+        Legacy JSON-based reminder creation.
+        """
+        from loadnsave import save_reminder_data
+        from datetime import datetime, timezone
+        due_time = datetime.now(timezone.utc).timestamp() + seconds
+        reminder = {
+            "id": str(int(datetime.now(timezone.utc).timestamp() * 1000)),
+            "user_id": int(user_id),
+            "channel_id": int(channel_id),
+            "message": message,
+            "due_timestamp": due_time,
+            "created_at": datetime.now(timezone.utc).timestamp()
+        }
+        reminders_dict.setdefault(str(guild_id), []).append(reminder)
+        await save_reminder_data(reminders_dict)
+        return True, reminder
+
+    @staticmethod
+    async def delete_reminder_api(reminders_dict, guild_id, reminder_id):
+        """
+        Legacy JSON-based reminder deletion.
+        """
+        from loadnsave import save_reminder_data
+        if str(guild_id) in reminders_dict:
+            old_len = len(reminders_dict[str(guild_id)])
+            reminders_dict[str(guild_id)] = [r for r in reminders_dict[str(guild_id)] if r.get('id') != reminder_id]
+            if len(reminders_dict[str(guild_id)]) < old_len:
+                await save_reminder_data(reminders_dict)
+                return True, "Deleted"
+        return False, "Not found"
+
+    @staticmethod
     def create_autoroom(db: Session, data: AutoRoomCreate) -> AutoRoom:
         """
         Create a new autoroom configuration.
