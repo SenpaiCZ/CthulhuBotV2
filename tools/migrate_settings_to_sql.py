@@ -32,23 +32,21 @@ FILE_FIELD_MAP = {
     'reaction_roles.json': 'reaction_roles',
     'luck_stats.json': 'luck_threshold', 
     'skill_settings.json': 'max_starting_skill',
-    'gamemode.json': 'game_mode'
+    'gamemode.json': 'game_mode',
+    'server_stats.json': 'prefix',
+    'bot_status.json': 'bot_status'
 }
 
-def load_json(path):
+def load_json_safe(path):
     if not os.path.exists(path):
-        return {}
-    try:
-        # Try UTF-8 first
-        with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except:
+        return None
+    for enc in ['utf-8', 'utf-16', 'windows-1252']:
         try:
-            # Fallback to UTF-16
-            with open(path, 'r', encoding='utf-16') as f:
+            with open(path, 'r', encoding=enc) as f:
                 return json.load(f)
-        except:
-            return {}
+        except Exception:
+            continue
+    return None
 
 def migrate_all_settings(db, data_folder):
     print("Starting settings migration...")
@@ -58,35 +56,47 @@ def migrate_all_settings(db, data_folder):
 
     for filename, field in FILE_FIELD_MAP.items():
         file_path = os.path.join(data_folder, filename)
-        data = load_json(file_path)
-        if not data:
-            print(f"Skipping {filename}: No data found.")
+        data = load_json_safe(file_path)
+        if data is None:
             continue
         
         print(f"Processing {filename}...")
-        for guild_id, value in data.items():
-            if guild_id not in guild_data:
-                guild_data[guild_id] = {}
-            
-            # Special handling for flattened fields
-            if field == 'luck_threshold':
-                guild_data[guild_id]['luck_threshold'] = int(value)
-            elif field == 'max_starting_skill':
-                if isinstance(value, dict):
-                    guild_data[guild_id]['max_starting_skill'] = value.get('max_starting_skill', 75)
+        
+        # Handle cases where the whole file is one setting (like bot_status)
+        if filename in ['bot_status.json', 'loot_settings.json']:
+            if 'global' not in guild_data: guild_data['global'] = {}
+            guild_data['global'][field] = data
+            continue
+
+        if isinstance(data, dict):
+            for guild_id, value in data.items():
+                if guild_id not in guild_data:
+                    guild_data[guild_id] = {}
+                
+                # Special handling for flattened fields
+                if field == 'luck_threshold':
+                    try: guild_data[guild_id]['luck_threshold'] = int(value)
+                    except: pass
+                elif field == 'max_starting_skill':
+                    if isinstance(value, dict):
+                        guild_data[guild_id]['max_starting_skill'] = value.get('max_starting_skill', 75)
+                    else:
+                        try: guild_data[guild_id]['max_starting_skill'] = int(value)
+                        except: pass
+                elif field == 'game_mode':
+                    guild_data[guild_id]['game_mode'] = str(value)
+                elif field == 'prefix':
+                    guild_data[guild_id]['prefix'] = str(value)
                 else:
-                    guild_data[guild_id]['max_starting_skill'] = int(value)
-            elif field == 'game_mode':
-                guild_data[guild_id]['game_mode'] = str(value)
-            else:
-                # Direct JSON mapping
-                guild_data[guild_id][field] = value
+                    # Direct JSON mapping
+                    guild_data[guild_id][field] = value
 
     for guild_id, settings in guild_data.items():
         print(f"Migrating settings for guild {guild_id}...")
         try:
-            update_data = GuildSettingsUpdate(**settings)
-            SettingsService.update_guild_settings(db, str(guild_id), update_data)
+            # We use set_setting instead of full object update to be safer
+            for key, val in settings.items():
+                SettingsService.set_setting(db, str(guild_id), key, val)
         except Exception as e:
             print(f"Failed to migrate guild {guild_id}: {e}")
 
@@ -94,22 +104,32 @@ def verify_settings_migration(db, data_folder):
     print("\nVerifying migration...")
     passed = True
     for filename, field in FILE_FIELD_MAP.items():
-        json_data = load_json(os.path.join(data_folder, filename))
-        if not json_data: continue
+        json_data = load_json_safe(os.path.join(data_folder, filename))
+        if json_data is None: continue
+
+        if filename in ['bot_status.json', 'loot_settings.json']:
+            actual_val = SettingsService.get_setting(db, "global", field)
+            if actual_val != json_data:
+                print(f"❌ Mismatch in {field} for global")
+                passed = False
+            continue
 
         for guild_id, expected_val in json_data.items():
-            db_settings = SettingsService.get_guild_settings(db, str(guild_id))
-            actual_val = getattr(db_settings, field)
+            actual_val = SettingsService.get_setting(db, str(guild_id), field)
             
             match = False
             if field == 'luck_threshold':
-                match = int(expected_val) == actual_val
+                try: match = int(expected_val) == actual_val
+                except: match = actual_val is None
             elif field == 'max_starting_skill':
                 if isinstance(expected_val, dict):
                     match = expected_val.get('max_starting_skill', 75) == actual_val
                 else:
-                    match = int(expected_val) == actual_val
+                    try: match = int(expected_val) == actual_val
+                    except: match = actual_val is None
             elif field == 'game_mode':
+                match = str(expected_val) == actual_val
+            elif field == 'prefix':
                 match = str(expected_val) == actual_val
             else:
                 match = expected_val == actual_val
@@ -123,11 +143,7 @@ def verify_settings_migration(db, data_folder):
     return passed
 
 if __name__ == "__main__":
-    # Ensure data directory exists
-    os.makedirs("data", exist_ok=True)
-    
     engine = create_engine(DB_URL)
-    # Ensure table exists
     Base.metadata.create_all(bind=engine)
     
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
