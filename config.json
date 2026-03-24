@@ -1,0 +1,8 @@
+{
+    "_comment": "You can either put your token here or set a DISCORD_TOKEN environment variable (e.g. in a .env file).",
+    "token": "YOUR_DISCORD_BOT_TOKEN_HERE",
+    "enable_dashboard": true,
+    "dashboard_port": 5000,
+    "admin_password": "ChangeMe123!",
+    "database_url": "sqlite:///data/database.sqlite"
+}
