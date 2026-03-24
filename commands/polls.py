@@ -1,65 +1,17 @@
 import discord
 from discord.ext import commands
-from discord import app_commands, ui
-import asyncio
+from discord import app_commands
 from loadnsave import load_polls_data, save_polls_data
-
-class PollButton(discord.ui.Button):
-    def __init__(self, label, index, poll_id):
-        super().__init__(
-            style=discord.ButtonStyle.secondary,
-            label=label,
-            custom_id=f"poll:{poll_id}:{index}"
-        )
-        self.index = index
-        self.poll_id = str(poll_id)
-
-    async def callback(self, interaction: discord.Interaction):
-        cog = interaction.client.get_cog("Polls")
-        if cog:
-            await cog.handle_vote(interaction, self.poll_id, self.index)
-        else:
-            await interaction.response.send_message("Poll system error.", ephemeral=True)
-
-class PollView(discord.ui.View):
-    def __init__(self, options, poll_id):
-        super().__init__(timeout=None)
-        for i, option in enumerate(options):
-            # Truncate label if too long (max 80 chars per button)
-            label = option[:80]
-            self.add_item(PollButton(label=label, index=i, poll_id=poll_id))
-
-class PollModal(ui.Modal, title="Create New Poll"):
-    question = ui.Label(text="Question", component=ui.TextInput(placeholder="What do you want to ask?", max_length=256))
-    options = ui.Label(text="Options (one per line)", component=ui.TextInput(style=discord.TextStyle.paragraph, placeholder="Option 1\nOption 2\nOption 3", max_length=2000, required=True))
-
-    def __init__(self, cog):
-        super().__init__()
-        self.cog = cog
-
-    async def on_submit(self, interaction: discord.Interaction):
-        # Parse options
-        raw_options = self.options.component.value.split('\n')
-        parsed_options = [opt.strip() for opt in raw_options if opt.strip()]
-
-        if len(parsed_options) < 2:
-            await interaction.response.send_message("You need at least two options.", ephemeral=True)
-            return
-        if len(parsed_options) > 25:
-            await interaction.response.send_message("Too many options (max 25).", ephemeral=True)
-            return
-
-        # Proceed
-        await self.cog._create_poll_internal(interaction, self.question.component.value, parsed_options)
+from views.poll_view import PollView, PollModal
+from services.engagement_service import EngagementService
 
 class Polls(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.active_polls = {} # message_id -> poll_data
+        self.active_polls = {}
 
     async def cog_load(self):
         self.active_polls = await load_polls_data()
-        # Re-register views
         for message_id, data in self.active_polls.items():
             try:
                 view = PollView(data['options'], message_id)
@@ -74,23 +26,10 @@ class Polls(commands.Cog):
 
         poll = self.active_polls[poll_id]
         user_id = str(interaction.user.id)
-
-        # Update vote
-        # Structure: poll['votes'] = {user_id: option_index}
-        if 'votes' not in poll:
-            poll['votes'] = {}
-
-        previous_vote = poll['votes'].get(user_id)
-
-        if previous_vote == option_index:
-            # Toggle off if clicking same option? Or just allow changing?
-            # Let's say clicking same option removes vote
-            del poll['votes'][user_id]
-            message = "Vote removed."
-        else:
-            poll['votes'][user_id] = option_index
-            message = f"Voted for **{poll['options'][option_index]}**."
-
+        
+        # Delegate vote logic to EngagementService
+        message, updated_poll = EngagementService.record_poll_vote(poll, user_id, option_index)
+        self.active_polls[poll_id] = updated_poll
         await save_polls_data(self.active_polls)
 
         # Update Embed
@@ -98,54 +37,15 @@ class Polls(commands.Cog):
             channel = self.bot.get_channel(int(poll['channel_id']))
             if channel:
                 msg = await channel.fetch_message(int(poll_id))
-                embed = self.create_poll_embed(poll)
+                embed = EngagementService.create_poll_embed(updated_poll)
                 await msg.edit(embed=embed)
         except Exception as e:
             print(f"Error updating poll message: {e}")
 
         await interaction.response.send_message(message, ephemeral=True)
 
-    def create_poll_embed(self, poll_data):
-        question = poll_data.get('question', 'Poll')
-        options = poll_data.get('options', [])
-        votes = poll_data.get('votes', {})
-
-        # Calculate results
-        results = [0] * len(options)
-        total_votes = len(votes)
-
-        for v_index in votes.values():
-            if 0 <= v_index < len(results):
-                results[v_index] += 1
-
-        embed = discord.Embed(title=f"📊 {question}", color=discord.Color.blurple())
-
-        desc = ""
-        for i, option in enumerate(options):
-            count = results[i]
-            percentage = 0
-            if total_votes > 0:
-                percentage = (count / total_votes) * 100
-
-            bar_length = 10
-            filled_length = int(bar_length * percentage / 100)
-            bar = "█" * filled_length + "░" * (bar_length - filled_length)
-
-            desc += f"**{option}**\n{bar} {count} ({percentage:.1f}%)\n\n"
-
-        embed.description = desc
-        embed.set_footer(text=f"Total Votes: {total_votes}")
-        return embed
-
     async def _create_poll_internal(self, interaction: discord.Interaction, question: str, option_list: list):
-        """Internal helper to create poll from parsed data."""
-
-        # Create initial embed
         embed = discord.Embed(title=f"📊 {question}", description="Setting up poll...", color=discord.Color.blurple())
-
-        # Check if interaction has been responded to (e.g. from modal submit which requires response)
-        # If from command with args, we haven't responded yet.
-        # If from Modal on_submit, we haven't responded yet unless we deferred.
 
         if not interaction.response.is_done():
              await interaction.response.send_message(embed=embed)
@@ -154,110 +54,30 @@ class Polls(commands.Cog):
              msg = await interaction.followup.send(embed=embed, wait=True)
 
         poll_id = str(msg.id)
-
-        # Initialize data
-        poll_data = {
-            "channel_id": interaction.channel.id,
-            "guild_id": interaction.guild.id,
-            "creator_id": interaction.user.id,
-            "question": question,
-            "options": option_list,
-            "votes": {}
-        }
+        poll_data = EngagementService.initialize_poll_data(interaction.guild.id, interaction.channel.id, interaction.user.id, question, option_list)
 
         self.active_polls[poll_id] = poll_data
         await save_polls_data(self.active_polls)
 
-        # Create view and update message
         view = PollView(option_list, poll_id)
-        final_embed = self.create_poll_embed(poll_data)
+        final_embed = EngagementService.create_poll_embed(poll_data)
         await msg.edit(embed=final_embed, view=view)
 
     @app_commands.command(description="📊 Create a poll with multiple options.")
     @app_commands.describe(question="The question to ask (leave blank for Modal)", options="Comma-separated options (leave blank for Modal)")
     async def poll(self, interaction: discord.Interaction, question: str = None, options: str = None):
-        """
-        📊 Create a poll.
-        """
-        # Scenario 1: Modal Trigger
         if question is None:
              await interaction.response.send_modal(PollModal(self))
              return
 
-        # Scenario 2: Direct arguments
-        if question:
-             # Use default if options missing
-             opt_str = options if options else "Yes, No"
-             parsed_options = [opt.strip() for opt in opt_str.split(',') if opt.strip()]
+        opt_str = options if options else "Yes, No"
+        parsed_options = [opt.strip() for opt in opt_str.split(',') if opt.strip()]
 
-             if len(parsed_options) < 2:
-                 await interaction.response.send_message("You need at least two options for a poll.", ephemeral=True)
-                 return
-             if len(parsed_options) > 25:
-                 await interaction.response.send_message("Too many options (max 25).", ephemeral=True)
-                 return
+        if len(parsed_options) < 2 or len(parsed_options) > 25:
+            await interaction.response.send_message("Poll requires 2-25 options.", ephemeral=True)
+            return
 
-             await self._create_poll_internal(interaction, question, parsed_options)
-
-    # API Method for Dashboard
-    async def create_poll_api(self, guild_id, channel_id, question, options):
-        guild = self.bot.get_guild(int(guild_id))
-        if not guild: return False, "Guild not found"
-
-        channel = guild.get_channel(int(channel_id))
-        if not channel: return False, "Channel not found"
-
-        option_list = [opt.strip() for opt in options if opt.strip()]
-        if len(option_list) < 2: return False, "Need at least 2 options"
-
-        # Create initial embed
-        embed = discord.Embed(title=f"📊 {question}", description="Setting up poll...", color=discord.Color.blurple())
-
-        try:
-            msg = await channel.send(embed=embed)
-            poll_id = str(msg.id)
-
-            # Initialize data
-            poll_data = {
-                "channel_id": channel_id,
-                "guild_id": guild_id,
-                "creator_id": self.bot.user.id, # Bot created
-                "question": question,
-                "options": option_list,
-                "votes": {}
-            }
-
-            self.active_polls[poll_id] = poll_data
-            await save_polls_data(self.active_polls)
-
-            view = PollView(option_list, poll_id)
-            final_embed = self.create_poll_embed(poll_data)
-            await msg.edit(embed=final_embed, view=view)
-
-            return True, poll_id
-        except Exception as e:
-            return False, str(e)
-
-    async def end_poll_api(self, poll_id):
-        if str(poll_id) in self.active_polls:
-            data = self.active_polls[poll_id]
-            del self.active_polls[str(poll_id)]
-            await save_polls_data(self.active_polls)
-
-            # Update message to show closed
-            try:
-                channel = self.bot.get_channel(int(data['channel_id']))
-                if channel:
-                    msg = await channel.fetch_message(int(poll_id))
-                    embed = msg.embeds[0]
-                    embed.title = f"🔴 [CLOSED] {embed.title.replace('📊 ', '')}"
-                    embed.color = discord.Color.red()
-                    await msg.edit(embed=embed, view=None)
-            except:
-                pass # Message might be deleted
-
-            return True, "Poll ended"
-        return False, "Poll not found"
+        await self._create_poll_internal(interaction, question, parsed_options)
 
 async def setup(bot):
     await bot.add_cog(Polls(bot))

@@ -126,20 +126,44 @@ class AdminService:
         return db_autoroom
 
     @staticmethod
-    def create_deleter_job(db: Session, data: DeleterJobCreate) -> DeleterJob:
-        """
-        Create a new deleter job.
-        """
-        db_job = DeleterJob(
-            guild_id=data.guild_id,
-            channel_id=data.channel_id,
-            user_id=data.user_id,
-            status=data.status
-        )
-        db.add(db_job)
-        db.commit()
-        db.refresh(db_job)
-        return db_job
+    async def setup_autoroom(db: Session, guild_id: str, channel_id: int, category_id: int):
+        from models.admin import AutoRoom
+        # We might need a more flexible model or handle it in guild_settings
+        # For now, let's assume we use the AutoRoom model or save to JSON bridge via loadnsave
+        from loadnsave import autoroom_load, autoroom_save
+        data = await autoroom_load()
+        if guild_id not in data: data[guild_id] = {}
+        data[guild_id]["channel_id"] = channel_id
+        data[guild_id]["category_id"] = category_id
+        await autoroom_save(data)
+        return True
+
+    @staticmethod
+    async def get_autoroom_config(guild_id: str):
+        from loadnsave import autoroom_load
+        data = await autoroom_load()
+        return data.get(guild_id, {})
+
+    @staticmethod
+    async def save_autoroom_user_channel(guild_id: str, user_id: str, channel_id: int):
+        from loadnsave import autoroom_load, autoroom_save
+        data = await autoroom_load()
+        if guild_id not in data: data[guild_id] = {}
+        data[guild_id][user_id] = channel_id
+        await autoroom_save(data)
+
+    @staticmethod
+    async def add_reaction_role(guild_id, message_id, emoji_str, role_id, channel_id=None):
+        from loadnsave import load_reaction_roles, save_reaction_roles
+        data = await load_reaction_roles()
+        sid, mid, rid = str(guild_id), str(message_id), str(role_id)
+        data.setdefault(sid, {}).setdefault(mid, {"roles": {}})
+        if "roles" not in data[sid][mid]: # Migration check
+            data[sid][mid] = {"roles": data[sid][mid].copy()}
+        if channel_id: data[sid][mid]["channel_id"] = str(channel_id)
+        data[sid][mid]["roles"][emoji_str] = rid
+        await save_reaction_roles(data)
+        return True
 
     @staticmethod
     async def perform_backup(bot: discord.Client, target_user: discord.User = None) -> tuple[bool, str]:

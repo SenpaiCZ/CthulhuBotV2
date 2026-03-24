@@ -1,5 +1,4 @@
 import discord
-from services.engagement_service import EngagementService
 
 class PollButton(discord.ui.Button):
     def __init__(self, label, index, poll_id):

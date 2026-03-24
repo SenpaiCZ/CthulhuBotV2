@@ -1,164 +1,123 @@
 import discord
-from discord import ui
-from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    from commands.reminders import Reminders
-    from commands.gameroles import GamerRoles
-
-class ReminderDeleteSelect(ui.Select):
-    def __init__(self, reminders):
-        options = []
-        # Sort by due time
-        sorted_reminders = sorted(reminders, key=lambda x: x['due_timestamp'])
-
-        for r in sorted_reminders[:25]: # Limit to 25 options
-            dt = datetime.fromtimestamp(r['due_timestamp'], tz=timezone.utc)
-            time_str = dt.strftime("%Y-%m-%d %H:%M")
-            label = f"{time_str} - {r['message'][:50]}"
-            if len(r['message']) > 50:
-                label += "..."
-
-            options.append(discord.SelectOption(
-                label=label,
-                value=r['id'],
-                description=f"Due <t:{int(r['due_timestamp'])}:R>"
-            ))
-
-        super().__init__(placeholder="Select a reminder to delete...", min_values=1, max_values=1, options=options)
+class WizardSelect(discord.ui.Select):
+    def __init__(self, view_parent, options, default_values):
+        super().__init__(
+            placeholder="Select your roles...",
+            min_values=0,
+            max_values=min(len(options), 25),
+            options=options,
+            row=0
+        )
+        self.view_parent = view_parent
 
     async def callback(self, interaction: discord.Interaction):
-        view: ReminderListView = self.view
-        await view.delete_reminder(interaction, self.values[0])
+        self.view_parent.selections[self.view_parent.current_page] = self.values
+        await interaction.response.defer()
 
-class ReminderListView(ui.View):
-    def __init__(self, cog: 'Reminders', guild_id, user_id, reminders):
-        super().__init__(timeout=60)
-        self.cog = cog
-        self.guild_id = guild_id
-        self.user_id = user_id
-        self.reminders = reminders
-        self.message = None
+class WizardButton(discord.ui.Button):
+    def __init__(self, view_parent, label, style, action, row=1):
+        super().__init__(label=label, style=style, row=row)
+        self.view_parent = view_parent
+        self.action = action
 
-        if reminders:
-            self.add_item(ReminderDeleteSelect(reminders))
+    async def callback(self, interaction: discord.Interaction):
+        if self.action == 'back': await self.view_parent.go_back(interaction)
+        elif self.action == 'next': await self.view_parent.go_next(interaction)
+        elif self.action == 'submit': await self.view_parent.submit(interaction)
+        elif self.action == 'cancel': await self.view_parent.cancel(interaction)
 
-    async def on_timeout(self):
-        for child in self.children:
-            child.disabled = True
+class EnrollView(discord.ui.View):
+    def __init__(self, pages, final_message):
+        super().__init__(timeout=300)
+        self.pages, self.final_message = pages, final_message
+        self.current_page, self.selections = 0, {}
+        self.setup_page()
 
-        if self.message:
-            try:
-                await self.message.edit(view=self)
-            except Exception:
-                pass # Message might be deleted or interaction expired
+    def setup_page(self):
+        self.clear_items()
+        page_data = self.pages[self.current_page]
+        options_data = page_data.get('options', [])
+        if options_data:
+            current_selections = self.selections.get(self.current_page, [])
+            select_options = [
+                discord.SelectOption(
+                    label=opt.get('label', 'Option')[:100],
+                    value=str(opt.get('role_id')),
+                    emoji=opt.get('emoji') or None,
+                    default=str(opt.get('role_id')) in current_selections
+                ) for opt in options_data[:25]
+            ]
+            if select_options: self.add_item(WizardSelect(self, select_options, current_selections))
+        
+        if self.current_page > 0: self.add_item(WizardButton(self, "Back", discord.ButtonStyle.secondary, 'back'))
+        if self.current_page < len(self.pages) - 1: self.add_item(WizardButton(self, "Next", discord.ButtonStyle.primary, 'next'))
+        else: self.add_item(WizardButton(self, "Finish", discord.ButtonStyle.success, 'submit'))
+        self.add_item(WizardButton(self, "Cancel", discord.ButtonStyle.danger, 'cancel'))
 
-    async def delete_reminder(self, interaction: discord.Interaction, reminder_id):
-        # Proceed to delete
-        res, msg = await self.cog.delete_reminder_api(self.guild_id, reminder_id)
+    async def update_message(self, interaction: discord.Interaction):
+        page_data = self.pages[self.current_page]
+        embed = discord.Embed(title=f"Enrollment: {page_data.get('title', 'Step')}", description=page_data.get('description', ''), color=discord.Color.blue())
+        embed.set_footer(text=f"Page {self.current_page + 1}/{len(self.pages)}")
+        if interaction.response.is_done(): await interaction.edit_original_response(embed=embed, view=self)
+        else: await interaction.response.edit_message(embed=embed, view=self)
 
-        if res:
-            await interaction.response.send_message(f"✅ Reminder deleted.", ephemeral=True)
-            self.stop()
-            for child in self.children:
-                child.disabled = True
-            await interaction.message.edit(view=self)
-        else:
-            await interaction.response.send_message(f"❌ Failed to delete: {msg}", ephemeral=True)
+    async def go_back(self, interaction: discord.Interaction):
+        self.current_page -= 1
+        self.setup_page()
+        await self.update_message(interaction)
 
-class ReminderContextMenuModal(ui.Modal, title="Set Reminder"):
-    def __init__(self, cog: 'Reminders', message: discord.Message):
+    async def go_next(self, interaction: discord.Interaction):
+        self.current_page += 1
+        self.setup_page()
+        await self.update_message(interaction)
+
+    async def cancel(self, interaction: discord.Interaction):
+        await interaction.response.edit_message(content="Enrollment cancelled.", embed=None, view=None)
+        self.stop()
+
+class AddSkillModal(discord.ui.Modal, title="Add Custom Skill"):
+    skill_name_input = discord.ui.TextInput(label="Skill Name", placeholder="e.g. Drive (Tank)", min_length=1, max_length=100)
+    skill_value_input = discord.ui.TextInput(label="Starting Value", placeholder="e.g. 40", min_length=1, max_length=3)
+
+    def __init__(self, investigator_id):
         super().__init__()
-        self.cog = cog
-
-        # Pre-fill note with context
-        content_preview = message.content
-        if len(content_preview) > 800:
-             content_preview = content_preview[:800] + "..."
-        default_note = f"Context: {content_preview}\n{message.jump_url}"
-        if len(default_note) > 1000:
-             default_note = default_note[:1000]
-
-        self.duration = ui.TextInput(
-            label="Duration (e.g., 10m, 1h, 1d)",
-            placeholder="1h",
-            max_length=10,
-            required=True
-        )
-        self.message_note = ui.TextInput(
-            label="Reminder Note",
-            style=discord.TextStyle.paragraph,
-            default=default_note,
-            max_length=1000,
-            required=True
-        )
-
-        self.add_item(self.duration)
-        self.add_item(self.message_note)
+        self.investigator_id = investigator_id
 
     async def on_submit(self, interaction: discord.Interaction):
-        seconds = self.cog.parse_duration(self.duration.value)
-        if seconds <= 0:
-            await interaction.response.send_message("❌ Invalid duration. Please use a format like `10m`, `1h`, `1d`, `30s`.", ephemeral=True)
-            return
+        from models.database import SessionLocal
+        from services.character_service import CharacterService
+        val_str = self.skill_value_input.value.strip()
+        if not val_str.isdigit(): return await interaction.response.send_message("Number required (0-100).", ephemeral=True)
+        val = int(val_str)
+        if val < 0: return await interaction.response.send_message("No negative values.", ephemeral=True)
+        db = SessionLocal()
+        try:
+            inv = CharacterService.get_investigator(db, self.investigator_id)
+            if any(k.lower() == self.skill_name_input.value.strip().lower() for k in (inv.skills or {}).keys()):
+                return await interaction.response.send_message("Skill already exists.", ephemeral=True)
+            CharacterService.add_skill(db, self.investigator_id, self.skill_name_input.value.strip(), val)
+            await interaction.response.send_message(f"Added **{self.skill_name_input.value}** ({val}).", ephemeral=True)
+        finally: db.close()
 
-        res, result = await self.cog.create_reminder_api(
-            interaction.guild_id,
-            interaction.channel_id,
-            interaction.user.id,
-            self.message_note.value,
-            seconds
-        )
-
-        if not res:
-            await interaction.response.send_message(f"❌ Failed to set reminder: {result}", ephemeral=True)
-            return
-
-        reminder = result
-        due_time = reminder['due_timestamp']
-
-        human_time = f"<t:{int(due_time)}:R>"
-        embed = discord.Embed(
-            title="✅ Reminder Set",
-            description=f"I'll remind you in {human_time} about:\n**{self.message_note.value}**",
-            color=discord.Color.green()
-        )
-        embed.set_footer(text="I will ping you in this channel when it's time.")
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-# GamerRole Views
-
-COLOR_PRESETS = {
-    "Red": 0xFF0000, "Orange": 0xFFA500, "Yellow": 0xFFFF00, "Green": 0x008000,
-    "Blue": 0x0000FF, "Purple": 0x800080, "Pink": 0xFFC0CB, "White": 0xFFFFFF,
-    "Grey": 0x808080, "Cyan": 0x00FFFF, "Teal": 0x008080, "Lime": 0x00FF00,
-    "Magenta": 0xFF00FF, "Gold": 0xFFD700, "Brown": 0xA52A2A, "Navy": 0x000080,
-    "Maroon": 0x800000, "Olive": 0x808000, "Coral": 0xFF7F50, "Indigo": 0x4B0082,
-    "Violet": 0xEE82EE, "Turquoise": 0x40E0D0, "Salmon": 0xFA8072, "Sky Blue": 0x87CEEB
-}
-
-class ColorSelect(ui.Select):
-    def __init__(self):
-        options = [discord.SelectOption(label=name, value=name) for name in COLOR_PRESETS.keys()]
-        super().__init__(placeholder="Select a color...", min_values=1, max_values=1, options=options)
-
-    async def callback(self, interaction: discord.Interaction):
-        color_name = self.values[0]
-        color_value = COLOR_PRESETS[color_name]
-        view: GamerRoleColorView = self.view
-        await view.save_color(interaction, color_value, color_name)
-
-class GamerRoleColorView(ui.View):
-    def __init__(self, cog: 'GamerRoles', guild_id):
+class RemoveSkillView(discord.ui.View):
+    def __init__(self, investigator_id, skill_name, user_id):
         super().__init__(timeout=60)
-        self.cog = cog
-        self.guild_id = guild_id
-        self.add_item(ColorSelect())
+        self.investigator_id, self.skill_name, self.user_id = investigator_id, skill_name, user_id
 
-    async def save_color(self, interaction, color_value, color_name):
-        hex_color = f"#{color_value:06x}"
-        await self.cog.update_settings(self.guild_id, "color", hex_color)
-        await interaction.response.send_message(f"Gamer Role color set to **{color_name}**.", ephemeral=False)
+    @discord.ui.button(label="Confirm Remove", style=discord.ButtonStyle.danger)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id: return await interaction.response.send_message("Not yours!", ephemeral=True)
+        from models.database import SessionLocal
+        from services.character_service import CharacterService
+        db = SessionLocal()
+        try:
+            CharacterService.remove_skill(db, self.investigator_id, self.skill_name)
+            await interaction.response.edit_message(content=f"Removed **{self.skill_name}**.", view=None)
+        finally: db.close()
+        self.stop()
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(content="Cancelled.", view=None)
         self.stop()

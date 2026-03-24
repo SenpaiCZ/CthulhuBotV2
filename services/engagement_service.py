@@ -431,3 +431,17 @@ class EngagementService:
                     sub["last_message"], sub["last_id"] = latest.title, self.get_rss_entry_id(latest)
                     changed = True
         if changed: await save_rss_data(rss_data)
+
+    @staticmethod
+    async def get_gamerole_settings(guild_id: str):
+        from loadnsave import load_gamerole_settings
+        data = await load_gamerole_settings()
+        return data.get(str(guild_id), {})
+
+    @staticmethod
+    async def update_gamerole_settings(guild_id: str, key: str, value):
+        from loadnsave import load_gamerole_settings, save_gamerole_settings
+        data = await load_gamerole_settings()
+        data.setdefault(str(guild_id), {})[key] = value
+        await save_gamerole_settings(data)
+        return True

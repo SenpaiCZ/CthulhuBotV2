@@ -2,197 +2,70 @@ import re
 import discord
 from discord.ext import commands
 from discord import app_commands
-from loadnsave import load_reaction_roles, save_reaction_roles
+from loadnsave import load_reaction_roles
+from services.admin_service import AdminService
 
 class ReactionRoles(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def add_reaction_role(self, guild_id, message_id, emoji_str, role_id, channel_id=None):
-        data = await load_reaction_roles()
-        guild_id = str(guild_id)
-        message_id = str(message_id)
-        role_id = str(role_id)
-
-        if guild_id not in data:
-            data[guild_id] = {}
-
-        if message_id not in data[guild_id]:
-            data[guild_id][message_id] = {}
-
-        # Handle data structure (Old vs New)
-        message_data = data[guild_id][message_id]
-        if "roles" in message_data:
-             # Already new format
-             pass
-        elif message_data and not any(k in ["roles", "channel_id"] for k in message_data):
-             # Old format, migrate
-             old_roles = message_data.copy()
-             data[guild_id][message_id] = {"roles": old_roles}
-             message_data = data[guild_id][message_id]
-        elif not message_data:
-             # New entry
-             data[guild_id][message_id] = {"roles": {}}
-             message_data = data[guild_id][message_id]
-
-        # Save channel_id if provided
-        if channel_id:
-            message_data["channel_id"] = str(channel_id)
-
-        # Save role
-        if "roles" in message_data:
-             message_data["roles"][emoji_str] = role_id
-        else:
-             # Should be unreachable if logic above is correct, but fallback to old behavior just in case?
-             # If "roles" is not in message_data, then it must be old format that failed migration?
-             # But migration logic covers empty and non-empty.
-             # Just assume safe.
-             pass
-
-        await save_reaction_roles(data)
-
     @app_commands.command(name="reactionrole", description="🎭 [DEPRECATED] Setup a reaction role. Use /rolepanel instead.")
-    @app_commands.describe(message_link="The message link or ID.", role="The role to assign.", emoji="The emoji to react with.")
     @app_commands.checks.has_permissions(administrator=True)
     async def reaction_role(self, interaction: discord.Interaction, message_link: str, role: discord.Role, emoji: str):
-        """
-        🎭 Setup a reaction role.
-        **DEPRECATED**: Please use `/rolepanel` for a better experience.
-        """
-        await interaction.response.send_message("⚠️ **Deprecation Warning**: Reaction Roles are deprecated. Please consider using `/rolepanel` for modern button-based roles.", ephemeral=True)
-        # Continue with old logic for now...
-        # await interaction.response.defer(ephemeral=True) # Cannot defer after send_message
-
-        # Determine Message
+        await interaction.response.send_message("⚠️ Reaction Roles are deprecated. Use `/rolepanel` instead.", ephemeral=True)
         message = None
         if message_link.isdigit():
-            try:
-                # If ID provided, try to find in current channel first
-                if interaction.channel:
-                     message = await interaction.channel.fetch_message(int(message_link))
-            except discord.NotFound:
-                await interaction.followup.send("Message not found in this channel. Try using a Message Link instead.")
-                return
+            try: message = await interaction.channel.fetch_message(int(message_link))
+            except: return await interaction.followup.send("Message not found.")
         else:
             try:
-                # Try to convert message link
                 parts = message_link.split('/')
-                msg_id = int(parts[-1])
-                chan_id = int(parts[-2])
-                guild_id = int(parts[-3]) # Message link: https://discord.com/channels/guild_id/channel_id/message_id
-
-                if guild_id != interaction.guild_id:
-                     await interaction.followup.send("Message must be in this server.")
-                     return
-
-                channel = interaction.guild.get_channel(chan_id)
-                if channel:
-                    message = await channel.fetch_message(msg_id)
-            except Exception:
-                pass
-
-        if not message:
-            await interaction.followup.send("Could not find the message. Please provide a valid Message ID (in this channel) or a Message Link.")
-            return
-
-        # Normalize emoji
-        resolved_emoji_str = emoji
-        emoji_to_react = emoji
-
-        # Check for custom ID format :12345: or just 12345 (if interpreted as string)
-        custom_id_match = re.match(r'^<a?:.+:(\d+)>$', emoji) # Matches <a:name:id> or <:name:id>
-        if not custom_id_match:
-             custom_id_match = re.match(r'^:?(\d+):?$', emoji)
-
+                chan = interaction.guild.get_channel(int(parts[-2]))
+                if chan: message = await chan.fetch_message(int(parts[-1]))
+            except: pass
+        if not message: return await interaction.followup.send("Could not find message.")
+        
+        resolved_emoji = emoji
+        custom_id_match = re.match(r'^<a?:.+:(\d+)>$', emoji) or re.match(r'^:?(\d+):?$', emoji)
         if custom_id_match:
-            emoji_id = int(custom_id_match.group(1))
-            custom_emoji = self.bot.get_emoji(emoji_id)
-            if custom_emoji:
-                resolved_emoji_str = str(custom_emoji)
-                emoji_to_react = custom_emoji
-            else:
-                # If we can't find it locally, we might not be able to react with it if it's from another server we are not in.
-                # But Discord handles external emojis if the bot has nitro features (it usually does as bot).
-                # However, if get_emoji returns None, it means the bot doesn't see it in its cache (maybe another shard or bot not in that guild).
-                # We'll try to use the partial emoji logic or just the ID if possible, but simplest is to error out if unknown.
-                await interaction.followup.send(f"I cannot find the emoji with ID {emoji_id}. Make sure I am in the server where this emoji is from.")
-                return
-        else:
-            # Standard emoji (unicode)
-            # resolved_emoji_str is already set to emoji
-            pass
-
-        # We need to ensure the bot can use the emoji to react.
-        try:
-            await message.add_reaction(emoji_to_react)
-        except discord.HTTPException:
-            await interaction.followup.send(f"I cannot react with {emoji_to_react}. Please make sure I have permission to use external emojis or that the emoji is valid.")
-            return
-
-        await self.add_reaction_role(interaction.guild_id, message.id, str(resolved_emoji_str), role.id, message.channel.id)
-
-        await interaction.followup.send(f"Reaction role setup! Reacting with {emoji_to_react} on that message will give the role **{role.name}**.", ephemeral=True)
+            custom_emoji = self.bot.get_emoji(int(custom_id_match.group(1)))
+            if custom_emoji: resolved_emoji = custom_emoji
+            else: return await interaction.followup.send("Custom emoji not found.")
+        
+        try: await message.add_reaction(resolved_emoji)
+        except: return await interaction.followup.send("Cannot react with that emoji.")
+        
+        await AdminService.add_reaction_role(interaction.guild_id, message.id, str(resolved_emoji), role.id, message.channel.id)
+        await interaction.followup.send(f"Reaction role setup for **{role.name}**!", ephemeral=True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        if payload.user_id == self.bot.user.id:
-            return
-
+        if payload.user_id == self.bot.user.id: return
         data = await load_reaction_roles()
-        guild_id = str(payload.guild_id)
-        message_id = str(payload.message_id)
-        emoji_str = str(payload.emoji)
-
-        if guild_id in data and message_id in data[guild_id]:
-            message_data = data[guild_id][message_id]
-            roles = {}
-            if "roles" in message_data:
-                roles = message_data["roles"]
-            else:
-                roles = message_data
-
-            if emoji_str in roles:
-                role_id = int(roles[emoji_str])
+        sid, mid, estr = str(payload.guild_id), str(payload.message_id), str(payload.emoji)
+        if sid in data and mid in data[sid]:
+            roles = data[sid][mid].get("roles", data[sid][mid])
+            if estr in roles:
                 guild = self.bot.get_guild(payload.guild_id)
-                if guild:
-                    role = guild.get_role(role_id)
-                    member = guild.get_member(payload.user_id)
-                    if role and member:
-                        try:
-                            await member.add_roles(role)
-                        except discord.Forbidden:
-                            # Bot doesn't have permission to add role
-                            pass
+                role = guild.get_role(int(roles[estr])) if guild else None
+                member = guild.get_member(payload.user_id) if guild else None
+                if role and member:
+                    try: await member.add_roles(role)
+                    except: pass
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        if payload.user_id == self.bot.user.id:
-            return
-
+        if payload.user_id == self.bot.user.id: return
         data = await load_reaction_roles()
-        guild_id = str(payload.guild_id)
-        message_id = str(payload.message_id)
-        emoji_str = str(payload.emoji)
-
-        if guild_id in data and message_id in data[guild_id]:
-            message_data = data[guild_id][message_id]
-            roles = {}
-            if "roles" in message_data:
-                roles = message_data["roles"]
-            else:
-                roles = message_data
-
-            if emoji_str in roles:
-                role_id = int(roles[emoji_str])
+        sid, mid, estr = str(payload.guild_id), str(payload.message_id), str(payload.emoji)
+        if sid in data and mid in data[sid]:
+            roles = data[sid][mid].get("roles", data[sid][mid])
+            if estr in roles:
                 guild = self.bot.get_guild(payload.guild_id)
-                if guild:
-                    role = guild.get_role(role_id)
-                    member = guild.get_member(payload.user_id)
-                    if role and member:
-                        try:
-                            await member.remove_roles(role)
-                        except discord.Forbidden:
-                            pass
+                role = guild.get_role(int(roles[estr])) if guild else None
+                member = guild.get_member(payload.user_id) if guild else None
+                if role and member:
+                    try: await member.remove_roles(role)
+                    except: pass
 
-async def setup(bot):
-    await bot.add_cog(ReactionRoles(bot))
+async def setup(bot): await bot.add_cog(ReactionRoles(bot))
