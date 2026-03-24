@@ -5,6 +5,7 @@ __pycache__/
 .venv
 env/
 venv/
-data/
+data/*
+!data/database.sqlite
 *.log
 cookies/

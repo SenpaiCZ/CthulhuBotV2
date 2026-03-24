@@ -1,4 +1,4 @@
-## 2024-05-24 - Fix Reflected XSS in 404 Error Pages
-**Vulnerability:** Reflected Cross-Site Scripting (XSS) in `dashboard/app.py` `render_*` routes. The `name` query parameter was directly interpolated into the 404 error HTML response.
-**Learning:** Quart uses `text/html` by default for string returns. Any unescaped user input directly returned in these strings can execute arbitrary JavaScript in the victim's browser.
-**Prevention:** Always use an HTML escaper (like `markupsafe.escape`) when interpolating user-controlled data into HTML strings, even for simple error messages like 404s.
+## 2025-03-02 - Enforcing Defense in Depth for File Serving
+**Vulnerability:** Weak path traversal checks in Flask/Quart endpoints `serve_fonts`, `serve_image` and `backup_download_file`.
+**Learning:** While `send_from_directory` generally offers basic traversal protection, relying solely on it or a simple string check (`.. in filename`) is insufficient defense in depth. Explicit server-side normalization (`os.path.abspath`) and prefix checking (`os.path.commonpath`) offer better and foolproof security.
+**Prevention:** Always implement `os.path.commonpath([full_path, base_path]) == base_path` whenever serving files from dynamically parsed URL paths or inputs, rather than depending purely on framework defaults or naive string checking.
