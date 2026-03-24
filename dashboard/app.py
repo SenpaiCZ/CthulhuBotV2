@@ -464,6 +464,12 @@ async def index():
                                uptime=uptime, 
                                failed_extensions=failed_extensions)
 
+@app.route('/activity')
+async def activity():
+    settings = await load_settings_async()
+    client_id = settings.get('activity_client_id', 'YOUR_DISCORD_CLIENT_ID_HERE')
+    return await render_template('activity.html', activity_client_id=client_id)
+
 @app.route('/login', methods=['GET', 'POST'])
 async def login():
     if request.method == 'POST':

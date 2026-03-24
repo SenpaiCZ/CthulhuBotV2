@@ -1,0 +1,48 @@
+{% extends "base_glass.html" %}
+
+{% block title %}CoC Bot Activity{% endblock %}
+
+{% block content %}
+<div class="glass-card max-w-2xl mx-auto text-center">
+    <h1 id="status" class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 mb-6">
+        Initializing Activity...
+    </h1>
+    
+    <div id="loading" class="flex flex-col items-center justify-center py-10">
+        <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+        <p class="text-slate-400">Rising from the depths of Discord...</p>
+    </div>
+
+    <div id="activity-content" class="hidden py-6">
+        <p class="text-slate-300 text-lg mb-8">
+            The Discord Activity SDK has been successfully initialized. You can now start building your custom game integrations!
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="glass-effect p-4 rounded-xl">
+                <i class="bi bi-shield-check text-2xl text-emerald-400"></i>
+                <h3 class="mt-2 font-semibold">SDK Initialized</h3>
+                <p class="text-xs text-slate-500">discordSdk.ready() successful</p>
+            </div>
+            <div class="glass-effect p-4 rounded-xl">
+                <i class="bi bi-person-check text-2xl text-indigo-400"></i>
+                <h3 class="mt-2 font-semibold">Authenticated</h3>
+                <p class="text-xs text-slate-500">OAuth2 flow confirmed</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Discord Embedded App SDK (CDN) -->
+<script src="https://cdn.discordapp.com/sdk/embedded-app-sdk/1.1.0/sdk.js"></script>
+
+<script>
+    // Pass the client ID from Flask to the activity JS
+    const ACTIVITY_CLIENT_ID = "{{ activity_client_id }}";
+</script>
+
+<!-- Activity Logic -->
+<script src="{{ url_for('static', filename='js/activity.js') }}"></script>
+{% endblock %}
