@@ -1,13 +1,9 @@
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
-import asyncio
-import aiofiles
-import io
-import os
-import zipfile
 import datetime
 from loadnsave import load_settings
+from services.admin_service import AdminService
 
 class backup(commands.Cog):
 
@@ -15,38 +11,6 @@ class backup(commands.Cog):
     self.bot = bot
     self.last_backup_date = None
     self.backup_task.start()
-
-  async def perform_backup(self, target_user=None):
-      try:
-          # If no target user is specified, default to the bot owner
-          if target_user is None:
-              app_info = await self.bot.application_info()
-              target_user = app_info.owner
-
-          # Create a zip buffer
-          zip_buffer = io.BytesIO()
-
-          # current date/time for filename
-          now = datetime.datetime.now()
-          filename = f"backup_{now.strftime('%Y-%m-%d_%H-%M')}.zip"
-
-          with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-              # Walk through data directory
-              if os.path.exists('data'):
-                  for root, dirs, files in os.walk('data'):
-                      for file in files:
-                          file_path = os.path.join(root, file)
-                          # Add file to zip, arcname makes it relative to current directory (so it includes data/)
-                          zip_file.write(file_path, os.path.relpath(file_path, '.'))
-
-          zip_buffer.seek(0)
-
-          await target_user.send(file=discord.File(zip_buffer, filename))
-          print(f"Backup {filename} sent to {target_user}.")
-          return True, filename
-      except Exception as e:
-          print(f"An error occurred while performing backup: {e}")
-          return False, str(e)
 
   @tasks.loop(minutes=1)
   async def backup_task(self):
@@ -64,7 +28,7 @@ class backup(commands.Cog):
           # Check if time matches and we haven't backed up today already
           if current_time_str == backup_time:
               if self.last_backup_date != current_date_str:
-                  await self.perform_backup()
+                  await AdminService.perform_backup(self.bot)
                   self.last_backup_date = current_date_str
       except Exception as e:
           print(f"Error in backup task: {e}")
@@ -83,7 +47,7 @@ class backup(commands.Cog):
     await interaction.response.defer(ephemeral=True)
 
     # We can send to interaction user since we verified they are owner
-    success, result = await self.perform_backup(interaction.user)
+    success, result = await AdminService.perform_backup(self.bot, interaction.user)
 
     if success:
         await interaction.followup.send(f"Backup `{result}` sent successfully to your DM.")

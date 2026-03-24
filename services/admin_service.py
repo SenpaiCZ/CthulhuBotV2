@@ -1,5 +1,7 @@
 import os
 import subprocess
+import sys
+import discord
 from datetime import datetime
 from sqlalchemy.orm import Session
 from models.social import Reminder
@@ -77,35 +79,66 @@ class AdminService:
         return db_job
 
     @staticmethod
-    def run_backup() -> bool:
+    async def perform_backup(bot: discord.Client, target_user: discord.User = None) -> tuple[bool, str]:
         """
-        Trigger a database backup.
+        Zips the data/ folder and sends it to the target user (default: bot owner).
         """
+        import io
+        import zipfile
         try:
-            # Assuming there's a backup.py or similar in the root
-            subprocess.run(["python", "backup.py"], check=True)
-            return True
-        except (subprocess.SubprocessError, FileNotFoundError):
-            return False
+            # If no target user is specified, default to the bot owner
+            if target_user is None:
+                app_info = await bot.application_info()
+                target_user = app_info.owner
+
+            # Create a zip buffer
+            zip_buffer = io.BytesIO()
+
+            # current date/time for filename
+            now = datetime.now()
+            filename = f"backup_{now.strftime('%Y-%m-%d_%H-%M')}.zip"
+
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                # Walk through data directory
+                if os.path.exists('data'):
+                    for root, dirs, files in os.walk('data'):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            # Add file to zip, arcname makes it relative to current directory (so it includes data/)
+                            zip_file.write(file_path, os.path.relpath(file_path, '.'))
+
+            zip_buffer.seek(0)
+
+            await target_user.send(file=discord.File(zip_buffer, filename))
+            return True, filename
+        except Exception as e:
+            return False, str(e)
 
     @staticmethod
-    def trigger_restart() -> bool:
+    def trigger_restart(pid: int) -> bool:
         """
         Trigger a bot restart.
         """
         try:
-            subprocess.Popen(["python", "restarter.py"])
+            subprocess.Popen([sys.executable, "restarter.py", str(pid)])
             return True
         except (subprocess.SubprocessError, FileNotFoundError):
             return False
+@staticmethod
+def trigger_update(pid: int, update_infodata: bool = False) -> bool:
+    """
+    Trigger a bot update.
+    """
+    try:
+        cmd = [sys.executable, "updater.py", str(pid)]
+        if update_infodata:
+            cmd.append("--update-infodata")
 
-    @staticmethod
-    def trigger_update() -> bool:
-        """
-        Trigger a bot update.
-        """
-        try:
-            subprocess.Popen(["python", "updater.py"])
-            return True
-        except (subprocess.SubprocessError, FileNotFoundError):
-            return False
+        if os.name == 'nt':
+            subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
+        else:
+            subprocess.Popen(cmd)
+        return True
+    except (subprocess.SubprocessError, FileNotFoundError):
+        return False
+

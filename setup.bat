@@ -28,8 +28,9 @@ echo Installing dependencies from requirements.txt...
 pip install -r requirements.txt
 
 REM Install Playwright browsers
-echo Installing Playwright browsers (chromium)...
-playwright install chromium
+echo "Installing Playwright browsers (chromium)..."
+python -m playwright install chromium
+
 
 REM Create data directory if it doesn't exist
 if not exist "data" (

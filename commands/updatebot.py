@@ -2,9 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import os
-import sys
-import subprocess
-import asyncio
+from services.admin_service import AdminService
 
 class UpdateBotView(discord.ui.View):
     def __init__(self, user, bot):
@@ -14,31 +12,15 @@ class UpdateBotView(discord.ui.View):
 
     async def _run_updater(self, interaction: discord.Interaction, update_infodata=False):
         await interaction.response.edit_message(content="🔄 **Starting Update...**\nBot is restarting.", view=None)
-
-        # Prepare the updater command
-        pid = str(os.getpid())
-        python_exe = sys.executable
-        updater_script = "updater.py"
-
-        if not os.path.exists(updater_script):
-            await interaction.followup.send(f"❌ Error: `{updater_script}` not found in root directory.", ephemeral=True)
-            return
-
-        cmd = [python_exe, updater_script, pid]
-        if update_infodata:
-            cmd.append("--update-infodata")
-
-        try:
-            if os.name == 'nt':
-                subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
-            else:
-                subprocess.Popen(cmd)
-        except Exception as e:
-             await interaction.followup.send(f"❌ Failed to start updater: {e}", ephemeral=True)
-             return
-
-        # Close the bot
-        await self.bot.close()
+        
+        # Get current process ID
+        pid = os.getpid()
+        
+        # Call service to trigger update
+        if AdminService.trigger_update(pid, update_infodata=update_infodata):
+            await self.bot.close()
+        else:
+            await interaction.followup.send("❌ Failed to start updater. Please check logs.", ephemeral=True)
 
     @discord.ui.button(label="Update System Only", style=discord.ButtonStyle.success)
     async def update_system(self, interaction: discord.Interaction, button: discord.ui.Button):

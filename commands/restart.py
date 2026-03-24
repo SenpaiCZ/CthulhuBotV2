@@ -1,8 +1,7 @@
 import discord
 from discord.ext import commands
 import os
-import sys
-import subprocess
+from services.admin_service import AdminService
 
 class Restart(commands.Cog):
     def __init__(self, bot):
@@ -16,34 +15,15 @@ class Restart(commands.Cog):
         Only the bot owner can use this command.
         """
         await ctx.send("🔄 **Restarting bot...**")
-
-        # Get the current process ID
+        
+        # Get current process ID
         pid = os.getpid()
-
-        # Prepare the restarter command
-        python_exe = sys.executable
-        restarter_script = "restarter.py"
-
-        if not os.path.exists(restarter_script):
-            await ctx.send(f"❌ Error: `{restarter_script}` not found in root directory.")
-            return
-
-        cmd = [python_exe, restarter_script, str(pid)]
-
-        try:
-            # Launch the restarter script
-            if os.name == 'nt':
-                # Windows
-                subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
-            else:
-                # Linux/Unix
-                subprocess.Popen(cmd)
-
-            # Close the bot connection
+        
+        # Call service to trigger restart
+        if AdminService.trigger_restart(pid):
             await self.bot.close()
-
-        except Exception as e:
-            await ctx.send(f"❌ Failed to start restarter: {e}")
+        else:
+            await ctx.send("❌ Failed to start restarter. Please check logs.")
 
 async def setup(bot):
     await bot.add_cog(Restart(bot))

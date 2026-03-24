@@ -35,8 +35,8 @@ echo "Installing dependencies from requirements.txt..."
 pip install -r requirements.txt
 
 # Install Playwright browsers
-echo "Installing Playwright browsers (chromium)..."
-playwright install chromium
+echo "Installing Playwright browsers (chromium) and system dependencies..."
+python3 -m playwright install chromium --with-deps
 
 # Create data directory if it doesn't exist
 if [ ! -d "data" ]; then
