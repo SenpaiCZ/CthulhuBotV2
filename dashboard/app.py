@@ -318,6 +318,60 @@ async def bot_status():
         is_ready = True
     return jsonify({"status": "online", "ready": is_ready})
 
+@app.route('/api/activity/character')
+async def api_activity_character():
+    user_id = request.args.get('user_id')
+    guild_id = request.args.get('guild_id')
+    
+    if not user_id:
+        return jsonify({"status": "error", "message": "Missing user_id"}), 400
+        
+    char_data = None
+    if USE_DATABASE:
+        from services.character_service import CharacterService
+        from models.investigator import Investigator
+        db = SessionLocal()
+        try:
+            # If guild_id is provided, look there first
+            if guild_id:
+                inv = CharacterService.get_investigator_by_guild_and_user(db, str(guild_id), str(user_id))
+                if inv:
+                    char_data = _to_legacy_format(inv)
+            
+            # If still not found, look for any character belonging to this user
+            if not char_data:
+                inv = db.query(Investigator).filter(
+                    Investigator.discord_user_id == str(user_id),
+                    Investigator.is_retired == False
+                ).first()
+                if inv:
+                    char_data = _to_legacy_format(inv)
+        finally:
+            db.close()
+    else:
+        stats = await load_player_stats()
+        if guild_id and str(guild_id) in stats and str(user_id) in stats[str(guild_id)]:
+            char_data = stats[str(guild_id)][str(user_id)]
+        else:
+            # Search all guilds
+            for g_id, g_stats in stats.items():
+                if str(user_id) in g_stats:
+                    char_data = g_stats[str(user_id)]
+                    break
+    
+    if not char_data:
+        return jsonify({"status": "error", "message": "Character not found"}), 404
+    
+    # Calculate derived stats for Max values
+    from services.character_service import CharacterService
+    derived = CharacterService.calculate_derived_stats(char_data, char_data.get("Game Mode", "Call of Cthulhu"))
+    
+    char_data["Max HP"] = derived["hp"]
+    char_data["Max MP"] = derived["mp"]
+    char_data["Max SAN"] = derived["san"]
+        
+    return jsonify(char_data)
+
 @app.route('/fonts/<path:filename>')
 async def serve_fonts(filename):
     try:

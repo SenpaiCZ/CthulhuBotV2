@@ -1,0 +1,78 @@
+{% from 'includes/glass_components.html' import glass_card, glass_button %}
+
+<div id="character-quick-view" class="space-y-6 animate-fadeIn hidden">
+    <!-- Character Info Header -->
+    <div class="glass-card p-4 flex items-center space-x-4 border-indigo-500/20">
+        <div id="char-avatar" class="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 overflow-hidden shadow-inner">
+            <i class="bi bi-person text-3xl text-indigo-400/80"></i>
+        </div>
+        <div class="text-left overflow-hidden">
+            <h2 id="char-name" class="text-2xl font-bold text-slate-100 truncate tracking-tight">Loading...</h2>
+            <p id="char-occupation" class="text-sm text-slate-400 truncate font-medium">Unknown Occupation</p>
+        </div>
+    </div>
+
+    <!-- Vitals with Progress Bars -->
+    <div class="grid grid-cols-1 gap-4">
+        <!-- HP -->
+        <div class="glass-effect p-4 rounded-2xl border-rose-500/10 hover:border-rose-500/20 transition-colors">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[10px] font-bold text-rose-400 uppercase tracking-[0.2em]">Hit Points</span>
+                <span id="hp-val" class="text-sm font-mono text-rose-100 font-bold">0 / 0</span>
+            </div>
+            <div class="w-full bg-slate-950/50 rounded-full h-2 border border-white/5 overflow-hidden">
+                <div id="hp-bar" class="bg-gradient-to-r from-rose-600 to-rose-400 h-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(225,29,72,0.3)]" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Sanity -->
+        <div class="glass-effect p-4 rounded-2xl border-amber-500/10 hover:border-amber-500/20 transition-colors">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[10px] font-bold text-amber-400 uppercase tracking-[0.2em]">Sanity</span>
+                <span id="san-val" class="text-sm font-mono text-amber-100 font-bold">0 / 0</span>
+            </div>
+            <div class="w-full bg-slate-950/50 rounded-full h-2 border border-white/5 overflow-hidden">
+                <div id="san-bar" class="bg-gradient-to-r from-amber-600 to-amber-400 h-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(217,119,6,0.3)]" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Magic Points -->
+        <div class="glass-effect p-4 rounded-2xl border-sky-500/10 hover:border-sky-500/20 transition-colors">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[10px] font-bold text-sky-400 uppercase tracking-[0.2em]">Magic Points</span>
+                <span id="mp-val" class="text-sm font-mono text-sky-100 font-bold">0 / 0</span>
+            </div>
+            <div class="w-full bg-slate-950/50 rounded-full h-2 border border-white/5 overflow-hidden">
+                <div id="mp-bar" class="bg-gradient-to-r from-sky-600 to-sky-400 h-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(14,165,233,0.3)]" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Characteristics Roll Buttons -->
+    <div class="grid grid-cols-2 gap-3">
+        {% for stat in ['STR', 'DEX', 'POW', 'INT', 'CON', 'APP', 'SIZ', 'EDU'] %}
+        <button onclick="rollStat('{{ stat }}')" class="glass-stat-btn group p-3 flex flex-col items-center border-white/5 hover:border-indigo-500/30">
+            <span class="text-[9px] text-slate-500 group-hover:text-indigo-400 uppercase tracking-[0.2em] mb-1 transition-colors">{{ stat }}</span>
+            <span id="stat-{{ stat }}" class="text-xl font-bold text-slate-100 group-hover:text-white transition-colors">0</span>
+        </button>
+        {% endfor %}
+        <button onclick="rollStat('LUCK')" class="glass-stat-btn group p-3 flex flex-col items-center col-span-2 border-emerald-500/10 hover:border-emerald-500/30">
+            <span class="text-[9px] text-emerald-500/60 group-hover:text-emerald-400 uppercase tracking-[0.2em] mb-1 transition-colors">LUCK</span>
+            <span id="stat-LUCK" class="text-xl font-bold text-emerald-400 group-hover:text-emerald-300 transition-colors">0</span>
+        </button>
+    </div>
+</div>
+
+<style>
+    .glass-stat-btn {
+        @apply bg-slate-900/40 backdrop-blur-md border rounded-xl transition-all duration-300 active:scale-95 hover:bg-indigo-500/5 hover:shadow-lg hover:shadow-indigo-500/5;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn {
+        animation: fadeIn 0.5s ease-out forwards;
+    }
+</style>

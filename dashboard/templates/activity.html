@@ -1,34 +1,30 @@
 {% extends "base_glass.html" %}
 
-{% block title %}CoC Bot Activity{% endblock %}
+{% block title %}CoC Bot Activity - Investigator View{% endblock %}
 
 {% block content %}
-<div class="glass-card max-w-2xl mx-auto text-center">
-    <h1 id="status" class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 mb-6">
-        Initializing Activity...
+<div class="max-w-md mx-auto text-center">
+    <h1 id="status" class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 mb-6 tracking-tight">
+        Initializing...
     </h1>
     
-    <div id="loading" class="flex flex-col items-center justify-center py-10">
-        <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-slate-400">Rising from the depths of Discord...</p>
+    <div id="loading" class="flex flex-col items-center justify-center py-12">
+        <div class="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(99,102,241,0.2)]"></div>
+        <p class="text-slate-400 font-medium animate-pulse">Consulting the stars...</p>
     </div>
 
-    <div id="activity-content" class="hidden py-6">
-        <p class="text-slate-300 text-lg mb-8">
-            The Discord Activity SDK has been successfully initialized. You can now start building your custom game integrations!
-        </p>
+    <div id="activity-content" class="hidden">
+        <div id="character-container">
+            {% include 'includes/activity_stats.html' %}
+        </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="glass-effect p-4 rounded-xl">
-                <i class="bi bi-shield-check text-2xl text-emerald-400"></i>
-                <h3 class="mt-2 font-semibold">SDK Initialized</h3>
-                <p class="text-xs text-slate-500">discordSdk.ready() successful</p>
-            </div>
-            <div class="glass-effect p-4 rounded-xl">
-                <i class="bi bi-person-check text-2xl text-indigo-400"></i>
-                <h3 class="mt-2 font-semibold">Authenticated</h3>
-                <p class="text-xs text-slate-500">OAuth2 flow confirmed</p>
-            </div>
+        <div id="no-character" class="hidden glass-card p-8 border-rose-500/20">
+            <i class="bi bi-exclamation-triangle text-4xl text-rose-400 mb-4"></i>
+            <h3 class="text-xl font-bold text-slate-100 mb-2">No Investigator Found</h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+                You don't have an active character in this server.<br>
+                Use <code class="bg-white/5 px-1.5 py-0.5 rounded text-indigo-300 font-mono">/newinvestigator</code> in a Discord channel to create one!
+            </p>
         </div>
     </div>
 </div>
