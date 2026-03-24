@@ -649,13 +649,25 @@ _DELETER_DATA_CACHE = None
 
 async def load_deleter_data():
     global _DELETER_DATA_CACHE
-    if _DELETER_DATA_CACHE is None:
-        _DELETER_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'deleter_data.json')
+    if _DELETER_DATA_CACHE is not None:
+        return _DELETER_DATA_CACHE.copy()
+
+    if USE_DATABASE:
+        all_deleter = await _db_get_all_guild_settings("deleter_data")
+        if all_deleter:
+            _DELETER_DATA_CACHE = all_deleter
+            return _DELETER_DATA_CACHE.copy()
+
+    _DELETER_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'deleter_data.json')
     return _DELETER_DATA_CACHE.copy()
 
 async def save_deleter_data(session_data):
     global _DELETER_DATA_CACHE
     _DELETER_DATA_CACHE = session_data.copy()
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("deleter_data", session_data)
+
     await _save_json_file(DATA_FOLDER, 'deleter_data.json', session_data)
 
 # --- RSS Data ---
@@ -663,13 +675,25 @@ _RSS_DATA_CACHE = None
 
 async def load_rss_data():
     global _RSS_DATA_CACHE
-    if _RSS_DATA_CACHE is None:
-        _RSS_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'rss_data.json')
+    if _RSS_DATA_CACHE is not None:
+        return _RSS_DATA_CACHE
+
+    if USE_DATABASE:
+        all_rss = await _db_get_all_guild_settings("rss_data")
+        if all_rss:
+            _RSS_DATA_CACHE = all_rss
+            return _RSS_DATA_CACHE
+
+    _RSS_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'rss_data.json')
     return _RSS_DATA_CACHE
 
 async def save_rss_data(session_data):
     global _RSS_DATA_CACHE
     _RSS_DATA_CACHE = session_data
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("rss_data", session_data)
+
     await _save_json_file(DATA_FOLDER, 'rss_data.json', session_data)
 
 # --- Soundboard Settings ---
@@ -677,13 +701,25 @@ _SOUNDBOARD_SETTINGS_CACHE = None
 
 async def load_soundboard_settings():
     global _SOUNDBOARD_SETTINGS_CACHE
-    if _SOUNDBOARD_SETTINGS_CACHE is None:
-        _SOUNDBOARD_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'soundboard_settings.json')
+    if _SOUNDBOARD_SETTINGS_CACHE is not None:
+        return _SOUNDBOARD_SETTINGS_CACHE.copy()
+
+    if USE_DATABASE:
+        all_sb = await _db_get_all_guild_settings("soundboard_settings")
+        if all_sb:
+            _SOUNDBOARD_SETTINGS_CACHE = all_sb
+            return _SOUNDBOARD_SETTINGS_CACHE.copy()
+
+    _SOUNDBOARD_SETTINGS_CACHE = await _load_json_file(DATA_FOLDER, 'soundboard_settings.json')
     return _SOUNDBOARD_SETTINGS_CACHE.copy()
 
 async def save_soundboard_settings(settings_data):
     global _SOUNDBOARD_SETTINGS_CACHE
     _SOUNDBOARD_SETTINGS_CACHE = settings_data.copy()
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("soundboard_settings", settings_data)
+
     await _save_json_file(DATA_FOLDER, 'soundboard_settings.json', settings_data)
 
 # --- Music Blacklist ---
@@ -691,9 +727,18 @@ _MUSIC_BLACKLIST_CACHE = None
 
 async def load_music_blacklist():
     global _MUSIC_BLACKLIST_CACHE
-    if _MUSIC_BLACKLIST_CACHE is None:
-        _MUSIC_BLACKLIST_CACHE = await _load_json_file(DATA_FOLDER, 'music_blacklist.json')
-    # List
+    if _MUSIC_BLACKLIST_CACHE is not None:
+        if isinstance(_MUSIC_BLACKLIST_CACHE, list):
+            return _MUSIC_BLACKLIST_CACHE.copy()
+        return _MUSIC_BLACKLIST_CACHE
+
+    if USE_DATABASE:
+        blacklist = await _db_get_setting("global", "music_blacklist")
+        if blacklist:
+            _MUSIC_BLACKLIST_CACHE = blacklist
+            return _MUSIC_BLACKLIST_CACHE.copy() if isinstance(blacklist, list) else blacklist
+
+    _MUSIC_BLACKLIST_CACHE = await _load_json_file(DATA_FOLDER, 'music_blacklist.json')
     if isinstance(_MUSIC_BLACKLIST_CACHE, list):
         return _MUSIC_BLACKLIST_CACHE.copy()
     return _MUSIC_BLACKLIST_CACHE
@@ -704,6 +749,10 @@ async def save_music_blacklist(blacklist):
         _MUSIC_BLACKLIST_CACHE = blacklist.copy()
     else:
         _MUSIC_BLACKLIST_CACHE = blacklist
+
+    if USE_DATABASE:
+        await _db_save_setting("global", "music_blacklist", blacklist)
+
     await _save_json_file(DATA_FOLDER, 'music_blacklist.json', blacklist)
 
 # --- Reminder Data ---
@@ -711,13 +760,25 @@ _REMINDER_DATA_CACHE = None
 
 async def load_reminder_data():
     global _REMINDER_DATA_CACHE
-    if _REMINDER_DATA_CACHE is None:
-        _REMINDER_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'reminder_data.json')
+    if _REMINDER_DATA_CACHE is not None:
+        return _REMINDER_DATA_CACHE.copy()
+
+    if USE_DATABASE:
+        all_reminders = await _db_get_all_guild_settings("reminder_data")
+        if all_reminders:
+            _REMINDER_DATA_CACHE = all_reminders
+            return _REMINDER_DATA_CACHE.copy()
+
+    _REMINDER_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'reminder_data.json')
     return _REMINDER_DATA_CACHE.copy()
 
 async def save_reminder_data(session_data):
     global _REMINDER_DATA_CACHE
     _REMINDER_DATA_CACHE = session_data.copy()
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("reminder_data", session_data)
+
     await _save_json_file(DATA_FOLDER, 'reminder_data.json', session_data)
 
 # --- Game Data ---
@@ -842,13 +903,25 @@ _REACTION_ROLES_CACHE = None
 
 async def load_reaction_roles():
     global _REACTION_ROLES_CACHE
-    if _REACTION_ROLES_CACHE is None:
-        _REACTION_ROLES_CACHE = await _load_json_file(DATA_FOLDER, 'reaction_roles.json')
+    if _REACTION_ROLES_CACHE is not None:
+        return _REACTION_ROLES_CACHE
+
+    if USE_DATABASE:
+        all_rr = await _db_get_all_guild_settings("reaction_roles")
+        if all_rr:
+            _REACTION_ROLES_CACHE = all_rr
+            return _REACTION_ROLES_CACHE
+
+    _REACTION_ROLES_CACHE = await _load_json_file(DATA_FOLDER, 'reaction_roles.json')
     return _REACTION_ROLES_CACHE
 
 async def save_reaction_roles(roles_data):
     global _REACTION_ROLES_CACHE
     _REACTION_ROLES_CACHE = roles_data
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("reaction_roles", roles_data)
+
     await _save_json_file(DATA_FOLDER, 'reaction_roles.json', roles_data)
 
 # --- Pokemon GO Data ---
@@ -880,13 +953,25 @@ async def save_pogo_settings(settings):
 
 async def load_pogo_events():
     global _POGO_EVENTS_CACHE
-    if _POGO_EVENTS_CACHE is None:
-        _POGO_EVENTS_CACHE = await _load_json_file(DATA_FOLDER, 'pogo_events.json')
+    if _POGO_EVENTS_CACHE is not None:
+        return _POGO_EVENTS_CACHE
+
+    if USE_DATABASE:
+        all_pogo = await _db_get_setting("global", "pogo_events")
+        if all_pogo:
+            _POGO_EVENTS_CACHE = all_pogo
+            return _POGO_EVENTS_CACHE
+
+    _POGO_EVENTS_CACHE = await _load_json_file(DATA_FOLDER, 'pogo_events.json')
     return _POGO_EVENTS_CACHE
 
 async def save_pogo_events(events):
     global _POGO_EVENTS_CACHE
     _POGO_EVENTS_CACHE = events
+
+    if USE_DATABASE:
+        await _db_save_setting("global", "pogo_events", events)
+
     await _save_json_file(DATA_FOLDER, 'pogo_events.json', events)
 
 # --- Giveaway Data ---
@@ -894,13 +979,25 @@ _GIVEAWAY_DATA_CACHE = None
 
 async def load_giveaway_data():
     global _GIVEAWAY_DATA_CACHE
-    if _GIVEAWAY_DATA_CACHE is None:
-        _GIVEAWAY_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'giveaway_data.json')
+    if _GIVEAWAY_DATA_CACHE is not None:
+        return _GIVEAWAY_DATA_CACHE
+
+    if USE_DATABASE:
+        all_giveaways = await _db_get_all_guild_settings("giveaway_data")
+        if all_giveaways:
+            _GIVEAWAY_DATA_CACHE = all_giveaways
+            return _GIVEAWAY_DATA_CACHE
+
+    _GIVEAWAY_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'giveaway_data.json')
     return _GIVEAWAY_DATA_CACHE
 
 async def save_giveaway_data(data):
     global _GIVEAWAY_DATA_CACHE
     _GIVEAWAY_DATA_CACHE = data
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("giveaway_data", data)
+
     await _save_json_file(DATA_FOLDER, 'giveaway_data.json', data)
 
 # --- Polls Data ---
@@ -908,13 +1005,25 @@ _POLLS_DATA_CACHE = None
 
 async def load_polls_data():
     global _POLLS_DATA_CACHE
-    if _POLLS_DATA_CACHE is None:
-        _POLLS_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'polls_data.json')
+    if _POLLS_DATA_CACHE is not None:
+        return _POLLS_DATA_CACHE
+
+    if USE_DATABASE:
+        all_polls = await _db_get_all_guild_settings("polls_data")
+        if all_polls:
+            _POLLS_DATA_CACHE = all_polls
+            return _POLLS_DATA_CACHE
+
+    _POLLS_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'polls_data.json')
     return _POLLS_DATA_CACHE
 
 async def save_polls_data(data):
     global _POLLS_DATA_CACHE
     _POLLS_DATA_CACHE = data
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("polls_data", data)
+
     await _save_json_file(DATA_FOLDER, 'polls_data.json', data)
 
 # --- Journal Data ---
@@ -922,13 +1031,25 @@ _JOURNAL_DATA_CACHE = None
 
 async def load_journal_data():
     global _JOURNAL_DATA_CACHE
-    if _JOURNAL_DATA_CACHE is None:
-        _JOURNAL_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'journal_data.json')
+    if _JOURNAL_DATA_CACHE is not None:
+        return _JOURNAL_DATA_CACHE
+
+    if USE_DATABASE:
+        all_journals = await _db_get_all_guild_settings("journal_data")
+        if all_journals:
+            _JOURNAL_DATA_CACHE = all_journals
+            return _JOURNAL_DATA_CACHE
+
+    _JOURNAL_DATA_CACHE = await _load_json_file(DATA_FOLDER, 'journal_data.json')
     return _JOURNAL_DATA_CACHE
 
 async def save_journal_data(data):
     global _JOURNAL_DATA_CACHE
     _JOURNAL_DATA_CACHE = data
+
+    if USE_DATABASE:
+        await _db_save_all_guild_settings("journal_data", data)
+
     await _save_json_file(DATA_FOLDER, 'journal_data.json', data)
 
 # --- Gamer Roles Data ---
