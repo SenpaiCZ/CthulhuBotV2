@@ -49,6 +49,7 @@ from .audio_mixer import MixingAudioSource
 from services.audio_service import AudioService
 from services.music_service import MusicService
 from services.metadata_service import MetadataService
+from services.tunnel_service import TunnelService
 from rss_utils import get_youtube_rss_url
 
 SOUNDBOARD_FOLDER = "soundboard"
@@ -1482,7 +1483,13 @@ async def fonts_update_category():
 @app.route('/admin')
 async def admin_dashboard():
     if not is_admin(): return redirect(url_for('login'))
-    return await render_template('admin_dashboard.html')
+    
+    tunnel_status = TunnelService.get_status()
+    tunnel_url = TunnelService.get_public_url()
+    
+    return await render_template('admin_dashboard.html', 
+                               tunnel_status=tunnel_status,
+                               tunnel_url=tunnel_url)
 
 @app.route('/admin/design')
 async def admin_design():

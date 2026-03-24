@@ -366,4 +366,47 @@
     </div>
 </div>
 
+<h5 class="border-bottom pb-2 mt-3">Connectivity & Discord Activity</h5>
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Cloudflare Tunnel Status</h5>
+                <div class="d-flex align-items-center mb-3">
+                    <span class="badge {% if tunnel_status.is_running %}bg-success{% else %}bg-danger{% endif %} me-2">
+                        {{ tunnel_status.status }}
+                    </span>
+                    <span class="text-muted">Process: cloudflared</span>
+                </div>
+                
+                <label for="tunnelUrl" class="form-label">Public Tunnel URL</label>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="tunnelUrl" value="{{ tunnel_url }}" readonly>
+                    <button class="btn btn-outline-secondary" type="button" onclick="copyTunnelUrl()">
+                        <i class="bi bi-clipboard"></i> Copy for Developer Portal
+                    </button>
+                </div>
+                <p class="card-text small text-muted">
+                    Use this URL in the Discord Developer Portal under <strong>Activities -> App Setup -> URL</strong>.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyTunnelUrl() {
+    const copyText = document.getElementById("tunnelUrl");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); // For mobile devices
+    navigator.clipboard.writeText(copyText.value).then(() => {
+        alert("Copied Tunnel URL to clipboard!");
+    }).catch(err => {
+        console.error('Could not copy text: ', err);
+    });
+}
+</script>
 {% endblock %}

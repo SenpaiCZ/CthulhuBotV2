@@ -6,3 +6,4 @@ from .combat_service import CombatService
 from .session_service import SessionService
 from .engagement_service import EngagementService
 from .admin_service import AdminService
+from .tunnel_service import TunnelService
