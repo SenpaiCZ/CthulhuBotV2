@@ -28,7 +28,7 @@ class GuildSettingsBase(BaseModel):
     
     # New fields for overhaul
     admin_password: Optional[str] = Field(default=None)
-    dashboard_theme: str = Field(default="cthulhu")
+    dashboard_theme: str = Field(default="glass")
     dashboard_fonts: Dict[str, Any] = Field(default_factory=dict)
     origin_fonts: Dict[str, Any] = Field(default_factory=dict)
     prefix: str = Field(default="!")

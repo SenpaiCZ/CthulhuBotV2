@@ -1,0 +1,158 @@
+<!-- Image Management Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-slate-900 text-slate-100 border border-white/10 rounded-2xl shadow-2xl">
+            <div class="modal-header border-white/5">
+                <h5 class="modal-title font-bold" id="imageModalLabel">Manage Image</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-6">
+                <div id="modal-image-control"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Image Management Helper
+async function initImageControl(containerId, typeSlug, name) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (!IS_ADMIN) {
+         try {
+            const response = await fetch(`/api/images/check?type_slug=${encodeURIComponent(typeSlug)}&name=${encodeURIComponent(name)}`);
+            const data = await response.json();
+
+            if (data.found) {
+                 container.innerHTML = `
+                    <div class="mb-3 text-center">
+                        <img src="${data.url + '?t=' + new Date().getTime()}" class="img-fluid rounded-xl border border-white/10 shadow-lg" style="max-height: 200px;">
+                    </div>
+                 `;
+            } else {
+                 container.innerHTML = '';
+            }
+         } catch(e) {
+             console.error(e);
+         }
+         return;
+    }
+
+    container.innerHTML = `
+        <div class="glass-card p-4">
+            <div class="mb-4 text-xs font-bold text-indigo-400 uppercase tracking-widest border-b border-white/5 pb-2">Image Management</div>
+            <div id="${containerId}-preview" class="mb-4 text-center" style="display:none;">
+                <img src="" class="img-fluid rounded-xl border border-white/10 shadow-lg mb-3" style="max-height: 200px;">
+                <div>
+                    <button class="px-4 py-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-rose-500/20 transition-all" onclick="deleteImage('${typeSlug}', '${name.replace(/'/g, "\\'")}', '${containerId}')">Delete Image</button>
+                </div>
+            </div>
+            <div id="${containerId}-upload">
+                <div class="flex flex-col gap-3">
+                    <input type="file" class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20" id="${containerId}-file" accept=".png,.jpg,.jpeg,.webp">
+                    <button class="w-full px-4 py-2 bg-indigo-500 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-indigo-600 transition-all" type="button" onclick="uploadImage('${typeSlug}', '${name.replace(/'/g, "\\'")}', '${containerId}')">Upload Image</button>
+                </div>
+            </div>
+            <div id="${containerId}-status" class="mt-3 text-xs text-center"></div>
+        </div>
+    `;
+
+    checkImage(typeSlug, name, containerId);
+}
+
+async function checkImage(typeSlug, name, containerId) {
+    try {
+        const response = await fetch(`/api/images/check?type_slug=${encodeURIComponent(typeSlug)}&name=${encodeURIComponent(name)}`);
+        const data = await response.json();
+
+        const preview = document.getElementById(`${containerId}-preview`);
+        const upload = document.getElementById(`${containerId}-upload`);
+        const img = preview.querySelector('img');
+
+        if (data.found) {
+            img.src = data.url + '?t=' + new Date().getTime(); // Cache bust
+            preview.style.display = 'block';
+            upload.style.display = 'none';
+        } else {
+            preview.style.display = 'none';
+            upload.style.display = 'block';
+        }
+    } catch (e) {
+        console.error("Error checking image", e);
+    }
+}
+
+async function uploadImage(typeSlug, name, containerId) {
+    const fileInput = document.getElementById(`${containerId}-file`);
+    const status = document.getElementById(`${containerId}-status`);
+
+    if (fileInput.files.length === 0) {
+        status.innerHTML = '<span class="text-rose-400">Please select a file.</span>';
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('type_slug', typeSlug);
+    formData.append('name', name);
+    formData.append('file', fileInput.files[0]);
+
+    status.innerHTML = '<span class="text-indigo-400 animate-pulse">Uploading...</span>';
+
+    try {
+        const response = await fetch('/api/images/upload', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            status.innerHTML = '<span class="text-emerald-400 font-bold">Uploaded successfully!</span>';
+            checkImage(typeSlug, name, containerId); // Refresh
+            fileInput.value = ''; // Clear input
+        } else {
+            status.innerHTML = `<span class="text-rose-400">Error: ${data.message}</span>`;
+        }
+    } catch (e) {
+        status.innerHTML = `<span class="text-rose-400">Error: ${e.message}</span>`;
+    }
+}
+
+async function deleteImage(typeSlug, name, containerId) {
+    if (!confirm("Are you sure you want to delete this image?")) return;
+
+    const status = document.getElementById(`${containerId}-status`);
+    status.innerHTML = '<span class="text-indigo-400 animate-pulse">Deleting...</span>';
+
+    try {
+        const response = await fetch('/api/images/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type_slug: typeSlug, name: name })
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            status.innerHTML = '<span class="text-emerald-400 font-bold">Deleted.</span>';
+            checkImage(typeSlug, name, containerId); // Refresh
+        } else {
+            status.innerHTML = `<span class="text-rose-400">Error: ${data.message}</span>`;
+        }
+    } catch (e) {
+        status.innerHTML = `<span class="text-rose-400">Error: ${e.message}</span>`;
+    }
+}
+
+function openImageModal(typeSlug, name) {
+    const modalEl = document.getElementById('imageModal');
+    const modal = new bootstrap.Modal(modalEl);
+    document.getElementById('imageModalLabel').textContent = `Manage Image: ${name}`;
+    // Clear previous content status to avoid confusion
+    const containerId = 'modal-image-control';
+    document.getElementById(containerId).innerHTML = '';
+
+    modal.show();
+    // Wait for modal to show slightly or just run
+    initImageControl(containerId, typeSlug, name);
+}
+</script>

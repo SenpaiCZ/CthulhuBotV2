@@ -292,7 +292,7 @@ def inject_user():
 async def inject_theme():
     db = SessionLocal()
     try:
-        theme = SettingsService.get_setting(db, "global", "dashboard_theme", "cthulhu")
+        theme = SettingsService.get_setting(db, "global", "dashboard_theme", "glass")
         fonts = SettingsService.get_setting(db, "global", "dashboard_fonts", {
             'headers': '',
             'body': '',
@@ -1424,7 +1424,7 @@ async def admin_dashboard():
 async def admin_design():
     if not is_admin(): return redirect(url_for('login'))
     settings = await load_settings_async()
-    current_theme = settings.get('dashboard_theme', 'cthulhu')
+    current_theme = settings.get('dashboard_theme', 'glass')
     current_fonts = settings.get('dashboard_fonts', {})
     current_origin_fonts = settings.get('origin_fonts', {})
 
