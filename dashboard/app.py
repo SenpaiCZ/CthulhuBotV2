@@ -48,6 +48,7 @@ from loadnsave import (
 from .audio_mixer import MixingAudioSource
 from services.audio_service import AudioService
 from services.music_service import MusicService
+from services.metadata_service import MetadataService
 from rss_utils import get_youtube_rss_url
 
 SOUNDBOARD_FOLDER = "soundboard"
@@ -91,6 +92,9 @@ async def app_startup():
     if app.bot:
         app.bot.audio_service = AudioService(app.bot)
         app.bot.music_service = MusicService()
+    
+    # Pre-initialize Metadata Cache
+    MetadataService.sync_cache()
 
     # Ensure images folder exists
     if not os.path.exists(IMAGES_FOLDER):
@@ -1504,6 +1508,52 @@ async def save_design():
         db.close()
 
     return jsonify({"status": "success"})
+
+# --- Metadata Routes ---
+
+@app.route('/admin/metadata')
+async def admin_metadata():
+    if not is_admin(): return redirect(url_for('login'))
+    db = SessionLocal()
+    try:
+        emojis_list = MetadataService.get_all_emojis(db)
+        # Sort by category then key
+        emojis_list.sort(key=lambda x: (x.category, x.key))
+    finally:
+        db.close()
+    return await render_template('admin_metadata.html', emojis=emojis_list)
+
+@app.route('/api/metadata/update', methods=['POST'])
+async def update_metadata():
+    if not is_admin(): return "Unauthorized", 401
+    
+    data = await request.get_json()
+    category = data.get('category')
+    key = data.get('key')
+    value = data.get('value')
+    
+    if not all([category, key, value]):
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+        
+    db = SessionLocal()
+    try:
+        MetadataService.update_emoji(db, key, category, value)
+        # Real-time sync: since we're in the same process, MetadataService._cache is shared.
+        # update_emoji already updates the cache.
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        db.close()
+
+@app.route('/api/metadata/sync', methods=['POST'])
+async def sync_metadata_cache():
+    if not is_admin(): return "Unauthorized", 401
+    try:
+        MetadataService.sync_cache()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/monsters')
 async def admin_monsters():

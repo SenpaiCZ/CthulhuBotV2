@@ -1,0 +1,183 @@
+{% extends "base_glass.html" %}
+
+{% block title %}Global Emoji Management - CoC Bot{% endblock %}
+
+{% block content %}
+<div class="container mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
+                Global Emoji Management
+            </h1>
+            <p class="text-slate-400 mt-2">Configure emojis used across the entire bot system.</p>
+        </div>
+        <div class="flex space-x-4">
+            <button onclick="syncCache()" class="bg-emerald-600/80 hover:bg-emerald-500/90 text-white px-6 py-2 rounded-xl transition-all backdrop-blur-md border border-white/10 flex items-center shadow-lg hover:shadow-emerald-500/20">
+                <i class="bi bi-arrow-repeat mr-2"></i> Sync Cache
+            </button>
+        </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="flex space-x-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        {% set categories = ["Stat", "Skill", "Occupation", "Language", "Item", "System"] %}
+        {% for cat in categories %}
+        <button onclick="filterCategory('{{ cat }}')" id="tab-{{ cat }}" class="category-tab whitespace-nowrap px-6 py-2 rounded-full glass-card hover:bg-white/10 transition-all border border-white/5 text-slate-300">
+            {{ cat }}
+        </button>
+        {% endfor %}
+        <button onclick="filterCategory('All')" id="tab-All" class="category-tab whitespace-nowrap px-6 py-2 rounded-full glass-card bg-indigo-500/20 border-indigo-500/30 text-indigo-300">
+            All
+        </button>
+    </div>
+
+    <!-- Emoji Table -->
+    <div class="glass-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-white/10 bg-white/5">
+                        <th class="px-6 py-4 text-xs font-semibold text-indigo-400 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-indigo-400 uppercase tracking-wider">Key</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-indigo-400 uppercase tracking-wider">Emoji / Value</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-indigo-400 uppercase tracking-wider text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="emoji-table-body">
+                    {% for emoji in emojis %}
+                    <tr class="emoji-row border-b border-white/5 hover:bg-white/5 transition-colors" data-category="{{ emoji.category }}">
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded-md text-xs font-medium bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                                {{ emoji.category }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 font-mono text-sm text-slate-300">{{ emoji.key }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-2xl">{{ emoji.value|format_custom_emoji|safe }}</span>
+                                <input type="text" id="input-{{ emoji.id }}" value="{{ emoji.value }}" 
+                                       class="glass-input w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-sm">
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="updateEmoji('{{ emoji.id }}', '{{ emoji.category }}', '{{ emoji.key }}')" 
+                                    class="glass-button bg-indigo-600/60 hover:bg-indigo-500/80 text-white px-4 py-1.5 rounded-lg text-sm transition-all border border-white/10 shadow-lg hover:shadow-indigo-500/20">
+                                Save
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .glass-input:focus {
+        background: rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function filterCategory(category) {
+        const rows = document.querySelectorAll('.emoji-row');
+        const tabs = document.querySelectorAll('.category-tab');
+        
+        // Update tabs
+        tabs.forEach(tab => {
+            tab.classList.remove('bg-indigo-500/20', 'border-indigo-500/30', 'text-indigo-300');
+            tab.classList.add('text-slate-300', 'border-white/5');
+        });
+        
+        document.getElementById('tab-' + category).classList.remove('text-slate-300', 'border-white/5');
+        document.getElementById('tab-' + category).classList.add('bg-indigo-500/20', 'border-indigo-500/30', 'text-indigo-300');
+
+        // Filter rows
+        rows.forEach(row => {
+            if (category === 'All' || row.dataset.category === category) {
+                row.style.display = 'table-row';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    async function updateEmoji(id, category, key) {
+        const value = document.getElementById('input-' + id).value;
+        const btn = event.currentTarget;
+        const originalText = btn.innerHTML;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split animate-spin"></i>';
+
+        try {
+            const response = await fetch('/api/metadata/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ category, key, value })
+            });
+
+            const result = await response.json();
+            if (result.status === 'success') {
+                btn.classList.remove('bg-indigo-600/60');
+                btn.classList.add('bg-emerald-600/60');
+                btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+                setTimeout(() => {
+                    btn.classList.remove('bg-emerald-600/60');
+                    btn.classList.add('bg-indigo-600/60');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            } else {
+                alert('Error: ' + result.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error updating emoji:', error);
+            alert('Failed to update emoji');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function syncCache() {
+        const btn = event.currentTarget;
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin mr-2"></i> Syncing...';
+
+        try {
+            const response = await fetch('/api/metadata/sync', { method: 'POST' });
+            const result = await response.json();
+            if (result.status === 'success') {
+                btn.classList.remove('bg-emerald-600/80');
+                btn.classList.add('bg-indigo-600/80');
+                btn.innerHTML = '<i class="bi bi-check2-all mr-2"></i> Synced!';
+                setTimeout(() => {
+                    btn.classList.remove('bg-indigo-600/80');
+                    btn.classList.add('bg-emerald-600/80');
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                }, 2000);
+            }
+        } catch (e) {
+            alert('Sync failed');
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}
