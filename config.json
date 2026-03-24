@@ -4,5 +4,7 @@
     "enable_dashboard": true,
     "dashboard_port": 5000,
     "admin_password": "ChangeMe123!",
-    "database_url": "sqlite:///data/database.sqlite"
+    "database_url": "sqlite:///data/database.sqlite",
+    "tunnel_url": "YOUR_TUNNEL_URL_HERE",
+    "activity_client_id": "YOUR_DISCORD_CLIENT_ID_HERE"
 }

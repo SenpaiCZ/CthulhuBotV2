@@ -14,6 +14,38 @@ The bot has recently undergone a major architectural transformation to improve p
 *   **🛠️ Lightweight Commands**: All Discord commands have been reduced to lightweight entry points (< 100 lines), delegating all business logic to reusable services.
 *   **🔄 Robust Persistence**: Game states, voice connections, and music queues (metadata) now survive bot restarts.
 
+## 🌐 Hosting as a Discord Activity (New!)
+
+CthulhuBotV2 can now be hosted as a **Discord Activity**, allowing players to interact with their character sheets and roll dice directly within the Discord interface.
+
+### Prerequisites for Activities
+*   A **publicly accessible HTTPS URL** (required by Discord).
+*   A registered Discord Application in the [Developer Portal](https://discord.com/developers/applications).
+
+### 🚀 Turnkey Setup with Cloudflare Tunnel (Recommended for RPi)
+
+The easiest way to host your bot from a local device (like a Raspberry Pi) is using **Cloudflare Tunnel**. This provides a secure HTTPS URL without port-forwarding.
+
+1.  **Run the Tunnel Setup Script**:
+    ```bash
+    chmod +x tools/setup_tunnel.sh
+    ./tools/setup_tunnel.sh
+    ```
+2.  **Follow the Authentication Prompt**: The script will provide a link to log in to your Cloudflare account and authorize the tunnel.
+3.  **Configure your Domain**: If you have a custom domain on Cloudflare, the script can automatically create a CNAME record (e.g., `cthulhubot.yourdomain.com`).
+4.  **Update Config**: Add your new tunnel URL to `config.json` under the `"tunnel_url"` key.
+
+### 🛠️ Discord Developer Portal Configuration
+
+Once your tunnel is live:
+1.  Go to the [Discord Developer Portal](https://discord.com/developers/applications).
+2.  Select your App and go to the **Activities** section.
+3.  Set the **URL Mapping**:
+    *   **Root URL**: Paste your Tunnel URL (e.g., `https://cthulhubot.yourdomain.com`).
+    *   **Mapping**: Map `/` to your root URL.
+4.  Copy your **Client ID** and put it in `config.json` as `"activity_client_id"`.
+5.  Launch the bot and try starting the Activity in any voice channel!
+
 ## Features
 
 *   🛠️ **Slash Commands**: Fully integrated with Discord's Slash Commands (`/`) for a modern and intuitive user experience.
