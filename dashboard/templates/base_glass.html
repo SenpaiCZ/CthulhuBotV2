@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CoC Bot Dashboard{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        eldritch: {
+                            base: '#020617', // slate-950
+                            accent: '#1e1b4b', // indigo-950
+                            glow: '#6366f1', // indigo-500
+                        }
+                    },
+                    backgroundImage: {
+                        'abyssal-gradient': 'linear-gradient(to bottom right, #020617, #1e1b4b)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Glass Style Utilities -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-effect {
+                @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-2xl;
+            }
+            .glass-nav {
+                @apply bg-slate-950/60 backdrop-blur-2xl border-b border-white/10 sticky top-0 z-50;
+            }
+            .glass-card {
+                @apply bg-slate-900/40 backdrop-blur-lg border border-white/10 rounded-2xl p-6 shadow-xl;
+            }
+            .eldritch-link {
+                @apply text-slate-400 hover:text-indigo-400 transition-all duration-300;
+            }
+        }
+    </style>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/glass.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    {% include 'includes/font_styles.html' %}
+</head>
+<body class="h-full abyssal-gradient min-h-screen selection:bg-indigo-500/30">
+    <div class="fog-layer"></div>
+    
+    <!-- Navigation -->
+    <nav class="glass-nav">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand -->
+                <div class="flex items-center">
+                    <a href="/" class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
+                        CoC Bot
+                    </a>
+                    
+                    <div class="hidden md:block ml-10">
+                        <div class="flex items-baseline space-x-4">
+                            <a href="/" class="eldritch-link px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                            
+                            {% if is_admin %}
+                            <!-- Keeper Dropdown -->
+                            <div class="relative group">
+                                <button class="eldritch-link flex items-center px-3 py-2 rounded-md text-sm font-medium">
+                                    Keeper Tools <i class="bi bi-chevron-down ml-1 text-xs"></i>
+                                </button>
+                                <div class="absolute left-0 mt-2 w-56 glass-effect rounded-xl py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
+                                    <!-- Characters -->
+                                    <div class="px-4 py-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider">Characters</div>
+                                    <a href="/characters" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Active Characters</a>
+                                    <a href="/retired" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Retired Characters</a>
+                                    
+                                    <!-- Grimoire -->
+                                    <div class="px-4 py-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider mt-2 border-t border-white/5">Grimoire</div>
+                                    <a href="/monsters" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Monsters</a>
+                                    <a href="/deities" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Deities</a>
+                                    <a href="/spells" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Spells</a>
+                                    
+                                    <!-- Reference -->
+                                    <div class="px-4 py-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider mt-2 border-t border-white/5">Reference</div>
+                                    <a href="/occupations" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Occupations</a>
+                                    <a href="/skills" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Skills</a>
+                                    <a href="/admin/game_settings" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Game Settings</a>
+                                </div>
+                            </div>
+                            
+                            <!-- Server Dropdown -->
+                            <div class="relative group">
+                                <button class="eldritch-link flex items-center px-3 py-2 rounded-md text-sm font-medium">
+                                    Server Admin <i class="bi bi-chevron-down ml-1 text-xs"></i>
+                                </button>
+                                <div class="absolute left-0 mt-2 w-64 glass-effect rounded-xl py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden">
+                                    <div class="px-4 py-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider">Automatization</div>
+                                    <a href="/admin/gameroles" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Gamer Roles</a>
+                                    <a href="/admin/autorooms" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Auto Rooms</a>
+                                    <a href="/admin/reactionroles" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Reaction Roles</a>
+                                    <a href="/admin/karma" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Karma System</a>
+                                    
+                                    <div class="px-4 py-2 text-xs font-semibold text-indigo-400 uppercase tracking-wider mt-2 border-t border-white/5">System</div>
+                                    <a href="/admin/bot_config" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Bot Configuration</a>
+                                    <a href="/admin/backup" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5">Backup System</a>
+                                    <a href="/admin" class="block px-4 py-2 text-sm text-slate-300 hover:bg-white/5 font-bold text-indigo-400">Admin Dashboard</a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Side -->
+                <div class="flex items-center">
+                    {% if is_admin %}
+                    <div class="relative group ml-4">
+                        <button class="flex items-center glass-effect px-4 py-2 rounded-full text-sm font-medium hover:bg-indigo-500/20 transition-all duration-300">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                            Admin
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 glass-effect rounded-xl py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                            <a href="/logout" class="block px-4 py-2 text-sm text-rose-400 hover:bg-rose-500/10 transition-colors">Logout</a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="/login" class="glass-effect px-6 py-2 rounded-full text-sm font-medium hover:bg-indigo-500/20 transition-all duration-300">
+                        Login
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Overlay (Status Polling) -->
+    <div id="reconnecting-overlay" class="hidden fixed inset-0 bg-slate-950/90 z-[9999] flex flex-col items-center justify-center backdrop-blur-md">
+        <div class="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+        <h2 class="text-2xl font-bold text-slate-100">Reconnecting to Cthulhu...</h2>
+        <p class="text-slate-400 mt-2">The bot is rising from the depths...</p>
+    </div>
+
+    <script>
+        const IS_ADMIN = {{ is_admin|tojson }};
+        
+        // Status Polling
+        let wasOffline = false;
+        setInterval(async () => {
+            const overlay = document.getElementById('reconnecting-overlay');
+            try {
+                const response = await fetch('/api/status', { cache: "no-store" });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'online') {
+                        if (wasOffline) location.reload();
+                        overlay.classList.add('hidden');
+                        wasOffline = false;
+                    } else {
+                        overlay.classList.remove('hidden');
+                        overlay.classList.add('flex');
+                        wasOffline = true;
+                    }
+                } else {
+                    overlay.classList.remove('hidden');
+                    overlay.classList.add('flex');
+                    wasOffline = true;
+                }
+            } catch (e) {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+                wasOffline = true;
+            }
+        }, 3000);
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
