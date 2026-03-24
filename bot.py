@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import asyncio
 import os
+import datetime
 from loadnsave import load_settings, load_server_stats
 from dashboard.app import app
 from hypercorn.asyncio import serve
@@ -31,6 +32,7 @@ bot.failed_extensions = []
 
 @bot.event
 async def on_ready():
+    bot.start_time = datetime.datetime.now()
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
 
@@ -64,7 +66,6 @@ async def on_ready():
                     await owner.send(error_message)
 
                 print(f"Sent error report to owner: {owner}")
-                bot.failed_extensions = [] # Clear after sending
         except Exception as e:
             print(f"Failed to send error report to owner: {e}")
 

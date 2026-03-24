@@ -1,262 +1,232 @@
-{% extends 'base.html' %}
+{% extends 'base_glass.html' %}
+{% from 'includes/glass_components.html' import glass_card, glass_button, glass_badge %}
 
 {% block title %}Home - CoC Bot{% endblock %}
 
 {% block content %}
-<div class="p-5 mb-4 bg-body-tertiary rounded-3">
-    <div class="container-fluid py-5">
-        <h1 class="display-5 fw-bold">Call of Cthulhu Bot Dashboard</h1>
-        <p class="col-md-8 fs-4">Welcome to the management interface for your Discord bot. Manage characters, roll dice, and enhance your Call of Cthulhu games.</p>
-        <div class="d-grid gap-2 d-md-block">
+<!-- Hero Section -->
+{% call glass_card(padding='py-16 px-8', extra_classes='relative overflow-hidden mb-12') %}
+    <div class="relative z-10 max-w-4xl">
+        <h1 class="text-4xl md:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 mb-6 tracking-tight">
+            Call of Cthulhu Bot Dashboard
+        </h1>
+        <p class="text-lg md:text-xl text-slate-300 mb-10 leading-relaxed max-w-2xl">
+            Welcome to the management interface for your Discord bot. Manage characters, roll dice, and enhance your Call of Cthulhu games with eldritch precision.
+        </p>
+        <div class="flex flex-wrap gap-4">
              {% if is_admin %}
-             <a class="btn btn-secondary btn-lg" href="/admin" role="button">Admin Panel</a>
+             <a href="/admin">
+                {{ glass_button('Admin Panel', style='primary', extra_classes='px-8 py-3 text-lg') }}
+             </a>
              {% endif %}
-             <a class="btn btn-outline-light btn-lg" href="https://github.com/SenpaiCZ/CthulhuBotV2" target="_blank" role="button"><i class="bi bi-github"></i> GitHub</a>
+             <a href="https://github.com/SenpaiCZ/CthulhuBotV2" target="_blank">
+                {{ glass_button('GitHub Repository', style='secondary', extra_classes='px-8 py-3 text-lg') }}
+             </a>
         </div>
     </div>
+    
+    <!-- Decorative background elements -->
+    <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px]"></div>
+    <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-purple-500/10 rounded-full blur-[80px]"></div>
+{% endcall %}
+
+<!-- Bot Status & Statistics -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+    {% call glass_card(title="Bot Status", padding='p-6') %}
+        <div class="flex items-center space-x-4">
+            <div class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]"></span>
+            </div>
+            <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Connection</p>
+                <p class="text-lg font-bold text-slate-100">Online & Ready</p>
+            </div>
+        </div>
+    {% endcall %}
+
+    {% call glass_card(title="Active Guilds", padding='p-6') %}
+        <div class="flex items-center space-x-4">
+            <div class="p-2 bg-indigo-500/10 rounded-lg">
+                <i class="bi bi-server text-xl text-indigo-400"></i>
+            </div>
+            <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Servers</p>
+                <p class="text-lg font-bold text-slate-100">{{ active_guilds|default('Connected') }}</p>
+            </div>
+        </div>
+    {% endcall %}
+
+    {% call glass_card(title="Uptime", padding='p-6') %}
+        <div class="flex items-center space-x-4">
+            <div class="p-2 bg-purple-500/10 rounded-lg">
+                <i class="bi bi-clock-history text-xl text-purple-400"></i>
+            </div>
+            <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">System Stability</p>
+                <p class="text-lg font-bold text-slate-100">{{ uptime|default('Running') }}</p>
+            </div>
+        </div>
+    {% endcall %}
 </div>
 
-<div class="row align-items-md-stretch mb-4">
-    <div class="col-md-6">
-        <div class="h-100 p-5 text-bg-dark rounded-3">
-          <h2>Features</h2>
-          <ul class="list-unstyled">
-              <li>🕵️‍♂️ <strong>Character Management</strong>: Create and manage investigator sheets.</li>
-              <li>🎲 <strong>Advanced Dice Rolling</strong>: Interactive rolls with Bonus/Penalty dice.</li>
-              <li>🎵 <strong>Music Bot</strong>: High-quality music playback from YouTube.</li>
-              <li>📈 <strong>Karma System</strong>: Track user reputation.</li>
-              <li>🎭 <strong>Reaction Roles</strong>: Self-assignable roles.</li>
-              <li>🔊 <strong>Soundboard</strong>: Play audio clips in voice channels.</li>
-              <li>📊 <strong>Polls</strong>: Create interactive polls for your server.</li>
-              <li>⏰ <strong>Reminders</strong>: Set personal or channel reminders.</li>
-          </ul>
+{% if failed_extensions %}
+<!-- Failed Extensions Alert -->
+<div class="mb-12">
+    {% call glass_card(title="Extension Load Failures", extra_classes='border-rose-500/30 bg-rose-500/5') %}
+        <div class="space-y-4">
+            <p class="text-rose-400 text-sm flex items-center">
+                <i class="bi bi-exclamation-triangle-fill mr-2"></i>
+                The following extensions failed to load during startup:
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for filename, error in failed_extensions %}
+                    <div class="p-4 rounded-xl bg-slate-950/40 border border-white/5 group hover:border-rose-500/30 transition-colors">
+                        <div class="flex justify-between items-start mb-2">
+                            <strong class="text-slate-100">{{ filename }}</strong>
+                            {{ glass_badge('Failed', style='danger') }}
+                        </div>
+                        <code class="text-xs text-rose-300/70 block overflow-x-auto whitespace-pre-wrap font-mono">
+                            {{ error }}
+                        </code>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
-    </div>
-    <div class="col-md-6">
-        <div class="h-100 p-5 bg-body-tertiary border rounded-3">
-          <h2>Keeper Tools</h2>
-          <p class="mb-3">Access an extensive library of game information including firearms, inventions, monsters, deities, madness tables, phobias/manias, and NPC generation directly from Discord or this dashboard.</p>
+    {% endcall %}
+</div>
+{% endif %}
 
-           <h5 class="mt-2">Characters</h5>
-           <a class="btn btn-outline-secondary mb-1" href="/characters">Active Characters</a>
-           <a class="btn btn-outline-secondary mb-1" href="/retired">Retired Characters</a>
+<!-- Main Feature Sections -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+    <!-- Features List -->
+    {% call glass_card(title="Core Features") %}
+      <div class="space-y-4">
+          <div class="flex items-start p-3 rounded-xl hover:bg-white/5 transition-colors group">
+              <div class="text-2xl mr-4 group-hover:scale-110 transition-transform">🕵️‍♂️</div>
+              <div>
+                  <strong class="text-slate-100 block">Character Management</strong>
+                  <p class="text-sm text-slate-400">Create and manage detailed investigator sheets with automated tracking.</p>
+              </div>
+          </div>
+          <div class="flex items-start p-3 rounded-xl hover:bg-white/5 transition-colors group">
+              <div class="text-2xl mr-4 group-hover:scale-110 transition-transform">🎲</div>
+              <div>
+                  <strong class="text-slate-100 block">Advanced Dice Rolling</strong>
+                  <p class="text-sm text-slate-400">Interactive rolls with Bonus/Penalty dice and Luck spending mechanics.</p>
+              </div>
+          </div>
+          <div class="flex items-start p-3 rounded-xl hover:bg-white/5 transition-colors group">
+              <div class="text-2xl mr-4 group-hover:scale-110 transition-transform">🎵</div>
+              <div>
+                  <strong class="text-slate-100 block">Atmospheric Music</strong>
+                  <p class="text-sm text-slate-400">High-quality audio streaming to set the mood for your investigations.</p>
+              </div>
+          </div>
+          <div class="flex items-start p-3 rounded-xl hover:bg-white/5 transition-colors group">
+              <div class="text-2xl mr-4 group-hover:scale-110 transition-transform">📈</div>
+              <div>
+                  <strong class="text-slate-100 block">Karma System</strong>
+                  <p class="text-sm text-slate-400">Dynamic reputation tracking and role management for your community.</p>
+              </div>
+          </div>
+      </div>
+    {% endcall %}
 
-           <h5 class="mt-2">Grimoire</h5>
-           <a class="btn btn-outline-secondary mb-1" href="/monsters">Monsters</a>
-           <a class="btn btn-outline-secondary mb-1" href="/deities">Deities</a>
-           <a class="btn btn-outline-secondary mb-1" href="/spells">Spells</a>
+    <!-- Keeper Tools Grid -->
+    {% call glass_card(title="Keeper Resources") %}
+        <p class="text-slate-400 mb-8">Access the comprehensive library of eldritch knowledge directly from your browser.</p>
 
-           <h5 class="mt-2">Pulp</h5>
-           <a class="btn btn-outline-secondary mb-1" href="/archetypes">Archetypes</a>
-           <a class="btn btn-outline-secondary mb-1" href="/pulp_talents">Talents</a>
-           <a class="btn btn-outline-secondary mb-1" href="/insane_talents">Insane Talents</a>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="space-y-3">
+                <h5 class="text-xs font-bold text-indigo-400 uppercase tracking-widest border-b border-white/5 pb-2">Investigator</h5>
+                <div class="flex flex-col gap-2">
+                    <a href="/characters">{{ glass_button('Active Characters', style='secondary', extra_classes='text-xs w-full text-left') }}</a>
+                    <a href="/retired">{{ glass_button('Retired Graveyard', style='secondary', extra_classes='text-xs w-full text-left') }}</a>
+                    <a href="/skills">{{ glass_button('Skill Database', style='secondary', extra_classes='text-xs w-full text-left') }}</a>
+                </div>
+            </div>
 
-           <h5 class="mt-2">References</h5>
-           <a class="btn btn-outline-secondary mb-1" href="/skills">Skills</a>
-           <a class="btn btn-outline-secondary mb-1" href="/inventions">Inventions</a>
-           <a class="btn btn-outline-secondary mb-1" href="/years">Years</a>
-           <a class="btn btn-outline-secondary mb-1" href="/manias">Mania</a>
-           <a class="btn btn-outline-secondary mb-1" href="/phobias">Phobia</a>
-           <a class="btn btn-outline-secondary mb-1" href="/weapons">Weapons</a>
-           <a class="btn btn-outline-secondary mb-1" href="/poisons">Poisons</a>
+            <div class="space-y-3">
+                <h5 class="text-xs font-bold text-purple-400 uppercase tracking-widest border-b border-white/5 pb-2">The Grimoire</h5>
+                <div class="flex flex-col gap-2">
+                    <a href="/monsters">{{ glass_button('Bestiary', style='secondary', extra_classes='text-xs w-full text-left') }}</a>
+                    <a href="/deities">{{ glass_button('Elder Gods', style='secondary', extra_classes='text-xs w-full text-left') }}</a>
+                    <a href="/spells">{{ glass_button('Arcane Spells', style='secondary', extra_classes='text-xs w-full text-left') }}</a>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <h5 class="text-xs font-bold text-emerald-400 uppercase tracking-widest border-b border-white/5 pb-2">Pulp Assets</h5>
+                <div class="flex flex-col gap-2">
+                    <a href="/archetypes">{{ glass_button('Archetypes', style='secondary', extra_classes='text-xs w-full text-left') }}</a>
+                    <a href="/pulp_talents">{{ glass_button('Heroic Talents', style='secondary', extra_classes='text-xs w-full text-left') }}</a>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <h5 class="text-xs font-bold text-rose-400 uppercase tracking-widest border-b border-white/5 pb-2">Sanity & Toxins</h5>
+                <div class="flex flex-col gap-2">
+                    <a href="/manias">{{ glass_button('Manias', style='secondary', extra_classes='text-xs w-full text-left') }}</a>
+                    <a href="/phobias">{{ glass_button('Phobias', style='secondary', extra_classes='text-xs w-full text-left') }}</a>
+                    <a href="/poisons">{{ glass_button('Poisons', style='secondary', extra_classes='text-xs w-full text-left') }}</a>
+                </div>
+            </div>
         </div>
-    </div>
+    {% endcall %}
 </div>
 
-<div class="mb-5">
-    <h2>Commands</h2>
-    <div class="accordion" id="commandsAccordion">
+<!-- Commands Explorer -->
+<div class="mb-20">
+    <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400 inline-block">Command Archives</h2>
+        <p class="text-slate-500 mt-2">Essential slash commands for Investigators and Keepers alike</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% set command_categories = [
+            ('🕵️‍♂️ Investigator Tools', [
+                ('/newinvestigator', 'Start character creation'),
+                ('/mycharacter', 'View character sheet'),
+                ('/stat [name] [val]', 'Edit specific stats'),
+                ('/rename [new_name]', 'Change character name'),
+                ('/printcharacter', 'Export sheet as image')
+            ]),
+            ('🎲 Game Mechanics', [
+                ('/roll [skill/stat]', 'Perform a check'),
+                ('/showluck', 'Check server luck'),
+                ('/session start', 'Begin new session'),
+                ('/madness', 'Roll for group madness'),
+                ('/randomnpc', 'Generate 1920s NPC')
+            ]),
+            ('🎵 Music & Audio', [
+                ('/play [url/query]', 'Stream music'),
+                ('/skip', 'Skip current track'),
+                ('/stop', 'Clear queue & disconnect'),
+                ('/volume [0-100]', 'Adjust bot volume'),
+                ('/queue', 'View upcoming songs')
+            ]),
+            ('🛠️ Administration', [
+                ('/autoroom setup', 'Configure voice rooms'),
+                ('/karma', 'Check user reputation'),
+                ('/reactionrole', 'Setup self-roles'),
+                ('/poll', 'Create interactive poll'),
+                ('/backup', 'Trigger manual backup')
+            ])
+        ] %}
 
-        <!-- Cthulhu & Investigator Tools -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingOne">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                    🐙 Cthulhu & Investigator Tools
-                </button>
-            </h2>
-            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/newinvestigator</code>: 🕵️‍♂️ Start the character creation wizard.</li>
-                        <li><code>/mycharacter</code>: 📜 View your character sheet.</li>
-                        <li><code>/stat</code>: 📊 View or edit specific stats.</li>
-                        <li><code>/rename</code>: 🏷️ Rename your character.</li>
-                        <li><code>/renameskill</code>: ✏️ Rename a skill on your sheet.</li>
-                        <li><code>/deleteinvestigator</code>: 🗑️ Delete a character.</li>
-                        <li><code>/addbackstory</code>, <code>/updatebackstory</code>, <code>/removebackstory</code>: 📖 Manage backstory elements.</li>
-                        <li><code>/generatebackstory</code>: 🎲 Generate a random backstory.</li>
-                        <li><code>/retire</code>: 👴 Retire an active character.</li>
-                        <li><code>/unretire</code>: 👶 Bring a retired character back.</li>
-                        <li><code>/printcharacter</code>: 🖼️ Generate an image of your character sheet.</li>
-                    </ul>
+        {% for category_title, commands in command_categories %}
+            {% call glass_card(title=category_title, padding='p-0') %}
+                <div class="divide-y divide-white/5">
+                    {% for cmd, desc in commands %}
+                        <div class="p-4 flex items-center justify-between hover:bg-white/5 transition-colors group">
+                            <code class="text-indigo-400 text-sm font-mono">{{ cmd }}</code>
+                            <span class="text-slate-400 text-xs text-right ml-4">{{ desc }}</span>
+                        </div>
+                    {% endfor %}
                 </div>
-            </div>
-        </div>
-
-        <!-- Dice Rolling & Session -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingTwo">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                    🎲 Dice Rolling & Session
-                </button>
-            </h2>
-            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/roll</code>: 🎲 Perform a dice roll or skill check. Interactive interface allows for Bonus/Penalty dice and Luck spending.</li>
-                        <li><code>/showluck</code>: 🍀 Show the luck threshold for the server.</li>
-                        <li><code>/session start</code>: 🎬 Start a new game session.</li>
-                        <li><code>/session show</code>: 📝 Show current session details.
-                        <li><code>/session wipe</code>: 🧹 Clear session data.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Music & Sound -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingThree">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                    🎵 Music & Sound
-                </button>
-            </h2>
-            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/play</code>: 🎵 Play a song from YouTube.</li>
-                        <li><code>/skip</code>: ⏭️ Skip the current song.</li>
-                        <li><code>/stop</code>: 🛑 Stop music, clear queue, and disconnect.</li>
-                        <li><code>/volume</code>: 🔊 Set playback volume (0-100).</li>
-                        <li><code>/loop</code>: 🔁 Toggle song looping.</li>
-                        <li><code>/queue</code>: 🎼 View the current music queue.</li>
-                        <li><code>/nowplaying</code>: 💿 Show the currently playing song.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Karma System -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingFour">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                    📈 Karma System
-                </button>
-            </h2>
-            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/setupkarma</code>: ⚙️ Interactive setup wizard for the karma system.</li>
-                        <li><code>/setupkarmaroles</code>: 🧙 Interactive wizard to manage rank roles.</li>
-                        <li><code>/karma</code>: 🌟 Check karma for yourself or another user.</li>
-                        <li><code>/leaderboard</code>: 🏆 Show the Karma leaderboard.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Reaction Roles -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingFive">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
-                    🎭 Reaction Roles
-                </button>
-            </h2>
-            <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/reactionrole</code>: 🎭 Setup a reaction role on a message (Admin).</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Keeper Resources -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingSix">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
-                    🧠 Keeper Resources
-                </button>
-            </h2>
-            <div id="collapseSix" class="accordion-collapse collapse" aria-labelledby="headingSix" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/monster</code>: 👹 Consult the Codex for a monster's stats and lore.</li>
-                        <li><code>/deity</code>: 👁️ Consult the pantheon for a deity's description and cult info.</li>
-                        <li><code>/spell</code>: 📜 Consult the archives for a spell's details.</li>
-                        <li><code>/changeluck</code>: 🍀 Modify the server's maximum luck spend threshold (Default: 10).</li>
-                        <li><code>/occupationinfo</code>: 💼 Lookup occupation details.</li>
-                        <li><code>/skill</code>: 📚 Lookup skill details.</li>
-                        <li><code>/randomnpc</code>: 👤 Generate an NPC with region selection.</li>
-                        <li><code>/randomname</code>: 🏷️ Generate a random name (1920s).</li>
-                        <li><code>/macguffin</code>: 🏺 Generate a MacGuffin.
-                        <li><code>/loot</code>: 💰 Generate random loot.</li>
-                        <li><code>/archetype</code>: 🦸‍♂️ Lookup archetype info (Pulp).</li>
-                        <li><code>/weapon</code>: 🔫 Lookup firearm/weapon statistics.</li>
-                        <li><code>/invention</code>: 💡 Lookup invention details by decade.</li>
-                        <li><code>/talent</code>: 🌟 Lookup Pulp talent info.</li>
-                        <li><code>/year</code>: 📅 Historical info for different years.</li>
-                        <li><code>/madness</code>: 🤪 Random madness (Group).</li>
-                        <li><code>/madnessAlone</code>: 🌑 Random madness (Solo).</li>
-                        <li><code>/insane</code>: 🩸 Lookup insane talents.</li>
-                        <li><code>/phobia</code>: 😨 Lookup phobia.</li>
-                        <li><code>/mania</code>: 🤩 Lookup mania.</li>
-                        <li><code>/poison</code>: 🧪 Lookup poison info.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- General & Admin -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingSeven">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeven" aria-expanded="false" aria-controls="collapseSeven">
-                    🛠️ General & Admin
-                </button>
-            </h2>
-            <div id="collapseSeven" class="accordion-collapse collapse" aria-labelledby="headingSeven" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/autoroom kick</code>: 👢 Kick user from auto-room.</li>
-                        <li><code>/autoroom lock</code>: 🔒 Lock auto-room.
-                        <li><code>/autoroom unlock</code>: 🔓 Unlock auto-room.</li>
-                        <li><code>/reportbug</code>: 🐛 Report a bug to the developer.</li>
-                        <li><code>/uptime</code>: ⏱️ Check bot uptime.</li>
-                        <li><code>/autoroom setup</code>: ⚙️ Configure Auto Rooms.</li>
-                        <li><code>!sync</code>: 🔄 **Essential!** Sync slash commands to Discord.</li>
-                        <li><code>/smartreaction add</code>: ➕ Add a smart reaction.</li>
-                        <li><code>/smartreaction remove</code>: ➖ Remove a smart reaction.
-                        <li><code>/smartreaction list</code>: 📋 List all smart reactions.</li>
-                        <li><code>/purge</code>: 🗑️ Bulk delete messages.</li>
-                        <li><code>/autodeleter set</code>: 🤖 Set auto-deletion rules.</li>
-                        <li><code>/autodeleter stop</code>: 🛑 Stop auto-deletion for a channel.</li>
-                        <li><code>/rss</code>: 📰 Add a specific RSS feed or YouTube channel manually.</li>
-                        <li><code>/rsssetup</code>: 📰 Interactive setup wizard for RSS/YouTube feeds.</li>
-                        <li><code>/pogo setchannel</code>: 📱 Set channel for Pokemon GO notifications.</li>
-                        <li><code>/pogo setrole</code>: 🔔 Set role for Pokemon GO notifications.</li>
-                        <li><code>/backup</code>: 💾 Trigger a manual backup.</li>
-                        <li><code>/updatebot</code>: 🔄 Update the bot.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Utility Tools -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingEight">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEight" aria-expanded="false" aria-controls="collapseEight">
-                    🛠️ Utility Tools
-                </button>
-            </h2>
-            <div id="collapseEight" class="accordion-collapse collapse" aria-labelledby="headingEight" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/poll</code>: 📊 Create an interactive poll.</li>
-                        <li><code>/remind</code>: ⏰ Set a reminder.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
+            {% endcall %}
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

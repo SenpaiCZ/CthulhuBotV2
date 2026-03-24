@@ -437,7 +437,28 @@ async def check_image():
 
 @app.route('/')
 async def index():
-    return await render_template('index.html')
+    active_guilds = len(app.bot.guilds) if app.bot else 0
+    
+    uptime = "Offline"
+    if app.bot:
+        if hasattr(app.bot, 'start_time'):
+            delta = datetime.datetime.now() - app.bot.start_time
+            days = delta.days
+            hours, remainder = divmod(delta.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            if days > 0:
+                uptime = f"{days}d {hours}h {minutes}m"
+            else:
+                uptime = f"{hours}h {minutes}m {seconds}s"
+        else:
+            uptime = "Online"
+            
+    failed_extensions = getattr(app.bot, 'failed_extensions', []) if app.bot else []
+    
+    return await render_template('index.html', 
+                               active_guilds=active_guilds, 
+                               uptime=uptime, 
+                               failed_extensions=failed_extensions)
 
 @app.route('/login', methods=['GET', 'POST'])
 async def login():
