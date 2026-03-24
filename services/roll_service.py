@@ -1,5 +1,7 @@
 import random
+import re
 from typing import Optional, Tuple, List
+from rapidfuzz import process, fuzz
 from schemas.roll import RollRequest, RollResult
 
 class SafeDiceParser:
@@ -193,3 +195,45 @@ class RollService:
             rolls=possible_rolls,
             net_dice=net_dice
         )
+
+    @staticmethod
+    def resolve_skill(stats: dict, skill_name_input: str) -> List[str]:
+        """
+        Resolves a skill name from stats dictionary, supporting exact and fuzzy matches.
+        """
+        match = re.match(r"^(.*?)\s*\(\d+\)$", skill_name_input)
+        clean_expression = match.group(1) if match else skill_name_input
+
+        choices = list(stats.keys())
+
+        # 1. Exact Match (Case Insensitive)
+        exact_matches = []
+        clean_lower = clean_expression.lower()
+        for k in choices:
+            if k.lower() == clean_lower:
+                exact_matches.append(k)
+
+        if exact_matches:
+            return exact_matches
+
+        # 2. Fuzzy Match
+        results = process.extract(clean_expression, choices, scorer=fuzz.WRatio, limit=5, score_cutoff=60)
+        return [res[0] for res in results]
+
+    @staticmethod
+    def get_autocomplete_choices(stats: dict = None, current: str = "", base_choices: List[str] = None) -> List[str]:
+        """
+        Returns a list of autocomplete choices based on input, stats, or a base list.
+        """
+        choices = base_choices or []
+        if stats:
+            valid_stats = []
+            ignored = ["NAME", "Name", "Residence", "Occupation", "Game Mode", "Archetype", "Archetype Info", "Backstory", "Custom Emojis", "Age", "Move", "Build", "Damage Bonus", "Bonus Damage", "CustomSkill", "CustomSkills", "CustomSkillss", "Occupation Info"]
+            for k, v in stats.items():
+                if k not in ignored and isinstance(v, (int, float)): valid_stats.append((k, v))
+            valid_stats.sort(key=lambda x: x[1], reverse=True)
+            choices = [f"{k} ({v})" for k, v in valid_stats]
+        
+        if not current: return choices[:25]
+        return [m[0] for m in process.extract(current, choices, scorer=fuzz.WRatio, limit=25)]
+
