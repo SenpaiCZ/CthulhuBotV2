@@ -1,836 +1,397 @@
-{% extends 'base.html' %}
+{% extends 'base_glass.html' %}
+{% from 'includes/glass_components.html' import glass_card, glass_button, glass_input, glass_modal, glass_badge %}
 
 {% block title %}{{ title }} - CoC Bot{% endblock %}
 
 {% block content %}
-<h2>{{ title }}</h2>
-
-<style>
-    .stat-icon {
-        font-size: 1.2em;
-        vertical-align: middle;
-    }
-    .player-name {
-        font-weight: bold;
-        color: var(--bs-link-color);
-        cursor: help;
-    }
-
-    /* CoC Sheet Styles */
-    .coc-sheet {
-        background-color: #1a1a1a;
-        color: #e0e0e0;
-        font-family: 'Courier New', Courier, monospace; /* Retro feel */
-        border: 2px solid var(--cthulhu-green-dark);
-        padding: 20px;
-        border-radius: 5px;
-    }
-
-    .coc-header {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-        margin-bottom: 20px;
-        border-bottom: 1px solid var(--cthulhu-green-dark);
-        padding-bottom: 10px;
-    }
-
-    .coc-label {
-        font-size: 0.8em;
-        color: var(--cthulhu-green-main);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .coc-value {
-        font-size: 1.1em;
-        font-weight: bold;
-        color: #fff;
-        border-bottom: 1px dotted #444;
-    }
-
-    .coc-section-title {
-        background-color: var(--cthulhu-green-dark);
-        color: #fff;
-        padding: 5px 10px;
-        font-weight: bold;
-        text-transform: uppercase;
-        margin-top: 15px;
-        margin-bottom: 10px;
-        border-radius: 3px;
-    }
-
-    .coc-characteristics {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-        gap: 10px;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .coc-stat-box {
-        background: #0f0f0f;
-        border: 1px solid #333;
-        padding: 5px;
-        border-radius: 5px;
-    }
-
-    .coc-stat-big {
-        font-size: 1.4em;
-        color: var(--cthulhu-green-bright);
-    }
-
-    .coc-status-bar {
-        display: flex;
-        justify-content: space-around;
-        background: #222;
-        padding: 10px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-        border: 1px solid #333;
-    }
-
-    .coc-skills-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 5px 15px;
-    }
-
-    .coc-skill-item {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        border: 1px solid #333;
-        background: #111;
-        padding: 5px;
-        border-radius: 4px;
-        margin-bottom: 5px;
-    }
-
-    .coc-skill-row-1 {
-        color: #bbb;
-        font-size: 0.9em;
-        margin-bottom: 2px;
-        text-align: center;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        width: 100%;
-    }
-
-    .coc-skill-row-2 {
-        font-family: 'Courier New', monospace;
-    }
-
-    .coc-skill-val-big {
-        font-size: 1.2em;
-        color: var(--cthulhu-green-bright);
-        font-weight: bold;
-    }
-
-    .coc-skill-val-small {
-        font-size: 0.8em;
-        color: #666;
-    }
-
-</style>
+<div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+    <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
+        {{ title }}
+    </h1>
+    {% if is_admin %}
+    <div class="flex gap-2">
+        {{ glass_badge('Admin Mode', style='info') }}
+    </div>
+    {% endif %}
+</div>
 
 {% if type == 'active' %}
     {% for server_id, users in data.items() %}
-    <div class="card mb-4">
-        <div class="card-header">Server ID: {{ server_id }}</div>
-        <div class="card-body">
-            <table class="table table-striped align-middle">
-                <thead>
-                    <tr>
-                        <th>Player</th>
-                        <th>Character</th>
-                        <th>Occupation</th>
-                        <th>Last Played</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user_id, char in users.items() %}
-                    <tr>
-                        <td>
-                            <span class="player-name" data-bs-toggle="tooltip" title="User ID: {{ user_id }}">
-                                {{ user_names.get(user_id, user_id) }}
-                            </span>
-                        </td>
-                        <td>{{ char.get('NAME', 'Unknown') }}</td>
-                        <td>{{ char.get('Occupation', 'Unknown') }}</td>
-                        <td>
-                            {% if char.get('last_played') %}
-                                <span class="small">{{ char.get('last_played')|replace('T', ' ')|truncate(16, True, '') }}</span>
-                            {% else %}
-                                <span class="text-muted small">N/A</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#modal-{{server_id}}-{{user_id}}" title="View Sheet">
-                                <i class="bi bi-file-earmark-person"></i>
-                            </button>
-                            {% if is_admin %}
-                            <button class="btn btn-sm btn-outline-info me-1" onclick="renameCharacter('{{server_id}}', '{{user_id}}', '{{char.get('NAME')}}')" title="Rename">
-                                <i class="bi bi-pencil-square"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-warning me-1" onclick="retireCharacter('{{server_id}}', '{{user_id}}', '{{char.get('NAME')}}', true)" title="Retire">
-                                <i class="bi bi-box-arrow-in-right"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger"
-                                    onclick='deleteCharacter({{ server_id|tojson }}, {{ user_id|tojson }}, "active", {{ char.get("NAME")|tojson }}, null)'
-                                    aria-label="Delete {{ char.get('NAME') }}"
-                                    data-bs-toggle="tooltip"
-                                    title="Delete Character">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                            {% endif %}
-                        </td>
-                    </tr>
-
-                    <!-- Modal -->
-                    <div class="modal fade" id="modal-{{server_id}}-{{user_id}}" tabindex="-1">
-                        <div class="modal-dialog modal-xl">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">{{ char.get('NAME') }}</h5>
-                                    <div class="ms-auto">
-                                        <button class="btn btn-sm btn-outline-success me-2" id="btn-copy-{{server_id}}-{{user_id}}" style="display:none;" onclick="copyJson('{{server_id}}-{{user_id}}')"><i class="bi bi-clipboard"></i> Copy JSON</button>
-                                        <button class="btn btn-sm btn-outline-secondary me-2" id="btn-toggle-{{server_id}}-{{user_id}}" onclick="toggleJson('{{server_id}}-{{user_id}}')">Show JSON</button>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                </div>
-                                <div class="modal-body">
-                                    <!-- Sheet View -->
-                                    <div id="sheet-{{server_id}}-{{user_id}}" class="char-sheet-container coc-sheet">
-
-                                        <!-- Game Mode Header -->
-                                        <div class="text-center mb-3" style="border-bottom: 2px solid var(--cthulhu-green-dark); padding-bottom: 10px;">
-                                            <h4 style="color: var(--cthulhu-green-bright); font-family: 'Courier New', Courier, monospace; text-transform: uppercase;">
-                                                {% if char.get('Game Mode') == 'Pulp of Cthulhu' or 'pulp' in (char.get('Game Mode')|default('')|lower) %}
-                                                    Pulp of Cthulhu Character
-                                                {% else %}
-                                                    Call of Cthulhu Character
-                                                {% endif %}
-                                            </h4>
-                                        </div>
-
-                                        <!-- Bio Header -->
-                                        <div class="coc-header">
-                                            <div>
-                                                <div class="coc-label">Name</div>
-                                                <div class="coc-value">{{ char.get('NAME', 'Unknown') }}</div>
-                                            </div>
-                                            <div>
-                                                <div class="coc-label">Occupation</div>
-                                                <div class="coc-value">{{ char.get('Occupation', 'Unknown') }}</div>
-                                            </div>
-                                            <div>
-                                                <div class="coc-label">Age</div>
-                                                <div class="coc-value">{{ char.get('Age', '') }}</div>
-                                            </div>
-                                            <div>
-                                                <div class="coc-label">Residence</div>
-                                                <div class="coc-value">{{ char.get('Residence', 'Unknown') }}</div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Characteristics -->
-                                        <div class="coc-section-title">Characteristics</div>
-                                        <div class="coc-characteristics">
-                                            {% for stat in ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU'] %}
-                                            <div class="coc-stat-box">
-                                                <div class="coc-label">{{ stat }}</div>
-                                                <div class="coc-stat-big">
-                                                    {{ emojis.get_stat_emoji(stat) | format_custom_emoji | safe }}
-                                                    {{ char.get(stat, 0) }}
-                                                </div>
-                                                <div style="font-size:0.7em; color:#666;">{{ char.get(stat,0)|int // 2 }} / {{ char.get(stat,0)|int // 5 }}</div>
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-
-                                        <!-- Status -->
-                                        <div class="coc-section-title">Status</div>
-                                        <div class="coc-status-bar">
-                                            <div class="text-center">
-                                                <div class="coc-label">Hit Points</div>
-                                                <div class="coc-stat-big text-danger">
-                                                    {{ emojis.get_stat_emoji('HP') | format_custom_emoji | safe }} {{ char.get('HP') }}
-                                                </div>
-                                            </div>
-                                            <div class="text-center">
-                                                <div class="coc-label">Sanity</div>
-                                                <div class="coc-stat-big text-warning">
-                                                    {{ emojis.get_stat_emoji('SAN') | format_custom_emoji | safe }} {{ char.get('SAN') }}
-                                                </div>
-                                            </div>
-                                            <div class="text-center">
-                                                <div class="coc-label">Magic Points</div>
-                                                <div class="coc-stat-big text-info">
-                                                    {{ emojis.get_stat_emoji('MP') | format_custom_emoji | safe }} {{ char.get('MP') }}
-                                                </div>
-                                            </div>
-                                            <div class="text-center">
-                                                <div class="coc-label">Luck</div>
-                                                <div class="coc-stat-big text-success">
-                                                    {{ emojis.get_stat_emoji('LUCK') | format_custom_emoji | safe }} {{ char.get('LUCK') }}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Combat & Move -->
-                                        <div class="row mb-3">
-                                            <div class="col-md-3">
-                                                <div class="coc-stat-box">
-                                                    <div class="coc-label">Move</div>
-                                                    <div>{{ char.get('Move') }}</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="coc-stat-box">
-                                                    <div class="coc-label">Build</div>
-                                                    <div>{{ char.get('Build') }}</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="coc-stat-box">
-                                                    <div class="coc-label">Dmg Bonus</div>
-                                                    <div>{{ char.get('Damage Bonus') }}</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="coc-stat-box">
-                                                    <div class="coc-label">Dodge</div>
-                                                    <div>{{ char.get('Dodge') }}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Skills -->
-                                        <div class="coc-section-title">Skills</div>
-                                        <div class="coc-skills-grid">
-                                            {% set excluded = ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU',
-                                                               'HP', 'MP', 'SAN', 'LUCK', 'Move', 'Build', 'Damage Bonus', 'Dodge',
-                                                               'NAME', 'Occupation', 'Age', 'Sex', 'Residence', 'Birthplace',
-                                                               'Credit Rating', 'Archetype', 'Archetype Info', 'Talent', 'Backstory'] %}
-
-                                            <!-- Explicit Credit Rating first -->
-                                            <div class="coc-skill-item">
-                                                <div class="coc-skill-row-1">
-                                                    {{ emojis.get_stat_emoji('Credit Rating') | format_custom_emoji | safe }} Credit Rating
-                                                </div>
-                                                <div class="coc-skill-row-2">
-                                                    <span class="coc-skill-val-big">{{ char.get('Credit Rating', 0) }}</span>
-                                                    <span class="coc-skill-val-small">| {{ char.get('Credit Rating', 0)|int // 2 }} | {{ char.get('Credit Rating', 0)|int // 5 }}</span>
-                                                </div>
-                                            </div>
-
-                                            {% for key, val in char.items()|sort %}
-                                                {% if key not in excluded and key|length > 0 %}
-                                                    {# Filter out likely non-skills based on capitalization? CoC skills are usually Capitalized #}
-                                                    {# Also check if value is a number #}
-                                                    {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
-                                                    <div class="coc-skill-item">
-                                                        <div class="coc-skill-row-1">
-                                                            {{ emojis.get_stat_emoji(key) | format_custom_emoji | safe }} {{ key }}
-                                                        </div>
-                                                        <div class="coc-skill-row-2">
-                                                            <span class="coc-skill-val-big">{{ val }}</span>
-                                                            <span class="coc-skill-val-small">| {{ val|int // 2 }} | {{ val|int // 5 }}</span>
-                                                        </div>
-                                                    </div>
-                                                    {% endif %}
-                                                {% endif %}
-                                            {% endfor %}
-                                        </div>
-
-                                        <!-- Background & Details -->
-                                        <div class="coc-section-title">Background & Details</div>
-                                        <div class="row">
-                                            {% if char.get('Archetype') %}
-                                                <div class="col-12 mb-3">
-                                                    <div class="coc-label" style="font-size: 1em; border-bottom: 1px solid #333; margin-bottom: 5px;">Archetype</div>
-                                                    <p class="text-white small mb-1">{{ char.get('Archetype') }}</p>
-                                                    {% if char.get('Archetype Info') %}
-                                                        {% set a_info = char.get('Archetype Info') %}
-                                                        {% if a_info.get('adjustments') %}
-                                                            <div class="mt-2">
-                                                            {% for adj in a_info.get('adjustments') %}
-                                                                <p class="text-white small mb-0">• {{ adj | format_custom_emoji | format_bold | safe }}</p>
-                                                            {% endfor %}
-                                                            </div>
-                                                        {% endif %}
-                                                    {% endif %}
-                                                </div>
-                                            {% endif %}
-
-                                            {% set backstory_order = [
-                                                'Pulp Talents',
-                                                'My Story', 'Personal Description', 'Ideology and Beliefs',
-                                                'Significant People', 'Meaningful Locations', 'Treasured Possessions',
-                                                'Traits', 'Injuries and Scars', 'Phobias and Manias',
-                                                'Arcane Tome and Spells', 'Encounters with Strange Entities',
-                                                'Fellow Investigators', 'Gear and Possessions',
-                                                'Spending Level', 'Cash', 'Assets'
-                                            ] %}
-                                            {% set char_backstory = char.get('Backstory', {}) %}
-
-                                            {% for section in backstory_order %}
-                                                {% if section in char_backstory %}
-                                                    <div class="col-12 mb-3">
-                                                        <div class="coc-label" style="font-size: 1em; border-bottom: 1px solid #333; margin-bottom: 5px;">{{ section }}</div>
-                                                        {% set entries = char_backstory[section] %}
-                                                        {% if entries and entries|length > 0 %}
-                                                            {% for entry in entries %}
-                                                                <p class="text-white small mb-1">{{ entry | format_custom_emoji | format_bold | safe }}</p>
-                                                            {% endfor %}
-                                                        {% else %}
-                                                            <div class="text-white small" style="min-height: 1.2em;">&nbsp;</div>
-                                                        {% endif %}
-                                                    </div>
-                                                {% endif %}
-                                            {% endfor %}
-
-                                            {% for key, val in char.items()|sort %}
-                                                {% if key not in excluded and key|length > 0 %}
-                                                    {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
-                                                    <div class="col-md-6 mb-2">
-                                                        <div class="coc-label">{{ key }}</div>
-                                                        <div class="text-white small" style="white-space: pre-wrap;">{{ val | format_custom_emoji | safe }}</div>
-                                                    </div>
-                                                    {% endif %}
-                                                {% endif %}
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-
-                                    <!-- JSON View -->
-                                    <div id="json-{{server_id}}-{{user_id}}" style="display: none;">
-                                        <pre>{{ char | tojson(indent=4) }}</pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <div class="mb-16">
+        <div class="flex items-center mb-6 px-2">
+            <div class="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"></div>
+            <h2 class="mx-4 text-sm font-bold text-indigo-400 uppercase tracking-[0.3em] flex items-center">
+                <i class="bi bi-server mr-3"></i> Server: {{ server_id }}
+            </h2>
+            <div class="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent"></div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for user_id, char in users.items() %}
+                {% set char_id = server_id ~ '-' ~ user_id %}
+                {{ render_char_card(char, user_id, user_names, 'active', server_id, char_id) }}
+                {{ render_char_modal(char, char_id, server_id, user_id) }}
+            {% endfor %}
         </div>
     </div>
     {% endfor %}
 {% elif type == 'retired' %}
-    <table class="table table-striped align-middle">
-        <thead>
-            <tr>
-                <th>Player</th>
-                <th>Character</th>
-                <th>Occupation</th>
-                <th>Retired On</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user_id, char_list in data.items() %}
-                {% for char in char_list %}
-                <tr>
-                    <td>
-                        <span class="player-name" data-bs-toggle="tooltip" title="User ID: {{ user_id }}">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for user_id, char_list in data.items() %}
+            {% for char in char_list %}
+                {% set char_id = 'ret-' ~ user_id ~ '-' ~ loop.index %}
+                {{ render_char_card(char, user_id, user_names, 'retired', char.get('guild_id', 'unknown'), char_id, loop.index0) }}
+                {{ render_char_modal(char, char_id, char.get('guild_id', 'unknown'), user_id) }}
+            {% endfor %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+{# Admin Modals #}
+{% if is_admin %}
+    {# Rename Modal #}
+    {% call glass_modal('rename-modal', 'Rename Character') %}
+        <div class="space-y-4">
+            <input type="hidden" id="rename-guild-id">
+            <input type="hidden" id="rename-user-id">
+            {{ glass_input('New Name', 'rename-new-name', placeholder='Enter character name...') }}
+            <div class="flex justify-end pt-4">
+                {{ glass_button('Update Name', style='primary', onclick='submitRename()') }}
+            </div>
+        </div>
+    {% endcall %}
+
+    {# Retire Modal #}
+    {% call glass_modal('retire-modal', 'Change Character Status') %}
+        <div class="space-y-4">
+            <input type="hidden" id="retire-guild-id">
+            <input type="hidden" id="retire-user-id">
+            <input type="hidden" id="retire-status">
+            <p id="retire-message" class="text-slate-300"></p>
+            <div class="flex justify-end pt-4">
+                {{ glass_button('Confirm', style='primary', id='retire-confirm-btn', onclick='submitRetire()') }}
+            </div>
+        </div>
+    {% endcall %}
+
+    {# Delete Modal #}
+    {% call glass_modal('delete-modal', 'Delete Character') %}
+        <div class="space-y-4">
+            <input type="hidden" id="delete-guild-id">
+            <input type="hidden" id="delete-user-id">
+            <input type="hidden" id="delete-type">
+            <input type="hidden" id="delete-index">
+            <input type="hidden" id="delete-char-name">
+            <p class="text-rose-400 font-bold">WARNING: This action cannot be undone!</p>
+            <p id="delete-message" class="text-slate-300"></p>
+            {{ glass_input('Type character name to confirm', 'delete-confirm-name', placeholder='Character Name') }}
+            <div class="flex justify-end pt-4">
+                {{ glass_button('Delete Forever', style='danger', onclick='submitDelete()') }}
+            </div>
+        </div>
+    {% endcall %}
+{% endif %}
+
+{% macro render_char_card(char, user_id, user_names, type, server_id, char_id, index=None) %}
+    <div class="group">
+        {% call glass_card(title=char.get('NAME', 'Unknown'), extra_classes='h-full flex flex-col hover:border-indigo-500/40 transition-all duration-300 hover:shadow-indigo-500/10') %}
+            <div class="space-y-6 flex-1 flex flex-col">
+                <div class="flex justify-between items-start">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Investigator</p>
+                        <p class="text-slate-200 font-bold truncate text-lg" title="User ID: {{ user_id }}">
                             {{ user_names.get(user_id, user_id) }}
-                        </span>
-                    </td>
-                    <td>{{ char.get('NAME', 'Unknown') }}</td>
-                    <td>{{ char.get('Occupation', 'Unknown') }}</td>
-                    <td>
-                        {% if char.get('retirement_date') %}
-                            <span class="small">{{ char.get('retirement_date')|replace('T', ' ')|truncate(16, True, '') }}</span>
-                        {% else %}
-                            <span class="text-muted small">N/A</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#modal-ret-{{user_id}}-{{loop.index}}" title="View Sheet">
+                        </p>
+                    </div>
+                    {% if type == 'active' %}
+                        {{ glass_badge('Active', style='success') }}
+                    {% else %}
+                        {{ glass_badge('Retired', style='warning') }}
+                    {% endif %}
+                </div>
+                
+                <div class="flex-1">
+                    <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Occupation</p>
+                    <p class="text-slate-300 font-medium">{{ char.get('Occupation', 'Unknown') }}</p>
+                </div>
+                
+                <div class="pt-4 border-t border-white/5 flex justify-between items-center mt-auto">
+                    <div>
+                        <p class="text-[9px] text-slate-500 uppercase tracking-widest mb-0.5">
+                            {{ 'Last Active' if type == 'active' else 'Retired On' }}
+                        </p>
+                        <p class="text-slate-400 text-xs font-mono">
+                            {% set date_val = char.get('last_played') if type == 'active' else char.get('retirement_date') %}
+                            {% if date_val %}
+                                {{ date_val|replace('T', ' ')|truncate(16, True, '') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="openModal('modal-{{ char_id }}')" class="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all active:scale-95" title="View Sheet">
                             <i class="bi bi-file-earmark-person"></i>
                         </button>
                         {% if is_admin %}
-                        <button class="btn btn-sm btn-outline-success me-1" onclick="retireCharacter('{{char.get('guild_id', 'unknown')}}', '{{user_id}}', '{{char.get('NAME')}}', false)" title="Unretire">
-                            <i class="bi bi-arrow-counterclockwise"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger"
-                                onclick='deleteCharacter(null, {{ user_id|tojson }}, "retired", {{ char.get("NAME")|tojson }}, {{ loop.index0 }})'
-                                aria-label="Delete {{ char.get('NAME') }}"
-                                data-bs-toggle="tooltip"
-                                title="Delete Character">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                            {% if type == 'active' %}
+                                <button onclick="openRenameModal('{{server_id}}', '{{user_id}}', '{{char.get('NAME')|e}}')" class="p-2.5 rounded-xl bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 border border-sky-500/20 transition-all active:scale-95" title="Rename">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button onclick="openRetireModal('{{server_id}}', '{{user_id}}', '{{char.get('NAME')|e}}', true)" class="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 transition-all active:scale-95" title="Retire">
+                                    <i class="bi bi-box-arrow-in-right"></i>
+                                </button>
+                                <button onclick='openDeleteModal({{ server_id|tojson }}, {{ user_id|tojson }}, "active", {{ char.get("NAME")|tojson }}, null)' class="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 transition-all active:scale-95" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            {% else %}
+                                <button onclick="openRetireModal('{{server_id}}', '{{user_id}}', '{{char.get('NAME')|e}}', false)" class="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all active:scale-95" title="Unretire">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                                <button onclick='openDeleteModal(null, {{ user_id|tojson }}, "retired", {{ char.get("NAME")|tojson }}, {{ index }})' class="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 transition-all active:scale-95" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            {% endif %}
                         {% endif %}
-                    </td>
-                </tr>
-
-                <!-- Modal -->
-                <div class="modal fade" id="modal-ret-{{user_id}}-{{loop.index}}" tabindex="-1">
-                    <div class="modal-dialog modal-xl">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">{{ char.get('NAME') }} (Retired)</h5>
-                                <div class="ms-auto">
-                                    <button class="btn btn-sm btn-outline-success me-2" id="btn-copy-ret-{{user_id}}-{{loop.index}}" style="display:none;" onclick="copyJson('ret-{{user_id}}-{{loop.index}}')"><i class="bi bi-clipboard"></i> Copy JSON</button>
-                                    <button class="btn btn-sm btn-outline-secondary me-2" id="btn-toggle-ret-{{user_id}}-{{loop.index}}" onclick="toggleJson('ret-{{user_id}}-{{loop.index}}')">Show JSON</button>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                            </div>
-                            <div class="modal-body">
-                                 <!-- Sheet View -->
-                                 <div id="sheet-ret-{{user_id}}-{{loop.index}}" class="char-sheet-container coc-sheet">
-
-                                        <!-- Game Mode Header -->
-                                        <div class="text-center mb-3" style="border-bottom: 2px solid var(--cthulhu-green-dark); padding-bottom: 10px;">
-                                            <h4 style="color: var(--cthulhu-green-bright); font-family: 'Courier New', Courier, monospace; text-transform: uppercase;">
-                                                {% if char.get('Game Mode') == 'Pulp of Cthulhu' or 'pulp' in (char.get('Game Mode')|default('')|lower) %}
-                                                    Pulp of Cthulhu Character
-                                                {% else %}
-                                                    Call of Cthulhu Character
-                                                {% endif %}
-                                            </h4>
-                                        </div>
-
-                                        <!-- Bio Header -->
-                                        <div class="coc-header">
-                                            <div>
-                                                <div class="coc-label">Name</div>
-                                                <div class="coc-value">{{ char.get('NAME', 'Unknown') }}</div>
-                                            </div>
-                                            <div>
-                                                <div class="coc-label">Occupation</div>
-                                                <div class="coc-value">{{ char.get('Occupation', 'Unknown') }}</div>
-                                            </div>
-                                            <div>
-                                                <div class="coc-label">Age</div>
-                                                <div class="coc-value">{{ char.get('Age', '') }}</div>
-                                            </div>
-                                            <div>
-                                                <div class="coc-label">Residence</div>
-                                                <div class="coc-value">{{ char.get('Residence', 'Unknown') }}</div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Characteristics -->
-                                        <div class="coc-section-title">Characteristics</div>
-                                        <div class="coc-characteristics">
-                                            {% for stat in ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU'] %}
-                                            <div class="coc-stat-box">
-                                                <div class="coc-label">{{ stat }}</div>
-                                                <div class="coc-stat-big">
-                                                    {{ emojis.get_stat_emoji(stat) | format_custom_emoji | safe }}
-                                                    {{ char.get(stat, 0) }}
-                                                </div>
-                                                <div style="font-size:0.7em; color:#666;">{{ char.get(stat,0)|int // 2 }} / {{ char.get(stat,0)|int // 5 }}</div>
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-
-                                        <!-- Status -->
-                                        <div class="coc-section-title">Status</div>
-                                        <div class="coc-status-bar">
-                                            <div class="text-center">
-                                                <div class="coc-label">Hit Points</div>
-                                                <div class="coc-stat-big text-danger">
-                                                    {{ emojis.get_stat_emoji('HP') | format_custom_emoji | safe }} {{ char.get('HP') }}
-                                                </div>
-                                            </div>
-                                            <div class="text-center">
-                                                <div class="coc-label">Sanity</div>
-                                                <div class="coc-stat-big text-warning">
-                                                    {{ emojis.get_stat_emoji('SAN') | format_custom_emoji | safe }} {{ char.get('SAN') }}
-                                                </div>
-                                            </div>
-                                            <div class="text-center">
-                                                <div class="coc-label">Magic Points</div>
-                                                <div class="coc-stat-big text-info">
-                                                    {{ emojis.get_stat_emoji('MP') | format_custom_emoji | safe }} {{ char.get('MP') }}
-                                                </div>
-                                            </div>
-                                            <div class="text-center">
-                                                <div class="coc-label">Luck</div>
-                                                <div class="coc-stat-big text-success">
-                                                    {{ emojis.get_stat_emoji('LUCK') | format_custom_emoji | safe }} {{ char.get('LUCK') }}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Combat & Move -->
-                                        <div class="row mb-3">
-                                            <div class="col-md-3">
-                                                <div class="coc-stat-box">
-                                                    <div class="coc-label">Move</div>
-                                                    <div>{{ char.get('Move') }}</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="coc-stat-box">
-                                                    <div class="coc-label">Build</div>
-                                                    <div>{{ char.get('Build') }}</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="coc-stat-box">
-                                                    <div class="coc-label">Dmg Bonus</div>
-                                                    <div>{{ char.get('Damage Bonus') }}</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="coc-stat-box">
-                                                    <div class="coc-label">Dodge</div>
-                                                    <div>{{ char.get('Dodge') }}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Skills -->
-                                        <div class="coc-section-title">Skills</div>
-                                        <div class="coc-skills-grid">
-                                            {% set excluded = ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU',
-                                                               'HP', 'MP', 'SAN', 'LUCK', 'Move', 'Build', 'Damage Bonus', 'Dodge',
-                                                               'NAME', 'Occupation', 'Age', 'Sex', 'Residence', 'Birthplace',
-                                                               'Credit Rating', 'Archetype', 'Archetype Info', 'Talent', 'Backstory'] %}
-
-                                            <!-- Explicit Credit Rating first -->
-                                            <div class="coc-skill-item">
-                                                <div class="coc-skill-row-1">
-                                                    {{ emojis.get_stat_emoji('Credit Rating') | format_custom_emoji | safe }} Credit Rating
-                                                </div>
-                                                <div class="coc-skill-row-2">
-                                                    <span class="coc-skill-val-big">{{ char.get('Credit Rating', 0) }}</span>
-                                                    <span class="coc-skill-val-small">| {{ char.get('Credit Rating', 0)|int // 2 }} | {{ char.get('Credit Rating', 0)|int // 5 }}</span>
-                                                </div>
-                                            </div>
-
-                                            {% for key, val in char.items()|sort %}
-                                                {% if key not in excluded and key|length > 0 %}
-                                                    {# Filter out likely non-skills based on capitalization? CoC skills are usually Capitalized #}
-                                                    {# Also check if value is a number #}
-                                                    {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
-                                                    <div class="coc-skill-item">
-                                                        <div class="coc-skill-row-1">
-                                                            {{ emojis.get_stat_emoji(key) | format_custom_emoji | safe }} {{ key }}
-                                                        </div>
-                                                        <div class="coc-skill-row-2">
-                                                            <span class="coc-skill-val-big">{{ val }}</span>
-                                                            <span class="coc-skill-val-small">| {{ val|int // 2 }} | {{ val|int // 5 }}</span>
-                                                        </div>
-                                                    </div>
-                                                    {% endif %}
-                                                {% endif %}
-                                            {% endfor %}
-                                        </div>
-
-                                        <!-- Background & Details -->
-                                        <div class="coc-section-title">Background & Details</div>
-                                        <div class="row">
-                                            {% if char.get('Archetype') %}
-                                                <div class="col-12 mb-3">
-                                                    <div class="coc-label" style="font-size: 1em; border-bottom: 1px solid #333; margin-bottom: 5px;">Archetype</div>
-                                                    <p class="text-white small mb-1">{{ char.get('Archetype') }}</p>
-                                                    {% if char.get('Archetype Info') %}
-                                                        {% set a_info = char.get('Archetype Info') %}
-                                                        {% if a_info.get('adjustments') %}
-                                                            <div class="mt-2">
-                                                            {% for adj in a_info.get('adjustments') %}
-                                                                <p class="text-white small mb-0">• {{ adj | format_custom_emoji | format_bold | safe }}</p>
-                                                            {% endfor %}
-                                                            </div>
-                                                        {% endif %}
-                                                    {% endif %}
-                                                </div>
-                                            {% endif %}
-
-                                            {% set backstory_order = [
-                                                'Pulp Talents',
-                                                'My Story', 'Personal Description', 'Ideology and Beliefs',
-                                                'Significant People', 'Meaningful Locations', 'Treasured Possessions',
-                                                'Traits', 'Injuries and Scars', 'Phobias and Manias',
-                                                'Arcane Tome and Spells', 'Encounters with Strange Entities',
-                                                'Fellow Investigators', 'Gear and Possessions',
-                                                'Spending Level', 'Cash', 'Assets'
-                                            ] %}
-                                            {% set char_backstory = char.get('Backstory', {}) %}
-
-                                            {% for section in backstory_order %}
-                                                {% if section in char_backstory %}
-                                                    <div class="col-12 mb-3">
-                                                        <div class="coc-label" style="font-size: 1em; border-bottom: 1px solid #333; margin-bottom: 5px;">{{ section }}</div>
-                                                        {% set entries = char_backstory[section] %}
-                                                        {% if entries and entries|length > 0 %}
-                                                            {% for entry in entries %}
-                                                                <p class="text-white small mb-1">{{ entry | format_custom_emoji | format_bold | safe }}</p>
-                                                            {% endfor %}
-                                                        {% else %}
-                                                            <div class="text-white small" style="min-height: 1.2em;">&nbsp;</div>
-                                                        {% endif %}
-                                                    </div>
-                                                {% endif %}
-                                            {% endfor %}
-
-                                            {% for key, val in char.items()|sort %}
-                                                {% if key not in excluded and key|length > 0 %}
-                                                    {% if not (val is number or val|string|replace('.','',1)|int(-1) != -1) %}
-                                                    <div class="col-md-6 mb-2">
-                                                        <div class="coc-label">{{ key }}</div>
-                                                        <div class="text-white small" style="white-space: pre-wrap;">{{ val | format_custom_emoji | safe }}</div>
-                                                    </div>
-                                                    {% endif %}
-                                                {% endif %}
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-
-                                <!-- JSON View -->
-                                <div id="json-ret-{{user_id}}-{{loop.index}}" style="display: none;">
-                                    <pre>{{ char | tojson(indent=4) }}</pre>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
+            </div>
+        {% endcall %}
+    </div>
+{% endmacro %}
+
+{% macro render_char_modal(char, char_id, server_id, user_id) %}
+    {% call glass_modal('modal-' ~ char_id, char.get('NAME')) %}
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex space-x-2">
+                <button onclick="switchModalTab('{{ char_id }}', 'sheet')" id="tab-btn-sheet-{{ char_id }}" class="modal-tab-btn px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-400 transition-all">
+                    Sheet
+                </button>
+                <button onclick="switchModalTab('{{ char_id }}', 'json')" id="tab-btn-json-{{ char_id }}" class="modal-tab-btn px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-slate-300 transition-all">
+                    JSON
+                </button>
+            </div>
+            <button id="btn-copy-{{ char_id }}" onclick="copyJson('{{ char_id }}')" class="hidden px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all">
+                <i class="bi bi-clipboard mr-2"></i> Copy JSON
+            </button>
+        </div>
+        
+        <div id="modal-content-sheet-{{ char_id }}" class="modal-tab-content max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar space-y-8">
+             {# Condensed Character Sheet #}
+             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {% for stat in ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU'] %}
+                <div class="bg-slate-950/40 rounded-xl p-3 border border-white/5 text-center">
+                    <p class="text-[9px] text-slate-500 uppercase tracking-widest mb-1">{{ stat }}</p>
+                    <p class="text-xl font-bold text-indigo-400">{{ char.get(stat, 0) }}</p>
+                    <p class="text-[9px] text-slate-600">{{ char.get(stat,0)|int // 2 }} / {{ char.get(stat,0)|int // 5 }}</p>
+                </div>
                 {% endfor %}
-            {% endfor %}
-        </tbody>
-    </table>
-{% endif %}
+             </div>
 
+             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {% set status_items = [('HP', 'text-rose-400'), ('SAN', 'text-amber-400'), ('MP', 'text-sky-400'), ('LUCK', 'text-emerald-400')] %}
+                {% for key, color in status_items %}
+                <div class="bg-slate-950/40 rounded-xl p-3 border border-white/5 text-center">
+                    <p class="text-[9px] text-slate-500 uppercase tracking-widest mb-1">{{ key }}</p>
+                    <p class="text-xl font-bold {{ color }}">{{ char.get(key, 0) }}</p>
+                </div>
+                {% endfor %}
+             </div>
+
+             <div>
+                <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 border-b border-white/5 pb-1">Key Skills</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {% set skill_count = namespace(value=0) %}
+                    {% for key, val in char.items()|sort %}
+                        {% if key not in ['STR', 'DEX', 'INT', 'CON', 'APP', 'POW', 'SIZ', 'EDU', 'HP', 'MP', 'SAN', 'LUCK', 'Move', 'Build', 'Damage Bonus', 'Dodge', 'NAME', 'Occupation', 'Age', 'Sex', 'Residence', 'Birthplace', 'Credit Rating', 'Archetype', 'Archetype Info', 'Talent', 'Backstory', 'Game Mode'] %}
+                            {% if val is number or val|string|replace('.','',1)|int(-1) != -1 %}
+                                {% if val|int > 40 or skill_count.value < 6 %}
+                                <div class="flex justify-between items-center bg-white/5 rounded-lg px-3 py-2 border border-white/5">
+                                    <span class="text-xs text-slate-300 font-medium">{{ key }}</span>
+                                    <span class="text-xs text-indigo-400 font-bold">{{ val }}</span>
+                                    {% set skill_count.value = skill_count.value + 1 %}
+                                </div>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="mt-4 text-center">
+                    <a href="/render/character/{{ server_id }}/{{ user_id }}" target="_blank" class="text-[10px] text-indigo-400 hover:text-indigo-300 underline uppercase tracking-widest font-bold">View Full Immersive Sheet <i class="bi bi-box-arrow-up-right ml-1"></i></a>
+                </div>
+             </div>
+        </div>
+        
+        <div id="modal-content-json-{{ char_id }}" class="modal-tab-content hidden max-h-[60vh] overflow-y-auto">
+            <pre class="text-[10px] leading-relaxed text-indigo-300 bg-slate-950/50 p-6 rounded-2xl border border-white/10 font-mono">{{ char | tojson(indent=4) }}</pre>
+        </div>
+    {% endcall %}
+{% endmacro %}
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.4); }
+</style>
+
+{% block scripts %}
 <script>
-    async function deleteCharacter(server_id, user_id, type, char_name, index) {
-        var confirmation = prompt("To DELETE character '" + char_name + "', please type their name below:\nThis action cannot be undone.");
+    // Tab switching for character modals
+    function switchModalTab(charId, tab) {
+        const sheetContent = document.getElementById('modal-content-sheet-' + charId);
+        const jsonContent = document.getElementById('modal-content-json-' + charId);
+        const sheetBtn = document.getElementById('tab-btn-sheet-' + charId);
+        const jsonBtn = document.getElementById('tab-btn-json-' + charId);
+        const copyBtn = document.getElementById('btn-copy-' + charId);
 
-        if (confirmation === char_name) {
-            try {
-                const response = await fetch('/api/character/delete', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        server_id: server_id,
-                        user_id: user_id,
-                        type: type,
-                        name: confirmation,
-                        index: index
-                    })
-                });
-
-                const result = await response.json();
-                if (result.status === 'success') {
-                    alert('Character deleted successfully.');
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + result.message);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred while deleting the character.');
-            }
-        } else if (confirmation !== null) {
-            alert("Name did not match. Deletion cancelled.");
-        }
-    }
-
-    async function renameCharacter(guild_id, user_id, old_name) {
-        var new_name = prompt("Enter new name for character '" + old_name + "':", old_name);
-        if (new_name && new_name !== old_name) {
-            try {
-                const response = await fetch('/api/character/rename', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        guild_id: guild_id,
-                        user_id: user_id,
-                        new_name: new_name
-                    })
-                });
-                const result = await response.json();
-                if (result.status === 'success') {
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + result.message);
-                }
-            } catch (error) {
-                alert('An error occurred.');
-            }
-        }
-    }
-
-    async function retireCharacter(guild_id, user_id, char_name, status) {
-        const action = status ? "RETIRE" : "UNRETIRE";
-        if (confirm("Are you sure you want to " + action + " character '" + char_name + "'?")) {
-            try {
-                const response = await fetch('/api/character/retire', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        guild_id: guild_id,
-                        user_id: user_id,
-                        status: status
-                    })
-                });
-                const result = await response.json();
-                if (result.status === 'success') {
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + result.message);
-                }
-            } catch (error) {
-                alert('An error occurred.');
-            }
-        }
-    }
-
-    function toggleJson(id) {
-        var sheet = document.getElementById('sheet-' + id);
-        var json = document.getElementById('json-' + id);
-        var btn = document.getElementById('btn-toggle-' + id);
-        var btnCopy = document.getElementById('btn-copy-' + id);
-
-        if (sheet.style.display === 'none') {
-            sheet.style.display = 'block';
-            json.style.display = 'none';
-            btn.innerText = 'Show JSON';
-            if (btnCopy) btnCopy.style.display = 'none';
+        if (tab === 'sheet') {
+            sheetContent.classList.remove('hidden');
+            jsonContent.classList.add('hidden');
+            sheetBtn.classList.add('bg-indigo-500/20', 'text-indigo-400');
+            sheetBtn.classList.remove('text-slate-500');
+            jsonBtn.classList.add('text-slate-500');
+            jsonBtn.classList.remove('bg-indigo-500/20', 'text-indigo-400');
+            copyBtn.classList.add('hidden');
         } else {
-            sheet.style.display = 'none';
-            json.style.display = 'block';
-            btn.innerText = 'Show Sheet';
-            if (btnCopy) btnCopy.style.display = 'inline-block';
+            sheetContent.classList.add('hidden');
+            jsonContent.classList.remove('hidden');
+            jsonBtn.classList.add('bg-indigo-500/20', 'text-indigo-400');
+            jsonBtn.classList.remove('text-slate-500');
+            sheetBtn.classList.add('text-slate-500');
+            sheetBtn.classList.remove('bg-indigo-500/20', 'text-indigo-400');
+            copyBtn.classList.remove('hidden');
+        }
+    }
+
+    // Modal Action Openers
+    function openRenameModal(guildId, userId, oldName) {
+        document.getElementById('rename-guild-id').value = guildId;
+        document.getElementById('rename-user-id').value = userId;
+        document.getElementById('rename-new-name').value = oldName;
+        openModal('rename-modal');
+    }
+
+    function openRetireModal(guildId, userId, charName, isRetiring) {
+        document.getElementById('retire-guild-id').value = guildId;
+        document.getElementById('retire-user-id').value = userId;
+        document.getElementById('retire-status').value = isRetiring ? 'true' : 'false';
+        
+        const action = isRetiring ? 'RETIRE' : 'UNRETIRE';
+        document.getElementById('retire-message').innerText = `Are you sure you want to ${action} character '${charName}'?`;
+        document.getElementById('retire-confirm-btn').innerText = isRetiring ? 'Retire Character' : 'Unretire Character';
+        
+        openModal('retire-modal');
+    }
+
+    function openDeleteModal(guildId, userId, type, charName, index) {
+        document.getElementById('delete-guild-id').value = guildId;
+        document.getElementById('delete-user-id').value = userId;
+        document.getElementById('delete-type').value = type;
+        document.getElementById('delete-index').value = index;
+        document.getElementById('delete-char-name').value = charName;
+        document.getElementById('delete-confirm-name').value = '';
+        
+        document.getElementById('delete-message').innerText = `To DELETE investigator '${charName}', please type their name below to confirm:`;
+        openModal('delete-modal');
+    }
+
+    // Modal Action Submitters
+    async function submitRename() {
+        const guildId = document.getElementById('rename-guild-id').value;
+        const userId = document.getElementById('rename-user-id').value;
+        const newName = document.getElementById('rename-new-name').value;
+
+        if (!newName) return;
+
+        try {
+            const response = await fetch('/api/character/rename', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guild_id: guildId, user_id: userId, new_name: newName })
+            });
+            const result = await response.json();
+            if (result.status === 'success') window.location.reload();
+            else alert('Error: ' + result.message);
+        } catch (error) {
+            alert('An error occurred.');
+        }
+    }
+
+    async function submitRetire() {
+        const guildId = document.getElementById('retire-guild-id').value;
+        const userId = document.getElementById('retire-user-id').value;
+        const status = document.getElementById('retire-status').value === 'true';
+
+        try {
+            const response = await fetch('/api/character/retire', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guild_id: guildId, user_id: userId, status: status })
+            });
+            const result = await response.json();
+            if (result.status === 'success') window.location.reload();
+            else alert('Error: ' + result.message);
+        } catch (error) {
+            alert('An error occurred.');
+        }
+    }
+
+    async function submitDelete() {
+        const guildId = document.getElementById('delete-guild-id').value;
+        const userId = document.getElementById('delete-user-id').value;
+        const type = document.getElementById('delete-type').value;
+        const index = document.getElementById('delete-index').value;
+        const charName = document.getElementById('delete-char-name').value;
+        const confirmedName = document.getElementById('delete-confirm-name').value;
+
+        if (confirmedName !== charName) {
+            alert("Name did not match. Deletion cancelled.");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/character/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    server_id: guildId,
+                    user_id: userId,
+                    type: type,
+                    name: charName,
+                    index: index !== 'null' ? parseInt(index) : null
+                })
+            });
+
+            const result = await response.json();
+            if (result.status === 'success') {
+                window.location.reload();
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the character.');
         }
     }
 
     function copyJson(id) {
-        var jsonContent = document.querySelector('#json-' + id + ' pre').innerText;
+        const jsonContent = document.querySelector('#modal-content-json-' + id + ' pre').innerText;
         navigator.clipboard.writeText(jsonContent).then(function() {
-            var btn = document.getElementById('btn-copy-' + id);
-            var originalHtml = btn.innerHTML;
-
-            btn.classList.remove('btn-outline-success');
-            btn.classList.add('btn-success');
-            btn.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
-
-            setTimeout(function() {
-                btn.classList.remove('btn-success');
-                btn.classList.add('btn-outline-success');
-                btn.innerHTML = originalHtml;
-            }, 2000);
+            const btn = document.getElementById('btn-copy-' + id);
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check-lg mr-2"></i> Copied!';
+            setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
         }, function(err) {
-            console.error('Async: Could not copy text: ', err);
             alert('Failed to copy JSON to clipboard.');
         });
     }
 
-    // Initialize Tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+    function toggleJson(id) {
+        // Legacy toggle for compatibility if needed, but we use switchModalTab now
+        switchModalTab(id, 'json');
+    }
 </script>
-
+{% endblock %}
 {% endblock %}
