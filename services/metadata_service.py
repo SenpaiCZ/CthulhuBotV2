@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from models.metadata import GlobalEmoji
 from typing import Dict, Tuple, List, Optional
+from models.database import SessionLocal
 
 class MetadataService:
     """
@@ -10,17 +11,22 @@ class MetadataService:
     _initialized: bool = False
 
     @staticmethod
-    def sync_cache(db: Session):
+    def sync_cache(db: Session = None):
         """
         Synchronize the in-memory cache with the database.
         Cache structure: { (category, key): value }
         """
-        emojis = db.query(GlobalEmoji).all()
+        if db is None:
+            with SessionLocal() as session:
+                emojis = session.query(GlobalEmoji).all()
+        else:
+            emojis = db.query(GlobalEmoji).all()
+            
         MetadataService._cache = { (e.category, e.key): e.value for e in emojis }
         MetadataService._initialized = True
 
     @staticmethod
-    def _ensure_cache(db: Session):
+    def _ensure_cache(db: Session = None):
         """
         Ensure the cache is initialized from the database.
         """
@@ -28,7 +34,7 @@ class MetadataService:
             MetadataService.sync_cache(db)
 
     @staticmethod
-    def get_emoji(db: Session, key: str, category: str) -> str:
+    def get_emoji(key: str, category: str, db: Session = None) -> str:
         """
         Retrieve an emoji value by key and category.
         Checks cache first, then DB if not found (and updates cache).
@@ -42,6 +48,14 @@ class MetadataService:
             return val
             
         # Try DB (if not in cache, fallback and update cache)
+        if db is None:
+            with SessionLocal() as session:
+                return MetadataService._get_from_db(session, key, category)
+        else:
+            return MetadataService._get_from_db(db, key, category)
+
+    @staticmethod
+    def _get_from_db(db: Session, key: str, category: str) -> str:
         db_emoji = db.query(GlobalEmoji).filter(
             GlobalEmoji.category == category,
             GlobalEmoji.key == key
@@ -54,11 +68,24 @@ class MetadataService:
         return ""
 
     @staticmethod
-    def get_all_emojis(db: Session) -> List[GlobalEmoji]:
+    def get_all_emojis(db: Session = None) -> List[GlobalEmoji]:
         """
         Retrieve all GlobalEmoji entries from the database.
         """
+        if db is None:
+            with SessionLocal() as session:
+                return session.query(GlobalEmoji).all()
         return db.query(GlobalEmoji).all()
+
+    @staticmethod
+    def get_all_emojis_by_category(category: str, db: Session = None) -> List[GlobalEmoji]:
+        """
+        Retrieve all GlobalEmoji entries for a specific category.
+        """
+        if db is None:
+            with SessionLocal() as session:
+                return session.query(GlobalEmoji).filter(GlobalEmoji.category == category).all()
+        return db.query(GlobalEmoji).filter(GlobalEmoji.category == category).all()
 
     @staticmethod
     def update_emoji(db: Session, key: str, category: str, value: str) -> GlobalEmoji:

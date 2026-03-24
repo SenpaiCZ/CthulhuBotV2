@@ -81,6 +81,44 @@ def migrate_emojis(db):
     for key, value in stat_emojis.items():
         category = categorize_stat_emoji(key)
         MetadataService.update_emoji(db, key, category, value)
+    
+    # 3. Migrate Health Bar (System)
+    print("Migrating health bar emojis...")
+    health_emojis = {
+        'health_bar_green': '🟩',
+        'health_bar_yellow': '🟨',
+        'health_bar_red': '🟥',
+        'health_bar_empty': '⬛'
+    }
+    for key, value in health_emojis.items():
+        MetadataService.update_emoji(db, key, 'System', value)
+
+    # 4. Migrate Item Keywords
+    print("Migrating additional item keywords...")
+    item_keywords = {
+        "amulet": "🧿", "artifact": "🧿", "relic": "🧿", "idol": "🧿", "crystal": "🧿", "orb": "🧿",
+        "watch": "⌚", "clock": "⌚", "time": "⌚",
+        "cigarette": "🚬", "cigar": "🚬", "tobacco": "🚬", "pipe": "🚬", "smoke": "🚬",
+        "glasses": "👓", "spectacles": "👓", "monocle": "👓",
+        "mask": "🎭", "disguise": "🎭",
+        "umbrella": "☂️",
+        "gun": "🔫", "rifle": "🔫", "pistol": "🔫", "shotgun": "🔫", "revolver": "🔫", "carbine": "🔫", "smg": "🔫", "handgun": "🔫",
+        "knife": "🗡️", "dagger": "🗡️", "blade": "🗡️", "machete": "🗡️", "hatchet": "🗡️", "razor": "🗡️", "kukri": "🗡️",
+        "potion": "🧪", "vial": "🧪", "bottle": "🧪", "flask": "🧪", "elixir": "🧪", "medicine": "🧪", "pill": "🧪", "syringe": "🧪", "drug": "🧪",
+        "book": "📖", "journal": "📖", "diary": "📖", "note": "📖", "paper": "📖", "map": "📖", "scroll": "📖", "letter": "📖", "document": "📖", "tome": "📖",
+        "key": "🗝️", "lockpick": "🗝️", "pass": "🗝️", "card": "🗝️",
+        "money": "💰", "cash": "💰", "wallet": "💰", "coin": "💰", "gold": "💰", "silver": "💰", "bill": "💰", "gem": "💰", "jewel": "💰", "diamond": "💰", "ruby": "💰", "emerald": "💰", "sapphire": "💰", "ring": "💰", "necklace": "💰",
+        "food": "🥫", "ration": "🥫", "canned": "🥫", "meat": "🥫", "bread": "🥫", "water": "🥫", "drink": "🥫", "alcohol": "🥫", "wine": "🥫", "beer": "🥫",
+        "clothes": "🧥", "coat": "🧥", "hat": "🧥", "gloves": "🧥", "boots": "🧥", "shoes": "🧥", "suit": "🧥", "dress": "🧥", "armor": "🧥", "helmet": "🧥", "vest": "🧥",
+        "tool": "🛠️", "wrench": "🛠️", "hammer": "🛠️", "screwdriver": "🛠️", "pliers": "🛠️", "saw": "🛠️", "crowbar": "🛠️", "kit": "🛠️",
+        "light": "🔦", "torch": "🔦", "lantern": "🔦", "lamp": "🔦", "candle": "🔦", "match": "🔦", "lighter": "🔦",
+        "ammo": "🎒", "bullet": "🎒", "shell": "🎒", "clip": "🎒", "magazine": "🎒",
+        "phone": "📷", "radio": "📷", "camera": "📷",
+        "bag": "👜", "backpack": "👜", "suitcase": "👜", "briefcase": "👜", "purse": "👜",
+        "ticket": "🎫", "permit": "🎫"
+    }
+    for key, value in item_keywords.items():
+        MetadataService.update_emoji(db, key, 'Item', value)
         
     db.commit()
     print("Migration logic complete.")

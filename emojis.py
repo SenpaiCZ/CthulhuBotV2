@@ -1,250 +1,48 @@
 import re
+from services.metadata_service import MetadataService
 
-stat_emojis = {
-      "STR": "💪",
-      "DEX": "🏃",
-      "CON": "❤️",
-      "INT": "🧠",
-      "POW": "⚡",
-      "APP": "😍",
-      "EDU": "🎓",
-      "SIZ": "👤",
-      "HP": "💗",
-      "MP": "✨",
-      "LUCK": "🍀",
-      "SAN": "⚖️",
-      "Age": "🎂",
-      "Residence": "🏠",
-      "Occupation": "💼",
-      "Move": "🏃",
-      "Build": "🚻",
-      "Damage Bonus": "❤️‍🩹",
-      "DB": "❤️‍🩹",
-      "Accounting": "📒",
-      "Anthropology": "🌎",
-      "Appraise": "🔍",
-      "Archaeology": "⛏️",
-      "Charm": "💟",
-      "Photography": "📸",
-      "Art/Craft": "🎨",
-      "Climb": "⛰️",
-      "Credit Rating": "💰",
-      "Cthulhu Mythos": "🐙",
-      "Demolitions": "💥",
-      "Disguise": "👗",
-      "Diving": "🤿",
-      "Dodge": "⚠️",
-      "Drive Auto": "🚙",
-      "Elec. Repair": "🔧",
-      "Fast Talk": "🤌",
-      "Fighting Brawl": "🥊",
-      "Firearms Handgun": "🔫",
-      "Firearms Rifle/Shotgun": "🔫",
-      "First Aid": "🚑",
-      "History": "📜",
-      "Intimidate": "😨",
-      "Jump": "👟",
-      "Language other": "🌐",
-      "Language own": "💬",
-      "Law": "⚖️",
-      "Library Use": "📚",
-      "Listen": "👂",
-      "Locksmith": "🔑",
-      "Mech. Repair": "🔧",
-      "Medicine": "💊",
-      "Natural World": "🌳",
-      "Navigate": "🧭",
-      "Occult": "🔮",
-      "Persuade": "💬",
-      "Pilot": "✈️",
-      "Psychoanalysis": "🧠",
-      "Psychology": "🧠",
-      "Read Lips": "👄",
-      "Ride": "🏇",
-      "Science specific": "🔬",
-      "Sleight of Hand": "🧙",
-      "Spot Hidden": "👀",
-      "Stealth": "👣",
-      "Survival": "🏕️",
-      "Swim": "🏊",
-      "Throw": "🎯",
-      "Track": "🔎",
-      "Arabic": "🇦🇪",
-      "Bengali": "🇧🇩",
-      "Chinese": "🇨🇳",
-      "Czech": "🇨🇿",
-      "Danish": "🇩🇰",
-      "Dutch": "🇳🇱",
-      "English": "🇬🇧",
-      "Finnish": "🇫🇮",
-      "French": "🇫🇷",
-      "German": "🇩🇪",
-      "Greek": "🇬🇷",
-      "Hindi": "🇮🇳",
-      "Hungarian": "🇭🇺",
-      "Italian": "🇮🇹",
-      "Japanese": "🇯🇵",
-      "Korean": "🇰🇷",
-      "Norwegian": "🇳🇴",
-      "Polish": "🇵🇱",
-      "Portuguese": "🇵🇹",
-      "Romanian": "🇷🇴",
-      "Russian": "🇷🇺",
-      "Spanish": "🇪🇸",
-      "Swedish": "🇸🇪",
-      "Turkish": "🇹🇷",
-      "Vietnamese": "🇻🇳",
-      "Hebrew": "🇮🇱",
-      "Thai": "🇹🇭",
-      "Swahili": "🇰🇪",
-      "Urdu": "🇵🇰",
-      "Malay": "🇲🇾",
-      "Filipino": "🇵🇭",
-      "Indonesian": "🇮🇩",
-      "Maltese": "🇲🇹",
-      "Nepali": "🇳🇵",
-      "Slovak": "🇸🇰",
-      "Slovenian": "🇸🇮",
-      "Ukrainian": "🇺🇦",
-      "Bulgarian": "🇧🇬",
-      "Estonian": "🇪🇪",
-      "Icelandic": "🇮🇸",
-      "Latvian": "🇱🇻",
-      "Lithuanian": "🇱🇹",
-      "Luxembourgish": "🇱🇺",
-      "Samoan": "🇼🇸",
-      "Tongan": "🇹🇴",
-      "Fijian": "🇫🇯",
-      "Tahitian": "🇵🇫",
-      "Hawaiian": "🇺🇸",
-      "Maori": "🇳🇿",
-      "Tibetan": "🇨🇳",
-      "Kurdish": "🇮🇶",
-      "Pashto": "🇦🇫",
-      "Dari": "🇦🇫",
-      "Balinese": "🇮🇩",
-      "Turkmen": "🇹🇲",
-      "Bosnian": "🇧🇦",
-      "Croatian": "🇭🇷",
-      "Serbian": "🇷🇸",
-      "Macedonian": "🇲🇰",
-      "Albanian": "🇦🇱",
-      "Mongolian": "🇲🇳",
-      "Armenian": "🇦🇲",
-      "Georgian": "🇬🇪",
-      "Azerbaijani": "🇦🇿",
-      "Kazakh": "🇰🇿",
-      "Kyrgyz": "🇰🇬",
-      "Tajik": "🇹🇯",
-      "Uzbek": "🇺🇿",
-      "Tatar": "🇷🇺",
-      "Bashkir": "🇷🇺",
-      "Chechen": "🇷🇺",
-      "Belarusian": "🇧🇾",
-      "Moldovan": "🇲🇩",
-      "Sami": "🇳🇴",
-      "Faroese": "🇫🇴",
-      "Irish": "🇮🇪",
-      "Welsh": "🇬🇧",
-      "Scots Gaelic": "🇬🇧",
-      "Basque": "🇪🇸",
-      "Catalan": "🇪🇸",
-      "Galician": "🇪🇸",
-      "Yiddish": "🇮🇱",
-      "Malayalam": "🇮🇳",
-      "Tamil": "🇮🇳",
-      "Burmese": "🇲🇲",
-      "Khmer": "🇰🇭",
-      "Lao": "🇱🇦",
-      "Bisaya": "🇵🇭",
-      "Cebuano": "🇵🇭",
-      "Ilocano": "🇵🇭",
-      "Hiligaynon": "🇵🇭",
-      "Waray": "🇵🇭",
-      "Chichewa": "🇲🇼",
-      "Kinyarwanda": "🇷🇼",
-      "Swazi": "🇸🇿",
-      "Tigrinya": "🇪🇷",
-      "Haitian Creole": "🇭🇹",
-      "Frisian": "🇳🇱",
-      "Esperanto": "🏳️",
-      "Latin": "🏳️",
-      "Scots": "🇬🇧",
-      "Pirate": "🏴‍☠️",
-      "Astronomy": "🔭",
-      "Biology": "🔬",
-      "Botany": "🌿",
-      "Chemistry": "🧪",
-      "Cryptography": "🔒",
-      "Engineering": "⚙️",
-      "Forensics": "🔎",
-      "Geology": "🌎",
-      "Mathematics": "🔢",
-      "Meteorology": "⛈️",
-      "Pharmacy": "💊",
-      "Physics": "⚛️",
-      "Weird Science": "🧑‍🔬",
-      "Zoology": "🐾",
+class EmojiDictProxy(dict):
+    """
+    A proxy class that intercepts dictionary access and fetches from MetadataService.
+    Supports backward compatibility for stat_emojis.
+    """
+    def __init__(self, categories=None):
+        # We store the categories we want to search in
+        self.categories = categories if isinstance(categories, list) else ([categories] if categories else [])
+        super().__init__()
 
-      # New Explicit Mappings
-      "Art / Craft (any)": "🎨",
-      "Fighting (Brawl)": "🥊",
-      "Firearms (Handgun)": "🔫",
-      "Firearms (Rifle/Shotgun)": "🔫",
-      "Language (Other)": "🌐",
-      "Language (Own)": "💬",
-      "Pilot (any)": "✈️",
-      "Science (any)": "🔬",
-      "Survival (any)": "🏕️",
+    def __getitem__(self, key):
+        # Search in the specified categories
+        cats = self.categories or ['Stat', 'Skill', 'Language', 'Item', 'System']
+        for cat in cats:
+            val = MetadataService.get_emoji(key, cat)
+            if val:
+                return val
+        return ""
 
-      # Base Keys for Fuzzy Matching
-      "Science": "🔬",
-      "Fighting": "🥊",
-      "Firearms": "🔫",
-      "Art / Craft": "🎨",
-      "Language": "🌐",
-      "Drive": "🚙",
-      "Survival": "🏕️",
-      "Pilot": "✈️",
+    def get(self, key, default=None):
+        val = self[key]
+        return val if val else default
 
-      # Era Specific / New Skills
-      "Computer Use": "💻",
-      "Electronics": "🔌",
-      "Alienism": "🧠",
-      "Drive Carriage": "🐴",
-      "Operate Heavy Machinery": "🚅",
-      "Reassure": "🤝",
-      "Religion": "🛐",
-      "Animal Handling": "🦁",
-      "Drive Wagon/Coach": "🐴",
-      "Gambling": "🎲",
-      "Rope Use": "🪢",
-      "Trap": "🪤",
-      "Drive (Horses/Oxen)": "🐂",
-      "Insight": "💡",
-      "Other Kingdoms (any)": "🗺️",
-      "Kingdom (Own)": "🏰",
-      "Pilot Boat": "⛵",
-      "Read/Write Language (any)": "📝",
-      "Repair/Devise": "🛠️",
-      "Ride Horse": "🏇",
-      "Status": "👑",
-      "Natural World (any)": "🌳",
-      "Hypnosis": "😵‍💫",
-      "Lore": "📜",
-      "Artillery": "⚔️",
+    def items(self):
+        cats = self.categories or ['Stat', 'Skill', 'Language', 'Item', 'System']
+        res = []
+        for cat in cats:
+            for e in MetadataService.get_all_emojis_by_category(cat):
+                res.append((e.key, e.value))
+        return res
 
-      # Weapons
-      "Axe": "🪓",
-      "Sword": "⚔️",
-      "Spear": "🗡️",
-      "Bow": "🏹",
-      "Flamethrower": "🔥",
-      "Heavy Weapons": "🚀",
-      "Machine Gun": "🔫",
-      "Submachine Gun": "🔫",
-      "Chainsaw": "🪓",
-  }
+    def __contains__(self, key):
+        return bool(self[key])
+
+    def __iter__(self):
+        return iter([k for k, v in self.items()])
+
+    def __len__(self):
+        return len(self.items())
+
+# Replace the static dict with a proxy
+stat_emojis = EmojiDictProxy(['Stat', 'Skill', 'Language', 'Item', 'System'])
 
 def get_stat_emoji(stat_name):
   # 1. Exact match
@@ -268,51 +66,19 @@ def get_stat_emoji(stat_name):
   return "❓"
 
 def get_emoji_for_item(item_name):
-    """Returns a relevant emoji based on item name keywords."""
+    """Returns a relevant emoji based on item name keywords pulling from MetadataService."""
     name_lower = item_name.lower()
-
-    # Specific items (High Priority)
-    if any(x in name_lower for x in ["amulet", "artifact", "relic", "idol", "crystal", "orb"]):
-        return "🧿"
-    if any(x in name_lower for x in ["watch", "clock", "time"]):
-        return "⌚"
-    if any(x in name_lower for x in ["cigarette", "cigar", "tobacco", "pipe", "smoke"]):
-        return "🚬"
-    if any(x in name_lower for x in ["glasses", "spectacles", "monocle"]):
-        return "👓"
-    if any(x in name_lower for x in ["mask", "disguise"]):
-        return "🎭"
-    if any(x in name_lower for x in ["umbrella"]):
-        return "☂️"
-
-    if any(x in name_lower for x in ["gun", "rifle", "pistol", "shotgun", "revolver", "carbine", "smg", "machine gun", "handgun"]):
-        return "🔫"
-    if any(x in name_lower for x in ["knife", "dagger", "sword", "blade", "machete", "axe", "hatchet", "razor", "kukri", "spear"]):
-        return "🗡️"
-    if any(x in name_lower for x in ["potion", "vial", "bottle", "flask", "elixir", "medicine", "pill", "syringe", "drug"]):
-        return "🧪"
-    if any(x in name_lower for x in ["book", "journal", "diary", "note", "paper", "map", "scroll", "letter", "document", "tome"]):
-        return "📖"
-    if any(x in name_lower for x in ["key", "lockpick", "pass", "card"]):
-        return "🗝️"
-    if any(x in name_lower for x in ["money", "cash", "wallet", "coin", "gold", "silver", "bill", "gem", "jewel", "diamond", "ruby", "emerald", "sapphire", "ring", "necklace"]):
-        return "💰"
-    if any(x in name_lower for x in ["food", "ration", "canned", "meat", "bread", "water", "drink", "alcohol", "wine", "beer"]):
-        return "🥫"
-    if any(x in name_lower for x in ["clothes", "coat", "hat", "gloves", "boots", "shoes", "suit", "dress", "armor", "helmet", "vest"]):
-        return "🧥"
-    if any(x in name_lower for x in ["tool", "wrench", "hammer", "screwdriver", "pliers", "saw", "crowbar", "kit"]):
-        return "🛠️"
-    if any(x in name_lower for x in ["light", "torch", "lantern", "lamp", "candle", "match", "lighter"]):
-        return "🔦"
-    if any(x in name_lower for x in ["ammo", "bullet", "shell", "clip", "magazine"]):
-        return "🎒"
-    if any(x in name_lower for x in ["phone", "radio", "camera"]):
-        return "📷"
-    if any(x in name_lower for x in ["bag", "backpack", "suitcase", "briefcase", "purse"]):
-        return "👜"
-    if any(x in name_lower for x in ["ticket", "pass", "permit"]):
-        return "🎫"
+    
+    # Fetch all item keywords from MetadataService
+    items = MetadataService.get_all_emojis_by_category('Item')
+    
+    # Sort by key length descending to ensure longest matches first (e.g. 'machine gun' before 'gun')
+    items_sorted = sorted(items, key=lambda x: len(x.key), reverse=True)
+    
+    for item in items_sorted:
+        if item.key.lower() in name_lower:
+            return item.value
+            
     return "📦"
 
 def get_health_bar(current, max_val, length=8):
@@ -324,10 +90,17 @@ def get_health_bar(current, max_val, length=8):
     filled = int(pct * length)
     empty = length - filled
 
-    # Color Logic
-    fill_char = "🟩"
-    if pct <= 0.2: fill_char = "🟥"
-    elif pct <= 0.5: fill_char = "🟨"
+    # Color Logic - Pull from MetadataService
+    green_char = MetadataService.get_emoji('health_bar_green', 'System') or "🟩"
+    yellow_char = MetadataService.get_emoji('health_bar_yellow', 'System') or "🟨"
+    red_char = MetadataService.get_emoji('health_bar_red', 'System') or "🟥"
+    empty_char = MetadataService.get_emoji('health_bar_empty', 'System') or "⬛"
 
-    bar = (fill_char * filled) + ("⬛" * empty)
+    fill_char = green_char
+    if pct <= 0.2: 
+        fill_char = red_char
+    elif pct <= 0.5: 
+        fill_char = yellow_char
+
+    bar = (fill_char * filled) + (empty_char * empty)
     return bar
