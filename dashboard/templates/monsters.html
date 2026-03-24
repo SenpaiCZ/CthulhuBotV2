@@ -1,224 +1,319 @@
-{% extends 'base.html' %}
+{% extends 'base_glass.html' %}
+{% from 'includes/glass_components.html' import glass_card, glass_input, glass_button, glass_badge, glass_modal %}
 
 {% block title %}Monsters - CoC Bot{% endblock %}
 
 {% block content %}
-<div class="container-fluid dashboard-container">
-    <div class="sidebar-panel">
-        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
-            <h5 class="m-0 text-success">Grimoire</h5>
+<div class="space-y-8">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400">
+                Grimoire: Monsters
+            </h1>
+            <p class="text-slate-400 mt-2">Explore the archives of eldritch horrors and mythos creatures.</p>
         </div>
-        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
-            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search..." aria-label="Search monsters">
-        </div>
-        <div class="list-group list-group-flush sidebar-list" id="monsterList" role="tablist">
-            {% if data and data.monsters %}
-                {% for item in data.monsters %}
-                    {% set m = item.monster_entry %}
-                    <button type="button" class="list-group-item list-group-item-action monster-list-item" onclick="showMonster({{ loop.index0 }})" role="tab" aria-selected="false" aria-controls="monster-content">
-                        {{ m.name }}
-                    </button>
-                {% endfor %}
-            {% else %}
-                <div class="p-3 text-center text-muted">No monsters found.</div>
-            {% endif %}
+        
+        <div class="flex gap-3 max-w-md w-full">
+            <div class="relative flex-grow">
+                <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                <input type="text" id="searchInput" placeholder="Search monsters..." 
+                    class="w-full bg-slate-900/40 border border-white/10 rounded-xl pl-12 pr-4 py-2.5 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 backdrop-blur-xl transition-all">
+            </div>
         </div>
     </div>
 
-    <div class="detail-panel" id="detailPanel">
-        <div id="monster-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
-            <h2 class="text-muted" style="opacity: 0.3;">Select a creature</h2>
-            <p class="text-secondary">View detailed statistics from the archives.</p>
-        </div>
-
-        <div id="monster-content" class="hidden" role="tabpanel" aria-live="polite">
-            <!-- Template content populated by JS -->
-        </div>
+    <!-- Monster Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="monsterGrid">
+        {% if data and data.monsters %}
+            {% for item in data.monsters %}
+                {% set m = item.monster_entry %}
+                <div class="monster-card-container group" data-name="{{ m.name | lower }}">
+                    {% call glass_card(padding='p-0', extra_classes='h-full hover:border-emerald-500/30 transition-all duration-500 cursor-pointer flex flex-col') %}
+                        <div onclick="showMonster({{ loop.index0 }})" class="p-5 flex-grow">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xl font-bold text-slate-100 group-hover:text-emerald-400 transition-colors">{{ m.name }}</h3>
+                                {% if m.tags %}
+                                    <span class="text-[10px] uppercase tracking-wider text-emerald-500/70 font-semibold px-2 py-0.5 rounded-full border border-emerald-500/20 bg-emerald-500/5">{{ m.tags[0] }}</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-slate-400 text-sm italic mb-4 line-clamp-2 h-10">{{ m.subtitle or '' }}</p>
+                            
+                            <div class="grid grid-cols-3 gap-2 mt-auto">
+                                <div class="text-center p-2 rounded-lg bg-white/5 border border-white/5">
+                                    <div class="text-[10px] text-slate-500 uppercase">HP</div>
+                                    <div class="text-rose-400 font-bold">{{ m.derived_stats.hit_points }}</div>
+                                </div>
+                                <div class="text-center p-2 rounded-lg bg-white/5 border border-white/5">
+                                    <div class="text-[10px] text-slate-500 uppercase">DB</div>
+                                    <div class="text-amber-400 font-bold text-sm truncate px-1">{{ m.derived_stats.damage_bonus }}</div>
+                                </div>
+                                <div class="text-center p-2 rounded-lg bg-white/5 border border-white/5">
+                                    <div class="text-[10px] text-slate-500 uppercase">Move</div>
+                                    <div class="text-sky-400 font-bold">{{ m.derived_stats.move.base if m.derived_stats.move is mapping else m.derived_stats.move }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endcall %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-span-full py-20 text-center glass-card">
+                <i class="bi bi-journal-x text-5xl text-slate-700 mb-4 block"></i>
+                <p class="text-slate-500 text-xl italic">No monsters found in the grimoire.</p>
+            </div>
+        {% endif %}
     </div>
 </div>
+
+<!-- Monster Detail Modal -->
+{{ glass_modal('monsterModal', 'Monster Details') }}
+    <div id="monster-content" class="max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+        <!-- Populated by JS -->
+    </div>
+{% endcall %}
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+</style>
 
 <script>
     // Search Functionality
     document.getElementById('searchInput').addEventListener('input', function() {
         const filter = this.value.toLowerCase();
-        const items = document.querySelectorAll('.monster-list-item');
+        const items = document.querySelectorAll('.monster-card-container');
         items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if(text.includes(filter)) {
-                item.classList.remove('hidden');
+            const name = item.dataset.name;
+            if(name.includes(filter)) {
+                item.style.display = 'block';
             } else {
-                item.classList.add('hidden');
+                item.style.display = 'none';
             }
         });
     });
 
-    // Pass Python data to JS safely
     const monsters = {{ data.monsters | tojson }};
     const statEmojis = {{ stat_emojis | tojson }};
 
     function showMonster(index) {
-        try {
-            const m = monsters[index].monster_entry;
-            const container = document.getElementById('monster-content');
-            const placeholder = document.getElementById('monster-placeholder');
+        const m = monsters[index].monster_entry;
+        const container = document.getElementById('monster-content');
+        
+        const modalTitle = document.querySelector('#monsterModal h3');
+        if (modalTitle) modalTitle.textContent = m.name;
 
-            // Highlight active item
-            document.querySelectorAll('.monster-list-item').forEach((el, i) => {
-                if(i === index) {
-                    el.classList.add('active');
-                    el.setAttribute('aria-selected', 'true');
-                } else {
-                    el.classList.remove('active');
-                    el.setAttribute('aria-selected', 'false');
-                }
-            });
-
-            let html = `
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h1 class="display-5 mb-0 text-success">${m.name}</h1>
-                        <div class="text-secondary fst-italic fs-5">${m.subtitle || ''}</div>
-                    </div>
-                    <div class="text-end">
-                         ${(m.tags || []).map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`).join('')}
-                    </div>
-                </div>
-
-                <div id="image-control-container" class="mb-4"></div>
-
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-body">
-                        ${m.description ? `<p class="card-text border-start border-success border-3 ps-3">${m.description}</p>` : ''}
-                        ${m.main_entry_text ? `<p class="card-text text-muted small">${m.main_entry_text}</p>` : ''}
-                    </div>
-                </div>
-
-                <div class="section-header">Characteristics</div>
-                <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-2 mb-4">
-                    ${Object.entries(m.characteristics || {}).map(([key, val]) => `
-                        <div class="col">
-                            <div class="stat-box h-100">
-                                <div class="stat-label">${statEmojis[key] || ''} ${key}</div>
-                                <div class="stat-value text-light">${val.average || val}</div>
-                                <div class="small text-muted">${val.roll || ''}</div>
-                            </div>
+        let html = `
+            <div class="space-y-8 pb-4">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="flex-grow space-y-4">
+                        \${m.subtitle ? \`<p class="text-emerald-400/80 italic text-lg font-serif">\${m.subtitle}</p>\` : ''}
+                        
+                        <div class="flex flex-wrap gap-2">
+                            \${(m.tags || []).map(tag => \`<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-xs text-slate-400">\${tag}</span>\`).join('')}
                         </div>
-                    `).join('')}
+
+                        \${m.description ? \`
+                        <div class="bg-white/5 border-l-2 border-emerald-500/50 p-4 rounded-r-xl italic text-slate-300 leading-relaxed">
+                            \${m.description}
+                        </div>\` : ''}
+                    </div>
+                    
+                    <div id="image-control-container" class="w-full md:w-64 shrink-0"></div>
                 </div>
 
-                <div class="section-header">Derived Stats</div>
-                <div class="row row-cols-2 row-cols-md-5 g-2 mb-4">
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['HP'] || ''} HP</div><div class="stat-value text-danger">${m.derived_stats.hit_points}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['DB'] || ''} DB</div><div class="stat-value">${m.derived_stats.damage_bonus}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['Build'] || ''} Build</div><div class="stat-value">${m.derived_stats.build}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['MP'] || ''} MP</div><div class="stat-value text-info">${m.derived_stats.magic_points}</div></div></div>
-                    <div class="col">
-                        <div class="stat-box">
-                            <div class="stat-label">${statEmojis['Move'] || ''} Move</div>
-                            <div class="stat-value">
-                                ${typeof m.derived_stats.move === 'object' ?
-                                    `${m.derived_stats.move.base} ${m.derived_stats.move.special ? `<span class="small text-muted">(${m.derived_stats.move.special})</span>` : ''}` :
-                                    m.derived_stats.move}
+                <div class="space-y-4">
+                    <h4 class="text-sm font-bold uppercase tracking-widest text-slate-500 border-b border-white/5 pb-2">Characteristics</h4>
+                    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                        \${Object.entries(m.characteristics || {}).map(([key, val]) => \`
+                            <div class="bg-slate-950/40 border border-white/5 rounded-xl p-3 text-center">
+                                <div class="text-[10px] text-slate-500 uppercase mb-1">\${statEmojis[key] || ''} \${key}</div>
+                                <div class="text-slate-100 font-bold">\${val.average || val}</div>
+                                \${val.roll ? \`<div class="text-[9px] text-slate-600 font-mono mt-1">\${val.roll}</div>\` : ''}
                             </div>
-                        </div>
+                        \`).join('')}
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="section-header">Combat</div>
-                        <p class="mb-2"><span class="text-success fw-bold">Attacks per round:</span> ${m.combat.attacks_per_round}</p>
-
-                        <div class="list-group mb-3">
-                            ${(m.combat.attacks || []).map(atk => `
-                                <div class="list-group-item list-group-item-action bg-dark border-secondary">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1 text-light">${atk.name}</h6>
-                                        <span class="badge bg-danger rounded-pill">${atk.success_chance || 'Auto'}</span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Combat -->
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-bold uppercase tracking-widest text-rose-500/70 border-b border-white/5 pb-2">Combat</h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-400">Attacks per round</span>
+                                <span class="text-slate-100 font-bold">\${m.combat.attacks_per_round}</span>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                \${(m.combat.attacks || []).map(atk => \`
+                                    <div class="bg-white/5 border border-white/5 rounded-lg p-3 group/atk hover:bg-white/10 transition-colors">
+                                        <div class="flex justify-between mb-1">
+                                            <span class="font-bold text-slate-200">\${atk.name}</span>
+                                            <span class="text-rose-400 font-mono text-sm">\${atk.success_chance || 'Auto'}</span>
+                                        </div>
+                                        <div class="text-xs text-rose-500/80 font-semibold mb-1">Damage: \${atk.damage}</div>
+                                        \${atk.description ? \`<div class="text-[11px] text-slate-500 leading-tight">\${atk.description}</div>\` : ''}
                                     </div>
-                                    <p class="mb-1 text-danger fw-bold">Damage: ${atk.damage}</p>
-                                    ${atk.special_effect ? `<small class="text-info d-block">Effect: ${atk.special_effect}</small>` : ''}
-                                    ${atk.description ? `<small class="text-muted d-block">${atk.description}</small>` : ''}
+                                \`).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skills & Abilities -->
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-bold uppercase tracking-widest text-sky-500/70 border-b border-white/5 pb-2">Abilities</h4>
+                        
+                        <div class="flex flex-wrap gap-2">
+                            \${(m.skills || []).map(s => \`
+                                <span class="px-2 py-1 rounded bg-slate-900/60 border border-white/5 text-xs">
+                                    <span class="text-slate-400">\${s.name}</span>
+                                    <span class="text-sky-400 font-bold ml-1">\${s.value}</span>
+                                </span>
+                            \`).join('')}
+                        </div>
+
+                        <div class="space-y-3 mt-4">
+                            \${(m.powers_and_abilities || []).map(p => \`
+                                <div class="text-sm">
+                                    <div class="text-amber-400/90 font-bold mb-1">\${p.name}</div>
+                                    <div class="text-slate-400 text-xs leading-relaxed">\${p.description}</div>
                                 </div>
-                            `).join('')}
-                        </div>
-                        <p><span class="text-success fw-bold">Dodge:</span> ${m.combat.dodge ? (m.combat.dodge.success_chance || 'N/A') : 'N/A'}</p>
-                    </div>
-
-                    <div class="col-lg-6">
-                        <div class="section-header">Skills & Abilities</div>
-                        ${m.skills ? `
-                            <div class="mb-3">
-                                <h6 class="text-muted small text-uppercase">Skills</h6>
-                                <div class="d-flex flex-wrap gap-2">
-                                ${m.skills.map(s => `<span class="badge bg-secondary border border-secondary">${s.name} <span class="text-warning ms-1">${s.value}</span></span>`).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        ${m.powers_and_abilities ? `
-                            <div class="mt-4">
-                                <h6 class="text-muted small text-uppercase">Powers</h6>
-                                <ul class="list-group list-group-flush bg-transparent">
-                                ${m.powers_and_abilities.map(p => `
-                                    <li class="list-group-item bg-transparent border-secondary ps-0">
-                                        <strong class="text-warning">${p.name}:</strong> <span class="text-secondary">${p.description}</span>
-                                    </li>
-                                `).join('')}
-                                </ul>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-
-                <div class="section-header">Defenses & Magic</div>
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="card bg-dark border-secondary h-100">
-                            <div class="card-header bg-secondary bg-opacity-10 border-secondary text-success py-1 small fw-bold">ARMOR</div>
-                            <div class="card-body">
-                                ${m.armor ? (m.armor.rating + (m.armor.modifiers ? `<br><small class="text-muted">${m.armor.modifiers}</small>` : '')) : 'None'}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card bg-dark border-secondary h-100">
-                            <div class="card-header bg-secondary bg-opacity-10 border-secondary text-success py-1 small fw-bold">SPELLS</div>
-                            <div class="card-body small">
-                                ${m.spells || 'None'}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card bg-dark border-secondary h-100">
-                            <div class="card-header bg-secondary bg-opacity-10 border-secondary text-success py-1 small fw-bold">SANITY LOSS</div>
-                            <div class="card-body text-danger">
-                                ${m.sanity_loss || 'None'}
-                            </div>
+                            \`).join('')}
                         </div>
                     </div>
                 </div>
 
-                ${m.alternative_names ? `
-                    <div class="mt-5 pt-3 border-top border-secondary small text-muted text-center">
-                        <em>Also known as: ${m.alternative_names.join(', ')}</em>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-3">
+                        <div class="text-[10px] text-emerald-500/50 uppercase font-bold mb-1">Armor</div>
+                        <div class="text-slate-200 text-sm">\${m.armor ? (m.armor.rating) : 'None'}</div>
                     </div>
-                ` : ''}
-            `;
-
-            container.innerHTML = html;
-
-            initImageControl('image-control-container', '{{ type_slug }}', m.name);
-
-            container.classList.remove('hidden');
-            placeholder.style.setProperty('display', 'none', 'important');
-            placeholder.classList.remove('d-flex');
-
-            document.getElementById('detailPanel').scrollTop = 0;
-        } catch (e) {
-            console.error(e);
-            alert("Error rendering monster: " + e.message);
+                    <div class="bg-indigo-500/5 border border-indigo-500/10 rounded-xl p-3">
+                        <div class="text-[10px] text-indigo-500/50 uppercase font-bold mb-1">Spells</div>
+                        <div class="text-slate-200 text-sm truncate" title="\${m.spells || 'None'}">\${m.spells || 'None'}</div>
+                    </div>
+                    <div class="bg-rose-500/5 border border-rose-500/10 rounded-xl p-3">
+                        <div class="text-[10px] text-rose-500/50 uppercase font-bold mb-1">Sanity Loss</div>
+                        <div class="text-rose-400 font-bold text-sm">\${m.sanity_loss || 'None'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        openModal('monsterModal');
+        
+        if (typeof initImageControl === 'function') {
+           initImageControl('image-control-container', '{{ type_slug }}', m.name);
         }
     }
+
+    // Copy over image management functions since we are in a different base
+    {% if is_admin %}
+    async function initImageControl(containerId, typeSlug, name) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="bg-slate-900/60 border border-white/10 rounded-xl overflow-hidden shadow-xl">
+                <div class="p-3 border-b border-white/10 text-[10px] font-bold uppercase tracking-wider text-slate-500">Image Management</div>
+                <div class="p-4">
+                    <div id="${containerId}-preview" class="mb-4 text-center hidden">
+                        <img src="" class="w-full h-48 object-cover rounded-lg border border-white/10">
+                        <button class="mt-3 w-full py-1.5 text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 transition-all" 
+                            onclick="deleteImage('${typeSlug}', '${name.replace(/'/g, "\\'")}', '${containerId}')">Remove Image</button>
+                    </div>
+                    <div id="${containerId}-upload">
+                        <div class="space-y-3">
+                            <input type="file" class="hidden" id="${containerId}-file" accept=".png,.jpg,.jpeg,.webp" onchange="document.getElementById('${containerId}-upload-label').textContent = this.files[0].name">
+                            <label for="${containerId}-file" id="${containerId}-upload-label" class="block w-full py-3 border-2 border-dashed border-white/10 rounded-xl text-center text-slate-500 text-xs cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all">
+                                Select Image
+                            </label>
+                            <button class="w-full py-2 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-sm font-bold hover:bg-indigo-500/30 transition-all" 
+                                type="button" onclick="uploadImage('${typeSlug}', '${name.replace(/'/g, "\\'")}', '${containerId}')">Upload</button>
+                        </div>
+                    </div>
+                    <div id="${containerId}-status" class="mt-2 text-[10px] text-center"></div>
+                </div>
+            </div>
+        `;
+
+        checkImage(typeSlug, name, containerId);
+    }
+
+    async function checkImage(typeSlug, name, containerId) {
+        try {
+            const response = await fetch(`/api/images/check?type_slug=${encodeURIComponent(typeSlug)}&name=${encodeURIComponent(name)}`);
+            const data = await response.json();
+            const preview = document.getElementById(`${containerId}-preview`);
+            const upload = document.getElementById(`${containerId}-upload`);
+            if (data.found) {
+                preview.querySelector('img').src = data.url + '?t=' + new Date().getTime();
+                preview.classList.remove('hidden');
+                upload.classList.add('hidden');
+            } else {
+                preview.classList.add('hidden');
+                upload.classList.remove('hidden');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function uploadImage(typeSlug, name, containerId) {
+        const fileInput = document.getElementById(`${containerId}-file`);
+        const status = document.getElementById(`${containerId}-status`);
+        if (fileInput.files.length === 0) {
+            status.innerHTML = '<span class="text-rose-400">Please select a file.</span>';
+            return;
+        }
+        const formData = new FormData();
+        formData.append('type_slug', typeSlug);
+        formData.append('name', name);
+        formData.append('file', fileInput.files[0]);
+        status.innerHTML = '<span class="text-sky-400">Uploading...</span>';
+        try {
+            const response = await fetch('/api/images/upload', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.status === 'success') {
+                status.innerHTML = '<span class="text-emerald-400">Success!</span>';
+                checkImage(typeSlug, name, containerId);
+            } else {
+                status.innerHTML = `<span class="text-rose-400">Error: ${data.message}</span>`;
+            }
+        } catch (e) { status.innerHTML = `<span class="text-rose-400">Error: ${e.message}</span>`; }
+    }
+
+    async function deleteImage(typeSlug, name, containerId) {
+        if (!confirm("Are you sure?")) return;
+        const status = document.getElementById(`${containerId}-status`);
+        try {
+            const response = await fetch('/api/images/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type_slug: typeSlug, name: name })
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                checkImage(typeSlug, name, containerId);
+            }
+        } catch (e) { console.error(e); }
+    }
+    {% else %}
+    async function initImageControl(containerId, typeSlug, name) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        try {
+            const response = await fetch(`/api/images/check?type_slug=${encodeURIComponent(typeSlug)}&name=${encodeURIComponent(name)}`);
+            const data = await response.json();
+            if (data.found) {
+                container.innerHTML = `
+                    <img src="${data.url}?t=${new Date().getTime()}" class="w-full rounded-xl border border-white/10 shadow-2xl">
+                `;
+            }
+        } catch(e) {}
+    }
+    {% endif %}
 </script>
 {% endblock %}

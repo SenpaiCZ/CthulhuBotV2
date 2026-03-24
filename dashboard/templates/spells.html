@@ -1,178 +1,281 @@
-{% extends 'base.html' %}
+{% extends 'base_glass.html' %}
+{% from 'includes/glass_components.html' import glass_card, glass_input, glass_button, glass_badge, glass_modal %}
 
 {% block title %}Spells - CoC Bot{% endblock %}
 
 {% block content %}
-<div class="container-fluid dashboard-container">
-    <div class="sidebar-panel">
-        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
-            <h5 class="m-0 text-success">Grimoire</h5>
+<div class="space-y-8">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400">
+                Grimoire: Spells
+            </h1>
+            <p class="text-slate-400 mt-2">Ancient incantations and eldritch rituals from the abyss.</p>
         </div>
-        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
-            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search..." aria-label="Search spells">
-        </div>
-        <div class="list-group list-group-flush sidebar-list" id="spellList">
-            {% if data and data.spells %}
-                {% for item in data.spells %}
-                    {% set s = item.spell_entry %}
-                    <button type="button" class="list-group-item list-group-item-action spell-list-item" onclick="showSpell({{ loop.index0 }})">
-                        {{ s.name }}
-                    </button>
-                {% endfor %}
-            {% else %}
-                <div class="p-3 text-center text-muted">No spells found.</div>
-            {% endif %}
+        
+        <div class="flex gap-3 max-w-md w-full">
+            <div class="relative flex-grow">
+                <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                <input type="text" id="searchInput" placeholder="Search spells..." 
+                    class="w-full bg-slate-900/40 border border-white/10 rounded-xl pl-12 pr-4 py-2.5 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 backdrop-blur-xl transition-all">
+            </div>
         </div>
     </div>
 
-    <div class="detail-panel" id="detailPanel">
-        <div id="spell-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
-            <h2 class="text-muted" style="opacity: 0.3;">Select a spell</h2>
-            <p class="text-secondary">View detailed incantations from the archives.</p>
-        </div>
-
-        <div id="spell-content" class="hidden">
-            <!-- Template content populated by JS -->
-        </div>
+    <!-- Spell Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="spellGrid">
+        {% if data and data.spells %}
+            {% for item in data.spells %}
+                {% set s = item.spell_entry %}
+                <div class="spell-card-container group" data-name="{{ s.name | lower }}">
+                    {% call glass_card(padding='p-0', extra_classes='h-full hover:border-purple-500/30 transition-all duration-500 cursor-pointer flex flex-col') %}
+                        <div onclick="showSpell({{ loop.index0 }})" class="p-5 flex-grow">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xl font-bold text-slate-100 group-hover:text-purple-400 transition-colors">{{ s.name }}</h3>
+                            </div>
+                            <p class="text-slate-400 text-xs uppercase tracking-widest font-semibold mb-4">{{ s.category or 'Unknown Category' }}</p>
+                            
+                            <div class="flex flex-col gap-2 mt-auto">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-slate-500">Casting Time</span>
+                                    <span class="text-slate-300">{{ s.casting_time or 'Instant' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-slate-500">Magic Points</span>
+                                    <span class="text-sky-400 font-bold">{{ s.costs.magic_points if s.costs and s.costs.magic_points else 'None' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endcall %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-span-full py-20 text-center glass-card">
+                <i class="bi bi-book text-5xl text-slate-700 mb-4 block"></i>
+                <p class="text-slate-500 text-xl italic">No spells found in the grimoire.</p>
+            </div>
+        {% endif %}
     </div>
 </div>
+
+<!-- Spell Detail Modal -->
+{{ glass_modal('spellModal', 'Spell Details') }}
+    <div id="spell-content" class="max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+        <!-- Populated by JS -->
+    </div>
+{% endcall %}
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+</style>
 
 <script>
     // Search Functionality
     document.getElementById('searchInput').addEventListener('input', function() {
         const filter = this.value.toLowerCase();
-        const items = document.querySelectorAll('.spell-list-item');
+        const items = document.querySelectorAll('.spell-card-container');
         items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if(text.includes(filter)) {
-                item.classList.remove('hidden');
+            const name = item.dataset.name;
+            if(name.includes(filter)) {
+                item.style.display = 'block';
             } else {
-                item.classList.add('hidden');
+                item.style.display = 'none';
             }
         });
     });
 
-    // Pass Python data to JS safely
     const spells = {{ data.spells | tojson }};
 
     function showSpell(index) {
-        try {
-            const s = spells[index].spell_entry;
-            const container = document.getElementById('spell-content');
-            const placeholder = document.getElementById('spell-placeholder');
+        const s = spells[index].spell_entry;
+        const container = document.getElementById('spell-content');
+        
+        const modalTitle = document.querySelector('#spellModal h3');
+        if (modalTitle) modalTitle.textContent = s.name;
 
-            // Highlight active item
-            document.querySelectorAll('.spell-list-item').forEach((el, i) => {
-                if(i === index) el.classList.add('active');
-                else el.classList.remove('active');
-            });
+        let html = `
+            <div class="space-y-8 pb-4">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="flex-grow space-y-4">
+                        <p class="text-purple-400/80 uppercase tracking-[0.2em] text-sm font-bold">\${s.category || 'Unknown Category'}</p>
+                        
+                        \${s.effect && s.effect.description ? \`
+                        <div class="bg-white/5 border-l-2 border-purple-500/50 p-4 rounded-r-xl italic text-slate-300 leading-relaxed">
+                            \${s.effect.description}
+                        </div>\` : ''}
+                    </div>
+                    
+                    <div id="image-control-container" class="w-full md:w-64 shrink-0"></div>
+                </div>
 
-            let html = `
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h1 class="display-5 mb-0 text-success">${s.name}</h1>
-                        <div class="text-secondary fst-italic fs-5">${s.category || 'Unknown Category'}</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-slate-950/40 border border-white/5 rounded-xl p-4 text-center">
+                        <div class="text-[10px] text-slate-500 uppercase mb-1">Magic Points</div>
+                        <div class="text-sky-400 font-bold">\${s.costs && s.costs.magic_points ? s.costs.magic_points : 'None'}</div>
+                    </div>
+                    <div class="bg-slate-950/40 border border-white/5 rounded-xl p-4 text-center">
+                        <div class="text-[10px] text-slate-500 uppercase mb-1">Sanity Cost</div>
+                        <div class="text-rose-400 font-bold">\${s.costs && s.costs.sanity ? s.costs.sanity : 'None'}</div>
+                    </div>
+                    <div class="bg-slate-950/40 border border-white/5 rounded-xl p-4 text-center">
+                        <div class="text-[10px] text-slate-500 uppercase mb-1">Casting Time</div>
+                        <div class="text-slate-100 font-bold">\${s.casting_time || 'Instant'}</div>
+                    </div>
+                    <div class="bg-slate-950/40 border border-white/5 rounded-xl p-4 text-center">
+                        <div class="text-[10px] text-slate-500 uppercase mb-1">Range</div>
+                        <div class="text-slate-100 font-bold">\${s.range || 'Touch'}</div>
                     </div>
                 </div>
 
-                <div id="image-control-container" class="mb-4"></div>
+                \${s.costs && s.costs.components ? \`
+                <div class="bg-indigo-500/5 border border-indigo-500/10 rounded-xl p-4">
+                    <div class="text-[10px] text-indigo-500/50 uppercase font-bold mb-2">Components</div>
+                    <div class="text-slate-300 text-sm italic">\${s.costs.components}</div>
+                </div>\` : ''}
 
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-body">
-                        ${s.effect && s.effect.description ? `<p class="card-text border-start border-success border-3 ps-3">${s.effect.description}</p>` : ''}
-                    </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    \${s.effect && s.effect.damage ? \`
+                    <div class="bg-rose-500/5 border border-rose-500/10 rounded-xl p-4">
+                        <div class="text-[10px] text-rose-500/50 uppercase font-bold mb-1">Damage</div>
+                        <div class="text-rose-400 text-xl font-bold">\${s.effect.damage}</div>
+                    </div>\` : ''}
+
+                    \${s.effect && s.effect.opposed_roll ? \`
+                    <div class="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4">
+                        <div class="text-[10px] text-amber-500/50 uppercase font-bold mb-1">Opposed Roll</div>
+                        <div class="text-amber-400 text-xl font-bold">\${s.effect.opposed_roll}</div>
+                    </div>\` : ''}
                 </div>
 
-                <div class="section-header">Costs & Casting</div>
-                <div class="row row-cols-2 row-cols-md-4 g-2 mb-4">
-                    <div class="col">
-                        <div class="stat-box h-100">
-                            <div class="stat-label">Magic Points</div>
-                            <div class="stat-value text-info">${s.costs && s.costs.magic_points ? s.costs.magic_points : 'None'}</div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="stat-box h-100">
-                            <div class="stat-label">Sanity</div>
-                            <div class="stat-value text-danger">${s.costs && s.costs.sanity ? s.costs.sanity : 'None'}</div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="stat-box h-100">
-                            <div class="stat-label">Casting Time</div>
-                            <div class="stat-value text-light">${s.casting_time || 'Instantaneous'}</div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="stat-box h-100">
-                            <div class="stat-label">Range</div>
-                            <div class="stat-value text-light">${s.range || 'Touch'}</div>
-                        </div>
-                    </div>
-                </div>
+                \${s.deeper_magic ? \`
+                <div class="space-y-3">
+                    <h4 class="text-sm font-bold uppercase tracking-widest text-indigo-400 border-b border-white/5 pb-2">Deeper Magic</h4>
+                    <p class="text-slate-400 text-sm leading-relaxed italic bg-white/5 p-4 rounded-xl border border-white/5">\${s.deeper_magic}</p>
+                </div>\` : ''}
 
-                ${s.costs && s.costs.components ? `
-                <div class="mb-3">
-                    <h6 class="text-success fw-bold">Components:</h6>
-                    <p class="text-light">${s.costs.components}</p>
-                </div>` : ''}
-
-                <div class="row">
-                    <div class="col-lg-6">
-                        ${s.effect && s.effect.damage ? `
-                        <div class="mb-3">
-                            <div class="card bg-dark border-secondary">
-                                <div class="card-body">
-                                    <h6 class="card-title text-danger">Damage</h6>
-                                    <p class="card-text fs-5 fw-bold">${s.effect.damage}</p>
-                                </div>
-                            </div>
-                        </div>` : ''}
-                    </div>
-
-                    <div class="col-lg-6">
-                        ${s.effect && s.effect.opposed_roll ? `
-                        <div class="mb-3">
-                            <div class="card bg-dark border-secondary">
-                                <div class="card-body">
-                                    <h6 class="card-title text-warning">Opposed Roll</h6>
-                                    <p class="card-text fs-5 fw-bold">${s.effect.opposed_roll}</p>
-                                </div>
-                            </div>
-                        </div>` : ''}
-                    </div>
-                </div>
-
-                ${s.deeper_magic ? `
-                <div class="mt-4">
-                    <div class="section-header">Deeper Magic</div>
-                    <div class="card bg-dark border-secondary">
-                        <div class="card-body">
-                            <p class="card-text text-light fst-italic">${s.deeper_magic}</p>
-                        </div>
-                    </div>
-                </div>` : ''}
-
-                ${s.alternate_names ? `
-                    <div class="mt-5 pt-3 border-top border-secondary small text-muted text-center">
-                        <em>Also known as: ${s.alternate_names.join(', ')}</em>
-                    </div>
-                ` : ''}
-            `;
-
-            container.innerHTML = html;
-
-            initImageControl('image-control-container', '{{ type_slug }}', s.name);
-
-            container.classList.remove('hidden');
-            placeholder.style.setProperty('display', 'none', 'important');
-            placeholder.classList.remove('d-flex');
-
-            document.getElementById('detailPanel').scrollTop = 0;
-        } catch (e) {
-            console.error(e);
-            alert("Error rendering spell: " + e.message);
+                \${s.alternate_names ? \`
+                <div class="mt-8 pt-4 border-t border-white/5 text-center">
+                    <p class="text-[10px] text-slate-600 uppercase tracking-widest">Also known as</p>
+                    <p class="text-slate-500 text-xs italic mt-1">\${s.alternate_names.join(', ')}</p>
+                </div>\` : ''}
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        openModal('spellModal');
+        
+        if (typeof initImageControl === 'function') {
+           initImageControl('image-control-container', '{{ type_slug }}', s.name);
         }
     }
+
+    // Copy over image management functions
+    {% if is_admin %}
+    async function initImageControl(containerId, typeSlug, name) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="bg-slate-900/60 border border-white/10 rounded-xl overflow-hidden shadow-xl">
+                <div class="p-3 border-b border-white/10 text-[10px] font-bold uppercase tracking-wider text-slate-500">Image Management</div>
+                <div class="p-4">
+                    <div id="${containerId}-preview" class="mb-4 text-center hidden">
+                        <img src="" class="w-full h-48 object-cover rounded-lg border border-white/10">
+                        <button class="mt-3 w-full py-1.5 text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 transition-all" 
+                            onclick="deleteImage('${typeSlug}', '${name.replace(/'/g, "\\'")}', '${containerId}')">Remove Image</button>
+                    </div>
+                    <div id="${containerId}-upload">
+                        <div class="space-y-3">
+                            <input type="file" class="hidden" id="${containerId}-file" accept=".png,.jpg,.jpeg,.webp" onchange="document.getElementById('${containerId}-upload-label').textContent = this.files[0].name">
+                            <label for="${containerId}-file" id="${containerId}-upload-label" class="block w-full py-3 border-2 border-dashed border-white/10 rounded-xl text-center text-slate-500 text-xs cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all">
+                                Select Image
+                            </label>
+                            <button class="w-full py-2 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-sm font-bold hover:bg-indigo-500/30 transition-all" 
+                                type="button" onclick="uploadImage('${typeSlug}', '${name.replace(/'/g, "\\'")}', '${containerId}')">Upload</button>
+                        </div>
+                    </div>
+                    <div id="${containerId}-status" class="mt-2 text-[10px] text-center"></div>
+                </div>
+            </div>
+        `;
+
+        checkImage(typeSlug, name, containerId);
+    }
+
+    async function checkImage(typeSlug, name, containerId) {
+        try {
+            const response = await fetch(`/api/images/check?type_slug=${encodeURIComponent(typeSlug)}&name=${encodeURIComponent(name)}`);
+            const data = await response.json();
+            const preview = document.getElementById(`${containerId}-preview`);
+            const upload = document.getElementById(`${containerId}-upload`);
+            if (data.found) {
+                preview.querySelector('img').src = data.url + '?t=' + new Date().getTime();
+                preview.classList.remove('hidden');
+                upload.classList.add('hidden');
+            } else {
+                preview.classList.add('hidden');
+                upload.classList.remove('hidden');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function uploadImage(typeSlug, name, containerId) {
+        const fileInput = document.getElementById(`${containerId}-file`);
+        const status = document.getElementById(`${containerId}-status`);
+        if (fileInput.files.length === 0) {
+            status.innerHTML = '<span class="text-rose-400">Please select a file.</span>';
+            return;
+        }
+        const formData = new FormData();
+        formData.append('type_slug', typeSlug);
+        formData.append('name', name);
+        formData.append('file', fileInput.files[0]);
+        status.innerHTML = '<span class="text-sky-400">Uploading...</span>';
+        try {
+            const response = await fetch('/api/images/upload', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.status === 'success') {
+                status.innerHTML = '<span class="text-emerald-400">Success!</span>';
+                checkImage(typeSlug, name, containerId);
+            } else {
+                status.innerHTML = `<span class="text-rose-400">Error: ${data.message}</span>`;
+            }
+        } catch (e) { status.innerHTML = `<span class="text-rose-400">Error: ${e.message}</span>`; }
+    }
+
+    async function deleteImage(typeSlug, name, containerId) {
+        if (!confirm("Are you sure?")) return;
+        const status = document.getElementById(`${containerId}-status`);
+        try {
+            const response = await fetch('/api/images/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type_slug: typeSlug, name: name })
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                checkImage(typeSlug, name, containerId);
+            }
+        } catch (e) { console.error(e); }
+    }
+    {% else %}
+    async function initImageControl(containerId, typeSlug, name) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        try {
+            const response = await fetch(`/api/images/check?type_slug=${encodeURIComponent(typeSlug)}&name=${encodeURIComponent(name)}`);
+            const data = await response.json();
+            if (data.found) {
+                container.innerHTML = `
+                    <img src="${data.url}?t=${new Date().getTime()}" class="w-full rounded-xl border border-white/10 shadow-2xl">
+                `;
+            }
+        } catch(e) {}
+    }
+    {% endif %}
 </script>
 {% endblock %}

@@ -1,175 +1,107 @@
-<!DOCTYPE html>
-<html lang="en" data-bs-theme="dark" data-theme="{{ dashboard_theme|default('cthulhu') }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ spell.name }} - Spell Render</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/themes.css') }}" rel="stylesheet">
-    {% include 'includes/font_styles.html' %}
-    <style>
-        body {
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
+{% extends 'base_glass.html' %}
+{% from 'includes/glass_components.html' import glass_card %}
 
-        .coc-sheet {
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-            font-family: var(--font-body, 'Courier New', Courier, monospace);
-            border: 2px solid var(--theme-primary-dark, #2E8B57);
-            padding: 20px;
-            border-radius: 5px;
-            width: 800px;
-        }
+{% block title %}{{ spell.name }} - Spell Render{% endblock %}
 
-        .stat-box {
-            background: #0f0f0f;
-            border: 1px solid #333;
-            padding: 5px;
-            border-radius: 5px;
-            text-align: center;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .stat-label {
-            font-size: 0.8em;
-            color: #888;
-            text-transform: uppercase;
-        }
-        .stat-value {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        .section-header {
-            background-color: var(--theme-primary-dark, #2E8B57);
-            color: #fff;
-            padding: 5px 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-top: 15px;
-            margin-bottom: 10px;
-            border-radius: 3px;
-            font-family: var(--font-headers, sans-serif) !important;
-        }
-    </style>
-</head>
-<body>
-    <div class="coc-sheet">
-        {% if image_url %}
-        <div class="d-flex align-items-start">
-            <div class="flex-grow-1">
-        {% endif %}
-
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div>
-                <h1 class="display-5 mb-0 text-success">{{ spell.name }}</h1>
-                <div class="text-secondary fst-italic fs-5">{{ spell.category or 'Unknown Category' }}</div>
+{% block content %}
+<div class="max-w-4xl mx-auto py-12">
+    {% call glass_card(padding='p-8') %}
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start gap-6 mb-10">
+            <div class="space-y-2">
+                <h1 class="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400">
+                    {{ spell.name }}
+                </h1>
+                <p class="text-purple-300/80 uppercase tracking-[0.2em] text-sm font-bold">{{ spell.category or 'Unknown Category' }}</p>
             </div>
         </div>
 
-        <div class="card bg-dark border-secondary mb-4">
-            <div class="card-body">
+        <div class="flex flex-col lg:flex-row gap-10 mb-10">
+            <!-- Left Side: Effect & Description -->
+            <div class="flex-grow space-y-8">
                 {% if spell.effect and spell.effect.description %}
-                    <p class="card-text border-start border-success border-3 ps-3">{{ spell.effect.description }}</p>
+                <div class="bg-slate-950/40 p-6 rounded-2xl border border-white/5 shadow-inner">
+                    <p class="text-slate-200 italic border-l-4 border-purple-500/50 pl-4 leading-relaxed text-lg">
+                        {{ spell.effect.description }}
+                    </p>
+                </div>
                 {% endif %}
-            </div>
-        </div>
 
-        <div class="section-header">Costs & Casting</div>
-        <div class="row row-cols-2 row-cols-md-4 g-2 mb-4">
-            <div class="col">
-                <div class="stat-box">
-                    <div class="stat-label">Magic Points</div>
-                    <div class="stat-value text-info">{{ spell.costs.magic_points if spell.costs and spell.costs.magic_points else 'None' }}</div>
+                <!-- Costs Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                        <div class="text-[10px] text-slate-500 uppercase mb-1">Magic Points</div>
+                        <div class="text-sky-400 font-bold text-xl">{{ spell.costs.magic_points if spell.costs and spell.costs.magic_points else 'None' }}</div>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                        <div class="text-[10px] text-slate-500 uppercase mb-1">Sanity Cost</div>
+                        <div class="text-rose-400 font-bold text-xl">{{ spell.costs.sanity if spell.costs and spell.costs.sanity else 'None' }}</div>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                        <div class="text-[10px] text-slate-500 uppercase mb-1">Casting Time</div>
+                        <div class="text-slate-100 font-bold text-lg">{{ spell.casting_time or 'Instant' }}</div>
+                    </div>
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                        <div class="text-[10px] text-slate-500 uppercase mb-1">Range</div>
+                        <div class="text-slate-100 font-bold text-lg">{{ spell.range or 'Touch' }}</div>
+                    </div>
                 </div>
-            </div>
-            <div class="col">
-                <div class="stat-box">
-                    <div class="stat-label">Sanity</div>
-                    <div class="stat-value text-danger">{{ spell.costs.sanity if spell.costs and spell.costs.sanity else 'None' }}</div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="stat-box">
-                    <div class="stat-label">Casting Time</div>
-                    <div class="stat-value text-light">{{ spell.casting_time or 'Instantaneous' }}</div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="stat-box">
-                    <div class="stat-label">Range</div>
-                    <div class="stat-value text-light">{{ spell.range or 'Touch' }}</div>
-                </div>
-            </div>
-        </div>
 
-        {% if spell.costs and spell.costs.components %}
-        <div class="mb-3 p-2 bg-dark border border-secondary rounded">
-            <strong class="text-success text-uppercase small">Components:</strong>
-            <span class="text-light ms-2">{{ spell.costs.components }}</span>
-        </div>
-        {% endif %}
-
-        <div class="row">
-            <div class="col-lg-6">
-                {% if spell.effect and spell.effect.damage %}
-                <div class="mb-3">
-                    <div class="card bg-dark border-secondary">
-                        <div class="card-body p-2">
-                            <h6 class="card-title text-danger small text-uppercase mb-1">Damage</h6>
-                            <p class="card-text fw-bold">{{ spell.effect.damage }}</p>
-                        </div>
+                {% if spell.costs and spell.costs.components %}
+                <div class="bg-indigo-500/5 border border-indigo-500/10 rounded-xl p-4 flex items-start gap-3">
+                    <i class="bi bi-incognito text-indigo-400"></i>
+                    <div>
+                        <div class="text-[10px] text-indigo-500/50 uppercase font-bold mb-1">Casting Components</div>
+                        <div class="text-slate-300 text-sm italic">{{ spell.costs.components }}</div>
                     </div>
                 </div>
                 {% endif %}
             </div>
 
-            <div class="col-lg-6">
-                {% if spell.effect and spell.effect.opposed_roll %}
-                <div class="mb-3">
-                    <div class="card bg-dark border-secondary">
-                        <div class="card-body p-2">
-                            <h6 class="card-title text-warning small text-uppercase mb-1">Opposed Roll</h6>
-                            <p class="card-text fw-bold">{{ spell.effect.opposed_roll }}</p>
-                        </div>
+            <!-- Right Side: Image & Combat -->
+            {% if image_url or (spell.effect and (spell.effect.damage or spell.effect.opposed_roll)) %}
+            <div class="w-full lg:w-72 shrink-0 space-y-6">
+                {% if image_url %}
+                <div class="p-2 bg-white/5 border border-white/10 rounded-2xl shadow-2xl">
+                    <img src="{{ image_url }}" class="w-full rounded-xl" alt="{{ spell.name }}">
+                </div>
+                {% endif %}
+
+                {% if spell.effect and (spell.effect.damage or spell.effect.opposed_roll) %}
+                <div class="space-y-4">
+                    {% if spell.effect.damage %}
+                    <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 text-center">
+                        <div class="text-[10px] text-rose-500/70 uppercase font-bold mb-1">Damage</div>
+                        <div class="text-rose-400 font-bold text-2xl">{{ spell.effect.damage }}</div>
                     </div>
+                    {% endif %}
+                    {% if spell.effect.opposed_roll %}
+                    <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-center">
+                        <div class="text-[10px] text-amber-500/70 uppercase font-bold mb-1">Opposed Roll</div>
+                        <div class="text-amber-400 font-bold text-lg">{{ spell.effect.opposed_roll }}</div>
+                    </div>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>
+            {% endif %}
         </div>
 
         {% if spell.deeper_magic %}
-        <div class="mt-4">
-            <div class="section-header">Deeper Magic</div>
-            <div class="card bg-dark border-secondary">
-                <div class="card-body">
-                    <p class="card-text text-light fst-italic">{{ spell.deeper_magic }}</p>
-                </div>
+        <div class="mt-12 space-y-4">
+            <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-indigo-400 border-b border-indigo-500/20 pb-2">Deeper Magic</h4>
+            <div class="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-6 italic text-slate-400 leading-relaxed shadow-inner">
+                {{ spell.deeper_magic }}
             </div>
         </div>
         {% endif %}
 
         {% if spell.alternate_names %}
-            <div class="mt-4 pt-2 border-top border-secondary small text-muted text-center">
-                <em>Also known as: {{ spell.alternate_names | join(', ') }}</em>
+            <div class="mt-12 pt-6 border-t border-white/5 text-center">
+                <p class="text-[10px] text-slate-600 uppercase tracking-[0.3em]">Also known as</p>
+                <p class="text-slate-500 italic mt-2 text-sm">{{ spell.alternate_names | join(', ') }}</p>
             </div>
         {% endif %}
-
-        {% if image_url %}
-            </div>
-            <div class="ms-3" style="width: 300px; flex-shrink: 0;">
-                <img src="{{ image_url }}" class="img-fluid rounded border border-secondary" alt="{{ spell.name }}" style="width: 100%; object-fit: contain;">
-            </div>
-        </div>
-        {% endif %}
-    </div>
-</body>
-</html>
+    {% endcall %}
+</div>
+{% endblock %}
