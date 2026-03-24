@@ -58,3 +58,17 @@ else
 fi
 
 echo "Setup complete! To run the bot, use: source venv/bin/activate && python bot.py"
+
+# Optional Tunnel Setup
+echo ""
+read -p "Do you want to set up a Cloudflare Tunnel for Discord Activity hosting? (y/N) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    if [ -f "tools/setup_tunnel.sh" ]; then
+        chmod +x tools/setup_tunnel.sh
+        ./tools/setup_tunnel.sh
+    else
+        echo "Error: tools/setup_tunnel.sh not found."
+    fi
+fi

@@ -46,6 +46,22 @@ Once your tunnel is live:
 4.  Copy your **Client ID** and put it in `config.json` as `"activity_client_id"`.
 5.  Launch the bot and try starting the Activity in any voice channel!
 
+### 📱 Mobile-Optimized Experience
+
+The Discord Activity is designed with a **mobile-first approach**. Whether you're on a desktop or using the Discord app on your phone, the UI automatically adjusts to provide:
+*   **Touch-Friendly Controls**: Large, accessible buttons for dice rolls and stat edits.
+*   **Responsive Layouts**: Character sheets that stack elegantly on narrow screens.
+*   **Immersive Visuals**: The "Eldritch Glass" design remains consistent across all devices.
+
+### ❓ Troubleshooting Tunnel & Activity Issues
+
+*   **`cloudflared` not found**: The setup script works best on Debian/Ubuntu (including Raspberry Pi OS). For other systems, install it manually from the [Cloudflare docs](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/).
+*   **"Invalid Origin" or Connection Errors**: 
+    *   Ensure `tunnel_url` in `config.json` exactly matches the URL in the Discord Developer Portal.
+    *   Verify that the `cloudflared` service is running (`systemctl status cloudflared`).
+*   **Activity stuck on "Loading"**: Check the bot console for any errors. Ensure the `activity_client_id` is correct.
+*   **Port 5000 Conflicts**: If another service is using port 5000, change the dashboard port in `config.json` and update your tunnel's `config.yml` accordingly.
+
 ## Features
 
 *   🛠️ **Slash Commands**: Fully integrated with Discord's Slash Commands (`/`) for a modern and intuitive user experience.
