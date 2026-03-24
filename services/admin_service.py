@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 import discord
+from discord.ext import commands
 from datetime import datetime
 from sqlalchemy.orm import Session
 from models.social import Reminder
@@ -124,21 +125,186 @@ class AdminService:
             return True
         except (subprocess.SubprocessError, FileNotFoundError):
             return False
-@staticmethod
-def trigger_update(pid: int, update_infodata: bool = False) -> bool:
-    """
-    Trigger a bot update.
-    """
-    try:
-        cmd = [sys.executable, "updater.py", str(pid)]
-        if update_infodata:
-            cmd.append("--update-infodata")
 
-        if os.name == 'nt':
-            subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
-        else:
-            subprocess.Popen(cmd)
-        return True
-    except (subprocess.SubprocessError, FileNotFoundError):
-        return False
+    @staticmethod
+    def trigger_update(pid: int, update_infodata: bool = False) -> bool:
+        """
+        Trigger a bot update.
+        """
+        try:
+            cmd = [sys.executable, "updater.py", str(pid)]
+            if update_infodata:
+                cmd.append("--update-infodata")
+
+            if os.name == 'nt':
+                subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
+            else:
+                subprocess.Popen(cmd)
+            return True
+        except (subprocess.SubprocessError, FileNotFoundError):
+            return False
+
+    LEGACY_CATEGORY_MAP = {
+        # Player
+        "newinvestigator": "Player",
+        "mycharacter": "Player",
+        "Roll": "Player",
+        "stat": "Player",
+        "Backstory": "Player",
+        "Session": "Player",
+        "Retire": "Player", # Legacy text command
+        "DeleteInvestigator": "Player", # Legacy text command
+        "PrintCharacter": "Player",
+        "Versus": "Player",
+        "AddSkill": "Player",
+        "Rename": "Player", # Legacy
+        "RenameSkill": "Player", # Legacy
+
+        # New Player Mappings
+        "addbackstory": "Player",
+        "Combat": "Player",
+        "deleteinvestigator": "Player",
+        "rename": "Player",
+        "renameskill": "Player",
+        "CharacterManagement": "Player", # retire, unretire
+        "updatebackstory": "Player",
+        "generatebackstory": "Player",
+
+        # Codex
+        "Codex": "Codex",
+
+        # Keeper
+        "Loot": "Keeper",
+        "Madness": "Keeper",
+        "Handout": "Keeper",
+        "MacGuffin": "Keeper",
+        "RandomNPC": "Keeper",
+        "RandomName": "Keeper",
+        "Chase": "Keeper",
+        "macguffin": "Keeper", # New mapping for Keeper command
+
+        # Music
+        "Music": "Music",
+
+        # Admin
+        "Admin": "Admin",
+        "Enroll": "Admin",
+        "AutoRoom": "Admin", # Legacy
+        "ReactionRole": "Admin", # Legacy
+        "GameRoles": "Admin", # Legacy
+        "RSS": "Admin", # Legacy
+        "Karma": "Admin",
+        "Ping": "Admin",
+        "Restart": "Admin",
+        "UpdateBot": "Admin",
+
+        # New Admin Mappings
+        "Deleter": "Admin",
+        "Autoroom": "Admin",
+        "backup": "Admin",
+        "GamerRoles": "Admin",
+        "ReactionRoles": "Admin",
+        "rss": "Admin",
+        "smartreaction": "Admin",
+        "BotStatus": "Admin",
+        "ChangeLuck": "Admin", # Command override for showluck handles Player cat
+
+        # Other
+        "Help": "Other",
+        "Polls": "Other",
+        "Reminders": "Other",
+        "ReportBug": "Other",
+        "Uptime": "Other",
+        "Giveaway": "Other"
+    }
+
+    @staticmethod
+    async def generate_help_data(bot, ctx):
+        """
+        Generates a dictionary of Category -> List of Commands.
+        Dynamically discovers commands based on bot.cogs and bot.tree.
+        """
+        help_data = {cat: [] for cat in set(AdminService.LEGACY_CATEGORY_MAP.values())}
+        # Ensure categories exist
+        for cat in ["Player", "Codex", "Keeper", "Music", "Admin", "Other"]:
+             if cat not in help_data: help_data[cat] = []
+
+        # Track seen commands to avoid duplicates (by name)
+        seen_commands = set()
+
+        # 1. Iterate over Cogs to get categorized commands
+        for cog_name, cog in bot.cogs.items():
+            # Priority: Attribute -> Legacy Map -> Other
+            cog_category = getattr(cog, "help_category", None)
+
+            if not cog_category:
+                cog_category = AdminService.LEGACY_CATEGORY_MAP.get(cog_name, "Other")
+                if cog_category == "Other":
+                     # Try class name if cog name didn't match
+                     cog_category = AdminService.LEGACY_CATEGORY_MAP.get(type(cog).__name__, "Other")
+
+            # Get App Commands from Cog
+            if hasattr(cog, "get_app_commands"):
+                for cmd in cog.get_app_commands():
+                    if cmd.name == 'help': continue
+                    # Determine command category: Check for override via extras, else use cog category
+                    cmd_category = cog_category
+                    if hasattr(cmd, "extras") and "help_category" in cmd.extras:
+                         cmd_category = cmd.extras["help_category"]
+
+                    if cmd.name not in seen_commands:
+                        if cmd_category not in help_data: help_data[cmd_category] = []
+                        help_data[cmd_category].append(cmd)
+                        seen_commands.add(cmd.name)
+
+            # Get Text Commands (Legacy)
+            if hasattr(cog, "get_commands"):
+                for cmd in cog.get_commands():
+                    if cmd.name == 'help': continue
+                    if cmd.hidden: continue
+                    if not await AdminService._can_run(cmd, ctx): continue
+
+                    if cmd.name not in seen_commands:
+                        if cog_category not in help_data: help_data[cog_category] = []
+                        help_data[cog_category].append(cmd)
+                        seen_commands.add(cmd.name)
+
+        # 2. Iterate remaining App Commands (Slash + Context Menus) from Tree
+        app_cmds = bot.tree.get_commands()
+        for cmd in app_cmds:
+            if cmd.name == 'help': continue
+            if cmd.name not in seen_commands:
+                # Try to determine category from binding if present
+                category = "Other"
+
+                # Check extras first for tree commands
+                if hasattr(cmd, "extras") and "help_category" in cmd.extras:
+                     category = cmd.extras["help_category"]
+                else:
+                    binding = getattr(cmd, "binding", None)
+                    if binding:
+                        # Check if binding is a Cog instance
+                        if isinstance(binding, commands.Cog):
+                             cog = binding
+                             category = getattr(cog, "help_category", None) or AdminService.LEGACY_CATEGORY_MAP.get(type(cog).__name__, "Other")
+                        else:
+                            cog_name = type(binding).__name__
+                            category = AdminService.LEGACY_CATEGORY_MAP.get(cog_name, "Other")
+
+                if category not in help_data: help_data[category] = []
+                help_data[category].append(cmd)
+                seen_commands.add(cmd.name)
+
+        # Remove empty categories
+        return {k: v for k, v in help_data.items() if v}
+
+    @staticmethod
+    async def _can_run(cmd, ctx):
+        # Permission check
+        if isinstance(cmd, commands.Command):
+            try:
+                return await cmd.can_run(ctx)
+            except:
+                return False
+        return True # Assume app commands are visible unless filtered elsewhere
 
