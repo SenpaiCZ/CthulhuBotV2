@@ -889,48 +889,57 @@ class CodexView(discord.ui.View):
         loading_embed = discord.Embed(title=f"Loading {title}…", color=discord.Color.dark_green())
         await interaction.response.edit_message(content=None, embed=loading_embed, view=None)
 
-        data = await loader()
-        choices = []
-        if flatten_pulp:
-            pulp_map = {}
-            for category, talents in data.items():
-                for t_str in talents:
-                    match = re.match(r'\*\*(.*?)\*\*:\s*(.*)', t_str)
-                    if match:
-                         pulp_map[match.group(1)] = match.group(1)
-            choices = list(pulp_map.keys())
-        elif data_key:
-             items = data.get(data_key, [])
-             if data_key == "monsters":
-                 entry_key = "monster_entry"
-             elif data_key == "spells":
-                 entry_key = "spell_entry"
-             elif data_key == "deities":
-                 entry_key = "deity_entry"
-             else:
-                 entry_key = data_key[:-1] + "_entry"
+        try:
+            data = await loader()
+            choices = []
+            if flatten_pulp:
+                pulp_map = {}
+                for category, talents in data.items():
+                    for t_str in talents:
+                        match = re.match(r'\*\*(.*?)\*\*:\s*(.*)', t_str)
+                        if match:
+                            pulp_map[match.group(1)] = match.group(1)
+                choices = list(pulp_map.keys())
+            elif data_key:
+                items = data.get(data_key, [])
+                if data_key == "monsters":
+                    entry_key = "monster_entry"
+                elif data_key == "spells":
+                    entry_key = "spell_entry"
+                elif data_key == "deities":
+                    entry_key = "deity_entry"
+                else:
+                    entry_key = data_key[:-1] + "_entry"
 
-             for item in items:
-                entry = item.get(entry_key)
-                if entry and entry.get('name'):
-                    choices.append(entry['name'])
-        else:
-             if type_slug == "invention":
-                 for k, v in data.items():
-                     choices.append(f"{k} ({len(v)} entries)")
-             else:
-                 choices = list(data.keys())
+                for item in items:
+                    entry = item.get(entry_key)
+                    if entry and entry.get('name'):
+                        choices.append(entry['name'])
+            else:
+                if type_slug == "invention":
+                    for k, v in data.items():
+                        choices.append(f"{k} ({len(v)} entries)")
+                else:
+                    choices = list(data.keys())
 
-        choices.sort()
-        view = PaginatedListView(
-            self.user, choices, title,
-            data=data, cog=self.cog, type_slug=type_slug,
-            data_key=data_key, flatten_pulp=flatten_pulp, keys_only=keys_only
-        )
-        view.update_buttons()
-        embed = view.get_embed()
-        await interaction.edit_original_response(content=None, embed=embed, view=view)
-        view.message = await interaction.original_response()
+            choices.sort()
+            view = PaginatedListView(
+                self.user, choices, title,
+                data=data, cog=self.cog, type_slug=type_slug,
+                data_key=data_key, flatten_pulp=flatten_pulp, keys_only=keys_only
+            )
+            view.update_buttons()
+            embed = view.get_embed()
+            msg = await interaction.edit_original_response(content=None, embed=embed, view=view)
+            view.message = msg
+        except Exception as e:
+            print(f"[Codex] _launch_list error ({title}): {e}")
+            import traceback; traceback.print_exc()
+            err_embed = discord.Embed(title="Error", description=str(e), color=discord.Color.red())
+            try:
+                await interaction.edit_original_response(content=None, embed=err_embed, view=None)
+            except Exception:
+                pass
 
     async def _check_owner(self, interaction: discord.Interaction) -> bool:
         if interaction.user != self.user:
