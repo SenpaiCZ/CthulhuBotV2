@@ -1,3 +1,4 @@
+import datetime
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
@@ -73,6 +74,57 @@ def _ytdl_opts_with_cookies(base: dict) -> dict:
     if os.path.isfile('cookies/cookies.txt'):
         opts['cookiefile'] = 'cookies/cookies.txt'
     return opts
+
+
+COOKIES_DIR = 'cookies'
+COOKIES_FILE = os.path.join(COOKIES_DIR, 'cookies.txt')
+
+COOKIE_INSTRUCTIONS = (
+    "**How to get your YouTube cookies:**\n"
+    "1. Install the **Get cookies.txt LOCALLY** extension (Chrome/Firefox)\n"
+    "2. Go to **youtube.com** while logged in to your Google account\n"
+    "3. Click the extension icon → select **youtube.com** → click **Export**\n"
+    "4. Open the downloaded `.txt` file, copy **all** contents and paste below\n\n"
+    "The file starts with `# Netscape HTTP Cookie File`.\n"
+    "Cookies are used only for age-restricted video playback."
+)
+
+
+class CookieModal(discord.ui.Modal, title="Set YouTube Cookies"):
+    cookie_data = discord.ui.TextInput(
+        label="Paste cookies.txt content here",
+        style=discord.TextStyle.paragraph,
+        placeholder="# Netscape HTTP Cookie File\n.youtube.com\tTRUE\t/\t...",
+        max_length=4000,
+        required=True,
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        content = self.cookie_data.value.strip()
+        if not content.startswith('# Netscape HTTP Cookie File') and '.youtube.com' not in content:
+            return await interaction.response.send_message(
+                "❌ Doesn't look like a valid Netscape cookie file. "
+                "Make sure you copied the full contents of the exported `.txt` file.",
+                ephemeral=True
+            )
+        os.makedirs(COOKIES_DIR, exist_ok=True)
+        with open(COOKIES_FILE, 'w', encoding='utf-8') as f:
+            f.write(content)
+        await interaction.response.send_message(
+            "✅ YouTube cookies saved! Try `/play` again — age-restricted videos should now work.",
+            ephemeral=True
+        )
+
+
+class CookieView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=300)
+
+    @discord.ui.button(label="Set YouTube Cookie", emoji="🍪", style=discord.ButtonStyle.primary)
+    async def set_cookie_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not interaction.user.guild_permissions.administrator:
+            return await interaction.response.send_message("Admins only.", ephemeral=True)
+        await interaction.response.send_modal(CookieModal())
 
 
 # ── Cog ──────────────────────────────────────────────────────────────────────
@@ -515,8 +567,18 @@ class Music(commands.Cog):
 
         except yt_dlp.utils.DownloadError as e:
             err = str(e)
-            if 'Sign in' in err or 'age' in err.lower():
-                msg = "❌ Video is age-restricted. Add a cookies file to bypass."
+            if 'Sign in' in err or 'age' in err.lower() or 'login' in err.lower():
+                cookie_exists = os.path.exists(COOKIES_FILE)
+                embed = discord.Embed(
+                    title="🔞 Age-Restricted Content",
+                    description=(
+                        "This video requires a YouTube login to play.\n\n"
+                        + ("⚠️ Cookies are set but may be expired — try refreshing them.\n\n" if cookie_exists else "")
+                        + COOKIE_INSTRUCTIONS
+                    ),
+                    color=discord.Color.orange()
+                )
+                return await interaction.followup.send(embed=embed, view=CookieView(), ephemeral=True)
             elif 'Private' in err or 'private' in err:
                 msg = "❌ That video is private."
             elif 'unavailable' in err.lower():
@@ -545,6 +607,21 @@ class Music(commands.Cog):
         if not self.current_track.get(guild_id):
             next_song = self.queue[guild_id].pop(0)
             await self._play_song(guild_id, next_song)
+
+    @app_commands.command(name="setytcookie", description="🍪 Set YouTube cookies for age-restricted playback. (Admin)")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def setytcookie(self, interaction: discord.Interaction):
+        cookie_status = ""
+        if os.path.exists(COOKIES_FILE):
+            mtime = os.path.getmtime(COOKIES_FILE)
+            age_days = (datetime.datetime.now() - datetime.datetime.fromtimestamp(mtime)).days
+            cookie_status = f"✅ Cookies already set (last updated {age_days}d ago). Submit new ones to replace.\n\n"
+        embed = discord.Embed(
+            title="🍪 YouTube Cookie Setup",
+            description=cookie_status + COOKIE_INSTRUCTIONS,
+            color=discord.Color.blurple()
+        )
+        await interaction.response.send_message(embed=embed, view=CookieView(), ephemeral=True)
 
     @app_commands.command(name="playnext", description="⏩ Insert a song to play next in the queue.")
     @app_commands.describe(query="YouTube URL or search terms")
