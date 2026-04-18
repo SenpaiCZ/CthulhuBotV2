@@ -604,18 +604,25 @@ class PaginatedListView(discord.ui.View):
         if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
 
+        await interaction.response.defer(ephemeral=True)
+
         selected_name = interaction.data['values'][0]
 
-        # Get entry data
-        entry_data = self.cog._get_entry_data(self.data, selected_name, self.type_slug, self.data_key, self.flatten_pulp, self.keys_only)
+        try:
+            entry_data = self.cog._get_entry_data(self.data, selected_name, self.type_slug, self.data_key, self.flatten_pulp, self.keys_only)
 
-        if entry_data:
-            await self.cog._display_entry(interaction, selected_name, self.type_slug, entry_data, ephemeral=True)
-        else:
-             # Fallback
-             quoted_name = urllib.parse.quote(selected_name)
-             url = f"/render/{self.type_slug}?name={quoted_name}"
-             await self.cog._render_poster(interaction, url, selected_name, self.type_slug, ephemeral=True)
+            if entry_data:
+                await self.cog._display_entry(interaction, selected_name, self.type_slug, entry_data, ephemeral=True)
+            else:
+                quoted_name = urllib.parse.quote(selected_name)
+                url = f"/render/{self.type_slug}?name={quoted_name}"
+                await self.cog._render_poster(interaction, url, selected_name, self.type_slug, ephemeral=True)
+        except Exception as e:
+            print(f"[Codex] select_callback error for '{selected_name}': {e}")
+            try:
+                await interaction.followup.send(f"Error displaying **{selected_name}**: {e}", ephemeral=True)
+            except Exception:
+                pass
 
     def update_buttons(self):
         self.prev_button.disabled = self.current_page == 0
@@ -731,45 +738,51 @@ class OptionsView(discord.ui.View):
         if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
 
-        data = await self.loader_func()
-        choices = []
-        if self.flatten_pulp:
-            for category, talents in data.items():
-                for t_str in talents:
-                    match = re.match(r'\*\*(.*?)\*\*:\s*(.*)', t_str)
-                    if match:
-                        choices.append(match.group(1))
-        elif self.data_key:
-             items = data.get(self.data_key, [])
-             entry_key = self.type_slug + "_entry"
-             for item in items:
-                entry = item.get(entry_key)
-                if entry and entry.get('name'):
-                    choices.append(entry['name'])
-        else:
-             choices = list(data.keys())
+        await interaction.response.defer(ephemeral=True)
 
-        if not choices:
-            await interaction.response.send_message("No entries found.", ephemeral=True)
-            return
+        try:
+            data = await self.loader_func()
+            choices = []
+            if self.flatten_pulp:
+                for category, talents in data.items():
+                    for t_str in talents:
+                        match = re.match(r'\*\*(.*?)\*\*:\s*(.*)', t_str)
+                        if match:
+                            choices.append(match.group(1))
+            elif self.data_key:
+                items = data.get(self.data_key, [])
+                entry_key = self.type_slug + "_entry"
+                for item in items:
+                    entry = item.get(entry_key)
+                    if entry and entry.get('name'):
+                        choices.append(entry['name'])
+            else:
+                choices = list(data.keys())
 
-        target_name = random.choice(choices)
+            if not choices:
+                await interaction.followup.send("No entries found.", ephemeral=True)
+                return
 
-        # Disable view
-        for child in self.children:
-            child.disabled = True
-        await interaction.response.edit_message(view=self)
+            target_name = random.choice(choices)
 
-        # Get entry data
-        entry_data = self.cog._get_entry_data(data, target_name, self.type_slug, self.data_key, self.flatten_pulp, self.keys_only)
+            for child in self.children:
+                child.disabled = True
+            await interaction.edit_original_response(view=self)
 
-        if entry_data:
-            await self.cog._display_entry(interaction, target_name, self.type_slug, entry_data, ephemeral=True)
-        else:
-             # Fallback
-             quoted_name = urllib.parse.quote(target_name)
-             url = f"/render/{self.type_slug}?name={quoted_name}"
-             await self.cog._render_poster(interaction, url, target_name, self.type_slug, ephemeral=True)
+            entry_data = self.cog._get_entry_data(data, target_name, self.type_slug, self.data_key, self.flatten_pulp, self.keys_only)
+
+            if entry_data:
+                await self.cog._display_entry(interaction, target_name, self.type_slug, entry_data, ephemeral=True)
+            else:
+                quoted_name = urllib.parse.quote(target_name)
+                url = f"/render/{self.type_slug}?name={quoted_name}"
+                await self.cog._render_poster(interaction, url, target_name, self.type_slug, ephemeral=True)
+        except Exception as e:
+            print(f"[Codex] random_button error: {e}")
+            try:
+                await interaction.followup.send(f"Error loading random entry: {e}", ephemeral=True)
+            except Exception:
+                pass
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.danger)
     async def cancel_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -874,10 +887,11 @@ class CodexView(discord.ui.View):
         self.message = None
 
     async def _launch_list(self, interaction, loader, title, data_key=None, flatten_pulp=False, type_slug=None, keys_only=False):
+        await interaction.response.defer()  # respond immediately before slow loader
+
         data = await loader()
         choices = []
         if flatten_pulp:
-            # Pulp talents logic
             pulp_map = {}
             for category, talents in data.items():
                 for t_str in talents:
@@ -887,7 +901,6 @@ class CodexView(discord.ui.View):
             choices = list(pulp_map.keys())
         elif data_key:
              items = data.get(data_key, [])
-             # Assuming standard structure
              if data_key == "monsters":
                  entry_key = "monster_entry"
              elif data_key == "spells":
@@ -902,7 +915,6 @@ class CodexView(discord.ui.View):
                 if entry and entry.get('name'):
                     choices.append(entry['name'])
         else:
-             # For inventions, include the count
              if type_slug == "invention":
                  for k, v in data.items():
                      choices.append(f"{k} ({len(v)} entries)")
@@ -917,8 +929,8 @@ class CodexView(discord.ui.View):
         )
         view.update_buttons()
         embed = view.get_embed()
-        await interaction.response.edit_message(content=None, embed=embed, view=view)
-        view.message = interaction.message
+        await interaction.edit_original_response(content=None, embed=embed, view=view)
+        view.message = await interaction.original_response()
 
     async def _check_owner(self, interaction: discord.Interaction) -> bool:
         if interaction.user != self.user:
