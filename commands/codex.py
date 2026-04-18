@@ -604,9 +604,10 @@ class PaginatedListView(discord.ui.View):
         if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
 
-        await interaction.response.defer(ephemeral=True)
-
         selected_name = interaction.data['values'][0]
+
+        loading_embed = discord.Embed(title=f"Loading {selected_name}…", color=discord.Color.dark_green())
+        await interaction.response.edit_message(content=None, embed=loading_embed, view=None)
 
         try:
             entry_data = self.cog._get_entry_data(self.data, selected_name, self.type_slug, self.data_key, self.flatten_pulp, self.keys_only)
@@ -620,7 +621,7 @@ class PaginatedListView(discord.ui.View):
         except Exception as e:
             print(f"[Codex] select_callback error for '{selected_name}': {e}")
             try:
-                await interaction.followup.send(f"Error displaying **{selected_name}**: {e}", ephemeral=True)
+                await interaction.edit_original_response(content=f"Error: {e}", embed=None, view=None)
             except Exception:
                 pass
 
@@ -738,7 +739,8 @@ class OptionsView(discord.ui.View):
         if interaction.user != self.user:
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
 
-        await interaction.response.defer(ephemeral=True)
+        loading_embed = discord.Embed(title="Finding a random entry…", color=discord.Color.dark_green())
+        await interaction.response.edit_message(content=None, embed=loading_embed, view=None)
 
         try:
             data = await self.loader_func()
@@ -760,14 +762,10 @@ class OptionsView(discord.ui.View):
                 choices = list(data.keys())
 
             if not choices:
-                await interaction.followup.send("No entries found.", ephemeral=True)
+                await interaction.edit_original_response(content="No entries found.", embed=None, view=None)
                 return
 
             target_name = random.choice(choices)
-
-            for child in self.children:
-                child.disabled = True
-            await interaction.edit_original_response(view=self)
 
             entry_data = self.cog._get_entry_data(data, target_name, self.type_slug, self.data_key, self.flatten_pulp, self.keys_only)
 
@@ -780,7 +778,7 @@ class OptionsView(discord.ui.View):
         except Exception as e:
             print(f"[Codex] random_button error: {e}")
             try:
-                await interaction.followup.send(f"Error loading random entry: {e}", ephemeral=True)
+                await interaction.edit_original_response(content=f"Error: {e}", embed=None, view=None)
             except Exception:
                 pass
 
@@ -887,7 +885,9 @@ class CodexView(discord.ui.View):
         self.message = None
 
     async def _launch_list(self, interaction, loader, title, data_key=None, flatten_pulp=False, type_slug=None, keys_only=False):
-        await interaction.response.defer()  # respond immediately before slow loader
+        # Respond immediately (satisfies 3s window), show loading state
+        loading_embed = discord.Embed(title=f"Loading {title}…", color=discord.Color.dark_green())
+        await interaction.response.edit_message(content=None, embed=loading_embed, view=None)
 
         data = await loader()
         choices = []
