@@ -1,3 +1,5 @@
+import re
+import datetime
 import discord
 import feedparser
 import asyncio
@@ -263,11 +265,23 @@ class rss(commands.Cog):
       except:
           color_val = 0x2E8B57 # Default SeaGreen
 
+      # Strip HTML from summary for description
+      raw_summary = getattr(entry, 'summary', None) or getattr(entry, 'description', None) or ''
+      clean_summary = re.sub(r'<[^>]+>', '', raw_summary).strip()
+      if len(clean_summary) > 300:
+          clean_summary = clean_summary[:297] + '…'
+
       embed = discord.Embed(
           title=entry.title,
           url=entry.link,
+          description=clean_summary or None,
           color=color_val
       )
+
+      # Publish timestamp
+      published = getattr(entry, 'published_parsed', None)
+      if published:
+          embed.timestamp = datetime.datetime(*published[:6])
 
       embed.set_footer(text=feed_title)
 
@@ -381,9 +395,8 @@ class rss(commands.Cog):
           return
 
       # 2. Fetch all feeds concurrently
-      # We use return_exceptions=True implicitly via our wrapper which handles errors
-      tasks = [self.fetch_feed(link) for link in unique_links]
-      results = await asyncio.gather(*tasks)
+      fetch_tasks = [self.fetch_feed(link) for link in unique_links]
+      results = await asyncio.gather(*fetch_tasks)
 
       # Create a cache: link -> feed object
       feed_cache = {link: feed for link, feed in results if feed}
@@ -422,8 +435,13 @@ class rss(commands.Cog):
 
                       new_items.append(entry)
 
-                  # If we found new items
-                  if new_items:
+                  # If last_id not found in feed (entry rolled off), just update marker silently
+                  if not found_last and (last_id is not None or last_message):
+                      latest = feed.entries[0]
+                      subscription["last_message"] = latest.title
+                      subscription["last_id"] = self.get_entry_id(latest)
+                      data_changed = True
+                  elif new_items:
                       channel = self.bot.get_channel(channel_id)
                       if channel:
                           feed_title = feed.feed.get('title', link)

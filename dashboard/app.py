@@ -3105,7 +3105,7 @@ async def rss_add():
     # Validate RSS
     try:
         # Run in executor to avoid blocking
-        feed = await asyncio.get_event_loop().run_in_executor(None, feedparser.parse, link)
+        feed = await asyncio.get_running_loop().run_in_executor(None, feedparser.parse, link)
         if not feed.entries:
             return jsonify({"status": "error", "message": "No items found in RSS feed"}), 400
 
@@ -3124,8 +3124,8 @@ async def rss_add():
 
     # Check duplicate
     for sub in rss_data[str(guild_id)]:
-        if sub['link'] == link:
-             return jsonify({"status": "error", "message": "Feed already exists for this server"}), 400
+        if sub['link'] == link and str(sub.get('channel_id')) == str(channel_id):
+             return jsonify({"status": "error", "message": "Feed already subscribed in this channel"}), 400
 
     rss_data[str(guild_id)].append({
         "link": link,
@@ -3182,6 +3182,34 @@ async def rss_update_color():
                 return jsonify({"status": "success"})
 
     return jsonify({"status": "error", "message": "Feed not found"}), 404
+
+@app.route('/api/rss/delete', methods=['POST'])
+async def rss_delete():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    guild_id = data.get('guild_id')
+    link = data.get('link')
+
+    if not all([guild_id, link]):
+        return jsonify({"status": "error", "message": "Missing arguments"}), 400
+
+    rss_data = await load_rss_data()
+
+    if str(guild_id) not in rss_data:
+        return jsonify({"status": "error", "message": "No feeds for this server"}), 404
+
+    original_len = len(rss_data[str(guild_id)])
+    rss_data[str(guild_id)] = [s for s in rss_data[str(guild_id)] if s['link'] != link]
+
+    if len(rss_data[str(guild_id)]) == original_len:
+        return jsonify({"status": "error", "message": "Feed not found"}), 404
+
+    if not rss_data[str(guild_id)]:
+        del rss_data[str(guild_id)]
+
+    await save_rss_data(rss_data)
+    return jsonify({"status": "success"})
 
 # --- Gamer Roles Routes ---
 
