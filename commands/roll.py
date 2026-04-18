@@ -760,10 +760,12 @@ class DiceTrayView(View):
         if not self.expression:
             return await interaction.response.send_message("Add dice first!", ephemeral=True)
 
-        await interaction.response.defer()
-        await interaction.delete_original_response()
+        await interaction.response.defer(ephemeral=True)
+        try:
+            await interaction.delete_original_response()
+        except Exception:
+            pass  # ephemeral deletion may fail — not critical
 
-        # Tray rolls are always private
         await self.cog._perform_roll(interaction, self.expression, 0, 0, True, "Regular")
 
 class Roll(commands.Cog):
@@ -1040,7 +1042,7 @@ class Roll(commands.Cog):
             description += f"Dice: [{tens_str}] + {ones_roll} -> **{final_roll}**\n\n"
             description += f"**{result_text}**\n\n"
             description += f"**{stat_name}**: {current_value} - {current_value // 2} - {current_value // 5}\n"
-            description += f":four_leaf_clover: LUCK: {player_stats[server_id][user_id]['LUCK']}"
+            description += f":four_leaf_clover: LUCK: {player_stats[server_id][user_id].get('LUCK', 0)}"
 
             embed = discord.Embed(description=description, color=color)
             view.message = await send_msg(embed=embed, view=view)
