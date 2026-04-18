@@ -228,7 +228,7 @@ class RollResultView(View):
         # LUCK Logic
         can_luck = False
         luck_cost = 0
-        player_luck = self.player_stats[self.server_id][self.user_id]['LUCK']
+        player_luck = self.player_stats[self.server_id][self.user_id].get('LUCK', 0)
 
         # Can only luck if Normal roll (net_dice == 0) and not LUCK roll itself
         if self.net_dice == 0 and self.stat_name != "LUCK" and self.result_tier != 0:
@@ -528,11 +528,12 @@ class QuickSkillSelect(Select):
         result_text, result_tier = roll_cog.calculate_roll_result(roll_val, current_val)
         luck_threshold = (await load_luck_stats()).get(self.server_id, 10)
 
+        full_player_stats = await load_player_stats()
         ctx = MockContext(interaction)
         view = RollResultView(
             ctx=ctx,
             cog=roll_cog,
-            player_stats={self.server_id: {self.user_id: self.char_data}},
+            player_stats=full_player_stats,
             server_id=self.server_id,
             user_id=self.user_id,
             stat_name=skill_name,
@@ -917,6 +918,9 @@ class Roll(commands.Cog):
 
             stat_name = matching_stats[0]
             current_value = stats[stat_name]
+            if not isinstance(current_value, (int, float)):
+                await send_msg(content=f"**{stat_name}** is not a numeric stat and can't be rolled.")
+                return
 
             if len(matching_stats) > 1:
                 view = DisambiguationView(ctx, matching_stats)
@@ -925,6 +929,9 @@ class Roll(commands.Cog):
                 if view.selected_stat:
                     stat_name = view.selected_stat
                     current_value = stats[stat_name]
+                    if not isinstance(current_value, (int, float)):
+                        await send_msg(content=f"**{stat_name}** is not a numeric stat and can't be rolled.")
+                        return
                     try: await msg.delete()
                     except: pass
                 else:

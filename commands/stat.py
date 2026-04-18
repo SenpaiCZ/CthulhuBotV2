@@ -242,6 +242,9 @@ class stat(commands.Cog):
 
         stat_key = matching_stats[0]
         current_value = user_stats[stat_key]
+        if not isinstance(current_value, (int, float)):
+            await interaction.edit_original_response(content=f"**{stat_key}** is not a numeric stat and can't be modified.")
+            return
 
         # Parse the value
         # Check for relative change (+5, -5) or absolute set (50)
@@ -380,7 +383,7 @@ class stat(commands.Cog):
             return []
 
         user_stats = player_stats[server_id][user_id]
-        choices = [f"{k} ({v})" for k, v in user_stats.items()]
+        choices = [f"{k} ({v})" for k, v in user_stats.items() if isinstance(v, (int, float))]
 
         if not current:
             return [app_commands.Choice(name=c, value=c) for c in sorted(choices)[:25]]

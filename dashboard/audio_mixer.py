@@ -1,17 +1,37 @@
 import discord
-import audioop
+import struct
 import uuid
 import os
 import threading
+import time
 
-# Constants for Discord Audio
+# Discord audio constants
 SAMPLE_RATE = 48000
 CHANNELS = 2
-SAMPLE_WIDTH = 2 # 16-bit
-CHUNK_SIZE = 3840 # 20ms of audio: 48000 * 0.02 * 2 * 2
+SAMPLE_WIDTH = 2  # 16-bit signed PCM
+CHUNK_SIZE = 3840  # 20ms of stereo audio: 48000 * 0.02 * 2 channels * 2 bytes
+
+
+def _apply_volume(data: bytes, volume: float) -> bytes:
+    """Scale PCM samples by volume factor with clipping."""
+    n = len(data) // SAMPLE_WIDTH
+    fmt = f'<{n}h'
+    samples = struct.unpack(fmt, data[:n * SAMPLE_WIDTH])
+    return struct.pack(fmt, *(max(-32768, min(32767, int(s * volume))) for s in samples))
+
+
+def _mix_pcm(a: bytes, b: bytes) -> bytes:
+    """Sum two 16-bit PCM buffers with clipping."""
+    n = len(a) // SAMPLE_WIDTH
+    fmt = f'<{n}h'
+    sa = struct.unpack(fmt, a)
+    sb = struct.unpack(fmt, b)
+    return struct.pack(fmt, *(max(-32768, min(32767, x + y)) for x, y in zip(sa, sb)))
+
 
 class Track:
-    def __init__(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None, on_finish=None):
+    def __init__(self, file_path, volume=0.5, loop=False, is_url=False,
+                 metadata=None, before_options=None, options=None, on_finish=None):
         self.id = str(uuid.uuid4())
         self.file_path = file_path
         self.volume = volume
@@ -20,153 +40,157 @@ class Track:
         self.metadata = metadata or {}
         self.before_options = before_options
         self.options = options
-        self.paused = False
         self.finished = False
         self.on_finish = on_finish
+
+        # Time tracking for progress bar
+        self.started_at: float | None = None
+        self._paused_duration: float = 0.0
+        self._paused_since: float | None = None
+        self._paused = False  # backing field — use .paused property
+
         self.source = self._create_source()
 
-    def _create_source(self):
-        # We use FFmpegPCMAudio.
-        # Note: We rely on the caller (bot) having ffmpeg installed.
+    @property
+    def paused(self) -> bool:
+        return self._paused
+
+    @paused.setter
+    def paused(self, value: bool):
+        now = time.monotonic()
+        if value and not self._paused:
+            # Entering pause — record when
+            self._paused_since = now
+        elif not value and self._paused:
+            # Leaving pause — accumulate paused duration
+            if self._paused_since is not None:
+                self._paused_duration += now - self._paused_since
+                self._paused_since = None
+        self._paused = value
+
+    @property
+    def elapsed(self) -> float:
+        """Playback elapsed seconds, excluding paused time."""
+        if self.started_at is None:
+            return 0.0
+        total = time.monotonic() - self.started_at - self._paused_duration
+        if self._paused_since is not None:
+            total -= time.monotonic() - self._paused_since
+        return max(0.0, total)
+
+    def _create_source(self) -> discord.FFmpegPCMAudio:
         if not self.is_url and not os.path.exists(self.file_path):
             raise FileNotFoundError(f"File not found: {self.file_path}")
-
         return discord.FFmpegPCMAudio(
             self.file_path,
             before_options=self.before_options,
             options=self.options
         )
 
-    def read(self):
-        if self.paused:
+    def read(self) -> bytes:
+        if self._paused:
             return b'\x00' * CHUNK_SIZE
 
         if self.finished:
             return b''
 
+        # Mark start time on first real read
+        if self.started_at is None:
+            self.started_at = time.monotonic()
+
         try:
             data = self.source.read()
         except Exception as e:
-            # Source might be cleaned up or closed
-            print(f"Error reading from source: {e}")
-            self.finished = True
-            if self.on_finish:
-                try: self.on_finish()
-                except: pass
+            print(f"[Track] Read error: {e}")
+            self._mark_finished()
             return b''
 
         if not data:
             if self.loop:
-                # Restart the source
                 try:
                     self.source.cleanup()
                     self.source = self._create_source()
+                    self.started_at = time.monotonic()
+                    self._paused_duration = 0.0
+                    self._paused_since = None
                     data = self.source.read()
-                    if not data: # Still empty? File might be empty/broken
-                        self.finished = True
-                        if self.on_finish:
-                            try: self.on_finish()
-                            except: pass
+                    if not data:
+                        self._mark_finished()
                         return b''
                 except Exception as e:
-                    print(f"Error restarting loop: {e}")
-                    self.finished = True
-                    if self.on_finish:
-                        try: self.on_finish()
-                        except: pass
+                    print(f"[Track] Loop restart error: {e}")
+                    self._mark_finished()
                     return b''
             else:
-                self.finished = True
-                if self.on_finish:
-                    try: self.on_finish()
-                    except: pass
+                self._mark_finished()
                 return b''
 
-        # If we got less data than CHUNK_SIZE (end of file), pad with silence
         if len(data) < CHUNK_SIZE:
             data += b'\x00' * (CHUNK_SIZE - len(data))
 
-        # Apply volume
-        # audioop.mul throws error if volume is not float? No, it takes factor.
-        # But for 'mul', factor is a float?
-        # audioop.mul(fragment, width, factor)
-        # Check python docs: audioop.mul(fragment, width, factor) -> factor is float.
-        if self.volume != 1.0:
-            try:
-                data = audioop.mul(data, SAMPLE_WIDTH, self.volume)
-            except Exception as e:
-                print(f"Error applying volume: {e}")
+        return _apply_volume(data, self.volume) if self.volume != 1.0 else data
 
-        return data
+    def _mark_finished(self):
+        self.finished = True
+        if self.on_finish:
+            try:
+                self.on_finish()
+            except Exception as e:
+                print(f"[Track] on_finish error: {e}")
 
     def cleanup(self):
-        if self.source:
-            self.source.cleanup()
+        try:
+            if self.source:
+                self.source.cleanup()
+        except Exception:
+            pass
+
 
 class MixingAudioSource(discord.AudioSource):
     def __init__(self):
-        self.tracks = []
-        self._finished = False
+        self.tracks: list[Track] = []
         self.lock = threading.Lock()
 
-    def add_track(self, file_path, volume=0.5, loop=False, is_url=False, metadata=None, before_options=None, options=None, on_finish=None):
-        track = Track(file_path, volume, loop, is_url, metadata, before_options, options, on_finish)
+    def add_track(self, file_path, volume=0.5, loop=False, is_url=False,
+                  metadata=None, before_options=None, options=None, on_finish=None) -> Track:
+        track = Track(file_path, volume, loop, is_url, metadata,
+                      before_options, options, on_finish)
         with self.lock:
             self.tracks.append(track)
         return track
 
-    def remove_track(self, track_id):
+    def remove_track(self, track_id: str) -> bool:
         with self.lock:
-            track_to_remove = next((t for t in self.tracks if t.id == track_id), None)
-            if track_to_remove:
-                track_to_remove.cleanup()
-                # Double check existence just in case, though lock should guarantee it
-                if track_to_remove in self.tracks:
-                    self.tracks.remove(track_to_remove)
+            track = next((t for t in self.tracks if t.id == track_id), None)
+            if track:
+                track.cleanup()
+                self.tracks.remove(track)
                 return True
             return False
 
-    def get_track(self, track_id):
+    def get_track(self, track_id: str) -> 'Track | None':
         with self.lock:
             return next((t for t in self.tracks if t.id == track_id), None)
 
-    def read(self):
-        # Start with silence
+    def read(self) -> bytes:
         mixed = bytearray(b'\x00' * CHUNK_SIZE)
+        to_remove: set[Track] = set()
 
         with self.lock:
-            # We need to iterate over a copy because tracks might finish and be removed (optional)
-            # For now, we just mark them finished.
-
-            # Actually, let's filter out finished non-looping tracks first?
-            # Or just read and cleanup later.
-
-            active_tracks = [t for t in self.tracks if not t.finished]
-
-            if not active_tracks:
-                # If no tracks playing, we return silence to keep the connection open?
-                # Or we return b'' to stop?
-                # If we return b'', Discord disconnects or stops playing.
-                # But we want the mixer to stay alive so we can add sounds later.
-                # So return silence.
-                return bytes(mixed)
-
-            for track in active_tracks:
-                data = track.read()
-                if data:
-                    # audioop.add returns bytes, we want to sum into our mixed accumulator
-                    # But audioop.add takes two fragments.
-                    # mixed = audioop.add(mixed, data, SAMPLE_WIDTH)
-                    # Note: audioop.add handles wrapping.
-                    # To minimize clipping, users should manage volume.
-                    mixed = audioop.add(mixed, data, SAMPLE_WIDTH)
-
-            # Clean up finished tracks
-            for track in self.tracks[:]:
+            for track in self.tracks:
                 if track.finished:
-                    track.cleanup()
-                    if track in self.tracks:
-                        self.tracks.remove(track)
+                    to_remove.add(track)
+                    continue
+                data = track.read()
+                if data and len(data) == CHUNK_SIZE:
+                    mixed = bytearray(_mix_pcm(bytes(mixed), data))
+                if track.finished:
+                    to_remove.add(track)
+
+            for track in to_remove:
+                track.cleanup()
+                if track in self.tracks:
+                    self.tracks.remove(track)
 
         return bytes(mixed)
 

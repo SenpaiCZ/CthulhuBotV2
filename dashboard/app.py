@@ -2895,7 +2895,9 @@ async def music_data():
                     "thumbnail": track.metadata.get('thumbnail', ''),
                     "volume": int(track.volume * 100),
                     "loop": track.loop,
-                    "paused": track.paused
+                    "paused": track.paused,
+                    "elapsed": round(track.elapsed, 1),
+                    "duration": track.metadata.get('duration'),
                 }
 
         # Queue
@@ -2903,9 +2905,10 @@ async def music_data():
         if guild_id in music_cog.queue:
             for song in music_cog.queue[guild_id]:
                 queue.append({
-                    "title": song['title'],
-                    "url": song['original_url'],
-                    "thumbnail": song.get('thumbnail', '')
+                    "title": song.get('title', 'Unknown'),
+                    "original_url": song.get('original_url', ''),
+                    "thumbnail": song.get('thumbnail', ''),
+                    "duration": song.get('duration'),
                 })
 
         data[guild_id] = {
@@ -2932,7 +2935,21 @@ async def music_control():
 
     music_cog = app.bot.music_cog
 
-    if action == 'skip':
+    if action == 'pause':
+        track = music_cog.current_track.get(guild_id)
+        if track and not track.paused:
+            track.paused = True
+            guild = app.bot.get_guild(int(guild_id))
+            if guild and guild.voice_client:
+                guild.voice_client.pause()
+    elif action == 'resume':
+        track = music_cog.current_track.get(guild_id)
+        if track and track.paused:
+            track.paused = False
+            guild = app.bot.get_guild(int(guild_id))
+            if guild and guild.voice_client:
+                guild.voice_client.resume()
+    elif action == 'skip':
         track = music_cog.current_track.get(guild_id)
         if track:
             track.finished = True

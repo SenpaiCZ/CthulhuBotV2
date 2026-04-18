@@ -2,6 +2,30 @@ import discord
 import emojis
 import emoji
 
+FIELD_LIMIT = 1024
+DESC_LIMIT = 4096
+
+
+def _trunc(text: str, limit: int = FIELD_LIMIT) -> str:
+    """Truncate to Discord embed limit."""
+    text = str(text)
+    return text if len(text) <= limit else text[:limit - 3] + "…"
+
+
+def _join_trunc(lines: list[str], sep: str = "\n", limit: int = FIELD_LIMIT) -> str:
+    """Join lines, stopping before the limit and appending '…and more'."""
+    result = []
+    total = 0
+    for line in lines:
+        needed = len(line) + (len(sep) if result else 0)
+        if total + needed > limit - 20:
+            result.append("*…and more*")
+            break
+        result.append(line)
+        total += needed
+    return sep.join(result)
+
+
 def _add_image_field(embed, file):
     """Helper to attach an image file as a thumbnail to the embed."""
     if file:
@@ -17,9 +41,7 @@ def create_monster_embed(data, title, file=None):
         embed.description = f"*{monster['subtitle']}*"
 
     if monster.get('description'):
-        desc = monster['description']
-        if len(desc) > 1024: desc = desc[:1021] + "..."
-        embed.add_field(name="Description", value=desc, inline=False)
+        embed.add_field(name="Description", value=_trunc(monster['description']), inline=False)
 
     # Characteristics
     chars = monster.get('characteristics', {})
@@ -31,7 +53,7 @@ def create_monster_embed(data, title, file=None):
             if isinstance(val, dict):
                  val_str = f"{val.get('average', '?')} ({val.get('roll', '')})"
             char_lines.append(f"{emoji_str} **{key}**: {val_str}")
-        embed.add_field(name="Characteristics", value="\n".join(char_lines), inline=False)
+        embed.add_field(name="Characteristics", value=_join_trunc(char_lines), inline=False)
 
     # Derived Stats
     derived = monster.get('derived_stats', {})
@@ -48,7 +70,7 @@ def create_monster_embed(data, title, file=None):
                  if val.get('special'): val_str += f" ({val['special']})"
 
              stats_line.append(f"{emoji_str} **{label}**: {val_str}")
-        embed.add_field(name="Derived Stats", value=" | ".join(stats_line), inline=False)
+        embed.add_field(name="Derived Stats", value=_trunc(" | ".join(stats_line)), inline=False)
 
     # Combat
     combat = monster.get('combat', {})
@@ -70,20 +92,31 @@ def create_monster_embed(data, title, file=None):
         if dodge:
              combat_desc += f"\n**Dodge**: {dodge.get('success_chance', 'N/A')}%"
 
-        embed.add_field(name="Combat", value=combat_desc, inline=False)
+        embed.add_field(name="Combat", value=_trunc(combat_desc), inline=False)
 
     # Skills & Powers
     skills = monster.get('skills', [])
     if skills:
-        skill_list = [f"{s['name']} {s['value']}%" for s in skills]
-        embed.add_field(name="Skills", value=", ".join(skill_list), inline=False)
+        try:
+            if isinstance(skills, list) and skills and isinstance(skills[0], dict):
+                skill_list = [f"{s.get('name', '?')} {s.get('value', '?')}%" for s in skills]
+            elif isinstance(skills, dict):
+                skill_list = [f"{k}: {v}" for k, v in skills.items()]
+            else:
+                skill_list = [str(s) for s in skills]
+            embed.add_field(name="Skills", value=_trunc(", ".join(skill_list)), inline=False)
+        except Exception:
+            pass
 
     powers = monster.get('powers_and_abilities', [])
     if powers:
-        power_lines = []
-        for p in powers:
-            power_lines.append(f"**{p['name']}**: {p['description']}")
-        embed.add_field(name="Powers", value="\n".join(power_lines), inline=False)
+        try:
+            power_lines = [f"**{p.get('name', '?')}**: {p.get('description', '')}" for p in powers if isinstance(p, dict)]
+            if not power_lines:
+                power_lines = [str(p) for p in powers]
+            embed.add_field(name="Powers", value=_join_trunc(power_lines), inline=False)
+        except Exception:
+            pass
 
     # Defenses & Magic
     armor = monster.get('armor', {})
@@ -94,11 +127,12 @@ def create_monster_embed(data, title, file=None):
 
     spells = monster.get('spells')
     if spells:
-        embed.add_field(name="Spells", value=spells, inline=True)
+        spells_str = spells if isinstance(spells, str) else ", ".join(str(s) for s in spells) if isinstance(spells, list) else str(spells)
+        embed.add_field(name="Spells", value=_trunc(spells_str), inline=True)
 
     san = monster.get('sanity_loss')
     if san:
-        embed.add_field(name="Sanity Loss", value=san, inline=True)
+        embed.add_field(name="Sanity Loss", value=_trunc(str(san)), inline=True)
 
     return embed
 
@@ -112,12 +146,10 @@ def create_deity_embed(data, title, file=None):
         embed.description = f"*{deity['classification']}*"
 
     if deity.get('main_entry_text'):
-        desc = deity['main_entry_text']
-        if len(desc) > 1024: desc = desc[:1021] + "..."
-        embed.add_field(name="Description", value=desc, inline=False)
+        embed.add_field(name="Description", value=_trunc(deity['main_entry_text']), inline=False)
 
     if deity.get('description_quote'):
-        embed.add_field(name="Quote", value=f"*{deity['description_quote']}*", inline=False)
+        embed.add_field(name="Quote", value=_trunc(f"*{deity['description_quote']}*"), inline=False)
 
     # Cult
     cult = deity.get('cult', {})
@@ -129,24 +161,27 @@ def create_deity_embed(data, title, file=None):
 
         blessings = cult.get('possible_blessings', [])
         if blessings:
-             bless_lines = [f"**{b['name']}**: {b['description']}" for b in blessings]
-             embed.add_field(name="Blessings", value="\n".join(bless_lines), inline=False)
+            try:
+                bless_lines = [f"**{b.get('name', '?')}**: {b.get('description', '')}" for b in blessings if isinstance(b, dict)]
+                embed.add_field(name="Blessings", value=_join_trunc(bless_lines), inline=False)
+            except Exception:
+                pass
 
     # Encounters & Magic
     if deity.get('encounters'):
-        embed.add_field(name="Encounters", value=deity['encounters'], inline=True)
+        embed.add_field(name="Encounters", value=_trunc(str(deity['encounters'])), inline=True)
     if deity.get('aura'):
-        embed.add_field(name="Aura", value=deity['aura'], inline=True)
+        embed.add_field(name="Aura", value=_trunc(str(deity['aura'])), inline=True)
 
     magic = deity.get('magic', {})
     if magic:
         magic_line = f"**POW**: {magic.get('pow', 'N/A')} | **MP**: {magic.get('magic_points', 'N/A')}"
         if magic.get('spells'):
             magic_line += f"\n**Spells**: {magic['spells']}"
-        embed.add_field(name="Magic", value=magic_line, inline=False)
+        embed.add_field(name="Magic", value=_trunc(magic_line), inline=False)
 
     if deity.get('sanity_loss'):
-         embed.add_field(name="Sanity Loss", value=deity['sanity_loss'], inline=True)
+        embed.add_field(name="Sanity Loss", value=_trunc(str(deity['sanity_loss'])), inline=True)
 
     # Physical Manifestation
     pm = deity.get('physical_manifestation', {})
@@ -159,24 +194,21 @@ def create_deity_embed(data, title, file=None):
             for key, val in chars.items():
                 emoji_str = emoji.emojize(emojis.get_stat_emoji(key), language='alias')
                 char_lines.append(f"{emoji_str} **{key}**: {val}")
-            embed.add_field(name=f"{pm_title} - Stats", value=" | ".join(char_lines), inline=False)
+            embed.add_field(name=f"{pm_title} - Stats", value=_trunc(" | ".join(char_lines)), inline=False)
 
         combat = pm.get('combat', {})
         if combat:
-             combat_text = ""
-             if combat.get('description'): combat_text += f"{combat['description']}\n"
-             combat_text += f"**Attacks**: {combat.get('attacks_per_round', 'N/A')}\n"
-
-             attacks = combat.get('attacks', [])
-             for atk in attacks:
-                 combat_text += f"• **{atk.get('name', 'Attack')}**: {atk.get('damage', '?')} ({atk.get('success_chance', '')})\n"
-
-             embed.add_field(name="Combat", value=combat_text, inline=False)
+            combat_text = ""
+            if combat.get('description'): combat_text += f"{combat['description']}\n"
+            combat_text += f"**Attacks**: {combat.get('attacks_per_round', 'N/A')}\n"
+            for atk in combat.get('attacks', []):
+                combat_text += f"• **{atk.get('name', 'Attack')}**: {atk.get('damage', '?')} ({atk.get('success_chance', '')})\n"
+            embed.add_field(name="Combat", value=_trunc(combat_text), inline=False)
 
         armor = pm.get('armor', {})
         if armor:
-             armor_text = f"**Rating**: {armor.get('rating', 'None')}\n{armor.get('notes', '')}"
-             embed.add_field(name="Armor", value=armor_text, inline=True)
+            armor_text = f"**Rating**: {armor.get('rating', 'None')}\n{armor.get('notes', '')}"
+            embed.add_field(name="Armor", value=_trunc(armor_text), inline=True)
 
     return embed
 
@@ -191,7 +223,7 @@ def create_spell_embed(data, title, file=None):
 
     effect = spell.get('effect', {})
     if effect and effect.get('description'):
-        embed.add_field(name="Effect", value=effect['description'], inline=False)
+        embed.add_field(name="Effect", value=_trunc(effect['description']), inline=False)
 
     # Costs
     costs = spell.get('costs', {})
@@ -205,15 +237,15 @@ def create_spell_embed(data, title, file=None):
         embed.add_field(name="Costs & Casting", value=" | ".join(cost_parts), inline=False)
 
     if costs.get('components'):
-        embed.add_field(name="Components", value=costs['components'], inline=False)
+        embed.add_field(name="Components", value=_trunc(str(costs['components'])), inline=False)
 
     if effect.get('damage'):
-        embed.add_field(name="Damage", value=effect['damage'], inline=True)
+        embed.add_field(name="Damage", value=_trunc(str(effect['damage'])), inline=True)
     if effect.get('opposed_roll'):
-        embed.add_field(name="Opposed Roll", value=effect['opposed_roll'], inline=True)
+        embed.add_field(name="Opposed Roll", value=_trunc(str(effect['opposed_roll'])), inline=True)
 
     if spell.get('deeper_magic'):
-        embed.add_field(name="Deeper Magic", value=spell['deeper_magic'], inline=False)
+        embed.add_field(name="Deeper Magic", value=_trunc(spell['deeper_magic']), inline=False)
 
     return embed
 
@@ -233,9 +265,7 @@ def create_weapon_embed(data, title, file=None):
         embed.description = " | ".join(desc_parts)
 
     if weapon.get('description'):
-        desc = weapon['description']
-        if len(desc) > 1024: desc = desc[:1021] + "..."
-        embed.add_field(name="Description", value=desc, inline=False)
+        embed.add_field(name="Description", value=_trunc(weapon['description']), inline=False)
 
     stats = []
     if weapon.get('damage'): stats.append(f"**Damage**: {weapon['damage']}")
@@ -256,17 +286,18 @@ def create_occupation_embed(data, title, file=None):
 
     occ = data
     if occ.get('description'):
-        embed.description = occ['description']
+        embed.description = _trunc(occ['description'], DESC_LIMIT)
 
     if occ.get('skills'):
-        skills_str = ", ".join(occ['skills'])
-        embed.add_field(name="Skills", value=skills_str, inline=False)
+        skills = occ['skills']
+        skills_str = ", ".join(skills) if isinstance(skills, list) else str(skills)
+        embed.add_field(name="Skills", value=_trunc(skills_str), inline=False)
 
     if occ.get('credit_rating'):
-        embed.add_field(name="Credit Rating", value=occ['credit_rating'], inline=True)
+        embed.add_field(name="Credit Rating", value=_trunc(str(occ['credit_rating'])), inline=True)
 
     if occ.get('suggested_contacts'):
-        embed.add_field(name="Contacts", value=occ['suggested_contacts'], inline=True)
+        embed.add_field(name="Contacts", value=_trunc(str(occ['suggested_contacts'])), inline=True)
 
     return embed
 
@@ -276,15 +307,16 @@ def create_archetype_embed(data, title, file=None):
 
     arch = data
     if arch.get('description'):
-        desc = emoji.emojize(arch['description'], language='alias')
-        embed.description = desc
+        embed.description = _trunc(emoji.emojize(arch['description'], language='alias'), DESC_LIMIT)
 
     if arch.get('adjustments'):
         adj_lines = [emoji.emojize(a, language='alias') for a in arch['adjustments']]
-        embed.add_field(name="Adjustments", value="\n".join(adj_lines), inline=False)
+        embed.add_field(name="Adjustments", value=_join_trunc(adj_lines), inline=False)
 
     if arch.get('talents'):
-        embed.add_field(name="Talents", value=arch['talents'], inline=False)
+        talents = arch['talents']
+        talents_str = talents if isinstance(talents, str) else "\n".join(str(t) for t in talents) if isinstance(talents, list) else str(talents)
+        embed.add_field(name="Talents", value=_trunc(talents_str), inline=False)
 
     return embed
 
@@ -309,8 +341,8 @@ def create_generic_embed(data, title, type_slug, file=None):
                      description += f"**{k.title()}**: {v}\n"
 
     if description:
-        description = emoji.emojize(description, language='alias')
-        embed.description = description
+        description = emoji.emojize(str(description), language='alias')
+        embed.description = _trunc(description, DESC_LIMIT)
 
     return embed
 
@@ -329,8 +361,8 @@ def create_timeline_embed(data, title, type_slug, file=None):
                  t = event.get('text', event.get('description', ''))
                  if t: events_text += f"• {t}\n"
 
-        if len(events_text) > 4000:
-            events_text = events_text[:3997] + "..."
+        if len(events_text) > DESC_LIMIT:
+            events_text = events_text[:DESC_LIMIT - 3] + "…"
 
         embed.description = events_text
 

@@ -249,8 +249,12 @@ class Session(commands.Cog):
             if not pending_upgrades:
                 embed = discord.Embed(title="Session Upgrade Results", description="No skills improved this time.", color=discord.Color.orange())
                 log_text = "\n".join(logs)
-                if len(log_text) > 4000: log_text = log_text[:4000] + "..."
-                embed.description += "\n\n" + log_text
+                existing = embed.description or ""
+                available = 4096 - len(existing) - 2
+                if available > 0:
+                    if len(log_text) > available:
+                        log_text = log_text[:available - 3] + "..."
+                    embed.description = existing + "\n\n" + log_text
 
                 # Check interaction response state
                 if interaction.response.is_done():

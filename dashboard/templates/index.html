@@ -1,262 +1,269 @@
 {% extends 'base.html' %}
 
-{% block title %}Home - CoC Bot{% endblock %}
+{% block title %}Home — CthulhuBot{% endblock %}
 
 {% block content %}
-<div class="p-5 mb-4 bg-body-tertiary rounded-3">
-    <div class="container-fluid py-5">
-        <h1 class="display-5 fw-bold">Call of Cthulhu Bot Dashboard</h1>
-        <p class="col-md-8 fs-4">Welcome to the management interface for your Discord bot. Manage characters, roll dice, and enhance your Call of Cthulhu games.</p>
-        <div class="d-grid gap-2 d-md-block">
-             {% if is_admin %}
-             <a class="btn btn-secondary btn-lg" href="/admin" role="button">Admin Panel</a>
-             {% endif %}
-             <a class="btn btn-outline-light btn-lg" href="https://github.com/SenpaiCZ/CthulhuBotV2" target="_blank" role="button"><i class="bi bi-github"></i> GitHub</a>
+
+<!-- Hero -->
+<div class="coc-hero">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <h1>Call of Cthulhu<br><span class="accent">Discord Bot</span></h1>
+            <p class="lead mt-3">
+                Your Keeper's companion for Call of Cthulhu 7th Edition — character sheets, dice rolling,
+                music, soundboard, and the full Cthulhu Mythos reference library, all from Discord.
+            </p>
+            <div class="d-flex gap-2 flex-wrap mt-4">
+                {% if is_admin %}
+                <a class="btn btn-primary btn-lg" href="/admin">
+                    <i class="bi bi-shield-lock-fill me-1"></i> Admin Panel
+                </a>
+                {% endif %}
+                <a class="btn btn-outline-secondary btn-lg" href="https://github.com/SenpaiCZ/CthulhuBotV2" target="_blank" rel="noopener">
+                    <i class="bi bi-github me-1"></i> GitHub
+                </a>
+                {% if is_admin %}
+                <a class="btn btn-outline-secondary btn-lg" href="/admin/music">
+                    <i class="bi bi-music-note-beamed me-1"></i> Music
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-4 text-center d-none d-lg-block" aria-hidden="true">
+            <div style="font-size: 7rem; line-height:1; filter: drop-shadow(0 0 30px rgba(var(--theme-primary-rgb),0.6)); opacity:0.85;">🐙</div>
         </div>
     </div>
 </div>
 
-<div class="row align-items-md-stretch mb-4">
-    <div class="col-md-6">
-        <div class="h-100 p-5 text-bg-dark rounded-3">
-          <h2>Features</h2>
-          <ul class="list-unstyled">
-              <li>🕵️‍♂️ <strong>Character Management</strong>: Create and manage investigator sheets.</li>
-              <li>🎲 <strong>Advanced Dice Rolling</strong>: Interactive rolls with Bonus/Penalty dice.</li>
-              <li>🎵 <strong>Music Bot</strong>: High-quality music playback from YouTube.</li>
-              <li>📈 <strong>Karma System</strong>: Track user reputation.</li>
-              <li>🎭 <strong>Reaction Roles</strong>: Self-assignable roles.</li>
-              <li>🔊 <strong>Soundboard</strong>: Play audio clips in voice channels.</li>
-              <li>📊 <strong>Polls</strong>: Create interactive polls for your server.</li>
-              <li>⏰ <strong>Reminders</strong>: Set personal or channel reminders.</li>
-          </ul>
+<!-- Feature Grid -->
+<div class="row g-3 mb-5">
+    <div class="col-sm-6 col-lg-3">
+        <div class="feature-card">
+            <span class="feature-icon">🕵️</span>
+            <h5>Investigator Sheets</h5>
+            <p>Full character creation wizard with era selection, occupation system, skill allocation, and backstory generation.</p>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="h-100 p-5 bg-body-tertiary border rounded-3">
-          <h2>Keeper Tools</h2>
-          <p class="mb-3">Access an extensive library of game information including firearms, inventions, monsters, deities, madness tables, phobias/manias, and NPC generation directly from Discord or this dashboard.</p>
+    <div class="col-sm-6 col-lg-3">
+        <div class="feature-card">
+            <span class="feature-icon">🎲</span>
+            <h5>Advanced Dice Rolling</h5>
+            <p>Bonus/penalty dice, luck spending, push rolls, opposed checks, damage rolls — interactive Discord UI.</p>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="feature-card">
+            <span class="feature-icon">📖</span>
+            <h5>Mythos Codex</h5>
+            <p>Monsters, deities, spells, weapons, occupations, phobias, manias — the full reference library at your fingertips.</p>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="feature-card">
+            <span class="feature-icon">🎵</span>
+            <h5>Music & Soundboard</h5>
+            <p>YouTube music with progress bar, playlists, volume control, and per-channel soundboard clips.</p>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="feature-card">
+            <span class="feature-icon">⚔️</span>
+            <h5>Combat System</h5>
+            <p>Interactive combat rolls with weapon stats, malfunction checks, damage application, and luck spend.</p>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="feature-card">
+            <span class="feature-icon">📈</span>
+            <h5>Karma & Ranks</h5>
+            <p>Track server reputation with automated role rewards, leaderboards, and per-server configuration.</p>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="feature-card">
+            <span class="feature-icon">🔔</span>
+            <h5>Server Tools</h5>
+            <p>Polls, reminders, giveaways, reaction roles, auto-rooms, auto-delete, RSS feeds, and more.</p>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="feature-card">
+            <span class="feature-icon">🛡️</span>
+            <h5>Web Dashboard</h5>
+            <p>Manage everything from this panel — characters, music, codex, server config, backups, and system updates.</p>
+        </div>
+    </div>
+</div>
 
-           <h5 class="mt-2">Characters</h5>
-           <a class="btn btn-outline-secondary mb-1" href="/characters">Active Characters</a>
-           <a class="btn btn-outline-secondary mb-1" href="/retired">Retired Characters</a>
+<!-- Two-column: Commands accordion + Keeper quick links -->
+<div class="row g-4 mb-4">
+    <!-- Commands Accordion -->
+    <div class="col-lg-7">
+        <h4 class="mb-3" style="color:var(--theme-primary-main);">Commands Reference</h4>
+        <div class="accordion" id="commandsAccordion">
 
-           <h5 class="mt-2">Grimoire</h5>
-           <a class="btn btn-outline-secondary mb-1" href="/monsters">Monsters</a>
-           <a class="btn btn-outline-secondary mb-1" href="/deities">Deities</a>
-           <a class="btn btn-outline-secondary mb-1" href="/spells">Spells</a>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true">
+                        🕵️ Investigator Tools
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#commandsAccordion">
+                    <div class="accordion-body">
+                        <ul class="mb-0">
+                            <li><code>/newinvestigator</code> — Start character creation wizard</li>
+                            <li><code>/mycharacter</code> — View your character sheet</li>
+                            <li><code>/stat</code> — View or edit specific stats</li>
+                            <li><code>/rename</code> / <code>/renameskill</code> — Rename character or skill</li>
+                            <li><code>/addbackstory</code> / <code>/updatebackstory</code> / <code>/removebackstory</code> — Manage backstory</li>
+                            <li><code>/generatebackstory</code> — Generate random backstory</li>
+                            <li><code>/retire</code> / <code>/unretire</code> — Retire or restore a character</li>
+                            <li><code>/printcharacter</code> — Export character sheet as image</li>
+                            <li><code>/deleteinvestigator</code> — Delete character</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
 
-           <h5 class="mt-2">Pulp</h5>
-           <a class="btn btn-outline-secondary mb-1" href="/archetypes">Archetypes</a>
-           <a class="btn btn-outline-secondary mb-1" href="/pulp_talents">Talents</a>
-           <a class="btn btn-outline-secondary mb-1" href="/insane_talents">Insane Talents</a>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false">
+                        🎲 Dice, Rolls & Sessions
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#commandsAccordion">
+                    <div class="accordion-body">
+                        <ul class="mb-0">
+                            <li><code>/roll</code> — Skill check with bonus/penalty dice, luck spend, push</li>
+                            <li><code>/showluck</code> — Show server luck threshold</li>
+                            <li><code>/session start</code> / <code>/session show</code> / <code>/session wipe</code> — Session management</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
 
-           <h5 class="mt-2">References</h5>
-           <a class="btn btn-outline-secondary mb-1" href="/skills">Skills</a>
-           <a class="btn btn-outline-secondary mb-1" href="/inventions">Inventions</a>
-           <a class="btn btn-outline-secondary mb-1" href="/years">Years</a>
-           <a class="btn btn-outline-secondary mb-1" href="/manias">Mania</a>
-           <a class="btn btn-outline-secondary mb-1" href="/phobias">Phobia</a>
-           <a class="btn btn-outline-secondary mb-1" href="/weapons">Weapons</a>
-           <a class="btn btn-outline-secondary mb-1" href="/poisons">Poisons</a>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false">
+                        🎵 Music & Sound
+                    </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#commandsAccordion">
+                    <div class="accordion-body">
+                        <ul class="mb-0">
+                            <li><code>/play</code> — Play a song or playlist from YouTube</li>
+                            <li><code>/pause</code> / <code>/resume</code> — Pause or resume playback</li>
+                            <li><code>/skip</code> — Skip current track</li>
+                            <li><code>/stop</code> — Stop and disconnect</li>
+                            <li><code>/volume</code> — Set volume (0–100)</li>
+                            <li><code>/loop</code> — Toggle loop</li>
+                            <li><code>/queue</code> — View queue</li>
+                            <li><code>/playnext</code> — Add song to front of queue</li>
+                            <li><code>/remove</code> / <code>/clear</code> — Remove songs from queue</li>
+                            <li><code>/nowplaying</code> — Show current track</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false">
+                        🧠 Keeper Resources
+                    </button>
+                </h2>
+                <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#commandsAccordion">
+                    <div class="accordion-body">
+                        <ul class="mb-0">
+                            <li><code>/monster</code> — Monster stats &amp; lore</li>
+                            <li><code>/deity</code> — Deity description &amp; cult info</li>
+                            <li><code>/spell</code> — Spell details</li>
+                            <li><code>/weapon</code> — Firearm/weapon stats</li>
+                            <li><code>/occupationinfo</code> — Occupation lookup</li>
+                            <li><code>/skill</code> — Skill lookup</li>
+                            <li><code>/randomnpc</code> — Generate NPC</li>
+                            <li><code>/randomname</code> — Generate 1920s name</li>
+                            <li><code>/archetype</code> / <code>/talent</code> — Pulp content</li>
+                            <li><code>/phobia</code> / <code>/mania</code> — Madness tables</li>
+                            <li><code>/poison</code> / <code>/invention</code> / <code>/year</code> — Reference</li>
+                            <li><code>/loot</code> / <code>/macguffin</code> — Loot &amp; props</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false">
+                        🔧 Server &amp; Utility
+                    </button>
+                </h2>
+                <div id="collapseFive" class="accordion-collapse collapse" data-bs-parent="#commandsAccordion">
+                    <div class="accordion-body">
+                        <ul class="mb-0">
+                            <li><code>/karma</code> / <code>/leaderboard</code> — Karma system</li>
+                            <li><code>/reactionrole</code> — Reaction roles</li>
+                            <li><code>/poll</code> / <code>/remind</code> — Polls &amp; reminders</li>
+                            <li><code>/purge</code> — Bulk delete messages</li>
+                            <li><code>/autoroom</code> — Auto-room management</li>
+                            <li><code>/rss</code> / <code>/rsssetup</code> — RSS feeds</li>
+                            <li><code>/backup</code> / <code>/updatebot</code> — Maintenance</li>
+                            <li><code>!sync</code> — Sync slash commands</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Keeper Quick Links -->
+    <div class="col-lg-5">
+        <h4 class="mb-3" style="color:var(--theme-primary-main);">Keeper Quick Links</h4>
+        <div class="keeper-section">
+            <h5>Characters</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-sm btn-outline-secondary" href="/characters">Active</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/retired">Retired</a>
+            </div>
+
+            <h5>Grimoire</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-sm btn-outline-secondary" href="/monsters">Monsters</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/deities">Deities</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/spells">Spells</a>
+            </div>
+
+            <h5>Pulp</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-sm btn-outline-secondary" href="/archetypes">Archetypes</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/pulp_talents">Talents</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/insane_talents">Insane Talents</a>
+            </div>
+
+            <h5>Reference</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-sm btn-outline-secondary" href="/occupations">Occupations</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/skills">Skills</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/weapons">Weapons</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/inventions">Inventions</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/years">Years</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/manias">Manias</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/phobias">Phobias</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/poisons">Poisons</a>
+            </div>
+
+            {% if is_admin %}
+            <h5>Administration</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-sm btn-outline-secondary" href="/admin">Dashboard</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/admin/music">Music</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/admin/soundboard">Soundboard</a>
+                <a class="btn btn-sm btn-outline-secondary" href="/admin/game_settings">Game Settings</a>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<div class="mb-5">
-    <h2>Commands</h2>
-    <div class="accordion" id="commandsAccordion">
-
-        <!-- Cthulhu & Investigator Tools -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingOne">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                    🐙 Cthulhu & Investigator Tools
-                </button>
-            </h2>
-            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/newinvestigator</code>: 🕵️‍♂️ Start the character creation wizard.</li>
-                        <li><code>/mycharacter</code>: 📜 View your character sheet.</li>
-                        <li><code>/stat</code>: 📊 View or edit specific stats.</li>
-                        <li><code>/rename</code>: 🏷️ Rename your character.</li>
-                        <li><code>/renameskill</code>: ✏️ Rename a skill on your sheet.</li>
-                        <li><code>/deleteinvestigator</code>: 🗑️ Delete a character.</li>
-                        <li><code>/addbackstory</code>, <code>/updatebackstory</code>, <code>/removebackstory</code>: 📖 Manage backstory elements.</li>
-                        <li><code>/generatebackstory</code>: 🎲 Generate a random backstory.</li>
-                        <li><code>/retire</code>: 👴 Retire an active character.</li>
-                        <li><code>/unretire</code>: 👶 Bring a retired character back.</li>
-                        <li><code>/printcharacter</code>: 🖼️ Generate an image of your character sheet.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dice Rolling & Session -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingTwo">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                    🎲 Dice Rolling & Session
-                </button>
-            </h2>
-            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/roll</code>: 🎲 Perform a dice roll or skill check. Interactive interface allows for Bonus/Penalty dice and Luck spending.</li>
-                        <li><code>/showluck</code>: 🍀 Show the luck threshold for the server.</li>
-                        <li><code>/session start</code>: 🎬 Start a new game session.</li>
-                        <li><code>/session show</code>: 📝 Show current session details.
-                        <li><code>/session wipe</code>: 🧹 Clear session data.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Music & Sound -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingThree">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                    🎵 Music & Sound
-                </button>
-            </h2>
-            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/play</code>: 🎵 Play a song from YouTube.</li>
-                        <li><code>/skip</code>: ⏭️ Skip the current song.</li>
-                        <li><code>/stop</code>: 🛑 Stop music, clear queue, and disconnect.</li>
-                        <li><code>/volume</code>: 🔊 Set playback volume (0-100).</li>
-                        <li><code>/loop</code>: 🔁 Toggle song looping.</li>
-                        <li><code>/queue</code>: 🎼 View the current music queue.</li>
-                        <li><code>/nowplaying</code>: 💿 Show the currently playing song.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Karma System -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingFour">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                    📈 Karma System
-                </button>
-            </h2>
-            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/setupkarma</code>: ⚙️ Interactive setup wizard for the karma system.</li>
-                        <li><code>/setupkarmaroles</code>: 🧙 Interactive wizard to manage rank roles.</li>
-                        <li><code>/karma</code>: 🌟 Check karma for yourself or another user.</li>
-                        <li><code>/leaderboard</code>: 🏆 Show the Karma leaderboard.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Reaction Roles -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingFive">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
-                    🎭 Reaction Roles
-                </button>
-            </h2>
-            <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/reactionrole</code>: 🎭 Setup a reaction role on a message (Admin).</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Keeper Resources -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingSix">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
-                    🧠 Keeper Resources
-                </button>
-            </h2>
-            <div id="collapseSix" class="accordion-collapse collapse" aria-labelledby="headingSix" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/monster</code>: 👹 Consult the Codex for a monster's stats and lore.</li>
-                        <li><code>/deity</code>: 👁️ Consult the pantheon for a deity's description and cult info.</li>
-                        <li><code>/spell</code>: 📜 Consult the archives for a spell's details.</li>
-                        <li><code>/changeluck</code>: 🍀 Modify the server's maximum luck spend threshold (Default: 10).</li>
-                        <li><code>/occupationinfo</code>: 💼 Lookup occupation details.</li>
-                        <li><code>/skill</code>: 📚 Lookup skill details.</li>
-                        <li><code>/randomnpc</code>: 👤 Generate an NPC with region selection.</li>
-                        <li><code>/randomname</code>: 🏷️ Generate a random name (1920s).</li>
-                        <li><code>/macguffin</code>: 🏺 Generate a MacGuffin.
-                        <li><code>/loot</code>: 💰 Generate random loot.</li>
-                        <li><code>/archetype</code>: 🦸‍♂️ Lookup archetype info (Pulp).</li>
-                        <li><code>/weapon</code>: 🔫 Lookup firearm/weapon statistics.</li>
-                        <li><code>/invention</code>: 💡 Lookup invention details by decade.</li>
-                        <li><code>/talent</code>: 🌟 Lookup Pulp talent info.</li>
-                        <li><code>/year</code>: 📅 Historical info for different years.</li>
-                        <li><code>/madness</code>: 🤪 Random madness (Group).</li>
-                        <li><code>/madnessAlone</code>: 🌑 Random madness (Solo).</li>
-                        <li><code>/insane</code>: 🩸 Lookup insane talents.</li>
-                        <li><code>/phobia</code>: 😨 Lookup phobia.</li>
-                        <li><code>/mania</code>: 🤩 Lookup mania.</li>
-                        <li><code>/poison</code>: 🧪 Lookup poison info.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- General & Admin -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingSeven">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeven" aria-expanded="false" aria-controls="collapseSeven">
-                    🛠️ General & Admin
-                </button>
-            </h2>
-            <div id="collapseSeven" class="accordion-collapse collapse" aria-labelledby="headingSeven" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/autoroom kick</code>: 👢 Kick user from auto-room.</li>
-                        <li><code>/autoroom lock</code>: 🔒 Lock auto-room.
-                        <li><code>/autoroom unlock</code>: 🔓 Unlock auto-room.</li>
-                        <li><code>/reportbug</code>: 🐛 Report a bug to the developer.</li>
-                        <li><code>/uptime</code>: ⏱️ Check bot uptime.</li>
-                        <li><code>/autoroom setup</code>: ⚙️ Configure Auto Rooms.</li>
-                        <li><code>!sync</code>: 🔄 **Essential!** Sync slash commands to Discord.</li>
-                        <li><code>/smartreaction add</code>: ➕ Add a smart reaction.</li>
-                        <li><code>/smartreaction remove</code>: ➖ Remove a smart reaction.
-                        <li><code>/smartreaction list</code>: 📋 List all smart reactions.</li>
-                        <li><code>/purge</code>: 🗑️ Bulk delete messages.</li>
-                        <li><code>/autodeleter set</code>: 🤖 Set auto-deletion rules.</li>
-                        <li><code>/autodeleter stop</code>: 🛑 Stop auto-deletion for a channel.</li>
-                        <li><code>/rss</code>: 📰 Add a specific RSS feed or YouTube channel manually.</li>
-                        <li><code>/rsssetup</code>: 📰 Interactive setup wizard for RSS/YouTube feeds.</li>
-                        <li><code>/pogo setchannel</code>: 📱 Set channel for Pokemon GO notifications.</li>
-                        <li><code>/pogo setrole</code>: 🔔 Set role for Pokemon GO notifications.</li>
-                        <li><code>/backup</code>: 💾 Trigger a manual backup.</li>
-                        <li><code>/updatebot</code>: 🔄 Update the bot.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Utility Tools -->
-        <div class="accordion-item">
-            <h2 class="accordion-header" id="headingEight">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEight" aria-expanded="false" aria-controls="collapseEight">
-                    🛠️ Utility Tools
-                </button>
-            </h2>
-            <div id="collapseEight" class="accordion-collapse collapse" aria-labelledby="headingEight" data-bs-parent="#commandsAccordion">
-                <div class="accordion-body">
-                    <ul>
-                        <li><code>/poll</code>: 📊 Create an interactive poll.</li>
-                        <li><code>/remind</code>: ⏰ Set a reminder.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
 {% endblock %}

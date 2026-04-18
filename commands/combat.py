@@ -4,7 +4,7 @@ import re
 from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, Button, Select
-from loadnsave import load_player_stats, load_weapons_data, save_player_stats
+from loadnsave import load_player_stats, load_weapons_data, save_player_stats, load_luck_stats
 from commands.roll import RollResultView
 from rapidfuzz import process, fuzz, utils
 from emojis import get_health_bar
@@ -525,6 +525,8 @@ class CombatView(View):
         result_text, result_tier = roll_cog.calculate_roll_result(roll_val, skill_val)
 
         # Prepare View
+        luck_data = await load_luck_stats()
+        luck_threshold = luck_data.get(self.server_id, 10)
         view = RollResultView(
             ctx=ctx,
             cog=roll_cog,
@@ -537,7 +539,7 @@ class CombatView(View):
             tens_rolls=[tens],
             net_dice=0,
             result_tier=result_tier,
-            luck_threshold=10,
+            luck_threshold=luck_threshold,
             malfunction_threshold=malf_limit,
             on_complete=on_complete,
             damage_data=damage_data,

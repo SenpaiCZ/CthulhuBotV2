@@ -920,78 +920,84 @@ class CodexView(discord.ui.View):
         await interaction.response.edit_message(content=None, embed=embed, view=view)
         view.message = interaction.message
 
+    async def _check_owner(self, interaction: discord.Interaction) -> bool:
+        if interaction.user != self.user:
+            await interaction.response.send_message("This menu isn't for you.", ephemeral=True)
+            return False
+        return True
+
     # Row 0
     @discord.ui.button(label="Monsters", style=discord.ButtonStyle.danger, row=0)
     async def monsters_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_monsters_data, "Monsters List", data_key="monsters", type_slug="monster")
 
     @discord.ui.button(label="Deities", style=discord.ButtonStyle.danger, row=0)
     async def deities_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_deities_data, "Deities List", data_key="deities", type_slug="deity")
 
     @discord.ui.button(label="Archetypes", style=discord.ButtonStyle.danger, row=0)
     async def archetypes_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_archetype_data, "Archetypes List", type_slug="archetype", keys_only=True)
 
     @discord.ui.button(label="Occupations", style=discord.ButtonStyle.danger, row=0)
     async def occupations_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_occupations_data, "Occupations List", type_slug="occupation", keys_only=True)
 
     # Row 1
     @discord.ui.button(label="Spells", style=discord.ButtonStyle.danger, row=1)
     async def spells_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_spells_data, "Spells List", data_key="spells", type_slug="spell")
 
     @discord.ui.button(label="Talents", style=discord.ButtonStyle.danger, row=1)
     async def talents_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_pulp_talents_data, "Pulp Talents List", flatten_pulp=True, type_slug="pulp_talent")
 
     @discord.ui.button(label="Insane Talents", style=discord.ButtonStyle.danger, row=1)
     async def insane_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_madness_insane_talent_data, "Insane Talents List", type_slug="insane_talent", keys_only=True)
 
     @discord.ui.button(label="Skills", style=discord.ButtonStyle.danger, row=1)
     async def skills_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_skills_data, "Skills List", type_slug="skill", keys_only=True)
 
     # Row 2
     @discord.ui.button(label="Weapons", style=discord.ButtonStyle.danger, row=2)
     async def weapons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_weapons_data, "Weapons List", type_slug="weapon", keys_only=True)
 
     @discord.ui.button(label="Poisons", style=discord.ButtonStyle.danger, row=2)
     async def poisons_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_poisons_data, "Poisons List", type_slug="poison", keys_only=True)
 
     @discord.ui.button(label="Inventions", style=discord.ButtonStyle.danger, row=2)
     async def inventions_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_inventions_data, "Inventions List", type_slug="invention")
 
     # Row 3
     @discord.ui.button(label="Manias", style=discord.ButtonStyle.danger, row=3)
     async def manias_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_manias_data, "Manias List", type_slug="mania", keys_only=True)
 
     @discord.ui.button(label="Phobias", style=discord.ButtonStyle.danger, row=3)
     async def phobias_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_phobias_data, "Phobias List", type_slug="phobia", keys_only=True)
 
     @discord.ui.button(label="Years", style=discord.ButtonStyle.danger, row=3)
     async def years_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.user: return
+        if not await self._check_owner(interaction): return
         await self._launch_list(interaction, load_years_data, "Years List", type_slug="year", keys_only=True)
 
     async def on_timeout(self):
@@ -1013,26 +1019,27 @@ class SelectionView(discord.ui.View):
         self.data_key = data_key
         self.flatten_pulp = flatten_pulp
         self.keys_only = keys_only
+        self.options = options  # Keep full list for index-based lookup
         self.message = None
 
-        # Create select menu
+        # Create select menu — use index as value to avoid 100-char limit on long names
         select = discord.ui.Select(placeholder=f"Select a {type_name.replace('_', ' ')}...", min_values=1, max_values=1)
 
-        for option in options:
-            # Select options have a max length of 100 chars for label
+        for i, option in enumerate(options):
             label = option[:100]
-            select.add_option(label=label, value=option)
+            select.add_option(label=label, value=str(i))
 
         select.callback = self.select_callback
         self.add_item(select)
 
     async def select_callback(self, interaction: discord.Interaction):
-        # Allow only the author to select
         if interaction.user != self.user:
             await interaction.response.send_message("This selection is not for you.", ephemeral=True)
             return
 
-        selected_name = interaction.data['values'][0]
+        # Resolve full name from index
+        idx = int(interaction.data['values'][0])
+        selected_name = self.options[idx]
 
         # Disable view and acknowledge interaction
         for child in self.children:
