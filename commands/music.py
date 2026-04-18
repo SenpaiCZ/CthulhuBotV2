@@ -60,6 +60,14 @@ def _is_playlist_url(query: str) -> bool:
     return 'list=' in query or '/playlist' in query
 
 
+async def _delete_after(message, delay: float):
+    await asyncio.sleep(delay)
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+
 def _ytdl_opts_with_cookies(base: dict) -> dict:
     opts = base.copy()
     if os.path.isfile('cookies/cookies.txt'):
@@ -446,7 +454,8 @@ class Music(commands.Cog):
                     description=f"**{playlist_title}**\n{added} tracks queued",
                     color=discord.Color.blurple(),
                 )
-                await interaction.followup.send(embed=embed, delete_after=10)
+                msg = await interaction.followup.send(embed=embed)
+                asyncio.create_task(_delete_after(msg, 10))
 
             else:
                 # Single track — full extraction
@@ -499,7 +508,8 @@ class Music(commands.Cog):
                     embed.set_footer(text=f"Requested by {interaction.user.display_name}")
                     if song_info['thumbnail']:
                         embed.set_thumbnail(url=song_info['thumbnail'])
-                    await interaction.followup.send(embed=embed, delete_after=15)
+                    msg = await interaction.followup.send(embed=embed)
+                    asyncio.create_task(_delete_after(msg, 15))
                     await self._update_dashboard_for_guild(guild_id)
                     return  # Don't replace dashboard; just update queue section
 
@@ -588,7 +598,8 @@ class Music(commands.Cog):
             embed.set_footer(text=f"Requested by {interaction.user.display_name}")
             if song_info['thumbnail']:
                 embed.set_thumbnail(url=song_info['thumbnail'])
-            await interaction.followup.send(embed=embed, delete_after=10)
+            msg = await interaction.followup.send(embed=embed)
+            asyncio.create_task(_delete_after(msg, 10))
             await self._update_dashboard_for_guild(guild_id)
 
             if not self.current_track.get(guild_id):
