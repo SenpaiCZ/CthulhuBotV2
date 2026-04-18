@@ -154,9 +154,11 @@ async def check_csrf():
         else:
             return csrf_deny("CSRF: No Origin/Referer")
 
+_PUBLIC_API = {'/api/status'}
+
 @app.before_request
 async def check_api_auth():
-    if request.path.startswith('/api/') and not session.get('logged_in'):
+    if request.path.startswith('/api/') and request.path not in _PUBLIC_API and not session.get('logged_in'):
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
 # Helper to check login
