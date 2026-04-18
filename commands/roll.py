@@ -1099,10 +1099,14 @@ class Roll(commands.Cog):
         if not current:
             return [app_commands.Choice(name=name[:100], value=val[:100]) for name, val in choices[:25]]
 
-        matches = process.extract(current, [val for _, val in choices], scorer=fuzz.WRatio, limit=25)
-        matched_keys = {m[0] for m in matches}
-        results = [(name, val) for name, val in choices if val in matched_keys]
-        return [app_commands.Choice(name=name[:100], value=val[:100]) for name, val in results[:25]]
+        # Fuzzy match against skill names, preserve score order (best match first)
+        skill_keys = [val for _, val in choices]
+        display_map = {val: name for name, val in choices}
+        matches = process.extract(current, skill_keys, scorer=fuzz.WRatio, limit=25, score_cutoff=30)
+        return [
+            app_commands.Choice(name=display_map[m[0]][:100], value=m[0][:100])
+            for m in matches  # already sorted best→worst by rapidfuzz
+        ]
 
     @roll.autocomplete('dice_expression')
     async def roll_autocomplete(self, interaction: discord.Interaction, current: str):
