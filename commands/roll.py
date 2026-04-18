@@ -849,7 +849,8 @@ class Roll(commands.Cog):
 
     @app_commands.command(name="roll", description="🎲 Perform a dice roll or skill check.")
     @app_commands.describe(
-        dice_expression="The dice expression (e.g. 3d6) or skill name (e.g. Spot Hidden)",
+        skill="Pick a skill from your character sheet (autocomplete)",
+        dice_expression="Dice expression (e.g. 3d6) or skill name typed manually",
         bonus="Number of Bonus Dice (0-2)",
         penalty="Number of Penalty Dice (0-2)",
         secret="Make the result ephemeral (hidden)",
@@ -860,23 +861,26 @@ class Roll(commands.Cog):
         penalty=[app_commands.Choice(name="0", value=0), app_commands.Choice(name="1", value=1), app_commands.Choice(name="2", value=2)],
         difficulty=[app_commands.Choice(name="Regular", value="Regular"), app_commands.Choice(name="Hard", value="Hard"), app_commands.Choice(name="Extreme", value="Extreme")]
     )
-    async def roll(self, interaction: discord.Interaction, dice_expression: str = None, bonus: int = 0, penalty: int = 0, secret: bool = False, difficulty: str = "Regular"):
+    async def roll(self, interaction: discord.Interaction, skill: str = None, dice_expression: str = None, bonus: int = 0, penalty: int = 0, secret: bool = False, difficulty: str = "Regular"):
         """
         🎲 Perform a dice roll or skill check.
         """
+        # skill takes priority over dice_expression
+        target = skill or dice_expression
+
         ephemeral = secret
-        if dice_expression is None:
+        if target is None:
             ephemeral = True
 
         if not interaction.response.is_done():
             await interaction.response.defer(ephemeral=ephemeral)
 
-        if not dice_expression:
+        if not target:
             view = DiceTrayView(self, interaction.user)
             await interaction.followup.send(embed=view.get_embed(), view=view, ephemeral=True)
             return
 
-        await self._perform_roll(interaction, dice_expression, bonus, penalty, secret, difficulty)
+        await self._perform_roll(interaction, target, bonus, penalty, secret, difficulty)
 
     async def _perform_roll(self, interaction, dice_expression, bonus, penalty, secret, difficulty):
         ephemeral = secret
@@ -1069,6 +1073,36 @@ class Roll(commands.Cog):
             import traceback
             traceback.print_exc()
             await send_msg(content=f"An error occurred: {e}")
+
+    @roll.autocomplete('skill')
+    async def skill_autocomplete(self, interaction: discord.Interaction, current: str):
+        server_id = str(interaction.guild_id)
+        user_id = str(interaction.user.id)
+        player_stats = await load_player_stats()
+
+        if server_id not in player_stats or user_id not in player_stats[server_id]:
+            return [app_commands.Choice(name="No character found — use /newinvestigator", value="")]
+
+        stats = player_stats[server_id][user_id]
+        ignored_keys = {
+            "NAME", "Name", "Residence", "Occupation", "Game Mode",
+            "Archetype", "Archetype Info", "Backstory", "Custom Emojis",
+            "Age", "Move", "Build", "Damage Bonus", "Bonus Damage",
+            "CustomSkill", "CustomSkills", "CustomSkillss", "Occupation Info"
+        }
+        valid_stats = [(k, v) for k, v in stats.items() if k not in ignored_keys and isinstance(v, (int, float))]
+        valid_stats.sort(key=lambda x: x[1], reverse=True)
+
+        # Format: "Spot Hidden — 60%"
+        choices = [(f"{k} — {v}%", k) for k, v in valid_stats]  # (display, value)
+
+        if not current:
+            return [app_commands.Choice(name=name[:100], value=val[:100]) for name, val in choices[:25]]
+
+        matches = process.extract(current, [val for _, val in choices], scorer=fuzz.WRatio, limit=25)
+        matched_keys = {m[0] for m in matches}
+        results = [(name, val) for name, val in choices if val in matched_keys]
+        return [app_commands.Choice(name=name[:100], value=val[:100]) for name, val in results[:25]]
 
     @roll.autocomplete('dice_expression')
     async def roll_autocomplete(self, interaction: discord.Interaction, current: str):
