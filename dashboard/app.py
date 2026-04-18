@@ -2138,7 +2138,14 @@ async def soundboard_file_settings():
 @app.route('/api/soundboard/play', methods=['POST'])
 async def soundboard_play():
     if not is_admin(): return "Unauthorized", 401
+    try:
+        return await _soundboard_play_inner()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": f"Server error: {e}"}), 500
 
+async def _soundboard_play_inner():
     data = await request.get_json()
     guild_id = data.get('guild_id')
     channel_id = data.get('channel_id')
