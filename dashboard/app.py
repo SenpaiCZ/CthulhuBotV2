@@ -138,16 +138,26 @@ async def check_csrf():
         # Construct trusted origin (scheme://host:port)
         trusted_origin = f"{request.scheme}://{request.host}"
 
+        is_api = request.path.startswith('/api/')
+
+        def csrf_deny(reason):
+            if is_api:
+                return jsonify({"status": "error", "message": f"Forbidden: {reason}"}), 403
+            abort(403, description=reason)
+
         if origin:
             if origin != trusted_origin:
-                abort(403, description="CSRF: Origin Mismatch")
+                return csrf_deny("CSRF: Origin Mismatch")
         elif referrer:
-            # Prevent prefix match vulnerability (e.g. trusted.com.evil.com)
             if referrer != trusted_origin and not referrer.startswith(trusted_origin + "/"):
-                abort(403, description="CSRF: Referrer Mismatch")
+                return csrf_deny("CSRF: Referrer Mismatch")
         else:
-            # Block requests with neither header
-            abort(403, description="CSRF: No Origin/Referer")
+            return csrf_deny("CSRF: No Origin/Referer")
+
+@app.before_request
+async def check_api_auth():
+    if request.path.startswith('/api/') and not session.get('logged_in'):
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
 # Helper to check login
 def is_admin():
