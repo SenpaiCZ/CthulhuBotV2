@@ -589,15 +589,18 @@ class PaginatedListView(discord.ui.View):
         page_items = self.items[start:end]
 
         self.select_menu.options.clear()
+        if not page_items:
+            # Discord requires at least 1 option — add a placeholder
+            self.select_menu.add_option(label="(no entries)", value="__none__", description="No entries on this page")
+            self.select_menu.disabled = True
+            return
+
+        self.select_menu.disabled = False
         for item in page_items:
-            # Handle invention counts "Name (Count)" -> "Name" for value, but keep label
             label = item[:100]
             value = item[:100]
-
             if self.type_slug == "invention":
-                 # Extract the decade part by splitting on the count suffix " (X entries)"
-                 value = item.split(' (')[0]
-
+                value = item.split(' (')[0]
             self.select_menu.add_option(label=label, value=value)
 
     async def select_callback(self, interaction: discord.Interaction):
@@ -605,6 +608,8 @@ class PaginatedListView(discord.ui.View):
              return await interaction.response.send_message("This isn't for you!", ephemeral=True)
 
         selected_name = interaction.data['values'][0]
+        if selected_name == "__none__":
+            return await interaction.response.defer()
 
         loading_embed = discord.Embed(title=f"Loading {selected_name}…", color=discord.Color.dark_green())
         await interaction.response.edit_message(content=None, embed=loading_embed, view=None)
@@ -923,6 +928,17 @@ class CodexView(discord.ui.View):
                     choices = list(data.keys())
 
             choices.sort()
+            print(f"[Codex] _launch_list '{title}': {len(choices)} choices, data type={type(data).__name__}, data_key={data_key}")
+
+            if not choices:
+                err_embed = discord.Embed(
+                    title="No entries found",
+                    description=f"No entries could be loaded for **{title}**. The data file may be missing or empty.",
+                    color=discord.Color.orange()
+                )
+                await interaction.edit_original_response(content=None, embed=err_embed, view=None)
+                return
+
             view = PaginatedListView(
                 self.user, choices, title,
                 data=data, cog=self.cog, type_slug=type_slug,
