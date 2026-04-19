@@ -148,13 +148,14 @@
 .sb-card-footer {
     border-top: 1px solid rgba(255,255,255,0.07);
     padding: 0.4rem 0.5rem;
-    display: flex; align-items: center; gap: 0.4rem;
+    display: flex; flex-direction: column; gap: 0.3rem;
     background: rgba(0,0,0,0.2);
 }
-.sb-card-footer input[type=range] { flex: 1; min-width: 0; height: 4px; }
+.sb-card-footer input[type=range] { width: 100%; min-width: 0; height: 4px; }
+.sb-card-footer-controls { display: flex; align-items: center; gap: 0.4rem; }
 .sb-card-footer .form-check { margin: 0; }
 .sb-card-footer .form-check-input { margin-top: 0; }
-.sb-card-mgmt { display: flex; gap: 0.25rem; }
+.sb-card-mgmt { display: flex; gap: 0.25rem; margin-left: auto; }
 .sb-card-mgmt .btn { padding: 0.1rem 0.35rem; font-size: 0.7rem; line-height: 1.4; }
 
 /* ── File Management Drawer ────────────────────────── */
@@ -604,12 +605,14 @@ function renderFiles(files, settings) {
                 </div>
                 <div class="sb-card-footer">
                     <input type="range" class="form-range sound-vol" min="0" max="100" value="${savedVol}" title="Volume">
-                    <div class="form-check form-switch m-0" title="Loop">
-                        <input class="form-check-input sound-loop" type="checkbox" ${savedLoop ? 'checked' : ''}>
-                    </div>
-                    <div class="sb-card-mgmt">
-                        <button class="btn btn-outline-secondary sb-rename-btn" title="Rename"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-outline-danger sb-del-btn" title="Delete"><i class="bi bi-trash3"></i></button>
+                    <div class="sb-card-footer-controls">
+                        <div class="form-check form-switch m-0" title="Loop">
+                            <input class="form-check-input sound-loop" type="checkbox" ${savedLoop ? 'checked' : ''}>
+                        </div>
+                        <div class="sb-card-mgmt">
+                            <button class="btn btn-outline-secondary sb-rename-btn" title="Rename"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-outline-danger sb-del-btn" title="Delete"><i class="bi bi-trash3"></i></button>
+                        </div>
                     </div>
                 </div>
             `;
