@@ -157,6 +157,13 @@
 .sb-card-footer .form-check-input { margin-top: 0; }
 .sb-card-mgmt { display: flex; gap: 0.25rem; margin-left: auto; }
 .sb-card-mgmt .btn { padding: 0.1rem 0.35rem; font-size: 0.7rem; line-height: 1.4; }
+.sb-fav-btn { padding: 0.1rem 0.35rem; font-size: 0.8rem; line-height: 1.4; background: none; border: none; color: rgba(255,255,255,0.25); transition: color 0.15s; }
+.sb-fav-btn:hover, .sb-fav-btn.favorited { color: #e74c3c; }
+.sb-folder-toggle { opacity: 0.35; transition: transform 0.2s, opacity 0.15s; flex-shrink: 0; }
+.sb-folder-header:hover .sb-folder-toggle { opacity: 0.8; }
+.sb-folder.collapsed .sb-folder-toggle { transform: rotate(-90deg); }
+.sb-folder.collapsed .sb-folder-grid-wrap { display: none; }
+.sb-folder-header { cursor: pointer; }
 
 /* ── File Management Drawer ────────────────────────── */
 .sb-mgmt-panel {
@@ -294,6 +301,26 @@
 
 </div><!-- #sb-app -->
 
+<!-- Rename Folder Modal -->
+<div class="modal fade" id="renameFolderModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title">Přejmenovat složku</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="renameFolderOldName">
+                <input type="text" class="form-control" id="renameFolderInput" placeholder="Nový název složky">
+            </div>
+            <div class="modal-footer py-2">
+                <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Zrušit</button>
+                <button class="btn btn-sm btn-primary" onclick="submitFolderRename()">Přejmenovat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Rename Modal -->
 <div class="modal fade" id="renameModal" tabindex="-1">
     <div class="modal-dialog modal-sm">
@@ -332,9 +359,11 @@ let currentData = null;
 let selectedGuildId = null;
 let prevFilesStr = null;
 let renameModal = null;
+let renameFolderModal = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     renameModal = new bootstrap.Modal(document.getElementById('renameModal'));
+    renameFolderModal = new bootstrap.Modal(document.getElementById('renameFolderModal'));
 
     // File management toggle
     document.getElementById('mgmtToggle').onclick = () => {
@@ -490,8 +519,16 @@ function renderNowPlaying(tracks) {
 }
 
 // ── Files Grid ────────────────────────────────────────────
+function getFolderCollapsed(key) {
+    return localStorage.getItem(`sb-folder-collapsed:${key}`) === '1';
+}
+function setFolderCollapsed(key, v) {
+    localStorage.setItem(`sb-folder-collapsed:${key}`, v ? '1' : '0');
+}
+
 function renderFiles(files, settings) {
-    const currentStr = JSON.stringify(files);
+    const favorites = settings?.favorites || [];
+    const currentStr = JSON.stringify({files, favorites});
     if (currentStr === prevFilesStr) return;
     prevFilesStr = currentStr;
 
@@ -499,152 +536,172 @@ function renderFiles(files, settings) {
     container.innerHTML = '';
 
     const allKeys = Object.keys(files);
-    if (allKeys.length === 0) {
+    if (allKeys.length === 0 && favorites.length === 0) {
         container.innerHTML = '<div class="sb-empty text-center py-4">No sound files found. Upload some above.</div>';
         return;
     }
 
+    // Flat map for favorites lookup
+    const allFilesMap = {};
+    Object.values(files).forEach(list => (list || []).forEach(f => { allFilesMap[f.path] = f; }));
+
+    // Favorites virtual folder at top
+    if (favorites.length > 0) {
+        const favFiles = favorites.map(p => allFilesMap[p]).filter(Boolean);
+        if (favFiles.length > 0) renderFolder('__favorites__', '❤️ Oblíbené', favFiles, null, settings, favorites, container, true);
+    }
+
     // Root first, then folders alphabetically
     const ordered = ['Root', ...allKeys.filter(k => k !== 'Root').sort()];
-
     ordered.forEach(folderKey => {
         const fileList = files[folderKey];
         if (!fileList || fileList.length === 0) return;
-
         const folderColor = settings?.folder_colors?.[folderKey] || null;
-        const isRoot = folderKey === 'Root';
+        renderFolder(folderKey, folderKey, fileList, folderColor, settings, favorites, container, false);
+    });
+}
 
-        const section = document.createElement('div');
-        section.className = 'sb-folder';
+function renderFolder(folderKey, displayTitle, fileList, folderColor, settings, favorites, container, isVirtual) {
+    const isRoot = folderKey === 'Root';
+    const collapsed = getFolderCollapsed(folderKey);
 
-        // Header
-        const header = document.createElement('div');
-        header.className = 'sb-folder-header';
+    const section = document.createElement('div');
+    section.className = 'sb-folder' + (collapsed ? ' collapsed' : '');
 
-        if (!isRoot && folderColor) {
-            const swatch = document.createElement('span');
-            swatch.className = 'sb-folder-color-swatch';
-            swatch.style.background = folderColor;
-            swatch.title = 'Change folder color';
-            const colorPicker = document.createElement('input');
-            colorPicker.type = 'color';
-            colorPicker.value = folderColor;
-            colorPicker.style.cssText = 'position:absolute;opacity:0;width:16px;height:16px;cursor:pointer;';
-            colorPicker.onchange = e => { swatch.style.background = e.target.value; saveFolderColor(folderKey, e.target.value); };
-            colorPicker.onclick = e => e.stopPropagation();
-            const swatchWrap = document.createElement('div');
-            swatchWrap.style.cssText = 'position:relative;width:16px;height:16px;flex-shrink:0;';
-            swatchWrap.appendChild(swatch);
-            swatchWrap.appendChild(colorPicker);
-            header.appendChild(swatchWrap);
-        } else if (!isRoot) {
-            // No color yet — show color picker swatch as grey
-            const swatchWrap = document.createElement('div');
-            swatchWrap.style.cssText = 'position:relative;width:16px;height:16px;flex-shrink:0;';
-            const swatch = document.createElement('span');
-            swatch.className = 'sb-folder-color-swatch';
-            swatch.style.background = '#444';
-            swatch.title = 'Set folder color';
-            const colorPicker = document.createElement('input');
-            colorPicker.type = 'color';
-            colorPicker.value = '#444444';
-            colorPicker.style.cssText = 'position:absolute;opacity:0;width:16px;height:16px;cursor:pointer;';
-            colorPicker.onchange = e => { swatch.style.background = e.target.value; saveFolderColor(folderKey, e.target.value); };
-            colorPicker.onclick = e => e.stopPropagation();
-            swatchWrap.appendChild(swatch);
-            swatchWrap.appendChild(colorPicker);
-            header.appendChild(swatchWrap);
-        }
+    // ── Header ──────────────────────────────────────────────
+    const header = document.createElement('div');
+    header.className = 'sb-folder-header';
 
-        const title = document.createElement('span');
-        title.className = 'sb-folder-title';
-        title.textContent = isRoot ? 'Uncategorized' : folderKey;
-        if (folderColor) title.style.color = folderColor;
-        header.appendChild(title);
+    // Collapse chevron
+    const chevron = document.createElement('i');
+    chevron.className = 'bi bi-chevron-down sb-folder-toggle me-1';
+    header.appendChild(chevron);
 
-        const count = document.createElement('span');
-        count.className = 'sb-section-label';
-        count.textContent = fileList.length + ' clip' + (fileList.length !== 1 ? 's' : '');
-        header.appendChild(count);
+    // Color swatch (non-root, non-virtual)
+    if (!isRoot && !isVirtual) {
+        const swatchWrap = document.createElement('div');
+        swatchWrap.style.cssText = 'position:relative;width:16px;height:16px;flex-shrink:0;';
+        const swatch = document.createElement('span');
+        swatch.className = 'sb-folder-color-swatch';
+        swatch.style.background = folderColor || '#444';
+        swatch.title = folderColor ? 'Change folder color' : 'Set folder color';
+        const colorPicker = document.createElement('input');
+        colorPicker.type = 'color';
+        colorPicker.value = folderColor || '#444444';
+        colorPicker.style.cssText = 'position:absolute;opacity:0;width:16px;height:16px;cursor:pointer;';
+        colorPicker.onchange = e => { swatch.style.background = e.target.value; saveFolderColor(folderKey, e.target.value); };
+        colorPicker.onclick = e => e.stopPropagation();
+        swatchWrap.appendChild(swatch);
+        swatchWrap.appendChild(colorPicker);
+        header.appendChild(swatchWrap);
+    }
 
-        if (!isRoot) {
-            const actions = document.createElement('div');
-            actions.className = 'sb-folder-actions';
-            const delBtn = document.createElement('button');
-            delBtn.className = 'btn btn-sm btn-outline-danger py-0';
-            delBtn.innerHTML = '<i class="bi bi-trash3"></i>';
-            delBtn.title = 'Delete folder';
-            delBtn.onclick = () => deleteFolder(folderKey);
-            actions.appendChild(delBtn);
-            header.appendChild(actions);
-        }
+    const title = document.createElement('span');
+    title.className = 'sb-folder-title';
+    title.textContent = isRoot ? 'Nekategorizováno' : displayTitle;
+    if (folderColor) title.style.color = folderColor;
+    header.appendChild(title);
 
-        section.appendChild(header);
+    const count = document.createElement('span');
+    count.className = 'sb-section-label';
+    count.textContent = fileList.length + ' clip' + (fileList.length !== 1 ? 's' : '');
+    header.appendChild(count);
 
-        // Grid
-        const grid = document.createElement('div');
-        grid.className = 'sb-grid';
+    // Folder actions (non-root, non-virtual)
+    if (!isRoot && !isVirtual) {
+        const actions = document.createElement('div');
+        actions.className = 'sb-folder-actions';
 
-        fileList.forEach(file => {
-            const fileSettings = settings?.files?.[file.path] || {};
-            const savedVol = fileSettings.volume ?? 100;
-            const savedLoop = fileSettings.loop ?? false;
-            const displayName = file.name.replace(/\.[^/.]+$/, '');
-            const accentColor = folderColor || 'rgba(var(--theme-primary-rgb,139,0,0),0.6)';
+        const renameBtn = document.createElement('button');
+        renameBtn.className = 'btn btn-sm btn-outline-secondary py-0';
+        renameBtn.innerHTML = '<i class="bi bi-pencil"></i>';
+        renameBtn.title = 'Přejmenovat složku';
+        renameBtn.onclick = e => { e.stopPropagation(); openRenameFolderModal(folderKey); };
+        actions.appendChild(renameBtn);
 
-            const card = document.createElement('div');
-            card.className = 'sb-card';
-            card.dataset.path = file.path;
-            card.dataset.name = displayName;
-            card.title = `Play: ${displayName}`;
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn btn-sm btn-outline-danger py-0';
+        delBtn.innerHTML = '<i class="bi bi-trash3"></i>';
+        delBtn.title = 'Delete folder';
+        delBtn.onclick = e => { e.stopPropagation(); deleteFolder(folderKey); };
+        actions.appendChild(delBtn);
 
-            card.innerHTML = `
-                <div class="sb-card-face" style="background: linear-gradient(135deg, ${accentColor}22, ${accentColor}44);">
-                    <div class="sb-card-wave">🔊</div>
-                    <div class="sb-card-name">${esc(displayName)}</div>
-                </div>
-                <div class="sb-card-footer">
-                    <input type="range" class="form-range sound-vol" min="0" max="100" value="${savedVol}" title="Volume">
-                    <div class="sb-card-footer-controls">
-                        <div class="form-check form-switch m-0" title="Loop">
-                            <input class="form-check-input sound-loop" type="checkbox" ${savedLoop ? 'checked' : ''}>
-                        </div>
-                        <div class="sb-card-mgmt">
-                            <button class="btn btn-outline-secondary sb-rename-btn" title="Rename"><i class="bi bi-pencil"></i></button>
-                            <button class="btn btn-outline-danger sb-del-btn" title="Delete"><i class="bi bi-trash3"></i></button>
-                        </div>
+        header.appendChild(actions);
+    }
+
+    header.onclick = () => {
+        const c = !section.classList.contains('collapsed');
+        section.classList.toggle('collapsed', c);
+        setFolderCollapsed(folderKey, c);
+    };
+
+    section.appendChild(header);
+
+    // ── Grid ────────────────────────────────────────────────
+    const gridWrap = document.createElement('div');
+    gridWrap.className = 'sb-folder-grid-wrap';
+
+    const grid = document.createElement('div');
+    grid.className = 'sb-grid';
+
+    fileList.forEach(file => {
+        const fileSettings = settings?.files?.[file.path] || {};
+        const savedVol = fileSettings.volume ?? 100;
+        const savedLoop = fileSettings.loop ?? false;
+        const isFav = favorites.includes(file.path);
+        const displayName = file.name.replace(/\.[^/.]+$/, '');
+        const accentColor = folderColor || 'rgba(var(--theme-primary-rgb,139,0,0),0.6)';
+
+        const card = document.createElement('div');
+        card.className = 'sb-card';
+        card.dataset.path = file.path;
+        card.dataset.name = displayName;
+        card.title = `Play: ${displayName}`;
+
+        card.innerHTML = `
+            <div class="sb-card-face" style="background: linear-gradient(135deg, ${accentColor}22, ${accentColor}44);">
+                <div class="sb-card-wave">🔊</div>
+                <div class="sb-card-name">${esc(displayName)}</div>
+            </div>
+            <div class="sb-card-footer">
+                <input type="range" class="form-range sound-vol" min="0" max="100" value="${savedVol}" title="Volume">
+                <div class="sb-card-footer-controls">
+                    <div class="form-check form-switch m-0" title="Loop">
+                        <input class="form-check-input sound-loop" type="checkbox" ${savedLoop ? 'checked' : ''}>
+                    </div>
+                    <div class="sb-card-mgmt">
+                        <button class="btn sb-fav-btn ${isFav ? 'favorited' : ''}" title="${isFav ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'}"><i class="bi bi-heart${isFav ? '-fill' : ''}"></i></button>
+                        <button class="btn btn-outline-secondary sb-rename-btn" title="Rename"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-outline-danger sb-del-btn" title="Delete"><i class="bi bi-trash3"></i></button>
                     </div>
                 </div>
-            `;
+            </div>
+        `;
 
-            // Play on card face click
-            card.querySelector('.sb-card-face').onclick = () => {
-                const vol = parseInt(card.querySelector('.sound-vol').value);
-                const loop = card.querySelector('.sound-loop').checked;
-                card.style.transform = 'scale(0.95)';
-                setTimeout(() => card.style.transform = '', 120);
-                playSound(file.path, loop, vol);
-            };
+        card.querySelector('.sb-card-face').onclick = () => {
+            const vol = parseInt(card.querySelector('.sound-vol').value);
+            const loop = card.querySelector('.sound-loop').checked;
+            card.style.transform = 'scale(0.95)';
+            setTimeout(() => card.style.transform = '', 120);
+            playSound(file.path, loop, vol);
+        };
 
-            // Save settings on change (don't re-render)
-            const volInput = card.querySelector('.sound-vol');
-            const loopInput = card.querySelector('.sound-loop');
-            volInput.oninput = () => {}; // live feedback if wanted
-            volInput.onchange = () => saveFileSettings(file.path, parseInt(volInput.value), loopInput.checked);
-            loopInput.onchange = () => saveFileSettings(file.path, parseInt(volInput.value), loopInput.checked);
+        const volInput = card.querySelector('.sound-vol');
+        const loopInput = card.querySelector('.sound-loop');
+        volInput.onchange = () => saveFileSettings(file.path, parseInt(volInput.value), loopInput.checked);
+        loopInput.onchange = () => saveFileSettings(file.path, parseInt(volInput.value), loopInput.checked);
 
-            // Stop propagation on footer controls
-            card.querySelector('.sb-card-footer').onclick = e => e.stopPropagation();
+        card.querySelector('.sb-card-footer').onclick = e => e.stopPropagation();
+        card.querySelector('.sb-fav-btn').onclick = () => toggleFavorite(file.path, isFav);
+        card.querySelector('.sb-rename-btn').onclick = () => openRenameModal(file.path, displayName);
+        card.querySelector('.sb-del-btn').onclick = () => deleteFile(file.path);
 
-            card.querySelector('.sb-rename-btn').onclick = () => openRenameModal(file.path, displayName);
-            card.querySelector('.sb-del-btn').onclick = () => deleteFile(file.path);
-
-            grid.appendChild(card);
-        });
-
-        section.appendChild(grid);
-        container.appendChild(section);
+        grid.appendChild(card);
     });
+
+    gridWrap.appendChild(grid);
+    section.appendChild(gridWrap);
+    container.appendChild(section);
 }
 
 // ── Controls ──────────────────────────────────────────────
@@ -767,6 +824,24 @@ async function submitRename() {
 
 async function saveFolderColor(name, color) {
     await apiCall('/api/soundboard/folder/color', { folder_name: name, color: color });
+}
+
+function openRenameFolderModal(oldName) {
+    document.getElementById('renameFolderOldName').value = oldName;
+    document.getElementById('renameFolderInput').value = oldName;
+    renameFolderModal.show();
+}
+
+async function submitFolderRename() {
+    const oldName = document.getElementById('renameFolderOldName').value;
+    const newName = document.getElementById('renameFolderInput').value.trim();
+    if (!newName || newName === oldName) return;
+    await apiCall('/api/soundboard/folder/rename', { old_name: oldName, new_name: newName });
+    renameFolderModal.hide();
+}
+
+async function toggleFavorite(path, isFav) {
+    await apiCall('/api/soundboard/file/favorite', { file_path: path, favorited: !isFav });
 }
 
 async function saveFileSettings(path, volume, loop) {

@@ -2135,6 +2135,29 @@ async def soundboard_file_settings():
 
     return jsonify({"status": "success"})
 
+@app.route('/api/soundboard/file/favorite', methods=['POST'])
+async def soundboard_file_favorite():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    file_path = data.get('file_path')
+    favorited = data.get('favorited')
+
+    if file_path is None or favorited is None:
+        return jsonify({"status": "error", "message": "Missing file_path or favorited"}), 400
+
+    settings = await load_soundboard_settings()
+    if 'favorites' not in settings:
+        settings['favorites'] = []
+
+    if favorited and file_path not in settings['favorites']:
+        settings['favorites'].append(file_path)
+    elif not favorited and file_path in settings['favorites']:
+        settings['favorites'].remove(file_path)
+
+    await save_soundboard_settings(settings)
+    return jsonify({"status": "success"})
+
 @app.route('/api/soundboard/play', methods=['POST'])
 async def soundboard_play():
     if not is_admin(): return "Unauthorized", 401
@@ -2376,6 +2399,54 @@ async def soundboard_delete_folder():
     else:
         return jsonify({"status": "error", "message": error}), 500
 
+@app.route('/api/soundboard/folder/rename', methods=['POST'])
+async def soundboard_rename_folder():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    old_name = data.get('old_name')
+    new_name = data.get('new_name')
+
+    if not old_name or not new_name:
+        return jsonify({"status": "error", "message": "Missing old_name or new_name"}), 400
+
+    safe_old = sanitize_filename(old_name)
+    safe_new = sanitize_filename(new_name)
+    old_path = os.path.join(SOUNDBOARD_FOLDER, safe_old)
+    new_path = os.path.join(SOUNDBOARD_FOLDER, safe_new)
+
+    if not os.path.exists(old_path):
+        return jsonify({"status": "error", "message": "Folder not found"}), 404
+
+    if os.path.exists(new_path):
+        return jsonify({"status": "error", "message": "A folder with that name already exists"}), 400
+
+    success, error = await asyncio.to_thread(sync_rename_path, old_path, new_path)
+    if success:
+        settings = await load_soundboard_settings()
+        old_prefix = safe_old + '/'
+        new_prefix = safe_new + '/'
+
+        if 'folder_colors' in settings and safe_old in settings['folder_colors']:
+            settings['folder_colors'][safe_new] = settings['folder_colors'].pop(safe_old)
+
+        if 'files' in settings:
+            settings['files'] = {
+                (new_prefix + k[len(old_prefix):] if k.startswith(old_prefix) else k): v
+                for k, v in settings['files'].items()
+            }
+
+        if 'favorites' in settings:
+            settings['favorites'] = [
+                new_prefix + p[len(old_prefix):] if p.startswith(old_prefix) else p
+                for p in settings['favorites']
+            ]
+
+        await save_soundboard_settings(settings)
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"status": "error", "message": error}), 500
+
 @app.route('/api/soundboard/file/delete', methods=['POST'])
 async def soundboard_delete_file():
     if not is_admin(): return "Unauthorized", 401
@@ -2463,11 +2534,16 @@ async def soundboard_rename_file():
 
     success, error = await asyncio.to_thread(sync_rename_path, full_old_path, full_new_path)
     if success:
-        # Migrate settings
         settings = await load_soundboard_settings()
+        changed = False
         if 'files' in settings and file_path in settings['files']:
-            settings['files'][new_rel_path] = settings['files'][file_path]
-            del settings['files'][file_path]
+            settings['files'][new_rel_path] = settings['files'].pop(file_path)
+            changed = True
+        if 'favorites' in settings and file_path in settings['favorites']:
+            settings['favorites'].remove(file_path)
+            settings['favorites'].append(new_rel_path)
+            changed = True
+        if changed:
             await save_soundboard_settings(settings)
 
         return jsonify({"status": "success", "new_path": new_rel_path})
