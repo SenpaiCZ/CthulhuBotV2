@@ -14,7 +14,7 @@ from loadnsave import (
     load_music_blacklist, save_music_blacklist,
     load_server_volumes, save_server_volumes,
 )
-from commands._music_view import MusicView, _fmt_duration
+from commands._music_view import MusicView, _fmt_duration, _pct_to_vol, _vol_to_pct
 
 # ── yt-dlp options ────────────────────────────────────────────────────────────
 
@@ -333,7 +333,7 @@ class Music(commands.Cog):
             file_path=song_info['url'],
             is_url=True,
             metadata=song_info,
-            volume=music_vol,
+            volume=_pct_to_vol(round(music_vol * 100)),
             before_options=FFMPEG_OPTIONS['before_options'],
             options=FFMPEG_OPTIONS['options'],
             on_finish=partial(self._on_track_finish, guild_id),
@@ -589,22 +589,27 @@ class Music(commands.Cog):
         except Exception as e:
             return await interaction.followup.send(f"❌ Unexpected error: {type(e).__name__}: {str(e)[:200]}")
 
-        # Delete old dashboard and send fresh one
+        # Update existing dashboard or send new one (avoid delete+send to keep panel stable)
         old_msg = self.dashboard_messages.get(guild_id)
-        if old_msg:
-            try:
-                await old_msg.delete()
-            except Exception:
-                pass
-            self.dashboard_messages.pop(guild_id, None)
-
         view = MusicView(self, guild_id)
         embed = view.get_embed()
-        msg = await interaction.followup.send(embed=embed, view=view)
-        self.dashboard_messages[guild_id] = msg
 
-        # Start playback if nothing is playing
-        if not self.current_track.get(guild_id):
+        if old_msg:
+            try:
+                await old_msg.edit(embed=embed, view=view)
+            except discord.NotFound:
+                self.dashboard_messages.pop(guild_id, None)
+                old_msg = None
+            except Exception:
+                old_msg = None
+
+        if not old_msg:
+            new_msg = await interaction.followup.send(embed=embed, view=view)
+            self.dashboard_messages[guild_id] = new_msg
+
+        # Start playback — also handle stale finished track
+        current = self.current_track.get(guild_id)
+        if (not current or current.finished) and self.queue.get(guild_id):
             next_song = self.queue[guild_id].pop(0)
             await self._play_song(guild_id, next_song)
 
@@ -753,7 +758,7 @@ class Music(commands.Cog):
 
         track = self.current_track.get(guild_id)
         if track and not track.finished:
-            track.volume = new_vol
+            track.volume = _pct_to_vol(clamped)
 
         await interaction.response.send_message(
             f"🔊 Volume set to **{clamped}%**", ephemeral=True

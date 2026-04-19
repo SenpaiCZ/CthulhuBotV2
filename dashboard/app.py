@@ -3054,7 +3054,8 @@ async def music_control():
             track.loop = not track.loop
     elif action == 'volume':
         vol = data.get('volume')
-        new_vol = max(0, min(100, int(vol))) / 100
+        clamped = max(0, min(100, int(vol)))
+        new_vol = clamped / 100.0  # store linear (percent) in server_volumes
 
         if str(guild_id) not in server_volumes:
             server_volumes[str(guild_id)] = {'music': 1.0, 'soundboard': 0.5}
@@ -3064,7 +3065,7 @@ async def music_control():
 
         track = music_cog.current_track.get(guild_id)
         if track:
-             track.volume = new_vol
+            track.volume = (clamped / 100.0) ** 2  # log-scale amplitude for PCM
     elif action == 'remove':
         # Remove from queue
         index = data.get('index')

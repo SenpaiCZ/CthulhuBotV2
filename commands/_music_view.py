@@ -1,5 +1,19 @@
+import math
 import discord
 from discord.ui import View, Button
+
+
+def _pct_to_vol(pct: int) -> float:
+    """Convert 0-100 slider percent to 0.0-1.0 linear amplitude (quadratic curve for log feel)."""
+    if pct <= 0: return 0.0
+    if pct >= 100: return 1.0
+    return (pct / 100.0) ** 2
+
+def _vol_to_pct(vol: float) -> int:
+    """Inverse: 0.0-1.0 linear amplitude back to 0-100 slider percent."""
+    if vol <= 0: return 0
+    if vol >= 1.0: return 100
+    return round(math.sqrt(vol) * 100)
 
 
 def _fmt_duration(seconds) -> str:
@@ -123,7 +137,7 @@ class MusicView(View):
                 # Livestream or unknown duration
                 lines.append("🔴 **Live**" if not duration else "")
 
-            vol_pct = int(track.volume * 100)
+            vol_pct = _vol_to_pct(track.volume)
             lines.append(f"**Volume:** {vol_pct}%")
 
             embed.description = "\n".join(l for l in lines if l)
