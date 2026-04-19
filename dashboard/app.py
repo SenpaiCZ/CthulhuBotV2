@@ -3483,33 +3483,6 @@ async def autorooms_save():
 
     return jsonify({"status": "success"})
 
-@app.route('/api/rss/delete', methods=['POST'])
-async def rss_delete():
-    if not is_admin(): return "Unauthorized", 401
-
-    data = await request.get_json()
-    guild_id = data.get('guild_id')
-    link = data.get('link')
-
-    if not guild_id or not link:
-         return jsonify({"status": "error", "message": "Missing arguments"}), 400
-
-    rss_data = await load_rss_data()
-
-    if str(guild_id) in rss_data:
-        original_len = len(rss_data[str(guild_id)])
-        rss_data[str(guild_id)] = [s for s in rss_data[str(guild_id)] if s['link'] != link]
-
-        if len(rss_data[str(guild_id)]) < original_len:
-            # Clean up empty
-            if not rss_data[str(guild_id)]:
-                del rss_data[str(guild_id)]
-
-            await save_rss_data(rss_data)
-            return jsonify({"status": "success"})
-
-    return jsonify({"status": "error", "message": "Feed not found"}), 404
-
 # --- Auto Deleter Routes ---
 
 @app.route('/admin/deleter')
