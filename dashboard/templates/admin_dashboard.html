@@ -37,26 +37,60 @@
     font-weight:400;
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:999;
+    opacity:0.06;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:998;
+    background:radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
   }
   .serif{font-family:"IM Fell English SC","IM Fell English",serif;letter-spacing:0.02em}
+  .serif-i{font-family:"IM Fell English",serif;font-style:italic}
   .mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  ::selection{background:var(--sigil-glow);color:var(--bone)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:var(--void-1)}
+  ::-webkit-scrollbar-thumb{background:var(--void-4)}
+  ::-webkit-scrollbar-thumb:hover{background:var(--sigil-deep)}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  button:focus-visible,a:focus-visible{outline:1px solid var(--sigil);outline-offset:2px}
   @keyframes flicker{0%,92%,100%{opacity:1}93%{opacity:0.35}94%{opacity:1}96%{opacity:0.65}97%{opacity:1}}
   .flicker{animation:flicker 7s infinite}
+  .label{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--bone-fade)}
+  .btn-eld{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;background:transparent;border:1px solid var(--hair-strong);color:var(--bone);font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;transition:all .2s;cursor:pointer}
+  .btn-eld:hover{border-color:var(--sigil);color:var(--sigil);box-shadow:inset 0 0 24px rgba(120,220,170,0.08)}
+  .btn-eld.primary{border-color:var(--sigil-deep);color:var(--sigil);background:rgba(80,160,120,0.04)}
+  .btn-eld.primary:hover{background:rgba(80,160,120,0.1)}
+  .btn-eld.rust{border-color:var(--rust-deep);color:var(--rust)}
+  .btn-eld.rust:hover{background:rgba(180,70,60,0.08)}
+  .card-h{background:linear-gradient(160deg,var(--void-1),var(--void-0));border:1px solid var(--hair);position:relative}
+  .card-h::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,0.02),transparent 30%)}
+  .corner-tl,.corner-tr,.corner-bl,.corner-br{position:absolute;width:10px;height:10px;border-color:var(--sigil);opacity:0.55}
+  .corner-tl{top:-1px;left:-1px;border-top:1px solid;border-left:1px solid}
+  .corner-tr{top:-1px;right:-1px;border-top:1px solid;border-right:1px solid}
+  .corner-bl{bottom:-1px;left:-1px;border-bottom:1px solid;border-left:1px solid}
+  .corner-br{bottom:-1px;right:-1px;border-bottom:1px solid;border-right:1px solid}
 
   #root{display:flex;height:100vh;overflow:hidden}
   header{flex-shrink:0;display:flex;align-items:center;gap:16px;padding:16px 32px;border-bottom:1px solid var(--hair-strong);background:linear-gradient(180deg,var(--void-0),transparent);position:sticky;top:0;z-index:10;backdrop-filter:blur(6px)}
   main{flex:1;overflow-y:auto;padding:28px 40px 80px;display:flex;flex-direction:column;gap:28px}
 
-  .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
-  .card{border:1px solid var(--hair-strong);background:linear-gradient(160deg,var(--void-1),var(--void-0));padding:20px;transition:all 0.2s;cursor:pointer}
-  .card:hover{border-color:var(--sigil);box-shadow:0 4px 16px rgba(0,0,0,0.3),inset 0 0 20px var(--sigil-glow);transform:translateY(-2px)}
-  .card-title{color:var(--sigil);font-weight:600;margin-bottom:8px;font-size:15px}
-  .card-desc{color:var(--bone-fade);font-size:13px;margin-bottom:12px}
-  .card a{display:inline-block;padding:7px 12px;border:1px solid var(--hair-strong);background:transparent;color:var(--bone);text-decoration:none;font-size:11px;font-family:"IBM Plex Mono",monospace;letter-spacing:0.08em;transition:all 0.2s}
-  .card a:hover{border-color:var(--sigil);color:var(--sigil);box-shadow:inset 0 0 20px var(--sigil-glow)}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+  .card{border:1px solid var(--hair);background:linear-gradient(160deg,var(--void-1),var(--void-0));padding:20px;transition:all 0.2s;cursor:pointer;position:relative}
+  .card::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,0.02),transparent 30%)}
+  .card:hover{border-color:var(--sigil);box-shadow:0 4px 16px rgba(0,0,0,0.3),inset 0 0 24px rgba(120,220,170,0.06)}
+  .card-title{color:var(--sigil);font-weight:600;margin-bottom:6px;font-size:14px;font-family:"IM Fell English SC",serif}
+  .card-desc{color:var(--bone-fade);font-size:12px;margin-bottom:12px;line-height:1.5}
+  .card-link{display:inline-flex;align-items:center;padding:6px 12px;border:1px solid var(--hair-strong);background:transparent;color:var(--bone-fade);font-size:10px;font-family:"IBM Plex Mono",monospace;letter-spacing:0.12em;text-transform:uppercase;transition:all 0.2s;text-decoration:none}
+  .card-link:hover{border-color:var(--sigil);color:var(--sigil)}
 
-  .section-title{color:var(--bone);font-size:18px;margin:20px 0 12px 0;padding-bottom:12px;border-bottom:1px solid var(--hair-strong)}
-  .glyph{color:var(--sigil);margin-right:8px;opacity:0.7}
+  .section-title{color:var(--bone-dim);font-size:11px;letter-spacing:0.22em;text-transform:uppercase;font-family:"IBM Plex Mono",monospace;margin:20px 0 12px 0;padding-bottom:10px;border-bottom:1px solid var(--hair)}
+  .glyph{color:var(--sigil);margin-right:10px;opacity:0.8}
 </style>
 </head>
 <body>
@@ -92,11 +126,11 @@ function TopBar() {
 
 function CardLink({title, desc, href}) {
   return (
-    <div className="card">
+    <a href={href} className="card" style={{display:"block",textDecoration:"none"}}>
       <div className="card-title">{title}</div>
       <div className="card-desc">{desc}</div>
-      <a href={href}>Open →</a>
-    </div>
+      <span className="card-link">Open →</span>
+    </a>
   );
 }
 
