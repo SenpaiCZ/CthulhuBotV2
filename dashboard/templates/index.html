@@ -1,269 +1,593 @@
-{% extends 'base.html' %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CthulhuBot — Keeper's Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Inter+Tight:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --void-0: #05070a;
+    --void-1: #0a0d11;
+    --void-2: #10141a;
+    --void-3: #161b23;
+    --void-4: #1e242e;
+    --hair: rgba(190,210,195,0.08);
+    --hair-strong: rgba(190,210,195,0.15);
+    --bone: oklch(0.93 0.012 75);
+    --bone-dim: oklch(0.78 0.015 75);
+    --bone-fade: oklch(0.52 0.015 75);
+    --sigil: oklch(0.78 0.16 152);
+    --sigil-deep: oklch(0.52 0.14 152);
+    --sigil-glow: oklch(0.85 0.18 152 / 0.35);
+    --sigil-g: oklch(0.85 0.18 152 / 0.6);
+    --rust: oklch(0.62 0.16 28);
+    --rust-deep: oklch(0.45 0.15 28);
+    --amber: oklch(0.78 0.13 75);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--void-0);color:var(--bone)}
+  body{
+    font-family:"Inter Tight",system-ui,sans-serif;
+    font-weight:400;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:999;
+    opacity:0.06;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:998;
+    background:radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+  }
+  .serif{font-family:"IM Fell English SC","IM Fell English",serif;letter-spacing:0.02em}
+  .serif-i{font-family:"IM Fell English",serif;font-style:italic}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  ::selection{background:var(--sigil-glow);color:var(--bone)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:var(--void-1)}
+  ::-webkit-scrollbar-thumb{background:var(--void-4)}
+  ::-webkit-scrollbar-thumb:hover{background:var(--sigil-deep)}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  button:focus-visible,a:focus-visible{outline:1px solid var(--sigil);outline-offset:2px}
 
-{% block title %}Home — CthulhuBot{% endblock %}
+  @keyframes breathe{
+    0%,100%{filter:drop-shadow(0 0 10px var(--sigil-glow))}
+    50%{filter:drop-shadow(0 0 22px var(--sigil-glow))}
+  }
+  @keyframes flicker{
+    0%,92%,100%{opacity:1}93%{opacity:0.35}94%{opacity:1}96%{opacity:0.65}97%{opacity:1}
+  }
+  .flicker{animation:flicker 7s infinite}
+  @keyframes pulse-dot{
+    0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:0.5}
+  }
+  .pulse-dot{animation:pulse-dot 2.2s ease-in-out infinite}
 
-{% block content %}
+  .card-h{
+    background:linear-gradient(160deg, var(--void-1), var(--void-0));
+    border:1px solid var(--hair);
+    position:relative;
+  }
+  .card-h::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(135deg,rgba(255,255,255,0.02),transparent 30%);
+  }
+  .corner-tl,.corner-tr,.corner-bl,.corner-br{
+    position:absolute;width:10px;height:10px;border-color:var(--sigil);opacity:0.55;
+  }
+  .corner-tl{top:-1px;left:-1px;border-top:1px solid;border-left:1px solid}
+  .corner-tr{top:-1px;right:-1px;border-top:1px solid;border-right:1px solid}
+  .corner-bl{bottom:-1px;left:-1px;border-bottom:1px solid;border-left:1px solid}
+  .corner-br{bottom:-1px;right:-1px;border-bottom:1px solid;border-right:1px solid}
 
-<!-- Hero -->
-<div class="coc-hero">
-    <div class="row align-items-center">
-        <div class="col-lg-8">
-            <h1>Call of Cthulhu<br><span class="accent">Discord Bot</span></h1>
-            <p class="lead mt-3">
-                Your Keeper's companion for Call of Cthulhu 7th Edition — character sheets, dice rolling,
-                music, soundboard, and the full Cthulhu Mythos reference library, all from Discord.
+  .label{
+    font-family:"IBM Plex Mono",monospace;font-size:10px;
+    letter-spacing:0.22em;text-transform:uppercase;color:var(--bone-fade);
+  }
+  .btn-eld{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:10px 16px;background:transparent;
+    border:1px solid var(--hair-strong);color:var(--bone);
+    font-family:"IBM Plex Mono",monospace;font-size:11px;
+    letter-spacing:0.18em;text-transform:uppercase;
+    transition:all .2s;cursor:pointer;
+  }
+  .btn-eld:hover{border-color:var(--sigil);color:var(--sigil);box-shadow:inset 0 0 24px rgba(120,220,170,0.08)}
+  .btn-eld.primary{border-color:var(--sigil-deep);color:var(--sigil);background:rgba(80,160,120,0.04)}
+  .btn-eld.primary:hover{background:rgba(80,160,120,0.1);box-shadow:0 0 20px rgba(120,220,170,0.15),inset 0 0 20px rgba(120,220,170,0.08)}
+  .btn-eld.rust{border-color:var(--rust-deep);color:var(--rust)}
+  .btn-eld.rust:hover{background:rgba(180,70,60,0.08)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+const IS_ADMIN = {{ is_admin | tojson }};
+
+async function confirmUpdate() {
+  if (confirm("Update the bot from GitHub? This will restart the system.")) {
+    try {
+      const r = await fetch('/api/admin/update', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({update_infodata: false})
+      });
+      const d = await r.json();
+      alert(d.status === 'success' ? d.message : 'Update failed: ' + d.message);
+    } catch(e) { alert('Error: ' + e); }
+  }
+}
+</script>
+
+<script type="text/babel" data-presets="react" src="{{ url_for('static', filename='sidebar.jsx') }}"></script>
+<script type="text/babel" data-presets="react">
+
+const AppSidebar = () => { const C = window.AppSidebar; return C ? React.createElement(C) : null; };
+
+/* ─── Grimoire & Admin data ─────────────────────────────── */
+const grimTiles = [
+  {k:"Monsters",    n:187, g:"Ψ",  hint:"Cthulhu to Zoog",        href:"/monsters"},
+  {k:"Deities",     n:58,  g:"☉",  hint:"Old Ones & Outer Gods",   href:"/deities"},
+  {k:"Spells",      n:94,  g:"✷",  hint:"Summon, Bind, Contact",   href:"/spells"},
+  {k:"Weapons",     n:142, g:"†",  hint:"Firearms & melee",        href:"/weapons"},
+  {k:"Occupations", n:76,  g:"⚒",  hint:"Professions 1890–1930",  href:"/occupations"},
+  {k:"Skills",      n:88,  g:"◉",  hint:"Investigator abilities",  href:"/skills"},
+  {k:"Manias",      n:44,  g:"☿",  hint:"Acquired on SAN loss",    href:"/manias"},
+  {k:"Phobias",     n:51,  g:"☢",  hint:"Irrational dreads",       href:"/phobias"},
+  {k:"Archetypes",  n:16,  g:"✶",  hint:"Pulp Cthulhu",            href:"/archetypes"},
+  {k:"Talents",     n:60,  g:"✦",  hint:"Pulp & Insane talents",   href:"/pulp_talents"},
+  {k:"Poisons",     n:22,  g:"✡",  hint:"Lethal substances",       href:"/poisons"},
+  {k:"Inventions",  n:240, g:"⚙",  hint:"By decade, 1890–1970",   href:"/inventions"},
+];
+
+const adminTiles = [
+  {k:"Karma System",    g:"☥", desc:"Configure reaction emojis, roles and leaderboard", href:"/admin/karma"},
+  {k:"Auto Rooms",      g:"⌘", desc:"Automatic voice channel creation rules",           href:"/admin/autorooms"},
+  {k:"Reaction Roles",  g:"✧", desc:"Self-assignable roles via message reactions",      href:"/admin/reactionroles"},
+  {k:"Auto Deleter",    g:"⌫", desc:"Set auto-deletion timers for channels",            href:"/admin/deleter"},
+  {k:"Polls",           g:"◈", desc:"Create and manage interactive polls",              href:"/admin/polls"},
+  {k:"Reminders",       g:"◷", desc:"View and manage scheduled reminders",             href:"/admin/reminders"},
+  {k:"RSS & Feeds",     g:"⌁", desc:"Manage RSS/YouTube subscriptions",                href:"/admin/rss"},
+  {k:"Giveaways",       g:"✦", desc:"Create and manage server giveaways",              href:"/admin/giveaway"},
+  {k:"Enrollment",      g:"✎", desc:"Configure the role enrollment wizard",            href:"/admin/enroll"},
+  {k:"Gamer Roles",     g:"⚔", desc:"Automatic game-based role assignment",            href:"/admin/gameroles"},
+  {k:"Soundboard",      g:"◐", desc:"Upload & play audio clips in voice channels",     href:"/admin/soundboard"},
+  {k:"Music Bot",       g:"♪", desc:"Queue management and song blacklist",             href:"/admin/music"},
+  {k:"Game Settings",   g:"⚙", desc:"Luck threshold and gameplay configuration",       href:"/admin/game_settings"},
+  {k:"Bot Config",      g:"◎", desc:"Status, prefix and server configuration",         href:"/admin/bot_config"},
+  {k:"Backup System",   g:"⧗", desc:"Automated and manual backup management",         href:"/admin/backup"},
+  {k:"Data Files",      g:"⌗", desc:"Raw JSON data file editor",                       href:"/admin/browse/data"},
+];
+
+const commandGroups = [
+  { head:"Investigator Tools", glyph:"✶", cmds:[
+    ["/newinvestigator","Start the character creation wizard"],
+    ["/mycharacter","View your character sheet"],
+    ["/stat","View or edit specific stats"],
+    ["/rename","Rename your character"],
+    ["/renameskill","Rename a skill on your sheet"],
+    ["/deleteinvestigator","Delete a character"],
+    ["/addbackstory","Add a backstory element"],
+    ["/updatebackstory","Update a backstory element"],
+    ["/removebackstory","Remove a backstory element"],
+    ["/generatebackstory","Generate a random backstory"],
+    ["/retire","Retire an active character"],
+    ["/unretire","Restore a retired character"],
+    ["/printcharacter","Export character sheet as image"],
+  ]},
+  { head:"Dice & Session", glyph:"☾", cmds:[
+    ["/roll","Skill check — bonus/penalty dice, luck, push"],
+    ["/showluck","Show the server luck threshold"],
+    ["/session start","Start a new game session"],
+    ["/session show","Show current session details"],
+    ["/session wipe","Clear session data"],
+  ]},
+  { head:"Grimoire", glyph:"Ψ", cmds:[
+    ["/codex","Open the main Codex menu"],
+    ["/monster [name]","Lookup a Cthulhu Mythos monster"],
+    ["/deity [name]","Lookup a Great Old One or Outer God"],
+    ["/spell [name]","Lookup a spell"],
+    ["/weapon [name]","Lookup weapon statistics"],
+    ["/occupation [name]","Lookup occupation details"],
+    ["/skill [name]","Lookup skill descriptions"],
+    ["/archetype [name]","Lookup Pulp Cthulhu Archetypes"],
+    ["/talent [name]","Lookup Pulp Talents"],
+    ["/insane [name]","Lookup Insane Talents"],
+    ["/mania [name]","Random or specific mania"],
+    ["/phobia [name]","Random or specific phobia"],
+    ["/poison [name]","Lookup poison info"],
+    ["/invention [decade]","Inventions by decade"],
+    ["/year [year]","Historical events for a year"],
+    ["/randomnpc","Generate a random NPC"],
+    ["/randomname","Generate a 1920s name"],
+    ["/macguffin","Generate a plot device"],
+    ["/loot","Generate random loot"],
+  ]},
+  { head:"Music & Sound", glyph:"♪", cmds:[
+    ["/play [query]","Stream from YouTube"],
+    ["/skip","Skip the current track"],
+    ["/stop","Stop music, clear queue, disconnect"],
+    ["/volume [0-100]","Set playback volume"],
+    ["/loop","Cycle loop mode (Track / Queue / Off)"],
+    ["/queue","View the current queue"],
+    ["/nowplaying","Show the currently playing song"],
+    ["/playnext [query]","Add song to front of queue"],
+    ["/remove [pos]","Remove a song from the queue"],
+    ["/clear","Clear the queue"],
+  ]},
+  { head:"Utilities", glyph:"◈", cmds:[
+    ["/enroll","Start the enrollment wizard"],
+    ["/poll","Create an interactive poll"],
+    ["/remind","Set a reminder"],
+    ["/reportbug","Report a bug"],
+    ["/ping","Check bot latency"],
+    ["/uptime","Check bot uptime"],
+    ["/leaderboard","Show the Karma leaderboard"],
+    ["/karma","Check karma for a user"],
+  ]},
+  { head:"Admin", glyph:"⚙", cmds:[
+    ["!sync","Sync slash commands globally"],
+    ["!sync guild","Sync to current guild (instant)"],
+    ["!sync clear","Clear global commands"],
+    ["!sync clearguild","Clear guild-specific commands"],
+    ["/setupkarma","Interactive karma setup wizard"],
+    ["/setupkarmaroles","Manage karma rank roles"],
+    ["/reactionrole","Setup a reaction role"],
+    ["/autoroom setup","Auto Rooms setup wizard"],
+    ["/rsssetup","RSS/YouTube feeds setup"],
+    ["/autodeleter set","Set auto-deletion rules"],
+    ["/autodeleter stop","Stop auto-deletion for a channel"],
+    ["/purge","Bulk delete messages"],
+    ["/backup","Trigger a manual backup"],
+    ["/updatebot","Update the bot from GitHub"],
+  ]},
+];
+
+/* ─── Shared ───────────────────────────────────────────── */
+const Corners = () => (<>
+  <span className="corner-tl"/><span className="corner-tr"/>
+  <span className="corner-bl"/><span className="corner-br"/>
+</>);
+
+const Divider = ({label}) => (
+  <div style={{display:"flex",alignItems:"center",gap:12,margin:"0 0 16px"}}>
+    <span className="label" style={{color:"var(--sigil)"}}>✶</span>
+    <span className="label">{label}</span>
+    <span style={{flex:1,height:1,background:"linear-gradient(90deg, var(--hair-strong), transparent)"}}/>
+  </div>
+);
+
+/* ─── Top bar ──────────────────────────────────────────── */
+function TopBar() {
+  const [t, setT] = React.useState(new Date());
+  React.useEffect(() => {
+    const id = setInterval(() => setT(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const p = n => String(n).padStart(2,"0");
+  return (
+    <header style={{
+      display:"flex",alignItems:"center",gap:16,
+      padding:"16px 32px",
+      borderBottom:"1px solid var(--hair)",
+      background:"linear-gradient(180deg, var(--void-0), transparent)",
+      position:"sticky",top:0,zIndex:10,
+      backdropFilter:"blur(6px)",
+    }}>
+      <div className="mono flicker" style={{fontSize:10,letterSpacing:"0.22em",color:"var(--sigil)"}}>
+        {`${p(t.getHours())}:${p(t.getMinutes())}:${p(t.getSeconds())}`}
+      </div>
+      <span style={{width:1,height:14,background:"var(--hair-strong)"}}/>
+      <div className="mono" style={{fontSize:10,letterSpacing:"0.18em",color:"var(--bone-fade)"}}>
+        {t.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"}).toUpperCase()}
+      </div>
+      <div style={{flex:1}}/>
+      <div style={{display:"flex",alignItems:"center",gap:6,border:"1px solid var(--hair)",padding:"7px 12px",minWidth:280,background:"var(--void-1)"}}>
+        <span className="serif" style={{color:"var(--bone-fade)",fontSize:14}}>⌕</span>
+        <input placeholder="Search the grimoire…"
+          style={{flex:1,background:"transparent",border:0,outline:0,color:"var(--bone)",fontFamily:"inherit",fontSize:12,letterSpacing:"0.02em"}}
+          onKeyDown={e => { if (e.key === "Enter" && e.target.value.trim()) window.location.href = "/monsters?q=" + encodeURIComponent(e.target.value.trim()); }}
+        />
+      </div>
+      {IS_ADMIN && <a href="/admin" className="btn-eld primary" style={{fontSize:11}}><span className="serif" style={{fontSize:14}}>⚙</span> Admin Panel</a>}
+      <a href="/logout" className="btn-eld rust" style={{fontSize:11}}>Logout</a>
+    </header>
+  );
+}
+
+/* ─── Bot status strip ─────────────────────────────────── */
+function BotStatus() {
+  const [vitals, setVitals] = React.useState(null);
+  React.useEffect(() => {
+    const poll = async () => {
+      try {
+        const r = await fetch('/api/status', {cache:"no-store"});
+        const d = await r.json();
+        setVitals(d);
+      } catch {}
+    };
+    poll();
+    const id = setInterval(poll, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  const items = vitals ? [
+    {k:"Status",  v: vitals.ready ? "Online" : "Starting",  color: vitals.ready ? "var(--sigil)" : "var(--amber)", dot: true},
+    {k:"Uptime",  v: vitals.uptime ?? "—",                  color:"var(--bone)"},
+    {k:"Latency", v: vitals.latency_ms != null ? `${vitals.latency_ms} ms` : "—", color:"var(--bone)"},
+    {k:"Memory",  v: vitals.memory_mb ? `${vitals.memory_mb} MB` : "—", color:"var(--bone)"},
+    {k:"Guilds",  v: vitals.guilds != null ? String(vitals.guilds) : "—", color:"var(--bone)"},
+  ] : [{k:"Status", v:"Connecting…", color:"var(--bone-fade)", dot:true}];
+
+  return (
+    <div className="card-h" style={{padding:"16px 24px",display:"flex",alignItems:"center",gap:0,position:"relative",overflow:"hidden"}}>
+      <Corners/>
+      <div style={{display:"flex",alignItems:"center",gap:0,flex:1,flexWrap:"wrap",rowGap:10}}>
+        <div className="serif" style={{fontSize:15,marginRight:16,borderRight:"1px solid var(--hair-strong)",paddingRight:16,letterSpacing:"0.06em"}}>System Vitals</div>
+        {items.map(v => (
+          <div key={v.k} style={{display:"flex",alignItems:"baseline",gap:8,paddingRight:24,borderRight:"1px solid var(--hair)"}}>
+            <span className="mono" style={{fontSize:10,letterSpacing:"0.18em",color:"var(--bone-fade)"}}>{v.k.toUpperCase()}</span>
+            <span className="mono" style={{fontSize:12,color:v.color,letterSpacing:"0.1em",display:"flex",alignItems:"center",gap:5}}>
+              {v.dot && <span className="pulse-dot" style={{width:6,height:6,borderRadius:"50%",background:v.color,boxShadow:`0 0 6px ${v.color}`}}/>}
+              {v.v}
+            </span>
+          </div>
+        ))}
+      </div>
+      {IS_ADMIN && (
+        <div style={{display:"flex",gap:8}}>
+          <button className="btn-eld" style={{padding:"6px 10px",fontSize:10}} onClick={async () => {
+            try {
+              const r = await fetch('/api/admin/sync_guild', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+              const d = await r.json();
+              alert(d.message || 'Synced');
+            } catch(e) { alert('Error: ' + e); }
+          }}>↻ SYNC GUILD</button>
+          <button className="btn-eld rust" style={{padding:"6px 10px",fontSize:10}} onClick={() => confirmUpdate()}>↑ UPDATE BOT</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Primary nav hub ──────────────────────────────────── */
+function NavHub() {
+  const sections = [
+    {
+      g:"✶", title:"Investigators", desc:"Manage active and retired character sheets",
+      links:[
+        {l:"Active Characters", href:"/characters"},
+        {l:"Retired Characters", href:"/retired"},
+      ],
+      actions:[{l:"View Characters", href:"/characters", primary:true}],
+    },
+    {
+      g:"Ψ", title:"Grimoire", desc:"Full reference library — monsters, deities, spells and more",
+      links:[
+        {l:"Monsters", href:"/monsters"},
+        {l:"Deities", href:"/deities"},
+        {l:"Spells", href:"/spells"},
+        {l:"Weapons", href:"/weapons"},
+      ],
+      actions:[{l:"Browse All", href:"/monsters", primary:true}],
+    },
+    {
+      g:"◐", title:"Soundboard", desc:"Upload and play audio clips in voice channels",
+      links:[
+        {l:"Open Soundboard", href:"/admin/soundboard"},
+        {l:"Music Bot", href:"/admin/music"},
+      ],
+      actions:[{l:"Open Soundboard", href:"/admin/soundboard", primary:true}],
+    },
+    {
+      g:"⚙", title:"Server Admin", desc:"Karma, auto rooms, roles, polls, RSS and more",
+      links:[
+        {l:"Karma System", href:"/admin/karma"},
+        {l:"Auto Rooms", href:"/admin/autorooms"},
+        {l:"Reaction Roles", href:"/admin/reactionroles"},
+        {l:"Giveaways", href:"/admin/giveaway"},
+      ],
+      actions:[{l:"Admin Dashboard", href:"/admin", primary:true}],
+    },
+  ];
+
+  return (
+    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:1,background:"var(--hair)",border:"1px solid var(--hair)"}}>
+      {sections.map((sec,i) => (
+        <div key={i} style={{background:"var(--void-0)",padding:"28px 26px 24px",position:"relative",display:"flex",flexDirection:"column"}}>
+          <div className="serif" style={{fontSize:34,color:"var(--bone-fade)",lineHeight:1,marginBottom:14}}>{sec.g}</div>
+          <div className="serif" style={{fontSize:22,marginBottom:8}}>{sec.title}</div>
+          <div style={{fontSize:12,color:"var(--bone-dim)",lineHeight:1.6,marginBottom:18}}>{sec.desc}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:20}}>
+            {sec.links.map((lk,j) => (
+              <a key={j} href={lk.href}
+                style={{fontSize:12,color:"var(--bone-fade)",display:"flex",alignItems:"center",gap:8,padding:"4px 0",borderBottom:"1px dashed var(--hair)",transition:"color .15s"}}
+                onMouseEnter={e => e.currentTarget.style.color="var(--sigil)"}
+                onMouseLeave={e => e.currentTarget.style.color="var(--bone-fade)"}
+              >
+                <span className="mono" style={{fontSize:9,color:"var(--hair-strong)"}}>→</span> {lk.l}
+              </a>
+            ))}
+          </div>
+          <div style={{marginTop:"auto"}}>
+            {sec.actions.map((a,j) => (
+              <a key={j} href={a.href} className={`btn-eld${a.primary ? " primary" : ""}`} style={{display:"inline-flex",fontSize:10,padding:"8px 12px"}}>
+                {a.l}
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Grimoire grid ────────────────────────────────────── */
+function GrimoireGrid() {
+  return (
+    <div>
+      <Divider label="The Grimoire · Reference Library"/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:1,background:"var(--hair)",border:"1px solid var(--hair)"}}>
+        {grimTiles.map((t,i) => (
+          <a key={i} href={t.href}
+            style={{background:"var(--void-1)",padding:"20px 18px 18px",display:"block",transition:"all .2s",position:"relative"}}
+            onMouseEnter={e => {e.currentTarget.style.background="var(--void-2)";e.currentTarget.querySelector(".gg").style.color="var(--sigil)"}}
+            onMouseLeave={e => {e.currentTarget.style.background="var(--void-1)";e.currentTarget.querySelector(".gg").style.color="var(--bone-fade)"}}
+          >
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <span className="serif gg" style={{fontSize:26,color:"var(--bone-fade)",lineHeight:1,transition:"color .2s"}}>{t.g}</span>
+              <span className="mono" style={{fontSize:10,color:"var(--bone-fade)",letterSpacing:"0.1em"}}>{t.n}</span>
+            </div>
+            <div className="serif" style={{fontSize:16,marginTop:14}}>{t.k}</div>
+            <div className="mono" style={{fontSize:9,color:"var(--bone-fade)",letterSpacing:"0.14em",marginTop:4}}>{t.hint.toUpperCase()}</div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Admin panel grid ─────────────────────────────────── */
+function AdminGrid() {
+  if (!IS_ADMIN) return null;
+  return (
+    <div>
+      <Divider label="Server Administration"/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:1,background:"var(--hair)",border:"1px solid var(--hair)"}}>
+        {adminTiles.map((t,i) => (
+          <a key={i} href={t.href}
+            style={{background:"var(--void-1)",padding:"20px 20px 18px",display:"block",transition:"background .2s"}}
+            onMouseEnter={e => e.currentTarget.style.background="var(--void-2)"}
+            onMouseLeave={e => e.currentTarget.style.background="var(--void-1)"}
+          >
+            <div style={{marginBottom:12}}>
+              <span className="serif" style={{fontSize:22,color:"var(--bone-fade)",lineHeight:1}}>{t.g}</span>
+            </div>
+            <div className="serif" style={{fontSize:16,marginBottom:6}}>{t.k}</div>
+            <div style={{fontSize:11,color:"var(--bone-fade)",lineHeight:1.6}}>{t.desc}</div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Commands codex ───────────────────────────────────── */
+function CommandsCodex() {
+  const [tab, setTab] = React.useState(0);
+  const [q, setQ] = React.useState("");
+  const g = commandGroups[tab];
+  const cmds = q ? g.cmds.filter(([c,d]) => c.includes(q.toLowerCase()) || d.toLowerCase().includes(q.toLowerCase())) : g.cmds;
+
+  return (
+    <div>
+      <Divider label="Commands Codex · Slash Command Reference"/>
+      <div className="card-h" style={{position:"relative"}}>
+        <Corners/>
+        <div style={{display:"flex",borderBottom:"1px solid var(--hair)",overflowX:"auto",flexWrap:"nowrap"}}>
+          {commandGroups.map((cg,i) => (
+            <button key={i} onClick={() => {setTab(i);setQ("")}}
+              style={{
+                padding:"14px 18px",whiteSpace:"nowrap",
+                borderBottom: tab===i ? "1px solid var(--sigil)" : "1px solid transparent",
+                marginBottom:-1,
+                color: tab===i ? "var(--sigil)" : "var(--bone-dim)",
+                display:"flex",gap:8,alignItems:"center",
+                fontSize:12,fontFamily:"'IM Fell English SC', serif",letterSpacing:"0.04em",
+              }}>
+              <span style={{fontSize:14}}>{cg.glyph}</span> {cg.head}
+              <span className="mono" style={{fontSize:9,color: tab===i ? "var(--sigil-deep)" : "var(--bone-fade)"}}>{cg.cmds.length}</span>
+            </button>
+          ))}
+          <div style={{marginLeft:"auto",display:"flex",alignItems:"center",padding:"0 16px",borderLeft:"1px solid var(--hair)"}}>
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="filter…"
+              style={{background:"transparent",border:0,outline:0,fontFamily:"'IBM Plex Mono',monospace",fontSize:11,color:"var(--bone)",letterSpacing:"0.1em",width:140}}/>
+          </div>
+        </div>
+        <div style={{padding:"20px 24px 24px",display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))",gap:0}}>
+          {cmds.map(([cmd,desc],i) => (
+            <div key={i} style={{padding:"13px 0",borderBottom:"1px dashed var(--hair)"}}>
+              <div className="mono" style={{fontSize:12,color:"var(--sigil)",letterSpacing:"0.03em"}}>{cmd}</div>
+              <div style={{fontSize:12,color:"var(--bone-dim)",marginTop:3,lineHeight:1.5}}>{desc}</div>
+            </div>
+          ))}
+          {cmds.length === 0 && <div className="serif-i" style={{color:"var(--bone-fade)",padding:"20px 0"}}>No commands match.</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── App ──────────────────────────────────────────────── */
+function App() {
+  return (
+    <div style={{display:"flex",minHeight:"100vh"}}>
+      <AppSidebar/>
+      <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column"}}>
+        <TopBar/>
+        <main style={{padding:"28px 40px 80px",display:"flex",flexDirection:"column",gap:28}}>
+
+          <BotStatus/>
+
+          {/* Hero */}
+          <div className="card-h" style={{padding:"32px 36px",position:"relative",overflow:"hidden"}}>
+            <Corners/>
+            <svg width="300" height="300" style={{position:"absolute",right:-60,top:-60,opacity:0.05,pointerEvents:"none"}} viewBox="0 0 300 300">
+              <g fill="none" stroke="var(--sigil)" strokeWidth="0.5">
+                <circle cx="150" cy="150" r="140"/><circle cx="150" cy="150" r="110"/><circle cx="150" cy="150" r="80"/>
+                {(() => {
+                  const r=128,cx=150,cy=150,a=d=>[cx+r*Math.cos(d*Math.PI/180),cy+r*Math.sin(d*Math.PI/180)];
+                  const [x0,y0]=a(-90),[x1,y1]=a(-18),[x2,y2]=a(54),[x3,y3]=a(126),[x4,y4]=a(198);
+                  return <path d={`M${x0},${y0} L${x2},${y2} L${x4},${y4} L${x1},${y1} L${x3},${y3} Z`} strokeLinejoin="miter"/>;
+                })()}
+              </g>
+            </svg>
+            <div className="label">CthulhuBot · Discord Bot Dashboard</div>
+            <h1 className="serif" style={{margin:"10px 0 10px",fontSize:48,lineHeight:1.05,fontWeight:400,letterSpacing:"0.01em",maxWidth:700}}>
+              Keeper's Console
+            </h1>
+            <p style={{maxWidth:580,color:"var(--bone-dim)",fontSize:14,lineHeight:1.7,margin:"0 0 22px"}}>
+              Manage investigators, browse the Grimoire, control the soundboard and administer your Discord server. All bot commands are documented below.
             </p>
-            <div class="d-flex gap-2 flex-wrap mt-4">
-                {% if is_admin %}
-                <a class="btn btn-primary btn-lg" href="/admin">
-                    <i class="bi bi-shield-lock-fill me-1"></i> Admin Panel
-                </a>
-                {% endif %}
-                <a class="btn btn-outline-secondary btn-lg" href="https://github.com/SenpaiCZ/CthulhuBotV2" target="_blank" rel="noopener">
-                    <i class="bi bi-github me-1"></i> GitHub
-                </a>
-                {% if is_admin %}
-                <a class="btn btn-outline-secondary btn-lg" href="/admin/music">
-                    <i class="bi bi-music-note-beamed me-1"></i> Music
-                </a>
-                {% endif %}
+            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+              <a href="/characters" className="btn-eld primary"><span className="serif">✶</span> Investigators</a>
+              <a href="/monsters" className="btn-eld"><span className="serif">Ψ</span> Grimoire</a>
+              <a href="/admin/soundboard" className="btn-eld"><span className="serif">◐</span> Soundboard</a>
+              {IS_ADMIN && <a href="/admin" className="btn-eld"><span className="serif">⚙</span> Admin</a>}
             </div>
-        </div>
-        <div class="col-lg-4 text-center d-none d-lg-block" aria-hidden="true">
-            <div style="font-size: 7rem; line-height:1; filter: drop-shadow(0 0 30px rgba(var(--theme-primary-rgb),0.6)); opacity:0.85;">🐙</div>
-        </div>
+          </div>
+
+          {/* Primary nav hub */}
+          <div>
+            <Divider label="Primary Sections"/>
+            <NavHub/>
+          </div>
+
+          <GrimoireGrid/>
+          <AdminGrid/>
+          <CommandsCodex/>
+
+          <footer style={{textAlign:"center",paddingTop:28,borderTop:"1px solid var(--hair)",color:"var(--bone-fade)"}}>
+            <div className="serif-i" style={{fontSize:15}}>"Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn."</div>
+            <div className="mono" style={{fontSize:9,letterSpacing:"0.22em",marginTop:8}}>CTHULHUBOT V2 · UNOFFICIAL · NOT AFFILIATED WITH CHAOSIUM INC.</div>
+          </footer>
+        </main>
+      </div>
     </div>
-</div>
+  );
+}
 
-<!-- Feature Grid -->
-<div class="row g-3 mb-5">
-    <div class="col-sm-6 col-lg-3">
-        <div class="feature-card">
-            <span class="feature-icon">🕵️</span>
-            <h5>Investigator Sheets</h5>
-            <p>Full character creation wizard with era selection, occupation system, skill allocation, and backstory generation.</p>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="feature-card">
-            <span class="feature-icon">🎲</span>
-            <h5>Advanced Dice Rolling</h5>
-            <p>Bonus/penalty dice, luck spending, push rolls, opposed checks, damage rolls — interactive Discord UI.</p>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="feature-card">
-            <span class="feature-icon">📖</span>
-            <h5>Mythos Codex</h5>
-            <p>Monsters, deities, spells, weapons, occupations, phobias, manias — the full reference library at your fingertips.</p>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="feature-card">
-            <span class="feature-icon">🎵</span>
-            <h5>Music & Soundboard</h5>
-            <p>YouTube music with progress bar, playlists, volume control, and per-channel soundboard clips.</p>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="feature-card">
-            <span class="feature-icon">⚔️</span>
-            <h5>Combat System</h5>
-            <p>Interactive combat rolls with weapon stats, malfunction checks, damage application, and luck spend.</p>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="feature-card">
-            <span class="feature-icon">📈</span>
-            <h5>Karma & Ranks</h5>
-            <p>Track server reputation with automated role rewards, leaderboards, and per-server configuration.</p>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="feature-card">
-            <span class="feature-icon">🔔</span>
-            <h5>Server Tools</h5>
-            <p>Polls, reminders, giveaways, reaction roles, auto-rooms, auto-delete, RSS feeds, and more.</p>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="feature-card">
-            <span class="feature-icon">🛡️</span>
-            <h5>Web Dashboard</h5>
-            <p>Manage everything from this panel — characters, music, codex, server config, backups, and system updates.</p>
-        </div>
-    </div>
-</div>
-
-<!-- Two-column: Commands accordion + Keeper quick links -->
-<div class="row g-4 mb-4">
-    <!-- Commands Accordion -->
-    <div class="col-lg-7">
-        <h4 class="mb-3" style="color:var(--theme-primary-main);">Commands Reference</h4>
-        <div class="accordion" id="commandsAccordion">
-
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true">
-                        🕵️ Investigator Tools
-                    </button>
-                </h2>
-                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#commandsAccordion">
-                    <div class="accordion-body">
-                        <ul class="mb-0">
-                            <li><code>/newinvestigator</code> — Start character creation wizard</li>
-                            <li><code>/mycharacter</code> — View your character sheet</li>
-                            <li><code>/stat</code> — View or edit specific stats</li>
-                            <li><code>/rename</code> / <code>/renameskill</code> — Rename character or skill</li>
-                            <li><code>/addbackstory</code> / <code>/updatebackstory</code> / <code>/removebackstory</code> — Manage backstory</li>
-                            <li><code>/generatebackstory</code> — Generate random backstory</li>
-                            <li><code>/retire</code> / <code>/unretire</code> — Retire or restore a character</li>
-                            <li><code>/printcharacter</code> — Export character sheet as image</li>
-                            <li><code>/deleteinvestigator</code> — Delete character</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false">
-                        🎲 Dice, Rolls & Sessions
-                    </button>
-                </h2>
-                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#commandsAccordion">
-                    <div class="accordion-body">
-                        <ul class="mb-0">
-                            <li><code>/roll</code> — Skill check with bonus/penalty dice, luck spend, push</li>
-                            <li><code>/showluck</code> — Show server luck threshold</li>
-                            <li><code>/session start</code> / <code>/session show</code> / <code>/session wipe</code> — Session management</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false">
-                        🎵 Music & Sound
-                    </button>
-                </h2>
-                <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#commandsAccordion">
-                    <div class="accordion-body">
-                        <ul class="mb-0">
-                            <li><code>/play</code> — Play a song or playlist from YouTube</li>
-                            <li><code>/pause</code> / <code>/resume</code> — Pause or resume playback</li>
-                            <li><code>/skip</code> — Skip current track</li>
-                            <li><code>/stop</code> — Stop and disconnect</li>
-                            <li><code>/volume</code> — Set volume (0–100)</li>
-                            <li><code>/loop</code> — Toggle loop</li>
-                            <li><code>/queue</code> — View queue</li>
-                            <li><code>/playnext</code> — Add song to front of queue</li>
-                            <li><code>/remove</code> / <code>/clear</code> — Remove songs from queue</li>
-                            <li><code>/nowplaying</code> — Show current track</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false">
-                        🧠 Keeper Resources
-                    </button>
-                </h2>
-                <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#commandsAccordion">
-                    <div class="accordion-body">
-                        <ul class="mb-0">
-                            <li><code>/monster</code> — Monster stats &amp; lore</li>
-                            <li><code>/deity</code> — Deity description &amp; cult info</li>
-                            <li><code>/spell</code> — Spell details</li>
-                            <li><code>/weapon</code> — Firearm/weapon stats</li>
-                            <li><code>/occupationinfo</code> — Occupation lookup</li>
-                            <li><code>/skill</code> — Skill lookup</li>
-                            <li><code>/randomnpc</code> — Generate NPC</li>
-                            <li><code>/randomname</code> — Generate 1920s name</li>
-                            <li><code>/archetype</code> / <code>/talent</code> — Pulp content</li>
-                            <li><code>/phobia</code> / <code>/mania</code> — Madness tables</li>
-                            <li><code>/poison</code> / <code>/invention</code> / <code>/year</code> — Reference</li>
-                            <li><code>/loot</code> / <code>/macguffin</code> — Loot &amp; props</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false">
-                        🔧 Server &amp; Utility
-                    </button>
-                </h2>
-                <div id="collapseFive" class="accordion-collapse collapse" data-bs-parent="#commandsAccordion">
-                    <div class="accordion-body">
-                        <ul class="mb-0">
-                            <li><code>/karma</code> / <code>/leaderboard</code> — Karma system</li>
-                            <li><code>/reactionrole</code> — Reaction roles</li>
-                            <li><code>/poll</code> / <code>/remind</code> — Polls &amp; reminders</li>
-                            <li><code>/purge</code> — Bulk delete messages</li>
-                            <li><code>/autoroom</code> — Auto-room management</li>
-                            <li><code>/rss</code> / <code>/rsssetup</code> — RSS feeds</li>
-                            <li><code>/backup</code> / <code>/updatebot</code> — Maintenance</li>
-                            <li><code>!sync</code> — Sync slash commands</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Keeper Quick Links -->
-    <div class="col-lg-5">
-        <h4 class="mb-3" style="color:var(--theme-primary-main);">Keeper Quick Links</h4>
-        <div class="keeper-section">
-            <h5>Characters</h5>
-            <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-sm btn-outline-secondary" href="/characters">Active</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/retired">Retired</a>
-            </div>
-
-            <h5>Grimoire</h5>
-            <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-sm btn-outline-secondary" href="/monsters">Monsters</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/deities">Deities</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/spells">Spells</a>
-            </div>
-
-            <h5>Pulp</h5>
-            <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-sm btn-outline-secondary" href="/archetypes">Archetypes</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/pulp_talents">Talents</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/insane_talents">Insane Talents</a>
-            </div>
-
-            <h5>Reference</h5>
-            <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-sm btn-outline-secondary" href="/occupations">Occupations</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/skills">Skills</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/weapons">Weapons</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/inventions">Inventions</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/years">Years</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/manias">Manias</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/phobias">Phobias</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/poisons">Poisons</a>
-            </div>
-
-            {% if is_admin %}
-            <h5>Administration</h5>
-            <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-sm btn-outline-secondary" href="/admin">Dashboard</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/admin/music">Music</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/admin/soundboard">Soundboard</a>
-                <a class="btn btn-sm btn-outline-secondary" href="/admin/game_settings">Game Settings</a>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-{% endblock %}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

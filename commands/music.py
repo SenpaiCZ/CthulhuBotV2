@@ -144,6 +144,8 @@ class Music(commands.Cog):
         self.blacklist: list[str] = []
         # guild_id (str) → monotonic time when queue went empty
         self.idle_since: dict[str, float] = {}
+        # guild_id (str) → "off" | "track" | "queue"
+        self.loop_mode: dict[str, str] = {}
 
         self.bot.music_cog = self
 
@@ -220,6 +222,7 @@ class Music(commands.Cog):
         """Remove mixer/track/queue state for a guild."""
         self.current_track.pop(guild_id, None)
         self.queue.pop(guild_id, None)
+        self.loop_mode.pop(guild_id, None)
         mixer = guild_mixers.pop(guild_id, None)
         if mixer:
             mixer.cleanup()
@@ -282,6 +285,10 @@ class Music(commands.Cog):
         """Advance to next song or update dashboard when queue is empty."""
         track = self.current_track.get(guild_id)
         if track and track.finished:
+            if self.loop_mode.get(guild_id) == "queue" and track.metadata:
+                recycled = dict(track.metadata)
+                recycled['needs_resolve'] = True
+                self.queue.setdefault(guild_id, []).append(recycled)
             self.current_track.pop(guild_id, None)
 
         if self.queue.get(guild_id):
@@ -334,6 +341,7 @@ class Music(commands.Cog):
             is_url=True,
             metadata=song_info,
             volume=_pct_to_vol(round(music_vol * 100)),
+            loop=(self.loop_mode.get(guild_id) == "track"),
             before_options=FFMPEG_OPTIONS['before_options'],
             options=FFMPEG_OPTIONS['options'],
             on_finish=partial(self._on_track_finish, guild_id),
@@ -418,15 +426,18 @@ class Music(commands.Cog):
 
     async def toggle_loop(self, interaction: discord.Interaction):
         guild_id = str(interaction.guild.id)
+        current_mode = self.loop_mode.get(guild_id, "off")
+        _cycle = {"off": "track", "track": "queue", "queue": "off"}
+        new_mode = _cycle[current_mode]
+        self.loop_mode[guild_id] = new_mode
+
         track = self.current_track.get(guild_id)
-        if not track or track.finished:
-            if not interaction.response.is_done():
-                await interaction.response.send_message("Nothing is playing.", ephemeral=True)
-            return
-        track.loop = not track.loop
-        state = "ON" if track.loop else "OFF"
+        if track and not track.finished:
+            track.loop = (new_mode == "track")
+
+        _labels = {"off": "🔁 Loop OFF", "track": "🔂 Loop: Track", "queue": "🔁 Loop: Queue"}
         if not interaction.response.is_done():
-            await interaction.response.send_message(f"🔁 Loop {state}.", ephemeral=True)
+            await interaction.response.send_message(_labels[new_mode], ephemeral=True)
         await self._update_dashboard_for_guild(guild_id)
 
     async def shuffle_queue(self, interaction: discord.Interaction):
@@ -765,7 +776,7 @@ class Music(commands.Cog):
         )
         await self._update_dashboard_for_guild(guild_id)
 
-    @app_commands.command(name="loop", description="🔁 Toggle looping the current song.")
+    @app_commands.command(name="loop", description="🔁 Cycle loop mode: Off → Track → Queue → Off")
     async def loop(self, interaction: discord.Interaction):
         if not interaction.guild:
             return

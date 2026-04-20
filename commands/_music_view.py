@@ -48,7 +48,7 @@ class MusicView(View):
         queue = self.cog.queue.get(self.guild_id, [])
         is_active = track and not track.finished
         is_playing = is_active and not track.paused
-        is_looping = is_active and track.loop
+        loop_mode = self.cog.loop_mode.get(self.guild_id, "off")
 
         # Row 0: primary controls
         self.btn_pause.emoji = "⏸️" if is_playing else "▶️"
@@ -60,9 +60,11 @@ class MusicView(View):
         self.btn_stop.disabled = not is_active
 
         # Row 1: queue controls
-        self.btn_loop.style = discord.ButtonStyle.success if is_looping else discord.ButtonStyle.secondary
-        self.btn_loop.label = "Loop: ON" if is_looping else "Loop: OFF"
-        self.btn_loop.disabled = not is_active
+        _loop_styles = {"off": discord.ButtonStyle.secondary, "track": discord.ButtonStyle.success, "queue": discord.ButtonStyle.primary}
+        _loop_labels = {"off": "Loop: OFF", "track": "🔂 Loop: Track", "queue": "🔁 Loop: Queue"}
+        self.btn_loop.style = _loop_styles[loop_mode]
+        self.btn_loop.label = _loop_labels[loop_mode]
+        self.btn_loop.disabled = not is_active and len(queue) == 0
 
         self.btn_shuffle.disabled = len(queue) < 2
 
@@ -116,7 +118,8 @@ class MusicView(View):
             thumbnail = meta.get('thumbnail', '')
             duration = meta.get('duration')
             req = meta.get('requested_by', 'Unknown')
-            loop_icon = "🔁 " if track.loop else ""
+            _lm = self.cog.loop_mode.get(self.guild_id, "off")
+            loop_icon = {"off": "", "track": "🔂 ", "queue": "🔁 "}.get(_lm, "")
             status = "⏸️ Paused" if track.paused else "▶️ Now Playing"
 
             embed.title = f"{status} — {loop_icon}{title}"

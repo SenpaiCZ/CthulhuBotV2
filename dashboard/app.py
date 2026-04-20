@@ -14,6 +14,7 @@ import emojis
 import feedparser
 import datetime
 import time
+import psutil
 from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort, send_from_directory
 from markupsafe import escape
 from loadnsave import (
@@ -68,6 +69,7 @@ BASIC_FONTS = [
 app = Quart(__name__)
 app.secret_key = os.urandom(24)
 app.bot = None  # Placeholder for the Discord bot instance
+_APP_START = time.monotonic()
 
 @app.before_serving
 async def app_startup():
@@ -343,10 +345,27 @@ async def inject_theme():
 
 @app.route('/api/status')
 async def bot_status():
-    is_ready = False
-    if app.bot and app.bot.is_ready():
-        is_ready = True
-    return jsonify({"status": "online", "ready": is_ready})
+    is_ready = app.bot is not None and app.bot.is_ready()
+    secs = int(time.monotonic() - _APP_START)
+    d, rem = divmod(secs, 86400)
+    h, rem = divmod(rem, 3600)
+    m = rem // 60
+    uptime = (f"{d}d " if d else "") + f"{h:02d}h {m:02d}m"
+    latency = round(app.bot.latency * 1000) if is_ready else 0
+    guilds = len(app.bot.guilds) if is_ready else 0
+    try:
+        proc = psutil.Process()
+        mem_mb = round(proc.memory_info().rss / 1024 / 1024)
+    except Exception:
+        mem_mb = 0
+    return jsonify({
+        "status": "online",
+        "ready": is_ready,
+        "uptime": uptime,
+        "latency_ms": latency,
+        "guilds": guilds,
+        "memory_mb": mem_mb,
+    })
 
 @app.route('/fonts/<path:filename>')
 async def serve_fonts(filename):
@@ -2989,6 +3008,7 @@ async def music_data():
                     "thumbnail": track.metadata.get('thumbnail', ''),
                     "volume": int(track.volume * 100),
                     "loop": track.loop,
+            "loop_mode": music_cog.loop_mode.get(guild_id, "off"),
                     "paused": track.paused,
                     "elapsed": round(track.elapsed, 1),
                     "duration": track.metadata.get('duration'),
@@ -3049,9 +3069,13 @@ async def music_control():
             track.finished = True
             await music_cog._process_queue(guild_id)
     elif action == 'loop':
+        _cycle = {"off": "track", "track": "queue", "queue": "off"}
+        current_mode = music_cog.loop_mode.get(guild_id, "off")
+        new_mode = _cycle[current_mode]
+        music_cog.loop_mode[guild_id] = new_mode
         track = music_cog.current_track.get(guild_id)
-        if track:
-            track.loop = not track.loop
+        if track and not track.finished:
+            track.loop = (new_mode == "track")
     elif action == 'volume':
         vol = data.get('volume')
         clamped = max(0, min(100, int(vol)))

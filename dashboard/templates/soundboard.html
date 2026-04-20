@@ -1,876 +1,837 @@
-{% extends 'base.html' %}
-
-{% block title %}Soundboard{% endblock %}
-
-{% block extra_head %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Soundboard — CthulhuBot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Inter+Tight:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <style>
-/* ── Soundboard Layout ─────────────────────────────── */
-.sb-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: var(--bs-body-bg, #1a1a2e);
-    border-bottom: 1px solid rgba(var(--theme-primary-rgb, 139,0,0), 0.25);
-    padding: 0.75rem 1rem;
-    backdrop-filter: blur(8px);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: center;
+:root {
+  --void-0: #05070a;
+  --void-1: #0a0d11;
+  --void-2: #10141a;
+  --void-3: #161b23;
+  --void-4: #1e242e;
+  --hair: rgba(190,210,195,0.08);
+  --hair-s: rgba(190,210,195,0.15);
+  --bone: oklch(0.93 0.012 75);
+  --bone-dim: oklch(0.78 0.015 75);
+  --bone-fade: oklch(0.52 0.015 75);
+  --sigil: oklch(0.78 0.16 152);
+  --sigil-d: oklch(0.52 0.14 152);
+  --sigil-g: oklch(0.85 0.18 152 / 0.35);
+  --rust: oklch(0.62 0.16 28);
+  --rust-d: oklch(0.45 0.15 28);
+  --amber: oklch(0.78 0.13 75);
 }
-.sb-topbar select { max-width: 200px; }
-.sb-status-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    display: inline-block; flex-shrink: 0;
-    transition: background 0.3s;
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--void-0);color:var(--bone)}
+body{
+  font-family:"Inter Tight",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;
+  overflow:hidden;
 }
-.sb-status-dot.connected { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
-.sb-status-dot.disconnected { background: #6b7280; }
-.sb-status-dot.playing { background: #22c55e; box-shadow: 0 0 10px #22c55e; animation: sb-pulse 1.5s infinite; }
+/* grain */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:999;
+  opacity:.055;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.serif{font-family:"IM Fell English SC","IM Fell English",serif;letter-spacing:.02em}
+.serif-i{font-family:"IM Fell English",serif;font-style:italic}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.label{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--bone-fade)}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible{outline:1px solid var(--sigil);outline-offset:2px}
+::selection{background:var(--sigil-g);color:var(--bone)}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--void-1)}
+::-webkit-scrollbar-thumb{background:var(--void-4)}
+::-webkit-scrollbar-thumb:hover{background:var(--sigil-d)}
+input[type=range]{accent-color:var(--sigil)}
+input[type=text],select{
+  background:var(--void-2);color:var(--bone);
+  border:1px solid var(--hair-s);
+  font-family:"IBM Plex Mono",monospace;font-size:11px;
+  padding:7px 10px;outline:none;
+  -webkit-appearance:none;appearance:none;
+}
+input[type=text]:focus,select:focus{border-color:var(--sigil-d)}
+select option{background:var(--void-2)}
 
-@keyframes sb-pulse {
-    0%, 100% { box-shadow: 0 0 6px #22c55e88; }
-    50% { box-shadow: 0 0 14px #22c55ecc; }
-}
+@keyframes breathe{0%,100%{opacity:.9;filter:drop-shadow(0 0 10px var(--sigil-g))}50%{opacity:1;filter:drop-shadow(0 0 22px var(--sigil-g))}}
+@keyframes pulse-dot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
+@keyframes flicker{0%,92%,100%{opacity:1}93%{opacity:.3}94%{opacity:1}96%{opacity:.6}97%{opacity:1}}
+@keyframes playing-glow{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 18px 0 var(--sigil-g)}}
 
-/* ── Now Playing ───────────────────────────────────── */
-.sb-now-playing {
-    background: rgba(var(--theme-primary-rgb, 139,0,0), 0.08);
-    border: 1px solid rgba(var(--theme-primary-rgb, 139,0,0), 0.2);
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
+.btn-eld{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 14px;background:transparent;
+  border:1px solid var(--hair-s);color:var(--bone);
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  transition:all .2s;cursor:pointer;white-space:nowrap;
 }
-.sb-track-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.6rem 0.75rem;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.06);
-    margin-bottom: 0.5rem;
-    transition: background 0.15s;
-}
-.sb-track-row:hover { background: rgba(255,255,255,0.08); }
-.sb-track-row:last-child { margin-bottom: 0; }
-.sb-track-icon {
-    width: 36px; height: 36px; border-radius: 8px;
-    background: rgba(var(--theme-primary-rgb, 139,0,0), 0.3);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; flex-shrink: 0;
-}
-.sb-track-name {
-    font-weight: 600; font-size: 0.9rem;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    flex: 1; min-width: 0;
-}
-.sb-track-vol { width: 90px; flex-shrink: 0; }
-.sb-track-controls { display: flex; gap: 0.4rem; flex-shrink: 0; }
-.sb-track-controls .btn { padding: 0.2rem 0.5rem; font-size: 0.8rem; }
+.btn-eld:hover{border-color:var(--sigil);color:var(--sigil)}
+.btn-eld.on{border-color:var(--sigil-d);color:var(--sigil);background:rgba(120,220,170,.06)}
+.btn-eld.on:hover{background:rgba(120,220,170,.12)}
+.btn-eld.danger{border-color:var(--rust-d);color:var(--rust)}
+.btn-eld.danger:hover{background:rgba(180,70,60,.1)}
+.btn-eld:disabled{opacity:.35;pointer-events:none}
 
-/* ── Folder Section ────────────────────────────────── */
-.sb-folder {
-    margin-bottom: 1.75rem;
+/* corners */
+.corners{position:absolute;inset:0;pointer-events:none}
+.corners::before,.corners::after,
+.corners span::before,.corners span::after{
+  content:"";position:absolute;width:9px;height:9px;border-color:var(--sigil);opacity:.5;
 }
-.sb-folder-header {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid rgba(var(--theme-primary-rgb, 139,0,0), 0.2);
-}
-.sb-folder-color-swatch {
-    width: 16px; height: 16px; border-radius: 4px;
-    flex-shrink: 0; border: 1px solid rgba(255,255,255,0.15);
-    cursor: pointer; transition: transform 0.15s;
-}
-.sb-folder-color-swatch:hover { transform: scale(1.2); }
-.sb-folder-title {
-    font-weight: 700; font-size: 1rem; letter-spacing: 0.03em;
-    text-transform: uppercase; opacity: 0.9; flex: 1;
-}
-.sb-folder-actions { display: flex; gap: 0.4rem; align-items: center; }
+.corners::before{top:-1px;left:-1px;border-top:1px solid;border-left:1px solid}
+.corners::after{top:-1px;right:-1px;border-top:1px solid;border-right:1px solid}
+.corners span::before{bottom:-1px;left:-1px;border-bottom:1px solid;border-left:1px solid}
+.corners span::after{bottom:-1px;right:-1px;border-bottom:1px solid;border-right:1px solid}
 
-/* ── Sound Cards ───────────────────────────────────── */
-.sb-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 0.75rem;
+/* Toast */
+#sb-toast{
+  position:fixed;bottom:24px;right:24px;z-index:2000;
+  background:var(--void-2);border:1px solid var(--rust-d);
+  padding:12px 18px;font-family:"IBM Plex Mono",monospace;font-size:11px;
+  color:var(--rust);letter-spacing:.08em;
+  display:none;max-width:320px;
+  box-shadow:0 4px 24px rgba(0,0,0,.5);
 }
-.sb-card {
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.04);
-    cursor: pointer;
-    transition: transform 0.12s, box-shadow 0.12s, border-color 0.2s;
-    position: relative;
-    display: flex; flex-direction: column;
-}
-.sb-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-    border-color: rgba(var(--theme-primary-rgb, 139,0,0), 0.5);
-}
-.sb-card.playing {
-    border-color: #22c55e;
-    box-shadow: 0 0 16px #22c55e44;
-}
-.sb-card-face {
-    padding: 0.9rem 0.75rem 0.6rem;
-    text-align: center;
-    flex: 1;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 0.4rem;
-    min-height: 90px;
-    position: relative;
-    user-select: none;
-}
-.sb-card-wave {
-    font-size: 1.5rem; line-height: 1;
-    opacity: 0.9;
-    transition: transform 0.2s;
-}
-.sb-card:hover .sb-card-wave { transform: scale(1.15); }
-.sb-card.playing .sb-card-wave { animation: sb-bounce 0.5s ease infinite alternate; }
-@keyframes sb-bounce {
-    from { transform: scale(1); }
-    to { transform: scale(1.2); }
-}
-.sb-card-name {
-    font-size: 0.78rem; font-weight: 600; line-height: 1.3;
-    word-break: break-word; text-align: center;
-    opacity: 0.95;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-}
-.sb-card-footer {
-    border-top: 1px solid rgba(255,255,255,0.07);
-    padding: 0.4rem 0.5rem;
-    display: flex; flex-direction: column; gap: 0.3rem;
-    background: rgba(0,0,0,0.2);
-}
-.sb-card-footer input[type=range] { width: 100%; min-width: 0; height: 4px; }
-.sb-card-footer-controls { display: flex; align-items: center; gap: 0.4rem; }
-.sb-card-footer .form-check { margin: 0; }
-.sb-card-footer .form-check-input { margin-top: 0; }
-.sb-card-mgmt { display: flex; gap: 0.25rem; margin-left: auto; }
-.sb-card-mgmt .btn { padding: 0.1rem 0.35rem; font-size: 0.7rem; line-height: 1.4; }
-.sb-fav-btn { padding: 0.1rem 0.35rem; font-size: 0.8rem; line-height: 1.4; background: none; border: none; color: rgba(255,255,255,0.25); transition: color 0.15s; }
-.sb-fav-btn:hover, .sb-fav-btn.favorited { color: #e74c3c; }
-.sb-folder-toggle { opacity: 0.35; transition: transform 0.2s, opacity 0.15s; flex-shrink: 0; }
-.sb-folder-header:hover .sb-folder-toggle { opacity: 0.8; }
-.sb-folder.collapsed .sb-folder-toggle { transform: rotate(-90deg); }
-.sb-folder.collapsed .sb-folder-grid-wrap { display: none; }
-.sb-folder-header { cursor: pointer; }
-
-/* ── File Management Drawer ────────────────────────── */
-.sb-mgmt-panel {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
-    overflow: hidden;
-}
-.sb-mgmt-header {
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: space-between;
-    user-select: none;
-    font-weight: 600;
-}
-.sb-mgmt-header:hover { background: rgba(255,255,255,0.04); }
-.sb-mgmt-body { padding: 1rem; border-top: 1px solid rgba(255,255,255,0.08); }
-
-/* ── Misc ──────────────────────────────────────────── */
-.sb-section-label {
-    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
-    opacity: 0.5; font-weight: 600;
-}
-.sb-volume-label {
-    font-size: 0.72rem; opacity: 0.6; white-space: nowrap; min-width: 28px; text-align: right;
-}
-.sb-master-vol { min-width: 100px; }
-.sb-empty { color: var(--bs-secondary-color); font-size: 0.9rem; font-style: italic; }
-
-/* Responsive */
-@media (max-width: 576px) {
-    .sb-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
-    .sb-topbar select { max-width: 140px; }
-}
+#sb-toast.show{display:block}
 </style>
-{% endblock %}
+</head>
+<body>
+<div id="root" style="display:flex;flex-direction:column;height:100vh;overflow:hidden"></div>
+<div id="sb-toast"></div>
 
-{% block content %}
+<script type="text/babel" data-presets="react" src="{{ url_for('static', filename='sidebar.jsx') }}"></script>
+<script type="text/babel" data-presets="react">
 
-<!-- Toast for errors -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
-    <div id="sbToast" class="toast align-items-center text-bg-danger border-0" role="alert">
-        <div class="d-flex">
-            <div class="toast-body" id="sbToastMsg"></div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    </div>
-</div>
+const AppSidebar = () => { const C = window.AppSidebar; return C ? React.createElement(C) : null; };
 
-<div id="sb-loading" class="text-center py-5">
-    <div class="spinner-border" style="color:var(--theme-primary-main);"></div>
-    <div class="mt-2 opacity-50">Loading soundboard…</div>
-</div>
-
-<div id="sb-app" class="d-none">
-
-<!-- ── Top Bar ────────────────────────────────────────── -->
-<div class="sb-topbar mb-3" style="margin-left: -1rem; margin-right: -1rem; margin-top: -0.5rem; width: calc(100% + 2rem);">
-    <span class="sb-status-dot disconnected" id="sbStatusDot" title="Connection status"></span>
-
-    <select id="guildSelect" class="form-select form-select-sm" title="Server"></select>
-
-    <select id="channelSelect" class="form-select form-select-sm" title="Voice channel"></select>
-
-    <button id="joinBtn" class="btn btn-sm btn-success" title="Connect">
-        <i class="bi bi-mic-fill me-1"></i>Connect
-    </button>
-    <button id="stopBtn" class="btn btn-sm btn-warning" title="Stop all sounds">
-        <i class="bi bi-stop-fill me-1"></i>Stop All
-    </button>
-    <button id="leaveBtn" class="btn btn-sm btn-outline-danger" title="Disconnect">
-        <i class="bi bi-x-circle me-1"></i>Leave
-    </button>
-
-    <div class="d-flex align-items-center gap-2 ms-auto">
-        <i class="bi bi-volume-up opacity-50 small"></i>
-        <input type="range" id="masterVol" class="form-range sb-master-vol" min="0" max="100" title="Master volume">
-        <span id="masterVolLabel" class="sb-volume-label">50%</span>
-    </div>
-
-    <a href="/admin" class="btn btn-sm btn-outline-secondary ms-1">
-        <i class="bi bi-arrow-left me-1"></i>Back
-    </a>
-</div>
-
-<!-- ── Status line ─────────────────────────────────────── -->
-<div class="d-flex align-items-center gap-2 mb-3 px-1">
-    <span class="sb-section-label">Status</span>
-    <span id="sbStatusText" class="small opacity-75">Disconnected</span>
-    <span class="ms-auto sb-section-label" id="sbTrackCount"></span>
-</div>
-
-<!-- ── Now Playing ─────────────────────────────────────── -->
-<div id="nowPlayingWrap" class="sb-now-playing d-none">
-    <div class="d-flex align-items-center gap-2 mb-2">
-        <span class="sb-section-label">Now Playing</span>
-        <span class="badge rounded-pill" style="background:rgba(var(--theme-primary-rgb),0.6);" id="trackCountBadge">0</span>
-    </div>
-    <div id="nowPlayingList"></div>
-</div>
-
-<!-- ── File Management ─────────────────────────────────── -->
-<div class="sb-mgmt-panel">
-    <div class="sb-mgmt-header" id="mgmtToggle">
-        <span><i class="bi bi-folder2-open me-2 opacity-50"></i>File Management</span>
-        <i class="bi bi-chevron-down" id="mgmtChevron"></i>
-    </div>
-    <div id="mgmtBody" class="sb-mgmt-body d-none">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label small fw-semibold">New Folder</label>
-                <div class="input-group input-group-sm">
-                    <input type="text" id="newFolderName" class="form-control" placeholder="Folder name">
-                    <button class="btn btn-primary" onclick="createFolder()"><i class="bi bi-folder-plus"></i></button>
-                </div>
-            </div>
-            <div class="col-md-8">
-                <label class="form-label small fw-semibold">Upload Files / ZIP</label>
-                <div class="input-group input-group-sm">
-                    <input type="file" id="uploadFilesInput" class="form-control" multiple accept=".mp3,.wav,.ogg,.m4a,.flac,.zip">
-                    <select id="uploadFolderSelect" class="form-select" style="max-width:130px;">
-                        <option value="Root">Root</option>
-                    </select>
-                    <button class="btn btn-success" id="uploadBtn" onclick="uploadFiles()"><i class="bi bi-upload"></i> Upload</button>
-                </div>
-                <div class="form-text opacity-50">Audio files or .zip archives (extracted to new folder)</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ── Soundboard Grid ─────────────────────────────────── -->
-<div id="sbFilesContainer"></div>
-
-</div><!-- #sb-app -->
-
-<!-- Rename Folder Modal -->
-<div class="modal fade" id="renameFolderModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header py-2">
-                <h6 class="modal-title">Přejmenovat složku</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="renameFolderOldName">
-                <input type="text" class="form-control" id="renameFolderInput" placeholder="Nový název složky">
-            </div>
-            <div class="modal-footer py-2">
-                <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Zrušit</button>
-                <button class="btn btn-sm btn-primary" onclick="submitFolderRename()">Přejmenovat</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Rename Modal -->
-<div class="modal fade" id="renameModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header py-2">
-                <h6 class="modal-title">Rename File</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="renameFilePath">
-                <input type="text" class="form-control" id="renameInput" placeholder="New name (no extension)">
-                <div class="form-text opacity-50">Extension preserved automatically</div>
-            </div>
-            <div class="modal-footer py-2">
-                <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-sm btn-primary" onclick="submitRename()">Rename</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-// ── Utilities ────────────────────────────────────────────
-function esc(t) {
-    if (!t) return '';
-    return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-}
+/* ── Helpers ────────────────────────────────────────────── */
+const stripExt = s => s.replace(/\.[^/.]+$/, "");
+const fmtName = s => stripExt(s).replace(/[_\-]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
 function showToast(msg) {
-    document.getElementById('sbToastMsg').textContent = msg;
-    bootstrap.Toast.getOrCreateInstance(document.getElementById('sbToast')).show();
+  const el = document.getElementById('sb-toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 4000);
 }
 
-// ── State ─────────────────────────────────────────────────
-let currentData = null;
-let selectedGuildId = null;
-let prevFilesStr = null;
-let renameModal = null;
-let renameFolderModal = null;
+/* ── Corner decoration ──────────────────────────────────── */
+const Corners = () => <div className="corners"><span/></div>;
 
-document.addEventListener('DOMContentLoaded', () => {
-    renameModal = new bootstrap.Modal(document.getElementById('renameModal'));
-    renameFolderModal = new bootstrap.Modal(document.getElementById('renameFolderModal'));
+/* ── Glyph map for folders ──────────────────────────────── */
+const FOLDER_GLYPHS = {Favorites:"♥", Ambient:"◈", Effects:"✦", Music:"♪", Root:"◎", __default:"✶"};
+const folderGlyph = k => FOLDER_GLYPHS[k] || FOLDER_GLYPHS.__default;
 
-    // File management toggle
-    document.getElementById('mgmtToggle').onclick = () => {
-        const body = document.getElementById('mgmtBody');
-        const chevron = document.getElementById('mgmtChevron');
-        const hidden = body.classList.toggle('d-none');
-        chevron.className = hidden ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
-    };
-});
+/* ── Top bar ────────────────────────────────────────────── */
+function TopBar({guilds, selectedGuild, onGuild, channels, selectedChannel, onChannel,
+                 connected, playing, volume, onVolume, onJoin, onLeave, onStop}) {
+  const [t, setT] = React.useState(new Date());
+  React.useEffect(() => { const i = setInterval(() => setT(new Date()), 1000); return () => clearInterval(i); }, []);
+  const p = n => String(n).padStart(2, "0");
 
-// ── Fetch & Render ────────────────────────────────────────
-async function fetchData() {
-    try {
-        const res = await fetch('/api/soundboard/data');
-        currentData = await res.json();
-        render();
-    } catch(e) { console.error('Soundboard fetch error:', e); }
+  return (
+    <header style={{
+      flexShrink:0,
+      display:"flex",alignItems:"center",gap:12,
+      padding:"12px 24px",
+      borderBottom:"1px solid var(--hair)",
+      background:"linear-gradient(180deg, var(--void-1), var(--void-0))",
+      zIndex:20,
+    }}>
+      {/* Brand */}
+      <a href="/" style={{display:"flex",alignItems:"center",gap:10,marginRight:8,borderRight:"1px solid var(--hair)",paddingRight:16}}>
+        <div style={{color:"var(--sigil)",animation:"breathe 5s ease-in-out infinite"}}>
+          <svg width="28" height="28" viewBox="0 0 44 44" fill="none" stroke="currentColor" strokeWidth="0.9">
+            <circle cx="22" cy="22" r="20.5" opacity="0.4"/>
+            {(()=>{
+              const r=18,cx=22,cy=22,a=d=>[cx+r*Math.cos(d*Math.PI/180),cy+r*Math.sin(d*Math.PI/180)];
+              const [x0,y0]=a(-90),[x1,y1]=a(-18),[x2,y2]=a(54),[x3,y3]=a(126),[x4,y4]=a(198);
+              return <path d={`M${x0},${y0} L${x2},${y2} L${x4},${y4} L${x1},${y1} L${x3},${y3} Z`} strokeLinejoin="miter"/>;
+            })()}
+            <circle cx="22" cy="22" r="1.5" fill="currentColor"/>
+          </svg>
+        </div>
+        <div>
+          <div className="serif" style={{fontSize:15,lineHeight:1}}>Soundboard</div>
+          <div className="mono" style={{fontSize:8,letterSpacing:"0.26em",color:"var(--bone-fade)",marginTop:3}}>SÉANCE ROOM</div>
+        </div>
+      </a>
+
+      {/* Status dot */}
+      <div style={{display:"flex",alignItems:"center",gap:8,marginRight:4}}>
+        <span style={{
+          width:7,height:7,borderRadius:"50%",flexShrink:0,
+          background: connected ? "var(--sigil)" : "var(--bone-fade)",
+          boxShadow: connected ? "0 0 8px var(--sigil-g)" : "none",
+          animation: connected && playing ? "pulse-dot 1.8s ease-in-out infinite" : "none",
+        }}/>
+        <span className="mono" style={{fontSize:9,letterSpacing:"0.18em",color:connected ? "var(--sigil)" : "var(--bone-fade)"}}>
+          {connected ? (playing ? "PLAYING" : "IDLE") : "OFFLINE"}
+        </span>
+      </div>
+
+      <span style={{width:1,height:18,background:"var(--hair)",flexShrink:0}}/>
+
+      {/* Guild */}
+      <select value={selectedGuild || ""} onChange={e => onGuild(e.target.value)} style={{minWidth:160}}>
+        {guilds.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+      </select>
+
+      {/* Channel */}
+      <select value={selectedChannel || ""} onChange={e => onChannel(e.target.value)} style={{minWidth:140}}>
+        {channels.map(c => <option key={c.id} value={c.id}># {c.name}</option>)}
+      </select>
+
+      <button className={`btn-eld${connected ? " danger" : " on"}`} onClick={connected ? onLeave : onJoin}>
+        {connected ? "Disconnect" : "Connect"}
+      </button>
+      {connected && <button className="btn-eld danger" onClick={onStop}>Stop All</button>}
+
+      <span style={{flex:1}}/>
+
+      {/* Master volume */}
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <span className="serif" style={{fontSize:14,color:"var(--bone-fade)"}}>◐</span>
+        <input type="range" min="0" max="100" value={volume}
+          onChange={e => onVolume(+e.target.value)}
+          style={{width:100,cursor:"pointer"}}/>
+        <span className="mono" style={{fontSize:10,color:"var(--bone-fade)",width:30}}>{volume}%</span>
+      </div>
+
+      <span style={{width:1,height:18,background:"var(--hair)",flexShrink:0}}/>
+      <div className="mono" style={{fontSize:10,letterSpacing:"0.18em",color:"var(--sigil)",animation:"flicker 7s infinite"}}>
+        {`${p(t.getHours())}:${p(t.getMinutes())}:${p(t.getSeconds())}`}
+      </div>
+    </header>
+  );
 }
 
-function render() {
-    document.getElementById('sb-loading').classList.add('d-none');
-    document.getElementById('sb-app').classList.remove('d-none');
+/* ── Folder sidebar ─────────────────────────────────────── */
+function FolderSidebar({folders, activeFolder, onFolder, onNewFolder, onRenameFolder, onDeleteFolder, onUpload}) {
+  const [newName, setNewName] = React.useState("");
+  const [uploading, setUploading] = React.useState(false);
+  const [renamingFolder, setRenamingFolder] = React.useState(null);
+  const [renameVal, setRenameVal] = React.useState("");
+  const fileRef = React.useRef();
 
-    const guildSel = document.getElementById('guildSelect');
-    const channelSel = document.getElementById('channelSelect');
-
-    // Guilds (populate once)
-    if (guildSel.options.length === 0) {
-        currentData.guilds.forEach(g => {
-            const o = document.createElement('option');
-            o.value = g.id; o.textContent = g.name;
-            guildSel.appendChild(o);
-        });
-        if (currentData.guilds.length > 0 && !selectedGuildId)
-            selectedGuildId = currentData.guilds[0].id;
+  const submitFolderRename = () => {
+    if (renameVal.trim() && renameVal.trim() !== renamingFolder) {
+      onRenameFolder(renamingFolder, renameVal.trim());
     }
-    if (!selectedGuildId) return;
-    guildSel.value = selectedGuildId;
+    setRenamingFolder(null);
+  };
 
-    const guildData = currentData.guilds.find(g => g.id === selectedGuildId);
-    if (!guildData) return;
-    const status = currentData.status[selectedGuildId] || {};
-
-    // Channels
-    const newChanHTML = guildData.channels.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
-    if (channelSel.innerHTML !== newChanHTML) channelSel.innerHTML = newChanHTML;
-    if (status.is_connected && status.channel_id) channelSel.value = status.channel_id;
-
-    // Status dot + text
-    const dot = document.getElementById('sbStatusDot');
-    const statusText = document.getElementById('sbStatusText');
-    if (status.is_connected) {
-        const chanName = guildData.channels.find(c => c.id === status.channel_id)?.name || status.channel_id;
-        dot.className = 'sb-status-dot ' + (status.is_playing ? 'playing' : 'connected');
-        statusText.textContent = `Connected to #${chanName}${status.is_playing ? ' · Playing' : ' · Idle'}`;
-    } else {
-        dot.className = 'sb-status-dot disconnected';
-        statusText.textContent = 'Disconnected';
-    }
-
-    // Master volume
-    const masterVol = document.getElementById('masterVol');
-    const masterLabel = document.getElementById('masterVolLabel');
-    if (document.activeElement !== masterVol) {
-        masterVol.value = status.volume ?? 50;
-        masterLabel.textContent = (status.volume ?? 50) + '%';
-    }
-
-    // Now Playing
-    renderNowPlaying(status.tracks || []);
-
-    // Upload folder select
-    const uploadSel = document.getElementById('uploadFolderSelect');
-    const prevUpload = uploadSel.value;
-    uploadSel.innerHTML = '<option value="Root">Root</option>';
-    Object.keys(currentData.files || {}).filter(k => k !== 'Root').forEach(k => {
-        const o = document.createElement('option');
-        o.value = k; o.textContent = k;
-        uploadSel.appendChild(o);
-    });
-    if (Array.from(uploadSel.options).some(o => o.value === prevUpload)) uploadSel.value = prevUpload;
-
-    // Files grid
-    renderFiles(currentData.files || {}, currentData.settings || {});
-}
-
-// ── Now Playing ───────────────────────────────────────────
-function renderNowPlaying(tracks) {
-    const wrap = document.getElementById('nowPlayingWrap');
-    const list = document.getElementById('nowPlayingList');
-    const badge = document.getElementById('trackCountBadge');
-    const countEl = document.getElementById('sbTrackCount');
-
-    badge.textContent = tracks.length;
-    countEl.textContent = tracks.length > 0 ? `${tracks.length} track${tracks.length !== 1 ? 's' : ''} active` : '';
-
-    if (tracks.length === 0) { wrap.classList.add('d-none'); return; }
-    wrap.classList.remove('d-none');
-
-    const existingMap = {};
-    list.querySelectorAll('[data-track-id]').forEach(el => existingMap[el.dataset.trackId] = el);
-
-    const newIds = new Set(tracks.map(t => t.id));
-    Object.keys(existingMap).forEach(id => { if (!newIds.has(id)) existingMap[id].remove(); });
-
-    tracks.forEach(track => {
-        let el = existingMap[track.id];
-        if (!el) {
-            el = document.createElement('div');
-            el.className = 'sb-track-row';
-            el.dataset.trackId = track.id;
-            el.innerHTML = `
-                <div class="sb-track-icon">🎵</div>
-                <div class="sb-track-name" title="${esc(track.name)}">${esc(track.name)}</div>
-                <input type="range" class="sb-track-vol form-range" min="0" max="100" aria-label="Volume">
-                <span class="sb-volume-label sb-tvol-label">--%</span>
-                <div class="sb-track-controls">
-                    <button class="btn btn-sm btn-outline-secondary sb-loop-btn" title="Loop" aria-label="Toggle loop">${track.loop ? '<i class="bi bi-arrow-repeat text-success"></i>' : '<i class="bi bi-arrow-repeat"></i>'}</button>
-                    <button class="btn btn-sm sb-pause-btn" title="${track.paused ? 'Resume' : 'Pause'}">${track.paused ? '<i class="bi bi-play-fill"></i>' : '<i class="bi bi-pause-fill"></i>'}</button>
-                    <button class="btn btn-sm btn-outline-danger sb-stop-btn" title="Stop"><i class="bi bi-stop-fill"></i></button>
+  return (
+    <aside style={{
+      width:220,flexShrink:0,
+      borderRight:"1px solid var(--hair)",
+      background:"var(--void-1)",
+      display:"flex",flexDirection:"column",
+      overflow:"hidden",
+    }}>
+      <div style={{flex:1,overflowY:"auto",padding:"18px 0"}}>
+        <div className="label" style={{padding:"0 16px 10px"}}>Folders</div>
+        {folders.map(f => {
+          const isActive = f === activeFolder;
+          const isRoot = f === "Root";
+          return (
+            <div key={f} style={{position:"relative",display:"flex",alignItems:"center"}}>
+              <button onClick={() => onFolder(f)}
+                style={{
+                  flex:1,display:"flex",alignItems:"center",gap:10,
+                  padding:"9px 8px 9px 16px",
+                  color: isActive ? "var(--sigil)" : "var(--bone-dim)",
+                  background: isActive ? "rgba(120,220,170,.06)" : "transparent",
+                  borderLeft: isActive ? "2px solid var(--sigil)" : "2px solid transparent",
+                  fontSize:13,letterSpacing:"0.02em",transition:"all .15s",textAlign:"left",
+                }}
+                onMouseEnter={e => !isActive && (e.currentTarget.style.color="var(--bone)")}
+                onMouseLeave={e => !isActive && (e.currentTarget.style.color="var(--bone-dim)")}
+              >
+                <span className="serif" style={{fontSize:14,color:isActive?"var(--sigil)":"var(--bone-fade)",width:16,textAlign:"center",flexShrink:0}}>
+                  {folderGlyph(f)}
+                </span>
+                <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f === "Root" ? "Uncategorized" : f}</span>
+              </button>
+              {!isRoot && isActive && (
+                <div style={{display:"flex",gap:2,paddingRight:8,flexShrink:0}}>
+                  <button
+                    onClick={() => { setRenamingFolder(f); setRenameVal(f); }}
+                    style={{width:20,height:20,display:"grid",placeItems:"center",color:"var(--bone-fade)",fontSize:10}}
+                    title="Rename folder">
+                    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M12.85 1.15a1.5 1.5 0 0 0-2.12 0L2 9.88V14h4.12l8.73-8.73a1.5 1.5 0 0 0 0-2.12l-2-2zm-1.06 1.06 2 2-1.44 1.44-2-2 1.44-1.44zM3.5 10.5l6-6 2 2-6 6H3.5v-2z"/>
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => onDeleteFolder(f)}
+                    style={{width:20,height:20,display:"grid",placeItems:"center",color:"var(--rust)",fontSize:10}}
+                    title="Delete folder">
+                    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M6 2h4v1H6V2zm-2 2v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4h1V3H3v1h1zm1 0h6v9H5V4zm2 2v5h1V6H7zm2 0v5h1V6H9z"/>
+                    </svg>
+                  </button>
                 </div>
-            `;
-            list.appendChild(el);
-
-            el.querySelector('.sb-track-vol').onchange = e => updateTrackVolume(track.id, e.target.value);
-            el.querySelector('.sb-stop-btn').onclick = () => removeTrack(track.id);
-        }
-
-        // Update state
-        const volInput = el.querySelector('.sb-track-vol');
-        if (document.activeElement !== volInput) {
-            volInput.value = track.volume;
-            el.querySelector('.sb-tvol-label').textContent = track.volume + '%';
-        }
-
-        const loopBtn = el.querySelector('.sb-loop-btn');
-        loopBtn.innerHTML = track.loop ? '<i class="bi bi-arrow-repeat text-success"></i>' : '<i class="bi bi-arrow-repeat"></i>';
-        loopBtn.onclick = () => updateTrackLoop(track.id, !track.loop);
-
-        const pauseBtn = el.querySelector('.sb-pause-btn');
-        pauseBtn.innerHTML = track.paused ? '<i class="bi bi-play-fill"></i>' : '<i class="bi bi-pause-fill"></i>';
-        pauseBtn.className = track.paused ? 'btn btn-sm btn-outline-success sb-pause-btn' : 'btn btn-sm btn-outline-warning sb-pause-btn';
-        pauseBtn.title = track.paused ? 'Resume' : 'Pause';
-        pauseBtn.onclick = () => updateTrackPause(track.id, !track.paused);
-    });
-
-    // Mark playing cards
-    document.querySelectorAll('.sb-card').forEach(card => {
-        const path = card.dataset.path;
-        const isPlaying = tracks.some(t => t.id === path || t.name === card.dataset.name);
-        card.classList.toggle('playing', isPlaying);
-    });
-}
-
-// ── Files Grid ────────────────────────────────────────────
-function getFolderCollapsed(key) {
-    return localStorage.getItem(`sb-folder-collapsed:${key}`) === '1';
-}
-function setFolderCollapsed(key, v) {
-    localStorage.setItem(`sb-folder-collapsed:${key}`, v ? '1' : '0');
-}
-
-function renderFiles(files, settings) {
-    const favorites = settings?.favorites || [];
-    const currentStr = JSON.stringify({files, favorites});
-    if (currentStr === prevFilesStr) return;
-    prevFilesStr = currentStr;
-
-    const container = document.getElementById('sbFilesContainer');
-    container.innerHTML = '';
-
-    const allKeys = Object.keys(files);
-    if (allKeys.length === 0 && favorites.length === 0) {
-        container.innerHTML = '<div class="sb-empty text-center py-4">No sound files found. Upload some above.</div>';
-        return;
-    }
-
-    // Flat map for favorites lookup
-    const allFilesMap = {};
-    Object.values(files).forEach(list => (list || []).forEach(f => { allFilesMap[f.path] = f; }));
-
-    // Favorites virtual folder at top
-    if (favorites.length > 0) {
-        const favFiles = favorites.map(p => allFilesMap[p]).filter(Boolean);
-        if (favFiles.length > 0) renderFolder('__favorites__', '❤️ Oblíbené', favFiles, null, settings, favorites, container, true);
-    }
-
-    // Root first, then folders alphabetically
-    const ordered = ['Root', ...allKeys.filter(k => k !== 'Root').sort()];
-    ordered.forEach(folderKey => {
-        const fileList = files[folderKey];
-        if (!fileList || fileList.length === 0) return;
-        const folderColor = settings?.folder_colors?.[folderKey] || null;
-        renderFolder(folderKey, folderKey, fileList, folderColor, settings, favorites, container, false);
-    });
-}
-
-function renderFolder(folderKey, displayTitle, fileList, folderColor, settings, favorites, container, isVirtual) {
-    const isRoot = folderKey === 'Root';
-    const collapsed = getFolderCollapsed(folderKey);
-
-    const section = document.createElement('div');
-    section.className = 'sb-folder' + (collapsed ? ' collapsed' : '');
-
-    // ── Header ──────────────────────────────────────────────
-    const header = document.createElement('div');
-    header.className = 'sb-folder-header';
-
-    // Collapse chevron
-    const chevron = document.createElement('i');
-    chevron.className = 'bi bi-chevron-down sb-folder-toggle me-1';
-    header.appendChild(chevron);
-
-    // Color swatch (non-root, non-virtual)
-    if (!isRoot && !isVirtual) {
-        const swatchWrap = document.createElement('div');
-        swatchWrap.style.cssText = 'position:relative;width:16px;height:16px;flex-shrink:0;';
-        const swatch = document.createElement('span');
-        swatch.className = 'sb-folder-color-swatch';
-        swatch.style.background = folderColor || '#444';
-        swatch.title = folderColor ? 'Change folder color' : 'Set folder color';
-        const colorPicker = document.createElement('input');
-        colorPicker.type = 'color';
-        colorPicker.value = folderColor || '#444444';
-        colorPicker.style.cssText = 'position:absolute;opacity:0;width:16px;height:16px;cursor:pointer;';
-        colorPicker.onchange = e => { swatch.style.background = e.target.value; saveFolderColor(folderKey, e.target.value); };
-        colorPicker.onclick = e => e.stopPropagation();
-        swatchWrap.appendChild(swatch);
-        swatchWrap.appendChild(colorPicker);
-        header.appendChild(swatchWrap);
-    }
-
-    const title = document.createElement('span');
-    title.className = 'sb-folder-title';
-    title.textContent = isRoot ? 'Nekategorizováno' : displayTitle;
-    if (folderColor) title.style.color = folderColor;
-    header.appendChild(title);
-
-    const count = document.createElement('span');
-    count.className = 'sb-section-label';
-    count.textContent = fileList.length + ' clip' + (fileList.length !== 1 ? 's' : '');
-    header.appendChild(count);
-
-    // Folder actions (non-root, non-virtual)
-    if (!isRoot && !isVirtual) {
-        const actions = document.createElement('div');
-        actions.className = 'sb-folder-actions';
-
-        const renameBtn = document.createElement('button');
-        renameBtn.className = 'btn btn-sm btn-outline-secondary py-0';
-        renameBtn.innerHTML = '<i class="bi bi-pencil"></i>';
-        renameBtn.title = 'Přejmenovat složku';
-        renameBtn.onclick = e => { e.stopPropagation(); openRenameFolderModal(folderKey); };
-        actions.appendChild(renameBtn);
-
-        const delBtn = document.createElement('button');
-        delBtn.className = 'btn btn-sm btn-outline-danger py-0';
-        delBtn.innerHTML = '<i class="bi bi-trash3"></i>';
-        delBtn.title = 'Delete folder';
-        delBtn.onclick = e => { e.stopPropagation(); deleteFolder(folderKey); };
-        actions.appendChild(delBtn);
-
-        header.appendChild(actions);
-    }
-
-    header.onclick = () => {
-        const c = !section.classList.contains('collapsed');
-        section.classList.toggle('collapsed', c);
-        setFolderCollapsed(folderKey, c);
-    };
-
-    section.appendChild(header);
-
-    // ── Grid ────────────────────────────────────────────────
-    const gridWrap = document.createElement('div');
-    gridWrap.className = 'sb-folder-grid-wrap';
-
-    const grid = document.createElement('div');
-    grid.className = 'sb-grid';
-
-    fileList.forEach(file => {
-        const fileSettings = settings?.files?.[file.path] || {};
-        const savedVol = fileSettings.volume ?? 100;
-        const savedLoop = fileSettings.loop ?? false;
-        const isFav = favorites.includes(file.path);
-        const displayName = file.name.replace(/\.[^/.]+$/, '');
-        const accentColor = folderColor || 'rgba(var(--theme-primary-rgb,139,0,0),0.6)';
-
-        const card = document.createElement('div');
-        card.className = 'sb-card';
-        card.dataset.path = file.path;
-        card.dataset.name = displayName;
-        card.title = `Play: ${displayName}`;
-
-        card.innerHTML = `
-            <div class="sb-card-face" style="background: linear-gradient(135deg, ${accentColor}22, ${accentColor}44);">
-                <div class="sb-card-wave">🔊</div>
-                <div class="sb-card-name">${esc(displayName)}</div>
+              )}
             </div>
-            <div class="sb-card-footer">
-                <input type="range" class="form-range sound-vol" min="0" max="100" value="${savedVol}" title="Volume">
-                <div class="sb-card-footer-controls">
-                    <div class="form-check form-switch m-0" title="Loop">
-                        <input class="form-check-input sound-loop" type="checkbox" ${savedLoop ? 'checked' : ''}>
-                    </div>
-                    <div class="sb-card-mgmt">
-                        <button class="btn sb-fav-btn ${isFav ? 'favorited' : ''}" title="${isFav ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'}"><i class="bi bi-heart${isFav ? '-fill' : ''}"></i></button>
-                        <button class="btn btn-outline-secondary sb-rename-btn" title="Rename"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-outline-danger sb-del-btn" title="Delete"><i class="bi bi-trash3"></i></button>
-                    </div>
-                </div>
-            </div>
-        `;
+          );
+        })}
+      </div>
 
-        card.querySelector('.sb-card-face').onclick = () => {
-            const vol = parseInt(card.querySelector('.sound-vol').value);
-            const loop = card.querySelector('.sound-loop').checked;
-            card.style.transform = 'scale(0.95)';
-            setTimeout(() => card.style.transform = '', 120);
-            playSound(file.path, loop, vol);
-        };
+      {/* Rename folder inline modal */}
+      {renamingFolder && (
+        <div style={{padding:"12px 14px",borderTop:"1px solid var(--hair)",background:"var(--void-2)"}}>
+          <div className="label" style={{marginBottom:8}}>Rename "{renamingFolder}"</div>
+          <div style={{display:"flex",gap:6}}>
+            <input type="text" value={renameVal} onChange={e => setRenameVal(e.target.value)}
+              autoFocus
+              onKeyDown={e => { if(e.key==="Enter") submitFolderRename(); if(e.key==="Escape") setRenamingFolder(null); }}
+              style={{flex:1,minWidth:0,fontSize:10}}/>
+            <button className="btn-eld on" style={{padding:"6px 8px"}} onClick={submitFolderRename}>✓</button>
+            <button className="btn-eld" style={{padding:"6px 8px"}} onClick={() => setRenamingFolder(null)}>✕</button>
+          </div>
+        </div>
+      )}
 
-        const volInput = card.querySelector('.sound-vol');
-        const loopInput = card.querySelector('.sound-loop');
-        volInput.onchange = () => saveFileSettings(file.path, parseInt(volInput.value), loopInput.checked);
-        loopInput.onchange = () => saveFileSettings(file.path, parseInt(volInput.value), loopInput.checked);
+      {/* Create folder */}
+      <div style={{padding:"14px 14px 10px",borderTop:"1px solid var(--hair)"}}>
+        <div className="label" style={{marginBottom:8}}>New Folder</div>
+        <div style={{display:"flex",gap:6}}>
+          <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
+            placeholder="folder name…"
+            onKeyDown={e => { if(e.key==="Enter"&&newName.trim()) { onNewFolder(newName.trim()); setNewName(""); }}}
+            style={{flex:1,minWidth:0,fontSize:10}}/>
+          <button className="btn-eld" style={{padding:"6px 8px"}}
+            onClick={() => { if(newName.trim()) { onNewFolder(newName.trim()); setNewName(""); }}}>
+            +
+          </button>
+        </div>
+      </div>
 
-        card.querySelector('.sb-card-footer').onclick = e => e.stopPropagation();
-        card.querySelector('.sb-fav-btn').onclick = () => toggleFavorite(file.path, isFav);
-        card.querySelector('.sb-rename-btn').onclick = () => openRenameModal(file.path, displayName);
-        card.querySelector('.sb-del-btn').onclick = () => deleteFile(file.path);
-
-        grid.appendChild(card);
-    });
-
-    gridWrap.appendChild(grid);
-    section.appendChild(gridWrap);
-    container.appendChild(section);
+      {/* Upload */}
+      <div style={{padding:"10px 14px 16px",borderTop:"1px solid var(--hair)"}}>
+        <div className="label" style={{marginBottom:8}}>Upload to "{activeFolder === "Root" ? "Uncategorized" : activeFolder}"</div>
+        <input ref={fileRef} type="file" multiple accept=".mp3,.wav,.ogg,.m4a,.flac,.zip"
+          style={{display:"none"}}
+          onChange={async e => {
+            if (!e.target.files.length) return;
+            setUploading(true);
+            await onUpload(e.target.files, activeFolder);
+            setUploading(false);
+            fileRef.current.value = "";
+          }}/>
+        <button className="btn-eld on" style={{width:"100%",justifyContent:"center",padding:"8px"}}
+          onClick={() => fileRef.current?.click()} disabled={uploading}>
+          {uploading ? "uploading…" : "↑  upload files"}
+        </button>
+        <div className="mono" style={{fontSize:9,color:"var(--bone-fade)",marginTop:6,letterSpacing:"0.1em"}}>mp3 · wav · ogg · zip</div>
+      </div>
+    </aside>
+  );
 }
 
-// ── Controls ──────────────────────────────────────────────
-document.getElementById('guildSelect').onchange = e => {
-    selectedGuildId = e.target.value;
-    prevFilesStr = null; // force re-render
-    if (currentData?.status?.[selectedGuildId]) {
-        const vol = currentData.status[selectedGuildId].volume ?? 50;
-        document.getElementById('masterVol').value = vol;
-        document.getElementById('masterVolLabel').textContent = vol + '%';
-    }
-    render();
-};
+/* ── Sound card ─────────────────────────────────────────── */
+function SoundCard({file, isPlaying, vol, loop, onPlay, onStop, onRename, onDelete, onToggleFav, isFav, onSaveSettings}) {
+  const [localVol, setLocalVol] = React.useState(vol);
+  const [localLoop, setLocalLoop] = React.useState(loop);
+  const [pressed, setPressed] = React.useState(false);
+  const name = fmtName(file.name);
 
-document.getElementById('joinBtn').onclick = async () => {
-    if (!selectedGuildId) return;
-    const ch = document.getElementById('channelSelect').value;
-    if (!ch) { showToast('Select a voice channel first.'); return; }
-    await apiCall('/api/soundboard/join', { guild_id: selectedGuildId, channel_id: ch });
-};
+  React.useEffect(() => { setLocalVol(vol); }, [vol]);
+  React.useEffect(() => { setLocalLoop(loop); }, [loop]);
 
-document.getElementById('leaveBtn').onclick = async () => {
-    if (!selectedGuildId) return;
-    await apiCall('/api/soundboard/leave', { guild_id: selectedGuildId });
-};
+  const handlePlay = () => {
+    if (isPlaying) { onStop(file.path); return; }
+    setPressed(true);
+    setTimeout(() => setPressed(false), 200);
+    onPlay(file.path, localLoop, localVol);
+  };
 
-document.getElementById('stopBtn').onclick = async () => {
-    if (!selectedGuildId) return;
-    await apiCall('/api/soundboard/stop', { guild_id: selectedGuildId });
-};
+  return (
+    <div style={{
+      background: isPlaying
+        ? "linear-gradient(160deg, rgba(120,220,170,0.08), var(--void-0))"
+        : "linear-gradient(160deg, var(--void-1), var(--void-0))",
+      border: isPlaying ? "1px solid var(--sigil-d)" : "1px solid var(--hair)",
+      position:"relative",
+      display:"flex",flexDirection:"column",
+      animation: isPlaying ? "playing-glow 3s ease-in-out infinite" : "none",
+      transform: pressed ? "scale(0.96)" : "scale(1)",
+      transition:"transform .15s, border-color .2s, background .2s",
+      overflow:"hidden",
+    }}>
+      <Corners/>
 
-document.getElementById('masterVol').oninput = e => {
-    document.getElementById('masterVolLabel').textContent = e.target.value + '%';
-};
-document.getElementById('masterVol').onchange = async e => {
-    if (!selectedGuildId) return;
-    await apiCall('/api/soundboard/volume', { guild_id: selectedGuildId, volume: parseInt(e.target.value) });
-};
+      {/* Playing indicator bar */}
+      {isPlaying && (
+        <div style={{
+          position:"absolute",top:0,left:0,right:0,height:2,
+          background:"linear-gradient(90deg, var(--sigil-d), var(--sigil))",
+          boxShadow:"0 0 8px var(--sigil-g)",
+        }}/>
+      )}
 
-// ── Sound Actions ─────────────────────────────────────────
-async function playSound(filePath, loop, volume) {
-    if (!selectedGuildId) return;
-    const ch = document.getElementById('channelSelect').value;
-    if (!ch) { showToast('Select a voice channel first.'); return; }
-    await apiCall('/api/soundboard/play', {
-        guild_id: selectedGuildId, channel_id: ch,
-        file_path: filePath, loop: loop, volume_modifier: volume / 100.0
-    });
+      {/* Main face */}
+      <button onClick={handlePlay} style={{
+        flex:1,padding:"20px 14px 16px",
+        display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+        gap:10,minHeight:100,cursor:"pointer",
+        textAlign:"center",width:"100%",
+      }}>
+        <div className="serif" style={{
+          fontSize:28,lineHeight:1,
+          color: isPlaying ? "var(--sigil)" : "var(--bone-fade)",
+          transition:"color .2s",
+        }}>
+          {isPlaying ? "◉" : "◎"}
+        </div>
+        <div style={{
+          fontSize:11.5,fontWeight:500,lineHeight:1.35,
+          color: isPlaying ? "var(--bone)" : "var(--bone-dim)",
+          wordBreak:"break-word",maxWidth:"100%",
+        }}>{name}</div>
+      </button>
+
+      {/* Controls footer */}
+      <div style={{
+        borderTop:"1px solid var(--hair)",
+        padding:"10px 12px",
+        background:"rgba(0,0,0,.25)",
+        display:"flex",flexDirection:"column",gap:7,
+      }} onClick={e => e.stopPropagation()}>
+
+        {/* Volume */}
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span className="mono" style={{fontSize:9,color:"var(--bone-fade)",width:16,letterSpacing:0}}>◐</span>
+          <input type="range" min="0" max="100" value={localVol}
+            style={{flex:1,cursor:"pointer"}}
+            onChange={e => setLocalVol(+e.target.value)}
+            onMouseUp={() => onSaveSettings(file.path, localVol, localLoop)}
+            onTouchEnd={() => onSaveSettings(file.path, localVol, localLoop)}/>
+          <span className="mono" style={{fontSize:9,color:"var(--bone-fade)",width:24,textAlign:"right"}}>{localVol}%</span>
+        </div>
+
+        {/* Bottom controls */}
+        <div style={{display:"flex",alignItems:"center",gap:4}}>
+          <button
+            onClick={() => { const nl = !localLoop; setLocalLoop(nl); onSaveSettings(file.path, localVol, nl); }}
+            className="mono"
+            style={{
+              fontSize:9,letterSpacing:".14em",padding:"3px 6px",
+              border:"1px solid var(--hair-s)",
+              color: localLoop ? "var(--sigil)" : "var(--bone-fade)",
+              background: localLoop ? "rgba(120,220,170,.08)" : "transparent",
+              transition:"all .15s",
+            }}>
+            ↻ LOOP
+          </button>
+
+          <div style={{flex:1}}/>
+
+          {/* Fav */}
+          <button
+            onClick={() => onToggleFav(file.path)}
+            style={{
+              width:22,height:22,display:"grid",placeItems:"center",
+              fontSize:12,color: isFav ? "var(--rust)" : "var(--bone-fade)",
+              transition:"color .15s",
+            }} title={isFav ? "Remove from favourites" : "Add to favourites"}>
+            {isFav ? "♥" : "♡"}
+          </button>
+
+          {/* Rename */}
+          <button
+            onClick={() => onRename(file.path, name)}
+            style={{width:22,height:22,display:"grid",placeItems:"center",fontSize:11,color:"var(--bone-fade)"}}
+            title="Rename">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12.85 1.15a1.5 1.5 0 0 0-2.12 0L2 9.88V14h4.12l8.73-8.73a1.5 1.5 0 0 0 0-2.12l-2-2zm-1.06 1.06 2 2-1.44 1.44-2-2 1.44-1.44zM3.5 10.5l6-6 2 2-6 6H3.5v-2z"/>
+            </svg>
+          </button>
+
+          {/* Delete */}
+          <button
+            onClick={() => onDelete(file.path)}
+            style={{width:22,height:22,display:"grid",placeItems:"center",fontSize:11,color:"var(--bone-fade)"}}
+            title="Delete">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M6 2h4v1H6V2zm-2 2v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4h1V3H3v1h1zm1 0h6v9H5V4zm2 2v5h1V6H7zm2 0v5h1V6H9z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-async function updateTrackVolume(id, vol) {
-    if (!selectedGuildId) return;
-    await apiCall('/api/soundboard/track/volume', { guild_id: selectedGuildId, track_id: id, volume: parseInt(vol) });
-}
-async function updateTrackLoop(id, loop) {
-    if (!selectedGuildId) return;
-    await apiCall('/api/soundboard/track/loop', { guild_id: selectedGuildId, track_id: id, loop: loop });
-}
-async function updateTrackPause(id, paused) {
-    if (!selectedGuildId) return;
-    await apiCall('/api/soundboard/track/pause', { guild_id: selectedGuildId, track_id: id, paused: paused });
-}
-async function removeTrack(id) {
-    if (!selectedGuildId) return;
-    await apiCall('/api/soundboard/track/remove', { guild_id: selectedGuildId, track_id: id });
+/* ── Now Playing strip ──────────────────────────────────── */
+function NowPlaying({tracks, onStop, onPause, onLoopToggle, onTrackVolume}) {
+  if (!tracks.length) return null;
+  return (
+    <div style={{
+      flexShrink:0,
+      borderTop:"1px solid var(--sigil-d)",
+      background:"linear-gradient(0deg, var(--void-1), var(--void-0))",
+      padding:"10px 24px",
+      display:"flex",alignItems:"center",gap:0,
+      overflowX:"auto",
+      boxShadow:"0 -10px 30px rgba(0,0,0,.4)",
+      position:"relative",
+    }}>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg,transparent,var(--sigil),transparent)",opacity:.5}}/>
+      <div className="label" style={{marginRight:18,flexShrink:0,color:"var(--sigil)"}}>
+        Now Playing · {tracks.length}
+      </div>
+      <div style={{display:"flex",gap:8,flex:1,overflowX:"auto"}}>
+        {tracks.map(track => (
+          <div key={track.id} style={{
+            display:"flex",alignItems:"center",gap:10,
+            padding:"7px 12px",
+            border:"1px solid var(--sigil-d)",
+            background:"rgba(120,220,170,.04)",
+            flexShrink:0,position:"relative",
+          }}>
+            <span className="serif" style={{color:"var(--sigil)",fontSize:13,animation:"pulse-dot 2s ease-in-out infinite"}}>◉</span>
+            <span style={{fontSize:12,maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{fmtName(track.name)}</span>
+
+            <input type="range" min="0" max="100" defaultValue={track.volume}
+              style={{width:70,cursor:"pointer"}}
+              onMouseUp={e => onTrackVolume(track.id, +e.target.value)}
+              onTouchEnd={e => onTrackVolume(track.id, +e.target.value)}/>
+
+            <button className="mono" onClick={() => onLoopToggle(track.id, !track.loop)}
+              style={{fontSize:9,padding:"2px 5px",letterSpacing:".12em",
+                color: track.loop ? "var(--sigil)" : "var(--bone-fade)",
+                border:"1px solid var(--hair-s)"}}>
+              ↻
+            </button>
+
+            <button onClick={() => onPause(track.id, !track.paused)}
+              style={{fontSize:13,color:"var(--bone-fade)",width:18,display:"grid",placeItems:"center"}}>
+              {track.paused ? "▷" : "⏸"}
+            </button>
+
+            <button onClick={() => onStop(track.id)}
+              style={{fontSize:11,color:"var(--rust)",width:18,display:"grid",placeItems:"center"}}>
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-// ── File Management ───────────────────────────────────────
-async function createFolder() {
-    const inp = document.getElementById('newFolderName');
-    if (!inp.value.trim()) return;
-    await apiCall('/api/soundboard/folder/create', { folder_name: inp.value.trim() });
-    inp.value = '';
+/* ── Rename file modal ──────────────────────────────────── */
+function RenameModal({open, value, onChange, onConfirm, onClose}) {
+  if (!open) return null;
+  return (
+    <div style={{
+      position:"fixed",inset:0,zIndex:500,
+      display:"flex",alignItems:"center",justifyContent:"center",
+      background:"rgba(0,0,0,.7)",backdropFilter:"blur(4px)",
+    }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background:"var(--void-1)",border:"1px solid var(--hair-s)",
+        padding:"24px 28px",width:340,position:"relative",
+      }}>
+        <Corners/>
+        <div className="serif" style={{fontSize:18,marginBottom:14}}>Rename File</div>
+        <input type="text" value={value} onChange={e => onChange(e.target.value)}
+          autoFocus
+          onKeyDown={e => { if(e.key==="Enter") onConfirm(); if(e.key==="Escape") onClose(); }}
+          style={{width:"100%",marginBottom:14}}/>
+        <div className="mono" style={{fontSize:9,color:"var(--bone-fade)",letterSpacing:".1em",marginBottom:14}}>Extension preserved automatically</div>
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+          <button className="btn-eld" onClick={onClose}>Cancel</button>
+          <button className="btn-eld on" onClick={onConfirm}>Rename</button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-async function uploadFiles() {
-    const inp = document.getElementById('uploadFilesInput');
-    const folder = document.getElementById('uploadFolderSelect').value;
-    const btn = document.getElementById('uploadBtn');
-    if (!inp.files.length) { showToast('No files selected.'); return; }
+/* ── Main App ───────────────────────────────────────────── */
+function App() {
+  const [data, setData] = React.useState(null);
+  const [guildId, setGuildId] = React.useState(null);
+  const [channelId, setChannelId] = React.useState(null);
+  const [activeFolder, setActiveFolder] = React.useState(null);
+  const [masterVol, setMasterVol] = React.useState(50);
+  const [renameState, setRenameState] = React.useState({open:false, path:"", value:""});
+  const pollingRef = React.useRef(null);
 
-    const fd = new FormData();
-    for (const f of inp.files) fd.append('files', f);
-    fd.append('folder', folder);
-
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Uploading…';
-    btn.disabled = true;
+  /* ── Data fetching ──────────────────────────────────── */
+  const fetchData = React.useCallback(async () => {
     try {
-        const res = await fetch('/api/soundboard/upload', { method: 'POST', body: fd });
-        const data = await res.json();
-        if (data.status === 'error') showToast(data.message);
-        else { inp.value = ''; prevFilesStr = null; fetchData(); }
-    } catch(e) { showToast('Upload failed: ' + e); }
-    finally { btn.innerHTML = '<i class="bi bi-upload"></i> Upload'; btn.disabled = false; }
-}
+      const res = await fetch('/api/soundboard/data', {cache:"no-store"});
+      if (!res.ok) return;
+      const d = await res.json();
+      setData(prev => {
+        // Preserve guild/channel selection
+        if (!prev) {
+          if (d.guilds.length > 0) setGuildId(d.guilds[0].id);
+          if (d.guilds[0]?.channels.length > 0) setChannelId(d.guilds[0].channels[0].id);
+        }
+        return d;
+      });
+    } catch(e) { console.warn("Soundboard fetch error:", e); }
+  }, []);
 
-async function deleteFile(path) {
-    if (!confirm('Delete this sound file?')) return;
-    await apiCall('/api/soundboard/file/delete', { file_path: path });
-}
+  React.useEffect(() => {
+    fetchData();
+    pollingRef.current = setInterval(fetchData, 3000);
+    return () => clearInterval(pollingRef.current);
+  }, [fetchData]);
 
-async function deleteFolder(name) {
+  /* ── Derived state ──────────────────────────────────── */
+  const guilds = data?.guilds || [];
+  const guild = guilds.find(g => g.id === guildId);
+  const channels = guild?.channels || [];
+  const status = (data?.status || {})[guildId] || {};
+  const connected = status.is_connected || false;
+  const playing = status.is_playing || false;
+  const tracks = status.tracks || [];
+  const files = data?.files || {};
+  const settings = data?.settings || {};
+  const favorites = settings.favorites || [];
+
+  // Folder ordering: Favorites at top if any, then non-Root sorted, then Root
+  const allFolderKeys = Object.keys(files);
+  const favFiles = favorites.map(p => {
+    for (const list of Object.values(files)) {
+      const f = list.find(x => x.path === p);
+      if (f) return f;
+    }
+    return null;
+  }).filter(Boolean);
+  const folders = [];
+  if (favFiles.length > 0) folders.push("Favorites");
+  folders.push(...allFolderKeys.filter(k => k !== "Root").sort());
+  if (files["Root"]?.length) folders.push("Root");
+
+  // Default active folder
+  const effectiveFolder = activeFolder && (activeFolder === "Favorites" || files[activeFolder]) ? activeFolder : (folders[0] || null);
+  const activeFiles = effectiveFolder === "Favorites" ? favFiles : (files[effectiveFolder] || []);
+
+  // Sync master volume from API
+  React.useEffect(() => {
+    if (status.volume != null) setMasterVol(status.volume);
+  }, [status.volume]);
+
+  /* ── API call helper ────────────────────────────────── */
+  const apiCall = async (url, body, silent=false) => {
+    try {
+      const res = await fetch(url, {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(body),
+      });
+      const d = await res.json();
+      if (d.status === "error") showToast(d.message);
+      if (!silent) await fetchData();
+    } catch(e) { showToast("Error: " + e); }
+  };
+
+  /* ── Handlers ───────────────────────────────────────── */
+  const handlePlay = (path, loop, vol) => {
+    if (!connected) { showToast("Connect to a voice channel first."); return; }
+    apiCall('/api/soundboard/play', {guild_id:guildId, channel_id:channelId, file_path:path, loop, volume_modifier:vol/100});
+  };
+
+  const handleStop = trackId =>
+    apiCall('/api/soundboard/track/remove', {guild_id:guildId, track_id:trackId});
+
+  const handleStopAll = () =>
+    apiCall('/api/soundboard/stop', {guild_id:guildId});
+
+  const handlePause = (trackId, paused) =>
+    apiCall('/api/soundboard/track/pause', {guild_id:guildId, track_id:trackId, paused});
+
+  const handleLoopToggle = (trackId, loop) =>
+    apiCall('/api/soundboard/track/loop', {guild_id:guildId, track_id:trackId, loop});
+
+  const handleTrackVol = (trackId, vol) =>
+    apiCall('/api/soundboard/track/volume', {guild_id:guildId, track_id:trackId, volume:vol});
+
+  const handleJoin = () =>
+    apiCall('/api/soundboard/join', {guild_id:guildId, channel_id:channelId});
+
+  const handleLeave = () =>
+    apiCall('/api/soundboard/leave', {guild_id:guildId});
+
+  const handleVolume = async v => {
+    setMasterVol(v);
+    await apiCall('/api/soundboard/volume', {guild_id:guildId, volume:v}, true);
+  };
+
+  const handleToggleFav = path =>
+    apiCall('/api/soundboard/file/favorite', {file_path:path, favorited:!favorites.includes(path)});
+
+  const handleSaveSettings = (path, vol, loop) =>
+    apiCall('/api/soundboard/file/settings', {file_path:path, volume:vol, loop}, true);
+
+  const handleDelete = path => {
+    if (!confirm("Delete this sound file?")) return;
+    apiCall('/api/soundboard/file/delete', {file_path:path});
+  };
+
+  const handleRename = (path, currentName) =>
+    setRenameState({open:true, path, value:currentName});
+
+  const submitRename = () => {
+    if (!renameState.value.trim()) return;
+    apiCall('/api/soundboard/file/rename', {file_path:renameState.path, new_name:renameState.value.trim()});
+    setRenameState({open:false, path:"", value:""});
+  };
+
+  const handleNewFolder = name =>
+    apiCall('/api/soundboard/folder/create', {folder_name:name});
+
+  const handleRenameFolder = (oldName, newName) =>
+    apiCall('/api/soundboard/folder/rename', {old_name:oldName, new_name:newName});
+
+  const handleDeleteFolder = name => {
     if (!confirm(`Delete folder "${name}" and all its files?`)) return;
-    await apiCall('/api/soundboard/folder/delete', { folder_name: name });
-}
+    apiCall('/api/soundboard/folder/delete', {folder_name:name});
+  };
 
-function openRenameModal(path, currentName) {
-    document.getElementById('renameFilePath').value = path;
-    document.getElementById('renameInput').value = currentName;
-    renameModal.show();
-}
-
-async function submitRename() {
-    const path = document.getElementById('renameFilePath').value;
-    const name = document.getElementById('renameInput').value.trim();
-    if (!name) return;
-    await apiCall('/api/soundboard/file/rename', { file_path: path, new_name: name });
-    renameModal.hide();
-}
-
-async function saveFolderColor(name, color) {
-    await apiCall('/api/soundboard/folder/color', { folder_name: name, color: color });
-}
-
-function openRenameFolderModal(oldName) {
-    document.getElementById('renameFolderOldName').value = oldName;
-    document.getElementById('renameFolderInput').value = oldName;
-    renameFolderModal.show();
-}
-
-async function submitFolderRename() {
-    const oldName = document.getElementById('renameFolderOldName').value;
-    const newName = document.getElementById('renameFolderInput').value.trim();
-    if (!newName || newName === oldName) return;
-    await apiCall('/api/soundboard/folder/rename', { old_name: oldName, new_name: newName });
-    renameFolderModal.hide();
-}
-
-async function toggleFavorite(path, isFav) {
-    await apiCall('/api/soundboard/file/favorite', { file_path: path, favorited: !isFav });
-}
-
-async function saveFileSettings(path, volume, loop) {
-    // Silent save — don't trigger re-render
+  const handleUpload = async (fileList, folder) => {
+    const fd = new FormData();
+    for (const f of fileList) fd.append('files', f);
+    fd.append('folder', folder);
     try {
-        await fetch('/api/soundboard/file/settings', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ file_path: path, volume, loop })
-        });
-    } catch(e) { console.warn('Failed to save settings:', e); }
+      const res = await fetch('/api/soundboard/upload', {method:'POST', body:fd});
+      const d = await res.json();
+      if (d.status === 'error') showToast(d.message);
+      else await fetchData();
+    } catch(e) { showToast('Upload failed: ' + e); }
+  };
+
+  if (!data) return (
+    <div style={{display:"flex",height:"100vh",alignItems:"center",justifyContent:"center",gap:16}}>
+      <div className="serif" style={{fontSize:28,color:"var(--sigil)",animation:"breathe 2s ease-in-out infinite"}}>◉</div>
+      <div className="mono" style={{fontSize:10,letterSpacing:".22em",color:"var(--bone-fade)"}}>LOADING SÉANCE ROOM…</div>
+    </div>
+  );
+
+  return (
+    <div style={{display:"flex",height:"100vh",overflow:"hidden"}}>
+      <AppSidebar/>
+      <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        <TopBar
+          guilds={guilds} selectedGuild={guildId} onGuild={id => { setGuildId(id); setChannelId(data.guilds.find(g=>g.id===id)?.channels[0]?.id || null); }}
+          channels={channels} selectedChannel={channelId} onChannel={setChannelId}
+          connected={connected} playing={playing}
+          volume={masterVol} onVolume={handleVolume}
+          onJoin={handleJoin} onLeave={handleLeave} onStop={handleStopAll}
+        />
+
+        <div style={{flex:1,display:"flex",overflow:"hidden"}}>
+          <FolderSidebar
+            folders={folders}
+            activeFolder={effectiveFolder}
+            onFolder={setActiveFolder}
+            onNewFolder={handleNewFolder}
+            onRenameFolder={handleRenameFolder}
+            onDeleteFolder={handleDeleteFolder}
+            onUpload={handleUpload}
+          />
+
+          <main style={{flex:1,overflowY:"auto",padding:"24px 28px 24px"}}>
+            {/* Folder header */}
+            <div style={{display:"flex",alignItems:"baseline",gap:14,marginBottom:20}}>
+              <span className="serif" style={{fontSize:28,color:"var(--bone-fade)",lineHeight:1}}>
+                {folderGlyph(effectiveFolder || "")}
+              </span>
+              <h1 className="serif" style={{fontSize:28,fontWeight:400}}>{effectiveFolder === "Root" ? "Uncategorized" : (effectiveFolder || "—")}</h1>
+              <span className="mono" style={{fontSize:10,color:"var(--bone-fade)",letterSpacing:".2em"}}>
+                {activeFiles.length} CLIP{activeFiles.length !== 1 ? "S" : ""}
+              </span>
+              {!connected && (
+                <span className="mono" style={{marginLeft:"auto",fontSize:9,letterSpacing:".2em",color:"var(--rust)",border:"1px solid var(--rust-d)",padding:"3px 8px"}}>
+                  NOT CONNECTED — select a channel and connect
+                </span>
+              )}
+            </div>
+
+            {activeFiles.length === 0 ? (
+              <div style={{
+                border:"1px dashed var(--hair-s)",padding:"60px 40px",
+                textAlign:"center",display:"flex",flexDirection:"column",gap:10,
+                alignItems:"center",color:"var(--bone-fade)",
+              }}>
+                <span className="serif" style={{fontSize:36}}>◎</span>
+                <div className="serif-i" style={{fontSize:16}}>No sound files in this folder</div>
+                <div className="mono" style={{fontSize:10,letterSpacing:".18em"}}>UPLOAD AUDIO FILES USING THE PANEL ON THE LEFT</div>
+              </div>
+            ) : (
+              <div style={{
+                display:"grid",
+                gridTemplateColumns:"repeat(auto-fill, minmax(160px, 1fr))",
+                gap:1,
+                background:"var(--hair)",
+                border:"1px solid var(--hair)",
+              }}>
+                {activeFiles.map(file => {
+                  const isPlaying = tracks.some(t => t.id === file.path);
+                  const fs = settings.files?.[file.path] || {};
+                  return (
+                    <SoundCard
+                      key={file.path}
+                      file={file}
+                      isPlaying={isPlaying}
+                      vol={fs.volume ?? 100}
+                      loop={fs.loop ?? false}
+                      isFav={favorites.includes(file.path)}
+                      onPlay={handlePlay}
+                      onStop={handleStop}
+                      onRename={handleRename}
+                      onDelete={handleDelete}
+                      onToggleFav={handleToggleFav}
+                      onSaveSettings={handleSaveSettings}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </main>
+        </div>
+
+        <NowPlaying
+          tracks={tracks}
+          onStop={handleStop}
+          onPause={handlePause}
+          onLoopToggle={handleLoopToggle}
+          onTrackVolume={handleTrackVol}
+        />
+      </div>
+
+      <RenameModal
+        open={renameState.open}
+        value={renameState.value}
+        onChange={v => setRenameState(s => ({...s, value:v}))}
+        onConfirm={submitRename}
+        onClose={() => setRenameState({open:false, path:"", value:""})}
+      />
+    </div>
+  );
 }
 
-// ── API ───────────────────────────────────────────────────
-async function apiCall(url, body) {
-    try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        if (data.status === 'error') showToast(data.message);
-        else fetchData();
-    } catch(e) { showToast('API error: ' + e); }
-}
-
-// ── Init ──────────────────────────────────────────────────
-fetchData();
-setInterval(fetchData, 3000);
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
-{% endblock %}
+</body>
+</html>

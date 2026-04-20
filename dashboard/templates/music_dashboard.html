@@ -107,13 +107,16 @@ function renderGuild(guildId, guildData) {
         const url = track.url ? escHtml(track.url) : '';
         const thumbnail = track.thumbnail ? escHtml(track.thumbnail) : '';
         const vol = track.volume ?? 50;
-        const loopOn = track.loop;
+        const loopMode = track.loop_mode ?? 'off';
         const statusBadge = isPaused
             ? `<span class="badge bg-warning text-dark">⏸ Paused</span>`
             : `<span class="badge bg-success">▶ Playing</span>`;
-        const loopBadge = loopOn
-            ? `<span class="badge bg-info text-dark">🔁 Loop ON</span>`
-            : `<span class="badge bg-secondary">🔁 Loop OFF</span>`;
+        const loopBadgeMap = {
+            'off':   `<span class="badge bg-secondary">🔁 Loop OFF</span>`,
+            'track': `<span class="badge bg-info text-dark">🔂 Loop: Track</span>`,
+            'queue': `<span class="badge bg-primary">🔁 Loop: Queue</span>`,
+        };
+        const loopBadge = loopBadgeMap[loopMode] ?? loopBadgeMap['off'];
 
         const art = thumbnail
             ? `<img src="${thumbnail}" alt="cover" class="track-art">`
@@ -148,7 +151,7 @@ function renderGuild(guildId, guildData) {
             <div class="controls-row">
                 ${pauseBtn}
                 <button class="btn btn-outline-secondary btn-control" onclick="ctrl('${guildId}', 'skip')">⏭ Skip</button>
-                <button class="btn btn-outline-${loopOn ? 'info' : 'secondary'} btn-control" onclick="ctrl('${guildId}', 'loop')">🔁 Loop</button>
+                <button class="btn btn-outline-${loopMode === 'track' ? 'info' : loopMode === 'queue' ? 'primary' : 'secondary'} btn-control" onclick="ctrl('${guildId}', 'loop')">${loopMode === 'track' ? '🔂 Loop: Track' : loopMode === 'queue' ? '🔁 Loop: Queue' : '🔁 Loop: OFF'}</button>
                 <button class="btn btn-outline-danger btn-control" onclick="banTrack('${guildId}', '${url}')">🚫 Ban Song</button>
             </div>`;
     }
