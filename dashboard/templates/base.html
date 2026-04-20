@@ -10,6 +10,42 @@
 
     {% include 'includes/font_styles.html' %}
 
+    <!-- Void Theme CSS -->
+    <style>
+      :root {
+        --void-0: #0a0a0a;
+        --void-1: #141414;
+        --void-2: #1e1e1e;
+        --hair: #2a2a2a;
+        --hair-strong: #3a3a3a;
+        --bone: #d4d4d4;
+        --bone-fade: #888888;
+        --sigil: #8b7355;
+        --sigil-g: rgba(139, 115, 85, 0.3);
+        --rust: #b85c3c;
+        --rust-d: #7a3f28;
+        --accent: #6b9080;
+      }
+
+      .serif { font-family: "Libre Baskerville", serif; }
+      .mono { font-family: "IBM Plex Mono", monospace; }
+
+      @keyframes flicker {
+        0%, 18%, 22%, 25%, 54%, 56%, 100% { opacity: 1; }
+        20%, 24%, 55% { opacity: 0.8; }
+      }
+      .flicker { animation: flicker 7s infinite; }
+
+      /* Override navbar */
+      .navbar { background: linear-gradient(180deg, var(--void-0), var(--void-1)) !important; border-bottom: 1px solid var(--hair) !important; }
+      .navbar-brand { color: var(--bone) !important; }
+      .nav-link { color: var(--bone-fade) !important; }
+      .nav-link:hover { color: var(--bone) !important; }
+      .dropdown-menu { background: var(--void-2) !important; border-color: var(--hair) !important; }
+      .dropdown-item { color: var(--bone) !important; }
+      .dropdown-item:hover { background: var(--void-1) !important; color: var(--sigil) !important; }
+    </style>
+
     {% block extra_head %}{% endblock %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
