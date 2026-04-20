@@ -138,6 +138,7 @@
 <body>
     <div id="root"></div>
 
+    <script type="text/babel" data-presets="react" src="{{ url_for('static', filename='sidebar.jsx') }}"></script>
     <script type="text/babel" data-presets="react">
 {% raw %}
 const AppSidebar = () => { const C = window.AppSidebar; return C ? React.createElement(C) : null; };
@@ -263,7 +264,5 @@ function App() {
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 {% endraw %}
     </script>
-
-    <script type="text/babel" data-presets="react" src="{{ url_for('static', filename='sidebar.jsx') }}"></script>
 </body>
 </html>
