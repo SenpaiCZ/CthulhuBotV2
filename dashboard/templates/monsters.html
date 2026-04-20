@@ -128,7 +128,11 @@ function MonsterDetail({monster, statEmojis}) {
 function App({monstersData, statEmojis}) {
   const [search, setSearch] = React.useState('');
   const [selected, setSelected] = React.useState(null);
-  const filtered = monstersData.filter(m => m.monster_entry.name.toLowerCase().includes(search.toLowerCase()));
+  const data = Array.isArray(monstersData) ? monstersData : monstersData.monsters || [];
+  const filtered = data.filter(m => {
+    const name = m.monster_entry?.name || m.name || '';
+    return name.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <div style={{display:"flex",minHeight:"100vh"}}>
@@ -143,11 +147,15 @@ function App({monstersData, statEmojis}) {
             </div>
             <div className="sidebar-list">
               {filtered.length > 0 ? (
-                filtered.map(m => (
-                  <button key={m.monster_entry.name} className={`sidebar-item ${selected?.monster_entry.name === m.monster_entry.name ? 'active' : ''}`} onClick={() => setSelected(m)}>
-                    {m.monster_entry.name}
-                  </button>
-                ))
+                filtered.map(m => {
+                  const name = m.monster_entry?.name || m.name || 'Unknown';
+                  const isActive = selected?.monster_entry?.name === name || selected?.name === name;
+                  return (
+                    <button key={name} className={`sidebar-item ${isActive ? 'active' : ''}`} onClick={() => setSelected(m)}>
+                      {name}
+                    </button>
+                  );
+                }))
               ) : (
                 <div style={{padding:12,textAlign:"center",color:"var(--bone-fade)",fontSize:12}}>No creatures found.</div>
               )}
