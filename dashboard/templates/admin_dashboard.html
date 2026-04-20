@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Admin Dashboard</title>
+<title>Admin Dashboard — CthulhuBot</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Inter+Tight:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -61,11 +61,13 @@
   button:focus-visible,a:focus-visible{outline:1px solid var(--sigil);outline-offset:2px}
   @keyframes flicker{0%,92%,100%{opacity:1}93%{opacity:0.35}94%{opacity:1}96%{opacity:0.65}97%{opacity:1}}
   .flicker{animation:flicker 7s infinite}
+  @keyframes pulse-dot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:0.5}}
+  .pulse-dot{animation:pulse-dot 2.2s ease-in-out infinite}
   .label{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--bone-fade)}
   .btn-eld{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;background:transparent;border:1px solid var(--hair-strong);color:var(--bone);font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;transition:all .2s;cursor:pointer}
   .btn-eld:hover{border-color:var(--sigil);color:var(--sigil);box-shadow:inset 0 0 24px rgba(120,220,170,0.08)}
   .btn-eld.primary{border-color:var(--sigil-deep);color:var(--sigil);background:rgba(80,160,120,0.04)}
-  .btn-eld.primary:hover{background:rgba(80,160,120,0.1)}
+  .btn-eld.primary:hover{background:rgba(80,160,120,0.1);box-shadow:0 0 20px rgba(120,220,170,0.15),inset 0 0 20px rgba(120,220,170,0.08)}
   .btn-eld.rust{border-color:var(--rust-deep);color:var(--rust)}
   .btn-eld.rust:hover{background:rgba(180,70,60,0.08)}
   .card-h{background:linear-gradient(160deg,var(--void-1),var(--void-0));border:1px solid var(--hair);position:relative}
@@ -75,32 +77,45 @@
   .corner-tr{top:-1px;right:-1px;border-top:1px solid;border-right:1px solid}
   .corner-bl{bottom:-1px;left:-1px;border-bottom:1px solid;border-left:1px solid}
   .corner-br{bottom:-1px;right:-1px;border-bottom:1px solid;border-right:1px solid}
-
-  #root{display:flex;height:100vh;overflow:hidden}
-  header{flex-shrink:0;display:flex;align-items:center;gap:16px;padding:16px 32px;border-bottom:1px solid var(--hair-strong);background:linear-gradient(180deg,var(--void-0),transparent);position:sticky;top:0;z-index:10;backdrop-filter:blur(6px)}
-  main{flex:1;overflow-y:auto;padding:28px 40px 80px;display:flex;flex-direction:column;gap:28px}
-
-  .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-  .card{border:1px solid var(--hair);background:linear-gradient(160deg,var(--void-1),var(--void-0));padding:20px;transition:all 0.2s;cursor:pointer;position:relative}
-  .card::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,0.02),transparent 30%)}
-  .card:hover{border-color:var(--sigil);box-shadow:0 4px 16px rgba(0,0,0,0.3),inset 0 0 24px rgba(120,220,170,0.06)}
-  .card-title{color:var(--sigil);font-weight:600;margin-bottom:6px;font-size:14px;font-family:"IM Fell English SC",serif}
-  .card-desc{color:var(--bone-fade);font-size:12px;margin-bottom:12px;line-height:1.5}
-  .card-link{display:inline-flex;align-items:center;padding:6px 12px;border:1px solid var(--hair-strong);background:transparent;color:var(--bone-fade);font-size:10px;font-family:"IBM Plex Mono",monospace;letter-spacing:0.12em;text-transform:uppercase;transition:all 0.2s;text-decoration:none}
-  .card-link:hover{border-color:var(--sigil);color:var(--sigil)}
-
-  .section-title{color:var(--bone-dim);font-size:11px;letter-spacing:0.22em;text-transform:uppercase;font-family:"IBM Plex Mono",monospace;margin:20px 0 12px 0;padding-bottom:10px;border-bottom:1px solid var(--hair)}
-  .glyph{color:var(--sigil);margin-right:10px;opacity:0.8}
 </style>
 </head>
 <body>
 <div id="root"></div>
 
+<script>
+const IS_ADMIN = {{ is_admin | tojson }};
+
+async function confirmUpdate() {
+  if (confirm("Update the bot from GitHub? This will restart the system.")) {
+    try {
+      const r = await fetch('/api/admin/update', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({update_infodata: false})
+      });
+      const d = await r.json();
+      alert(d.status === 'success' ? d.message : 'Update failed: ' + d.message);
+    } catch(e) { alert('Error: ' + e); }
+  }
+}
+</script>
+
 <script type="text/babel" data-presets="react" src="{{ url_for('static', filename='sidebar.jsx') }}"></script>
 <script type="text/babel" data-presets="react">
-const IS_ADMIN = {{ is_admin | tojson }};
 {% raw %}
 const AppSidebar = () => { const C = window.AppSidebar; return C ? React.createElement(C) : null; };
+
+const Corners = () => (<>
+  <span className="corner-tl"/><span className="corner-tr"/>
+  <span className="corner-bl"/><span className="corner-br"/>
+</>);
+
+const Divider = ({label}) => (
+  <div style={{display:"flex",alignItems:"center",gap:12,margin:"0 0 16px"}}>
+    <span className="label" style={{color:"var(--sigil)"}}>✶</span>
+    <span className="label">{label}</span>
+    <span style={{flex:1,height:1,background:"linear-gradient(90deg, var(--hair-strong), transparent)"}}/>
+  </div>
+);
 
 function TopBar() {
   const [t, setT] = React.useState(new Date());
@@ -110,7 +125,14 @@ function TopBar() {
   }, []);
   const p = n => String(n).padStart(2, "0");
   return (
-    <header>
+    <header style={{
+      display:"flex",alignItems:"center",gap:16,
+      padding:"16px 32px",
+      borderBottom:"1px solid var(--hair)",
+      background:"linear-gradient(180deg, var(--void-0), transparent)",
+      position:"sticky",top:0,zIndex:10,
+      backdropFilter:"blur(6px)",
+    }}>
       <div className="mono flicker" style={{fontSize:10,letterSpacing:"0.22em",color:"var(--sigil)"}}>
         {`${p(t.getHours())}:${p(t.getMinutes())}:${p(t.getSeconds())}`}
       </div>
@@ -128,21 +150,81 @@ function TopBar() {
   );
 }
 
-function CardLink({title, desc, href}) {
+function BotStatus() {
+  const [vitals, setVitals] = React.useState(null);
+  React.useEffect(() => {
+    const poll = async () => {
+      try {
+        const r = await fetch('/api/status', {cache:"no-store"});
+        const d = await r.json();
+        setVitals(d);
+      } catch {}
+    };
+    poll();
+    const id = setInterval(poll, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  const items = vitals ? [
+    {k:"Status",  v: vitals.ready ? "Online" : "Starting",  color: vitals.ready ? "var(--sigil)" : "var(--amber)", dot: true},
+    {k:"Uptime",  v: vitals.uptime ?? "—",                  color:"var(--bone)"},
+    {k:"Latency", v: vitals.latency_ms != null ? `${vitals.latency_ms} ms` : "—", color:"var(--bone)"},
+    {k:"Memory",  v: vitals.memory_mb ? `${vitals.memory_mb} MB` : "—", color:"var(--bone)"},
+    {k:"Guilds",  v: vitals.guilds != null ? String(vitals.guilds) : "—", color:"var(--bone)"},
+  ] : [{k:"Status", v:"Connecting…", color:"var(--bone-fade)", dot:true}];
+
   return (
-    <a href={href} className="card" style={{display:"block",textDecoration:"none"}}>
-      <div className="card-title">{title}</div>
-      <div className="card-desc">{desc}</div>
-      <span className="card-link">Open →</span>
+    <div className="card-h" style={{padding:"16px 24px",display:"flex",alignItems:"center",gap:24,position:"relative",overflow:"hidden"}}>
+      <Corners/>
+      <div style={{display:"flex",alignItems:"center",gap:0,flex:1,flexWrap:"wrap",rowGap:10}}>
+        <div className="serif" style={{fontSize:15,marginRight:16,borderRight:"1px solid var(--hair-strong)",paddingRight:16,letterSpacing:"0.06em"}}>System Vitals</div>
+        {items.map(v => (
+          <div key={v.k} style={{display:"flex",alignItems:"baseline",gap:8,paddingRight:24,borderRight:"1px solid var(--hair)"}}>
+            <span className="mono" style={{fontSize:10,letterSpacing:"0.18em",color:"var(--bone-fade)"}}>{v.k.toUpperCase()}</span>
+            <span className="mono" style={{fontSize:12,color:v.color,letterSpacing:"0.1em",display:"flex",alignItems:"center",gap:5}}>
+              {v.dot && <span className="pulse-dot" style={{width:6,height:6,borderRadius:"50%",background:v.color,boxShadow:`0 0 6px ${v.color}`}}/>}
+              {v.v}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",gap:8}}>
+        <button className="btn-eld" style={{padding:"6px 10px",fontSize:10}} onClick={async () => {
+          try {
+            const r = await fetch('/api/admin/sync_guild', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+            const d = await r.json();
+            alert(d.message || 'Synced');
+          } catch(e) { alert('Error: ' + e); }
+        }}>↻ SYNC GUILD</button>
+        <button className="btn-eld rust" style={{padding:"6px 10px",fontSize:10}} onClick={() => window.confirmUpdate()}>↑ UPDATE BOT</button>
+      </div>
+    </div>
+  );
+}
+
+function AdminTile({k, g, desc, href, rust}) {
+  return (
+    <a href={href}
+      style={{background:"var(--void-1)",padding:"20px 20px 18px",display:"block",transition:"background .2s",position:"relative",borderRight:"1px solid var(--hair)",borderBottom:"1px solid var(--hair)"}}
+      onMouseEnter={e => e.currentTarget.style.background="var(--void-2)"}
+      onMouseLeave={e => e.currentTarget.style.background="var(--void-1)"}
+    >
+      <div style={{marginBottom:12}}>
+        <span className="serif" style={{fontSize:22,color: rust ? "var(--rust)" : "var(--bone-fade)",lineHeight:1}}>{g}</span>
+      </div>
+      <div className="serif" style={{fontSize:16,marginBottom:6,color: rust ? "var(--rust)" : "var(--bone)"}}>{k}</div>
+      <div style={{fontSize:11,color:"var(--bone-fade)",lineHeight:1.6}}>{desc}</div>
     </a>
   );
 }
 
-function Section({title, marker, children}) {
+function Section({title, label, children}) {
   return (
-    <div>
-      <div className="section-title"><span className="glyph">{marker}</span>{title}</div>
-      <div className="card-grid">{children}</div>
+    <div style={{marginBottom:32}}>
+      <Divider label={label || title}/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(240px, 1fr))",gap:1,background:"var(--hair)",borderLeft:"1px solid var(--hair)",borderTop:"1px solid var(--hair)"}}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -153,65 +235,79 @@ function App() {
       <AppSidebar/>
       <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column"}}>
         <TopBar/>
-        <main>
-          <h1 className="serif" style={{fontSize:32,marginBottom:8}}>Admin Dashboard</h1>
+        <main style={{padding:"28px 40px 80px",display:"flex",flexDirection:"column",gap:28}}>
+          
+          <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:4,gap:20,flexWrap:"wrap"}}>
+            <div>
+              <div className="label">System Administration</div>
+              <h1 className="serif" style={{fontSize:42,margin:"8px 0 0"}}>Admin Console</h1>
+            </div>
+            <BotStatus/>
+          </div>
 
-          <Section title="Keeper Tools" marker="◈">
-            <CardLink title="Active Characters" desc="View and manage active investigators." href="/characters"/>
-            <CardLink title="Retired Characters" desc="View the graveyard of retired investigators." href="/retired"/>
-            <CardLink title="Polls" desc="Create and manage polls." href="/admin/polls"/>
-            <CardLink title="Reminders" desc="Manage reminders." href="/admin/reminders"/>
-            <CardLink title="Dashboard Design" desc="Change the visual theme." href="/admin/design"/>
+          <Section title="Keeper Tools" label="Investigator & Campaign Management">
+            <AdminTile k="Active Characters" g="✶" desc="Manage active investigator sheets and stats." href="/characters"/>
+            <AdminTile k="Retired Characters" g="†" desc="Browse the archive of dead or retired investigators." href="/retired"/>
+            <AdminTile k="Polls" g="◈" desc="Create and manage interactive server polls." href="/admin/polls"/>
+            <AdminTile k="Reminders" g="◷" desc="Manage scheduled server reminders." href="/admin/reminders"/>
+            <AdminTile k="Dashboard Design" g="🎨" desc="Visual theme and font configuration." href="/admin/design"/>
+            <AdminTile k="Game Settings" g="⚙" desc="Luck threshold and gameplay configuration." href="/admin/game_settings"/>
           </Section>
 
-          <Section title="Grimoire" marker="Ψ">
-            <CardLink title="Monsters" desc="View the Grimoire of Monsters." href="/monsters"/>
-            <CardLink title="Deities" desc="View the Pantheon of Deities." href="/deities"/>
-            <CardLink title="Spells" desc="Browse the arcane Spells." href="/spells"/>
+          <Section title="Grimoire" label="Reference Library">
+            <AdminTile k="Monsters" g="Ψ" desc="The Grimoire of Cthulhu Mythos monsters." href="/monsters"/>
+            <AdminTile k="Deities" g="☉" desc="Great Old Ones, Outer Gods and Elder Gods." href="/deities"/>
+            <AdminTile k="Spells" g="✷" desc="Arcane spells, rituals and enchantments." href="/spells"/>
+            <AdminTile k="Occupations" g="⚒" desc="Investigator professions 1890–1930." href="/occupations"/>
+            <AdminTile k="Skills" g="◉" desc="Investigator skills and base values." href="/skills"/>
+            <AdminTile k="Weapons" g="†" desc="Firearms, melee and improvised weapons." href="/weapons"/>
+            <AdminTile k="Poisons" g="✡" desc="Lethal substances and their effects." href="/poisons"/>
           </Section>
 
-          <Section title="Pulp Cthulhu" marker="✦">
-            <CardLink title="Archetypes" desc="Browse Pulp Cthulhu Archetypes." href="/archetypes"/>
-            <CardLink title="Pulp Talents" desc="View Pulp Talents by category." href="/pulp_talents"/>
-            <CardLink title="Insane Talents" desc="View Insane Talents." href="/insane_talents"/>
+          <Section title="Pulp Cthulhu" label="Pulp & Advanced Rules">
+            <AdminTile k="Archetypes" g="✶" desc="Pulp Cthulhu hero archetypes." href="/archetypes"/>
+            <AdminTile k="Pulp Talents" g="✦" desc="Heroic talents for Pulp investigators." href="/pulp_talents"/>
+            <AdminTile k="Insane Talents" g="☣" desc="Dark gifts acquired through madness." href="/insane_talents"/>
           </Section>
 
-          <Section title="Reference" marker="⚒">
-            <CardLink title="Occupations" desc="Browse Occupations." href="/occupations"/>
-            <CardLink title="Skills" desc="Skill descriptions and base values." href="/skills"/>
-            <CardLink title="Inventions" desc="Timeline of Inventions." href="/inventions"/>
-            <CardLink title="Years Timeline" desc="Timeline of historical events." href="/years"/>
-            <CardLink title="Manias" desc="List of Manias." href="/manias"/>
-            <CardLink title="Phobias" desc="List of Phobias." href="/phobias"/>
-            <CardLink title="Weapons" desc="View the Armory of Weapons." href="/weapons"/>
-            <CardLink title="Poisons" desc="List of Poisons." href="/poisons"/>
+          <Section title="Historical Reference" label="Timelines & Conditions">
+            <AdminTile k="Inventions" g="⚙" desc="Timeline of historical inventions by decade." href="/inventions"/>
+            <AdminTile k="Years Timeline" g="⏳" desc="Key historical events 1890–1950." href="/years"/>
+            <AdminTile k="Manias" g="☿" desc="Mental conditions acquired on SAN loss." href="/manias"/>
+            <AdminTile k="Phobias" g="☢" desc="Irrational dreads and psychological traumas." href="/phobias"/>
           </Section>
 
-          <Section title="Audio" marker="♪">
-            <CardLink title="Soundboard" desc="Play audio files in voice channels." href="/admin/soundboard"/>
-            <CardLink title="Music Bot" desc="Manage music queue and bans." href="/admin/music"/>
+          <Section title="Audio & Media" label="Voice Channel Controls">
+            <AdminTile k="Soundboard" g="◐" desc="Play audio clips and manage library." href="/admin/soundboard"/>
+            <AdminTile k="Music Bot" g="♪" desc="Music queue, bans and configuration." href="/admin/music"/>
           </Section>
 
-          <Section title="Server Administration" marker="⚙">
-            <CardLink title="Auto Rooms" desc="Configure automatic voice channel creation." href="/admin/autorooms"/>
-            <CardLink title="Auto Deleter" desc="Manage auto-deletion rules and bulk delete." href="/admin/deleter"/>
-            <CardLink title="Reaction Roles" desc="Assign roles via message reactions." href="/admin/reactionroles"/>
-            <CardLink title="Karma System" desc="Configure reaction channel and emojis." href="/admin/karma"/>
-            <CardLink title="Gamer Roles" desc="Configure automatic game roles." href="/admin/gameroles"/>
-            <CardLink title="Giveaways" desc="Manage server giveaways." href="/admin/giveaway"/>
+          <Section title="Server Operations" label="Automation & Roles">
+            <AdminTile k="Auto Rooms" g="⌘" desc="Automatic voice channel creation rules." href="/admin/autorooms"/>
+            <AdminTile k="Auto Deleter" g="⌫" desc="Message auto-deletion and purge tools." href="/admin/deleter"/>
+            <AdminTile k="Reaction Roles" g="✧" desc="Self-assignable roles via reactions." href="/admin/reactionroles"/>
+            <AdminTile k="Karma System" g="☥" desc="Reaction-based reputation and leaderboard." href="/admin/karma"/>
+            <AdminTile k="Gamer Roles" g="⚔" desc="Automatic game-based role assignment." href="/admin/gameroles"/>
+            <AdminTile k="Giveaways" g="✦" desc="Create and manage server giveaways." href="/admin/giveaway"/>
+            <AdminTile k="Enrollment" g="✎" desc="Role enrollment wizard configuration." href="/admin/enroll"/>
           </Section>
 
-          <Section title="Information" marker="⌁">
-            <CardLink title="RSS Feeds" desc="Manage RSS subscriptions and channels." href="/admin/rss"/>
-            <CardLink title="Pokemon GO" desc="Manage events and notifications." href="/admin/pokemon"/>
+          <Section title="Feeds & External" label="External Integrations">
+            <AdminTile k="RSS & YouTube" g="⌁" desc="Manage automated news and video feeds." href="/admin/rss"/>
+            <AdminTile k="Pokemon GO" g="○" desc="Event notifications and raid coordination." href="/admin/pokemon"/>
           </Section>
 
-          <Section title="Server" marker="◎">
-            <CardLink title="Bot Configuration" desc="Manage bot status and server prefixes." href="/admin/bot_config"/>
-            <CardLink title="Data Files" desc="Manage raw data files." href="/admin/browse/data"/>
-            <CardLink title="Info Data" desc="Manage game data files." href="/admin/browse/infodata"/>
-            <CardLink title="Backup System" desc="Manage automated backups." href="/admin/backup"/>
+          <Section title="System" label="Bot & Infrastructure">
+            <AdminTile k="Bot Configuration" g="◎" desc="Status, prefix and core bot settings." href="/admin/bot_config"/>
+            <AdminTile k="Backup System" g="⧗" desc="Manage automated and manual backups." href="/admin/backup"/>
+            <AdminTile k="Data Files" g="⌗" desc="Raw JSON data file editor." href="/admin/browse/data"/>
+            <AdminTile k="Info Data" g="🗇" desc="Static game data file editor." href="/admin/browse/infodata"/>
           </Section>
+
+          <footer style={{textAlign:"center",paddingTop:40,borderTop:"1px solid var(--hair)",color:"var(--bone-fade)",marginTop:20}}>
+            <div className="serif-i" style={{fontSize:15}}>"Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn."</div>
+            <div className="mono" style={{fontSize:9,letterSpacing:"0.22em",marginTop:8}}>CTHULHUBOT V2 ADMIN · RESTRICTED ACCESS</div>
+          </footer>
         </main>
       </div>
     </div>
