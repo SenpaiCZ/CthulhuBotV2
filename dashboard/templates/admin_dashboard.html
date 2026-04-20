@@ -98,6 +98,7 @@
 
 <script type="text/babel" data-presets="react" src="{{ url_for('static', filename='sidebar.jsx') }}"></script>
 <script type="text/babel" data-presets="react">
+const IS_ADMIN = {{ is_admin | tojson }};
 {% raw %}
 const AppSidebar = () => { const C = window.AppSidebar; return C ? React.createElement(C) : null; };
 
@@ -118,8 +119,11 @@ function TopBar() {
         {t.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"}).toUpperCase()}
       </div>
       <div style={{flex:1}}/>
-      <a href="/" style={{padding:"7px 12px",border:"1px solid var(--hair-strong)",background:"transparent",color:"var(--bone)",textDecoration:"none",fontSize:11,fontFamily:"IBM Plex Mono",letterSpacing:"0.08em",cursor:"pointer"}}>Home</a>
-      <a href="/logout" style={{padding:"7px 12px",border:"1px solid var(--rust-deep)",background:"transparent",color:"var(--rust)",textDecoration:"none",fontSize:11,fontFamily:"IBM Plex Mono",letterSpacing:"0.08em",cursor:"pointer"}}>Logout</a>
+      <a href="/" className="btn-eld" style={{fontSize:11}}>Home</a>
+      {IS_ADMIN
+        ? <a href="/logout" className="btn-eld rust" style={{fontSize:11}}>Logout</a>
+        : <a href="/login" className="btn-eld" style={{fontSize:11}}>Login</a>
+      }
     </header>
   );
 }

@@ -300,7 +300,10 @@ function TopBar() {
         />
       </div>
       {IS_ADMIN && <a href="/admin" className="btn-eld primary" style={{fontSize:11}}><span className="serif" style={{fontSize:14}}>⚙</span> Admin Panel</a>}
-      <a href="/logout" className="btn-eld rust" style={{fontSize:11}}>Logout</a>
+      {IS_ADMIN
+        ? <a href="/logout" className="btn-eld rust" style={{fontSize:11}}>Logout</a>
+        : <a href="/login" className="btn-eld" style={{fontSize:11}}>Login</a>
+      }
     </header>
   );
 }
