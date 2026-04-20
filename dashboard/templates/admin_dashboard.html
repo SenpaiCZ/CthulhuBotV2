@@ -1,369 +1,269 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
 
-{% block title %}Admin Dashboard{% endblock %}
+    <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-{% block content %}
-<h2 class="mb-4">Admin Dashboard</h2>
+    {% include 'includes/font_styles.html' %}
 
-<h3 class="mb-3">Keeper Tools</h3>
+    <style>
+      :root {
+        --void-0: #0a0a0a;
+        --void-1: #141414;
+        --void-2: #1e1e1e;
+        --hair: #2a2a2a;
+        --hair-strong: #3a3a3a;
+        --bone: #d4d4d4;
+        --bone-fade: #888888;
+        --sigil: #8b7355;
+        --sigil-g: rgba(139, 115, 85, 0.3);
+        --rust: #b85c3c;
+        --accent: #6b9080;
+      }
 
-<h5 class="border-bottom pb-2">Characters</h5>
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Active Characters</h5>
-                <p class="card-text">View and manage active investigators.</p>
-                <a href="/characters" class="btn btn-primary">View Characters</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Retired Characters</h5>
-                <p class="card-text">View the graveyard of retired investigators.</p>
-                <a href="/retired" class="btn btn-secondary">View Retired</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Polls</h5>
-                <p class="card-text">Create and manage polls.</p>
-                <a href="/admin/polls" class="btn btn-primary">Manage Polls</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Reminders</h5>
-                <p class="card-text">Manage reminders.</p>
-                <a href="/admin/reminders" class="btn btn-warning">Manage Reminders</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Dashboard Design</h5>
-                <p class="card-text">Change the visual theme of the dashboard.</p>
-                <a href="/admin/design" class="btn btn-primary">Change Theme</a>
-            </div>
-        </div>
-    </div>
-</div>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        background: var(--void-0);
+        color: var(--bone);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+      }
 
-<h5 class="border-bottom pb-2 mt-3">Grimoire</h5>
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Monsters</h5>
-                <p class="card-text">View the Grimoire of Monsters.</p>
-                <a href="/monsters" class="btn btn-primary">Open Grimoire</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Deities</h5>
-                <p class="card-text">View the Pantheon of Deities.</p>
-                <a href="/deities" class="btn btn-primary">Open Pantheon</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Spells</h5>
-                <p class="card-text">Browse the arcane Spells.</p>
-                <a href="/spells" class="btn btn-primary">Open Grimoire</a>
-            </div>
-        </div>
-    </div>
-</div>
+      .serif { font-family: "Libre Baskerville", serif; }
+      .mono { font-family: "IBM Plex Mono", monospace; }
 
-<h5 class="border-bottom pb-2 mt-3">Pulp</h5>
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Archetypes</h5>
-                <p class="card-text">Browse Pulp Cthulhu Archetypes.</p>
-                <a href="/archetypes" class="btn btn-success">View Archetypes</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Pulp Talents</h5>
-                <p class="card-text">View Pulp Talents by category.</p>
-                <a href="/pulp_talents" class="btn btn-success">View Talents</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Insane Talents</h5>
-                <p class="card-text">View Insane Talents.</p>
-                <a href="/insane_talents" class="btn btn-warning">View Insane Talents</a>
-            </div>
-        </div>
-    </div>
-</div>
+      @keyframes flicker {
+        0%, 18%, 22%, 25%, 54%, 56%, 100% { opacity: 1; }
+        20%, 24%, 55% { opacity: 0.8; }
+      }
+      .flicker { animation: flicker 7s infinite; }
 
-<h5 class="border-bottom pb-2 mt-3">References</h5>
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Occupations</h5>
-                <p class="card-text">Browse Occupations.</p>
-                <a href="/occupations" class="btn btn-info">View Occupations</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Skills</h5>
-                <p class="card-text">Skill descriptions and base values.</p>
-                <a href="/skills" class="btn btn-info">View Skills</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Inventions</h5>
-                <p class="card-text">Timeline of Inventions.</p>
-                <a href="/inventions" class="btn btn-info">View Inventions</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Years Timeline</h5>
-                <p class="card-text">Timeline of historical events.</p>
-                <a href="/years" class="btn btn-info">View Timeline</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Manias</h5>
-                <p class="card-text">List of Manias.</p>
-                <a href="/manias" class="btn btn-warning">View Manias</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Phobias</h5>
-                <p class="card-text">List of Phobias.</p>
-                <a href="/phobias" class="btn btn-warning">View Phobias</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Weapons</h5>
-                <p class="card-text">View the Armory of Weapons.</p>
-                <a href="/weapons" class="btn btn-primary">Open Armory</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Poisons</h5>
-                <p class="card-text">List of Poisons.</p>
-                <a href="/poisons" class="btn btn-info">View Poisons</a>
-            </div>
-        </div>
-    </div>
-</div>
+      #root { display: flex; height: 100vh; overflow: hidden; }
 
-<h5 class="border-bottom pb-2 mt-3">Administration</h5>
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Game Settings</h5>
-                <p class="card-text">Configure gameplay rules (Luck Threshold, etc).</p>
-                <a href="/admin/game_settings" class="btn btn-primary">Game Settings</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Info Data</h5>
-                <p class="card-text">Manage raw game data files.</p>
-                <a href="/admin/browse/infodata" class="btn btn-secondary">Browse Info Data</a>
-            </div>
-        </div>
-    </div>
-</div>
+      header {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 32px;
+        border-bottom: 1px solid var(--hair);
+        background: linear-gradient(180deg, var(--void-0), transparent);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(6px);
+      }
 
-<h3 class="mb-3 mt-4">Audio</h3>
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Soundboard</h5>
-                <p class="card-text">Play audio files in voice channels.</p>
-                <a href="/admin/soundboard" class="btn btn-success">Open Soundboard</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Music Bot</h5>
-                <p class="card-text">Manage music queue and bans.</p>
-                <a href="/admin/music" class="btn btn-info">Open Music Panel</a>
-            </div>
-        </div>
-    </div>
-</div>
+      main {
+        padding: 28px 40px 80px;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+        overflow-y: auto;
+      }
 
-<h3 class="mb-3 mt-4">Server Administration</h3>
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+      }
 
-<h5 class="border-bottom pb-2">Automatization</h5>
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Auto Rooms</h5>
-                <p class="card-text">Configure automatic voice channel creation.</p>
-                <a href="/admin/autorooms" class="btn btn-primary">Manage Auto Rooms</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Auto Deleter</h5>
-                <p class="card-text">Manage auto-deletion rules and bulk delete.</p>
-                <a href="/admin/deleter" class="btn btn-danger">Manage Auto Deleter</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Reaction Roles</h5>
-                <p class="card-text">Assign roles via message reactions.</p>
-                <a href="/admin/reactionroles" class="btn btn-primary">Manage Roles</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Karma System</h5>
-                <p class="card-text">Configure reaction channel and emojis.</p>
-                <a href="/admin/karma" class="btn btn-primary">Manage Karma</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Gamer Roles</h5>
-                <p class="card-text">Configure automatic game roles.</p>
-                <a href="/admin/gameroles" class="btn btn-info">Manage Roles</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Giveaways</h5>
-                <p class="card-text">Manage server giveaways.</p>
-                <a href="/admin/giveaway" class="btn btn-warning">Manage Giveaways</a>
-            </div>
-        </div>
-    </div>
-</div>
+      .card {
+        border: 1px solid var(--hair);
+        background: linear-gradient(135deg, var(--void-1), var(--void-2));
+        padding: 20px;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+      .card:hover {
+        border-color: var(--sigil);
+        box-shadow: 0 4px 16px rgba(139, 115, 85, 0.2);
+        transform: translateY(-2px);
+      }
 
-<h5 class="border-bottom pb-2 mt-3">Information</h5>
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">RSS Feeds</h5>
-                <p class="card-text">Manage RSS subscriptions and channels.</p>
-                <a href="/admin/rss" class="btn btn-warning">Manage Feeds</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Pokemon GO</h5>
-                <p class="card-text">Manage events and notifications.</p>
-                <a href="/admin/pokemon" class="btn btn-warning">Manage Pokemon GO</a>
-            </div>
-        </div>
-    </div>
-</div>
+      .card-title {
+        color: var(--sigil);
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 15px;
+      }
 
-<h5 class="border-bottom pb-2 mt-3">Server</h5>
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Bot Configuration</h5>
-                <p class="card-text">Manage bot status and server prefixes.</p>
-                <a href="/admin/bot_config" class="btn btn-primary">Manage Bot</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Data Files</h5>
-                <p class="card-text">Manage raw data files (Stats, Servers, etc).</p>
-                <a href="/admin/browse/data" class="btn btn-warning">Browse Data Files</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Backup System</h5>
-                <p class="card-text">Manage automated backups and run manual backups.</p>
-                <a href="/admin/backup" class="btn btn-secondary">Manage Backups</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="card border-danger">
-            <div class="card-body">
-                <h5 class="card-title text-danger">System Update</h5>
-                <p class="card-text">Update the bot to the latest version from GitHub and restart.</p>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" value="" id="updateInfodataCheck">
-                    <label class="form-check-label" for="updateInfodataCheck">
-                        Update Infodata (Overwrite changes)
-                    </label>
-                </div>
-                <button class="btn btn-danger" onclick="confirmUpdate()">Update Bot</button>
-            </div>
-        </div>
-    </div>
-</div>
+      .card-desc {
+        color: var(--bone-fade);
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
 
-{% endblock %}
+      .card a {
+        display: inline-block;
+        padding: 8px 14px;
+        border: 1px solid var(--hair);
+        background: var(--void-2);
+        color: var(--bone);
+        text-decoration: none;
+        font-size: 12px;
+        font-family: "IBM Plex Mono", monospace;
+        letter-spacing: 0.08em;
+        transition: all 0.2s;
+      }
+      .card a:hover {
+        border-color: var(--sigil);
+        color: var(--sigil);
+      }
+
+      .section-title {
+        color: var(--bone);
+        font-size: 18px;
+        margin-top: 20px;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--hair-strong);
+      }
+
+      .corner-marker {
+        display: inline-block;
+        color: var(--sigil);
+        margin-right: 8px;
+        opacity: 0.6;
+      }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-presets="react">
+{% raw %}
+const AppSidebar = () => { const C = window.AppSidebar; return C ? React.createElement(C) : null; };
+
+function TopBar() {
+  const [t, setT] = React.useState(new Date());
+  React.useEffect(() => {
+    const id = setInterval(() => setT(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const p = n => String(n).padStart(2, "0");
+
+  return (
+    <header>
+      <div className="mono flicker" style={{fontSize:10,letterSpacing:"0.22em",color:"var(--sigil)"}}>
+        {`${p(t.getHours())}:${p(t.getMinutes())}:${p(t.getSeconds())}`}
+      </div>
+      <span style={{width:1,height:14,background:"var(--hair-strong)"}}/>
+      <div className="mono" style={{fontSize:10,letterSpacing:"0.18em",color:"var(--bone-fade)"}}>
+        {t.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"}).toUpperCase()}
+      </div>
+      <div style={{flex:1}}/>
+      <a href="/" style={{padding:"7px 12px",border:"1px solid var(--hair)",background:"var(--void-1)",color:"var(--bone)",textDecoration:"none",fontSize:11,fontFamily:"IBM Plex Mono",letterSpacing:"0.08em",cursor:"pointer"}}>Home</a>
+      <a href="/logout" style={{padding:"7px 12px",border:"1px solid var(--rust)",background:"var(--void-1)",color:"var(--rust)",textDecoration:"none",fontSize:11,fontFamily:"IBM Plex Mono",letterSpacing:"0.08em",cursor:"pointer"}}>Logout</a>
+    </header>
+  );
+}
+
+function CardLink({title, desc, href}) {
+  return (
+    <div className="card">
+      <div className="card-title">{title}</div>
+      <div className="card-desc">{desc}</div>
+      <a href={href}>Open →</a>
+    </div>
+  );
+}
+
+function Section({title, marker, children}) {
+  return (
+    <div>
+      <div className="section-title">
+        <span className="corner-marker">{marker}</span>{title}
+      </div>
+      <div className="card-grid">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <div style={{display:"flex",minHeight:"100vh"}}>
+      <AppSidebar/>
+      <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column"}}>
+        <TopBar/>
+        <main>
+          <h1 className="serif" style={{fontSize:32,marginBottom:8}}>Admin Dashboard</h1>
+
+          <Section title="Keeper Tools" marker="◈">
+            <CardLink title="Active Characters" desc="View and manage active investigators." href="/characters"/>
+            <CardLink title="Retired Characters" desc="View the graveyard of retired investigators." href="/retired"/>
+            <CardLink title="Polls" desc="Create and manage polls." href="/admin/polls"/>
+            <CardLink title="Reminders" desc="Manage reminders." href="/admin/reminders"/>
+            <CardLink title="Dashboard Design" desc="Change the visual theme." href="/admin/design"/>
+          </Section>
+
+          <Section title="Grimoire" marker="◈">
+            <CardLink title="Monsters" desc="View the Grimoire of Monsters." href="/monsters"/>
+            <CardLink title="Deities" desc="View the Pantheon of Deities." href="/deities"/>
+            <CardLink title="Spells" desc="Browse the arcane Spells." href="/spells"/>
+          </Section>
+
+          <Section title="Pulp Cthulhu" marker="◈">
+            <CardLink title="Archetypes" desc="Browse Pulp Cthulhu Archetypes." href="/archetypes"/>
+            <CardLink title="Pulp Talents" desc="View Pulp Talents by category." href="/pulp_talents"/>
+            <CardLink title="Insane Talents" desc="View Insane Talents." href="/insane_talents"/>
+          </Section>
+
+          <Section title="Reference" marker="◈">
+            <CardLink title="Occupations" desc="Browse Occupations." href="/occupations"/>
+            <CardLink title="Skills" desc="Skill descriptions and base values." href="/skills"/>
+            <CardLink title="Inventions" desc="Timeline of Inventions." href="/inventions"/>
+            <CardLink title="Years Timeline" desc="Timeline of historical events." href="/years"/>
+            <CardLink title="Manias" desc="List of Manias." href="/manias"/>
+            <CardLink title="Phobias" desc="List of Phobias." href="/phobias"/>
+            <CardLink title="Weapons" desc="View the Armory of Weapons." href="/weapons"/>
+            <CardLink title="Poisons" desc="List of Poisons." href="/poisons"/>
+          </Section>
+
+          <Section title="Audio" marker="♪">
+            <CardLink title="Soundboard" desc="Play audio files in voice channels." href="/admin/soundboard"/>
+            <CardLink title="Music Bot" desc="Manage music queue and bans." href="/admin/music"/>
+          </Section>
+
+          <Section title="Server Administration" marker="⚙">
+            <CardLink title="Auto Rooms" desc="Configure automatic voice channel creation." href="/admin/autorooms"/>
+            <CardLink title="Auto Deleter" desc="Manage auto-deletion rules and bulk delete." href="/admin/deleter"/>
+            <CardLink title="Reaction Roles" desc="Assign roles via message reactions." href="/admin/reactionroles"/>
+            <CardLink title="Karma System" desc="Configure reaction channel and emojis." href="/admin/karma"/>
+            <CardLink title="Gamer Roles" desc="Configure automatic game roles." href="/admin/gameroles"/>
+            <CardLink title="Giveaways" desc="Manage server giveaways." href="/admin/giveaway"/>
+          </Section>
+
+          <Section title="Information" marker="⌁">
+            <CardLink title="RSS Feeds" desc="Manage RSS subscriptions and channels." href="/admin/rss"/>
+            <CardLink title="Pokemon GO" desc="Manage events and notifications." href="/admin/pokemon"/>
+          </Section>
+
+          <Section title="Server" marker="⚙">
+            <CardLink title="Bot Configuration" desc="Manage bot status and server prefixes." href="/admin/bot_config"/>
+            <CardLink title="Data Files" desc="Manage raw data files." href="/admin/browse/data"/>
+            <CardLink title="Info Data" desc="Manage game data files." href="/admin/browse/infodata"/>
+            <CardLink title="Backup System" desc="Manage automated backups." href="/admin/backup"/>
+          </Section>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+{% endraw %}
+    </script>
+
+    <script type="text/babel" data-presets="react" src="{{ url_for('static', filename='sidebar.jsx') }}"></script>
+</body>
+</html>
