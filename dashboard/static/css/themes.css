@@ -32,12 +32,12 @@
     --theme-primary-dark: #1b4d3e;
     --theme-primary-main: #2E8B57;
     --theme-primary-bright: #00ff7f;
-    --theme-bg-dark: #0a0a0a;
-    --theme-bg-card: #151515;
-    --theme-navbar-bg: #050505;
+    --theme-bg-dark: #020305;
+    --theme-bg-card: #05070a;
+    --theme-navbar-bg: #010203;
     --theme-text-color: #e0e0e0;
     --theme-link-color: #66cdaa;
-    --theme-border-color: #333;
+    --theme-border-color: #1a1a1a;
     --theme-accent-hover: rgba(46, 139, 87, 0.1);
     --theme-primary-rgb: 46, 139, 87;
 }
@@ -114,8 +114,10 @@
 
 /* Navbar Customization */
 .navbar-dark.bg-dark {
-    background-color: var(--theme-navbar-bg) !important;
+    background-color: rgba(1, 2, 3, 0.92) !important;
     border-bottom: 1px solid var(--theme-primary-dark);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .navbar-brand {
@@ -475,13 +477,6 @@ body {
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
     background-attachment: fixed;
     background-size: cover, 300px 300px;
-}
-
-/* Navbar: stronger glass feel */
-.navbar-dark.bg-dark {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    background-color: rgba(5, 5, 5, 0.92) !important;
 }
 
 /* Brand: pulse glow */
