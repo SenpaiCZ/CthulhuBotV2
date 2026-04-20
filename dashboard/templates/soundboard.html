@@ -145,33 +145,19 @@ function TopBar({guilds, selectedGuild, onGuild, channels, selectedChannel, onCh
   return (
     <header style={{
       flexShrink:0,
-      display:"flex",alignItems:"center",gap:12,
-      padding:"12px 24px",
+      display:"flex",alignItems:"center",gap:16,
+      padding:"16px 32px",
       borderBottom:"1px solid var(--hair)",
-      background:"linear-gradient(180deg, var(--void-1), var(--void-0))",
-      zIndex:20,
+      background:"linear-gradient(180deg, var(--void-0), transparent)",
+      position:"sticky",top:0,zIndex:10,
+      backdropFilter:"blur(6px)",
     }}>
-      {/* Brand */}
-      <a href="/" style={{display:"flex",alignItems:"center",gap:10,marginRight:8,borderRight:"1px solid var(--hair)",paddingRight:16}}>
-        <div style={{color:"var(--sigil)",animation:"breathe 5s ease-in-out infinite"}}>
-          <svg width="28" height="28" viewBox="0 0 44 44" fill="none" stroke="currentColor" strokeWidth="0.9">
-            <circle cx="22" cy="22" r="20.5" opacity="0.4"/>
-            {(()=>{
-              const r=18,cx=22,cy=22,a=d=>[cx+r*Math.cos(d*Math.PI/180),cy+r*Math.sin(d*Math.PI/180)];
-              const [x0,y0]=a(-90),[x1,y1]=a(-18),[x2,y2]=a(54),[x3,y3]=a(126),[x4,y4]=a(198);
-              return <path d={`M${x0},${y0} L${x2},${y2} L${x4},${y4} L${x1},${y1} L${x3},${y3} Z`} strokeLinejoin="miter"/>;
-            })()}
-            <circle cx="22" cy="22" r="1.5" fill="currentColor"/>
-          </svg>
-        </div>
-        <div>
-          <div className="serif" style={{fontSize:15,lineHeight:1}}>Soundboard</div>
-          <div className="mono" style={{fontSize:8,letterSpacing:"0.26em",color:"var(--bone-fade)",marginTop:3}}>SÉANCE ROOM</div>
-        </div>
-      </a>
-
-      {/* Status dot */}
-      <div style={{display:"flex",alignItems:"center",gap:8,marginRight:4}}>
+      {/* Time + Status */}
+      <div className="mono flicker" style={{fontSize:10,letterSpacing:"0.22em",color:"var(--sigil)"}}>
+        {`${p(t.getHours())}:${p(t.getMinutes())}:${p(t.getSeconds())}`}
+      </div>
+      <span style={{width:1,height:14,background:"var(--hair-strong)"}}/>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
         <span style={{
           width:7,height:7,borderRadius:"50%",flexShrink:0,
           background: connected ? "var(--sigil)" : "var(--bone-fade)",
@@ -183,38 +169,40 @@ function TopBar({guilds, selectedGuild, onGuild, channels, selectedChannel, onCh
         </span>
       </div>
 
-      <span style={{width:1,height:18,background:"var(--hair)",flexShrink:0}}/>
+      <span style={{flex:1}}/>
 
-      {/* Guild */}
-      <select value={selectedGuild || ""} onChange={e => onGuild(e.target.value)} style={{minWidth:160}}>
+      {/* Guild & Channel Selectors */}
+      <select value={selectedGuild || ""} onChange={e => onGuild(e.target.value)} style={{
+        padding:"7px 10px",border:"1px solid var(--hair)",background:"var(--void-1)",
+        color:"var(--bone)",fontFamily:"inherit",fontSize:10,letterSpacing:"0.08em",
+        cursor:"pointer",minWidth:140
+      }}>
         {guilds.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
       </select>
 
-      {/* Channel */}
-      <select value={selectedChannel || ""} onChange={e => onChannel(e.target.value)} style={{minWidth:140}}>
+      <select value={selectedChannel || ""} onChange={e => onChannel(e.target.value)} style={{
+        padding:"7px 10px",border:"1px solid var(--hair)",background:"var(--void-1)",
+        color:"var(--bone)",fontFamily:"inherit",fontSize:10,letterSpacing:"0.08em",
+        cursor:"pointer",minWidth:140
+      }}>
         {channels.map(c => <option key={c.id} value={c.id}># {c.name}</option>)}
       </select>
 
-      <button className={`btn-eld${connected ? " danger" : " on"}`} onClick={connected ? onLeave : onJoin}>
-        {connected ? "Disconnect" : "Connect"}
-      </button>
-      {connected && <button className="btn-eld danger" onClick={onStop}>Stop All</button>}
-
-      <span style={{flex:1}}/>
-
-      {/* Master volume */}
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <span className="serif" style={{fontSize:14,color:"var(--bone-fade)"}}>◐</span>
+      {/* Volume */}
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
         <input type="range" min="0" max="100" value={volume}
           onChange={e => onVolume(+e.target.value)}
-          style={{width:100,cursor:"pointer"}}/>
-        <span className="mono" style={{fontSize:10,color:"var(--bone-fade)",width:30}}>{volume}%</span>
+          style={{width:80,cursor:"pointer"}}/>
+        <span className="mono" style={{fontSize:10,color:"var(--bone-fade)",width:25}}>{volume}%</span>
       </div>
 
       <span style={{width:1,height:18,background:"var(--hair)",flexShrink:0}}/>
-      <div className="mono" style={{fontSize:10,letterSpacing:"0.18em",color:"var(--sigil)",animation:"flicker 7s infinite"}}>
-        {`${p(t.getHours())}:${p(t.getMinutes())}:${p(t.getSeconds())}`}
-      </div>
+
+      {/* Connect/Control Buttons */}
+      <button className={`btn-eld${connected ? " danger" : " on"}`} onClick={connected ? onLeave : onJoin} style={{fontSize:10}}>
+        {connected ? "Disconnect" : "Connect"}
+      </button>
+      {connected && <button className="btn-eld danger" onClick={onStop} style={{fontSize:10}}>Stop All</button>}
     </header>
   );
 }
