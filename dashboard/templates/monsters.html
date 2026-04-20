@@ -162,7 +162,7 @@ function App({monstersData, statEmojis}) {
   );
 }
 
-const MONSTERS_DATA = {{ data.monsters | tojson }};
+const MONSTERS_DATA = {{ data | tojson }};
 const STAT_EMOJIS = {{ stat_emojis | tojson }};
 ReactDOM.createRoot(document.getElementById('root')).render(<App monstersData={MONSTERS_DATA} statEmojis={STAT_EMOJIS}/>);
 {% endraw %}
