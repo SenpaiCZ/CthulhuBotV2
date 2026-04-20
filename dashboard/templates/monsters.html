@@ -1,224 +1,477 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monsters - CoC Bot</title>
 
-{% block title %}Monsters - CoC Bot{% endblock %}
+    <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-{% block content %}
-<div class="container-fluid dashboard-container">
-    <div class="sidebar-panel">
-        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
-            <h5 class="m-0 text-success">Grimoire</h5>
+    {% include 'includes/font_styles.html' %}
+
+    <style>
+      :root {
+        --void-0: #0a0a0a;
+        --void-1: #141414;
+        --void-2: #1e1e1e;
+        --hair: #2a2a2a;
+        --hair-strong: #3a3a3a;
+        --bone: #d4d4d4;
+        --bone-fade: #888888;
+        --sigil: #8b7355;
+        --sigil-g: rgba(139, 115, 85, 0.3);
+        --rust: #b85c3c;
+      }
+
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        background: var(--void-0);
+        color: var(--bone);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .serif { font-family: "Libre Baskerville", serif; }
+      .mono { font-family: "IBM Plex Mono", monospace; }
+
+      @keyframes flicker {
+        0%, 18%, 22%, 25%, 54%, 56%, 100% { opacity: 1; }
+        20%, 24%, 55% { opacity: 0.8; }
+      }
+      .flicker { animation: flicker 7s infinite; }
+
+      #root { display: flex; height: 100vh; overflow: hidden; }
+
+      header {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 32px;
+        border-bottom: 1px solid var(--hair);
+        background: linear-gradient(180deg, var(--void-0), transparent);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(6px);
+      }
+
+      .layout { display: flex; flex: 1; min-height: 0; }
+
+      .sidebar {
+        flex: 0 0 260px;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--hair);
+        overflow: hidden;
+      }
+
+      .sidebar-header {
+        padding: 12px;
+        border-bottom: 1px solid var(--hair);
+        font-weight: 600;
+        color: var(--sigil);
+      }
+
+      .sidebar-search {
+        padding: 8px;
+        border-bottom: 1px solid var(--hair);
+      }
+
+      .sidebar-search input {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid var(--hair);
+        background: var(--void-2);
+        color: var(--bone);
+        font-size: 12px;
+      }
+
+      .sidebar-list {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .sidebar-item {
+        padding: 10px 12px;
+        border: none;
+        background: transparent;
+        color: var(--bone-fade);
+        text-align: left;
+        cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: all 0.2s;
+      }
+
+      .sidebar-item:hover {
+        background: var(--void-2);
+        color: var(--bone);
+      }
+
+      .sidebar-item.active {
+        background: var(--void-2);
+        border-left-color: var(--sigil);
+        color: var(--sigil);
+      }
+
+      .detail-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        padding: 28px 40px 80px;
+      }
+
+      .placeholder {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        text-align: center;
+      }
+
+      .placeholder-title {
+        font-size: 24px;
+        color: var(--bone-fade);
+        opacity: 0.3;
+        margin-bottom: 12px;
+      }
+
+      .placeholder-desc {
+        color: var(--bone-fade);
+      }
+
+      .monster-title {
+        font-size: 32px;
+        color: var(--sigil);
+        margin-bottom: 4px;
+        font-family: "Libre Baskerville", serif;
+      }
+
+      .monster-subtitle {
+        color: var(--bone-fade);
+        font-style: italic;
+        margin-bottom: 16px;
+      }
+
+      .section-title {
+        color: var(--bone);
+        font-size: 16px;
+        font-weight: 600;
+        margin: 20px 0 12px 0;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--hair-strong);
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .stat-box {
+        border: 1px solid var(--hair);
+        background: var(--void-2);
+        padding: 10px;
+        text-align: center;
+      }
+
+      .stat-label {
+        font-size: 11px;
+        color: var(--bone-fade);
+        margin-bottom: 4px;
+      }
+
+      .stat-value {
+        font-size: 16px;
+        color: var(--bone);
+        font-weight: 600;
+      }
+
+      .card {
+        border: 1px solid var(--hair);
+        background: var(--void-2);
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+
+      .card-title {
+        font-weight: 600;
+        color: var(--sigil);
+        margin-bottom: 8px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        background: var(--hair-strong);
+        color: var(--bone-fade);
+        font-size: 11px;
+        margin: 0 4px 4px 0;
+      }
+
+      .attack-item {
+        border: 1px solid var(--hair);
+        background: var(--void-2);
+        padding: 12px;
+        margin-bottom: 8px;
+      }
+
+      .attack-name {
+        font-weight: 600;
+        color: var(--bone);
+        margin-bottom: 4px;
+      }
+
+      .attack-damage {
+        color: var(--rust);
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .power-list {
+        list-style: none;
+      }
+
+      .power-item {
+        padding: 8px 0;
+        border-bottom: 1px solid var(--hair);
+      }
+
+      .power-item:last-child {
+        border-bottom: none;
+      }
+
+      .power-name {
+        color: var(--sigil);
+        font-weight: 600;
+      }
+
+      .alt-names {
+        margin-top: 32px;
+        padding-top: 16px;
+        border-top: 1px solid var(--hair);
+        text-align: center;
+        color: var(--bone-fade);
+        font-size: 12px;
+      }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-presets="react">
+{% raw %}
+const AppSidebar = () => { const C = window.AppSidebar; return C ? React.createElement(C) : null; };
+
+function TopBar() {
+  const [t, setT] = React.useState(new Date());
+  React.useEffect(() => {
+    const id = setInterval(() => setT(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const p = n => String(n).padStart(2, "0");
+
+  return (
+    <header>
+      <div className="mono flicker" style={{fontSize:10,letterSpacing:"0.22em",color:"var(--sigil)"}}>
+        {`${p(t.getHours())}:${p(t.getMinutes())}:${p(t.getSeconds())}`}
+      </div>
+      <span style={{width:1,height:14,background:"var(--hair-strong)"}}/>
+      <div style={{flex:1}}/>
+      <a href="/admin" style={{padding:"7px 12px",border:"1px solid var(--hair)",background:"var(--void-1)",color:"var(--bone)",textDecoration:"none",fontSize:11,fontFamily:"IBM Plex Mono",letterSpacing:"0.08em"}}>Admin</a>
+    </header>
+  );
+}
+
+function MonsterDetail({monster, statEmojis}) {
+  if (!monster) {
+    return (
+      <div className="placeholder">
+        <div className="placeholder-title">Select a creature</div>
+        <div className="placeholder-desc">View detailed statistics from the archives.</div>
+      </div>
+    );
+  }
+
+  const m = monster.monster_entry;
+  const emj = s => (statEmojis[s] || '') + ' ' + s;
+
+  return (
+    <>
+      <h1 className="monster-title">{m.name}</h1>
+      {m.subtitle && <div className="monster-subtitle">{m.subtitle}</div>}
+      {m.tags && m.tags.length > 0 && (
+        <div style={{marginBottom:16}}>
+          {m.tags.map(tag => <span key={tag} className="badge">{tag}</span>)}
         </div>
-        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
-            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search..." aria-label="Search monsters">
+      )}
+
+      {m.description && (
+        <div className="card">
+          <div>{m.description}</div>
+          {m.main_entry_text && <div style={{marginTop:8,fontSize:12,color:"var(--bone-fade)"}}>{m.main_entry_text}</div>}
         </div>
-        <div class="list-group list-group-flush sidebar-list" id="monsterList" role="tablist">
-            {% if data and data.monsters %}
-                {% for item in data.monsters %}
-                    {% set m = item.monster_entry %}
-                    <button type="button" class="list-group-item list-group-item-action monster-list-item" onclick="showMonster({{ loop.index0 }})" role="tab" aria-selected="false" aria-controls="monster-content">
-                        {{ m.name }}
-                    </button>
-                {% endfor %}
-            {% else %}
-                <div class="p-3 text-center text-muted">No monsters found.</div>
-            {% endif %}
+      )}
+
+      <div className="section-title">Characteristics</div>
+      <div className="stat-grid">
+        {Object.entries(m.characteristics || {}).map(([key, val]) => (
+          <div key={key} className="stat-box">
+            <div className="stat-label">{statEmojis[key] || ''} {key}</div>
+            <div className="stat-value">{typeof val === 'object' ? (val.average || val.value || val) : val}</div>
+            {typeof val === 'object' && val.roll && <div style={{fontSize:10,color:"var(--bone-fade)"}}>{val.roll}</div>}
+          </div>
+        ))}
+      </div>
+
+      <div className="section-title">Derived Stats</div>
+      <div className="stat-grid">
+        <div className="stat-box"><div className="stat-label">{statEmojis['HP'] || ''} HP</div><div className="stat-value" style={{color:"var(--rust)"}}>{m.derived_stats.hit_points}</div></div>
+        <div className="stat-box"><div className="stat-label">{statEmojis['DB'] || ''} DB</div><div className="stat-value">{m.derived_stats.damage_bonus}</div></div>
+        <div className="stat-box"><div className="stat-label">{statEmojis['Build'] || ''} Build</div><div className="stat-value">{m.derived_stats.build}</div></div>
+        <div className="stat-box"><div className="stat-label">{statEmojis['MP'] || ''} MP</div><div className="stat-value">{m.derived_stats.magic_points}</div></div>
+        <div className="stat-box">
+          <div className="stat-label">{statEmojis['Move'] || ''} Move</div>
+          <div className="stat-value">
+            {typeof m.derived_stats.move === 'object' ? `${m.derived_stats.move.base}${m.derived_stats.move.special ? ` (${m.derived_stats.move.special})` : ''}` : m.derived_stats.move}
+          </div>
         </div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+        <div>
+          <div className="section-title">Combat</div>
+          <p style={{marginBottom:8}}><span style={{color:"var(--sigil)",fontWeight:600}}>Attacks per round:</span> {m.combat.attacks_per_round}</p>
+          {(m.combat.attacks || []).map((atk, i) => (
+            <div key={i} className="attack-item">
+              <div className="attack-name">{atk.name}</div>
+              <div className="attack-damage">Damage: {atk.damage}</div>
+              {atk.success_chance && <div style={{fontSize:12,color:"var(--bone-fade)"}}>Success: {atk.success_chance}</div>}
+              {atk.special_effect && <div style={{fontSize:12,color:"var(--sigil)"}}>{atk.special_effect}</div>}
+              {atk.description && <div style={{fontSize:11,color:"var(--bone-fade)"}}>{atk.description}</div>}
+            </div>
+          ))}
+          {m.combat.dodge && <p><span style={{color:"var(--sigil)",fontWeight:600}}>Dodge:</span> {m.combat.dodge.success_chance || 'N/A'}</p>}
+        </div>
+
+        <div>
+          <div className="section-title">Skills & Abilities</div>
+          {m.skills && m.skills.length > 0 && (
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:11,color:"var(--bone-fade)",marginBottom:8}}>SKILLS</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                {m.skills.map((s, i) => (
+                  <span key={i} className="badge">{s.name} <span style={{marginLeft:4,color:"var(--sigil)"}}>{s.value}</span></span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {m.powers_and_abilities && m.powers_and_abilities.length > 0 && (
+            <div>
+              <div style={{fontSize:11,color:"var(--bone-fade)",marginBottom:8}}>POWERS</div>
+              <ul className="power-list">
+                {m.powers_and_abilities.map((p, i) => (
+                  <li key={i} className="power-item">
+                    <span className="power-name">{p.name}:</span> <span style={{color:"var(--bone-fade)"}}>{p.description}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="section-title">Defenses & Magic</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:16}}>
+        <div className="card">
+          <div style={{fontSize:10,color:"var(--sigil)",fontWeight:600,marginBottom:8}}>ARMOR</div>
+          <div>{m.armor ? (m.armor.rating + (m.armor.modifiers ? ` ${m.armor.modifiers}` : '')) : 'None'}</div>
+        </div>
+        <div className="card">
+          <div style={{fontSize:10,color:"var(--sigil)",fontWeight:600,marginBottom:8}}>SPELLS</div>
+          <div style={{fontSize:12}}>{m.spells || 'None'}</div>
+        </div>
+        <div className="card">
+          <div style={{fontSize:10,color:"var(--sigil)",fontWeight:600,marginBottom:8}}>SANITY LOSS</div>
+          <div style={{color:"var(--rust)"}}>{m.sanity_loss || 'None'}</div>
+        </div>
+      </div>
+
+      {m.alternative_names && m.alternative_names.length > 0 && (
+        <div className="alt-names">
+          <em>Also known as: {m.alternative_names.join(', ')}</em>
+        </div>
+      )}
+    </>
+  );
+}
+
+function App({monstersData, statEmojis}) {
+  const [search, setSearch] = React.useState('');
+  const [selected, setSelected] = React.useState(null);
+
+  const filtered = monstersData.filter(m =>
+    m.monster_entry.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div style={{display:"flex",minHeight:"100vh"}}>
+      <AppSidebar/>
+      <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column"}}>
+        <TopBar/>
+        <div className="layout">
+          <div className="sidebar">
+            <div className="sidebar-header">Grimoire</div>
+            <div className="sidebar-search">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="sidebar-list">
+              {filtered.length > 0 ? (
+                filtered.map((m, i) => (
+                  <button
+                    key={m.monster_entry.name}
+                    className={`sidebar-item ${selected?.monster_entry.name === m.monster_entry.name ? 'active' : ''}`}
+                    onClick={() => setSelected(m)}
+                  >
+                    {m.monster_entry.name}
+                  </button>
+                ))
+              ) : (
+                <div style={{padding:"16px",textAlign:"center",color:"var(--bone-fade)"}}>No creatures found.</div>
+              )}
+            </div>
+          </div>
+          <div className="detail-panel">
+            <MonsterDetail monster={selected} statEmojis={statEmojis}/>
+          </div>
+        </div>
+      </div>
     </div>
+  );
+}
 
-    <div class="detail-panel" id="detailPanel">
-        <div id="monster-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
-            <h2 class="text-muted" style="opacity: 0.3;">Select a creature</h2>
-            <p class="text-secondary">View detailed statistics from the archives.</p>
-        </div>
+const MONSTERS_DATA = {{ data.monsters | tojson }};
+const STAT_EMOJIS = {{ stat_emojis | tojson }};
 
-        <div id="monster-content" class="hidden" role="tabpanel" aria-live="polite">
-            <!-- Template content populated by JS -->
-        </div>
-    </div>
-</div>
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <App monstersData={MONSTERS_DATA} statEmojis={STAT_EMOJIS}/>
+);
+{% endraw %}
+    </script>
 
-<script>
-    // Search Functionality
-    document.getElementById('searchInput').addEventListener('input', function() {
-        const filter = this.value.toLowerCase();
-        const items = document.querySelectorAll('.monster-list-item');
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if(text.includes(filter)) {
-                item.classList.remove('hidden');
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-    });
-
-    // Pass Python data to JS safely
-    const monsters = {{ data.monsters | tojson }};
-    const statEmojis = {{ stat_emojis | tojson }};
-
-    function showMonster(index) {
-        try {
-            const m = monsters[index].monster_entry;
-            const container = document.getElementById('monster-content');
-            const placeholder = document.getElementById('monster-placeholder');
-
-            // Highlight active item
-            document.querySelectorAll('.monster-list-item').forEach((el, i) => {
-                if(i === index) {
-                    el.classList.add('active');
-                    el.setAttribute('aria-selected', 'true');
-                } else {
-                    el.classList.remove('active');
-                    el.setAttribute('aria-selected', 'false');
-                }
-            });
-
-            let html = `
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h1 class="display-5 mb-0 text-success">${m.name}</h1>
-                        <div class="text-secondary fst-italic fs-5">${m.subtitle || ''}</div>
-                    </div>
-                    <div class="text-end">
-                         ${(m.tags || []).map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`).join('')}
-                    </div>
-                </div>
-
-                <div id="image-control-container" class="mb-4"></div>
-
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-body">
-                        ${m.description ? `<p class="card-text border-start border-success border-3 ps-3">${m.description}</p>` : ''}
-                        ${m.main_entry_text ? `<p class="card-text text-muted small">${m.main_entry_text}</p>` : ''}
-                    </div>
-                </div>
-
-                <div class="section-header">Characteristics</div>
-                <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-2 mb-4">
-                    ${Object.entries(m.characteristics || {}).map(([key, val]) => `
-                        <div class="col">
-                            <div class="stat-box h-100">
-                                <div class="stat-label">${statEmojis[key] || ''} ${key}</div>
-                                <div class="stat-value text-light">${val.average || val}</div>
-                                <div class="small text-muted">${val.roll || ''}</div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-
-                <div class="section-header">Derived Stats</div>
-                <div class="row row-cols-2 row-cols-md-5 g-2 mb-4">
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['HP'] || ''} HP</div><div class="stat-value text-danger">${m.derived_stats.hit_points}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['DB'] || ''} DB</div><div class="stat-value">${m.derived_stats.damage_bonus}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['Build'] || ''} Build</div><div class="stat-value">${m.derived_stats.build}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['MP'] || ''} MP</div><div class="stat-value text-info">${m.derived_stats.magic_points}</div></div></div>
-                    <div class="col">
-                        <div class="stat-box">
-                            <div class="stat-label">${statEmojis['Move'] || ''} Move</div>
-                            <div class="stat-value">
-                                ${typeof m.derived_stats.move === 'object' ?
-                                    `${m.derived_stats.move.base} ${m.derived_stats.move.special ? `<span class="small text-muted">(${m.derived_stats.move.special})</span>` : ''}` :
-                                    m.derived_stats.move}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-lg-6">
-                        <div class="section-header">Combat</div>
-                        <p class="mb-2"><span class="text-success fw-bold">Attacks per round:</span> ${m.combat.attacks_per_round}</p>
-
-                        <div class="list-group mb-3">
-                            ${(m.combat.attacks || []).map(atk => `
-                                <div class="list-group-item list-group-item-action bg-dark border-secondary">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1 text-light">${atk.name}</h6>
-                                        <span class="badge bg-danger rounded-pill">${atk.success_chance || 'Auto'}</span>
-                                    </div>
-                                    <p class="mb-1 text-danger fw-bold">Damage: ${atk.damage}</p>
-                                    ${atk.special_effect ? `<small class="text-info d-block">Effect: ${atk.special_effect}</small>` : ''}
-                                    ${atk.description ? `<small class="text-muted d-block">${atk.description}</small>` : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                        <p><span class="text-success fw-bold">Dodge:</span> ${m.combat.dodge ? (m.combat.dodge.success_chance || 'N/A') : 'N/A'}</p>
-                    </div>
-
-                    <div class="col-lg-6">
-                        <div class="section-header">Skills & Abilities</div>
-                        ${m.skills ? `
-                            <div class="mb-3">
-                                <h6 class="text-muted small text-uppercase">Skills</h6>
-                                <div class="d-flex flex-wrap gap-2">
-                                ${m.skills.map(s => `<span class="badge bg-secondary border border-secondary">${s.name} <span class="text-warning ms-1">${s.value}</span></span>`).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        ${m.powers_and_abilities ? `
-                            <div class="mt-4">
-                                <h6 class="text-muted small text-uppercase">Powers</h6>
-                                <ul class="list-group list-group-flush bg-transparent">
-                                ${m.powers_and_abilities.map(p => `
-                                    <li class="list-group-item bg-transparent border-secondary ps-0">
-                                        <strong class="text-warning">${p.name}:</strong> <span class="text-secondary">${p.description}</span>
-                                    </li>
-                                `).join('')}
-                                </ul>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-
-                <div class="section-header">Defenses & Magic</div>
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="card bg-dark border-secondary h-100">
-                            <div class="card-header bg-secondary bg-opacity-10 border-secondary text-success py-1 small fw-bold">ARMOR</div>
-                            <div class="card-body">
-                                ${m.armor ? (m.armor.rating + (m.armor.modifiers ? `<br><small class="text-muted">${m.armor.modifiers}</small>` : '')) : 'None'}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card bg-dark border-secondary h-100">
-                            <div class="card-header bg-secondary bg-opacity-10 border-secondary text-success py-1 small fw-bold">SPELLS</div>
-                            <div class="card-body small">
-                                ${m.spells || 'None'}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card bg-dark border-secondary h-100">
-                            <div class="card-header bg-secondary bg-opacity-10 border-secondary text-success py-1 small fw-bold">SANITY LOSS</div>
-                            <div class="card-body text-danger">
-                                ${m.sanity_loss || 'None'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                ${m.alternative_names ? `
-                    <div class="mt-5 pt-3 border-top border-secondary small text-muted text-center">
-                        <em>Also known as: ${m.alternative_names.join(', ')}</em>
-                    </div>
-                ` : ''}
-            `;
-
-            container.innerHTML = html;
-
-            initImageControl('image-control-container', '{{ type_slug }}', m.name);
-
-            container.classList.remove('hidden');
-            placeholder.style.setProperty('display', 'none', 'important');
-            placeholder.classList.remove('d-flex');
-
-            document.getElementById('detailPanel').scrollTop = 0;
-        } catch (e) {
-            console.error(e);
-            alert("Error rendering monster: " + e.message);
-        }
-    }
-</script>
-{% endblock %}
+    <script type="text/babel" data-presets="react" src="{{ url_for('static', filename='sidebar.jsx') }}"></script>
+</body>
+</html>
