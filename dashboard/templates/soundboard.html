@@ -114,7 +114,7 @@ select option{background:var(--void-2)}
 
 <script type="text/babel" data-presets="react" src="{{ url_for('static', filename='sidebar.jsx') }}"></script>
 <script type="text/babel" data-presets="react">
-
+{% raw %}
 const AppSidebar = () => { const C = window.AppSidebar; return C ? React.createElement(C) : null; };
 
 /* ── Helpers ────────────────────────────────────────────── */
@@ -832,6 +832,7 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+{% endraw %}
 </script>
 </body>
 </html>
