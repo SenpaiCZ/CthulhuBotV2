@@ -410,6 +410,11 @@ class Codex(commands.Cog):
         await interaction.response.send_message("What list would you like to see?", view=view, ephemeral=True)
         view.message = await interaction.original_response()
 
+    @app_commands.command(description="📜 Opens the Grimoire (Codex) to view all game data.")
+    async def grimoire(self, interaction: discord.Interaction):
+        """Opens the Grimoire (Codex) to view all game data."""
+        await self.codex(interaction)
+
     @app_commands.command(name="archetype", description="🎭 Displays a Pulp Cthulhu Archetype.")
     async def archetype(self, interaction: discord.Interaction, name: str = None):
         """Displays a Pulp Cthulhu Archetype."""

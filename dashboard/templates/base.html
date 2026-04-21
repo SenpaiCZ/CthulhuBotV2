@@ -25,6 +25,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/grimoire">Grimoire</a></li>
                 </ul>
                 <ul class="navbar-nav">
                     {% if is_admin %}
@@ -43,6 +44,8 @@
                             <li class="dropstart">
                                 <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Grimoire</a>
                                 <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/grimoire">Browse Grimoire</a></li>
+                                    <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="/monsters">Monsters</a></li>
                                     <li><a class="dropdown-item" href="/deities">Deities</a></li>
                                     <li><a class="dropdown-item" href="/spells">Spells</a></li>

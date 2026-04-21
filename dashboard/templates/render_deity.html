@@ -201,7 +201,11 @@
                                 <strong class="text-light">{{ atk.name }}</strong>
                                 <span class="text-danger fw-bold">{{ atk.damage or '' }}</span>
                             </div>
-                            <div class="small text-secondary">Success: {{ atk.success_chance or '' }}</div>
+                            <div class="small text-secondary">Success: {{ atk.success_chance or '' }} 
+                            {% if atk.difficulty_hard or atk.difficulty_extreme %}
+                                <span class="text-muted fst-italic ms-1" style="font-size: 0.85em;">(H: {{ atk.difficulty_hard or '?' }}, E: {{ atk.difficulty_extreme or '?' }})</span>
+                            {% endif %}
+                            </div>
                         </div>
                         {% endfor %}
                     </div>

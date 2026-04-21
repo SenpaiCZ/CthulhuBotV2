@@ -114,6 +114,7 @@
 
 <script>
 const IS_ADMIN = {{ is_admin | tojson }};
+const SCROLL_TO = {{ scroll_to | default("") | tojson }};
 
 async function confirmUpdate() {
   if (confirm("Update the bot from GitHub? This will restart the system.")) {
@@ -382,7 +383,7 @@ function NavHub() {
         {l:"Spells", href:"/spells"},
         {l:"Weapons", href:"/weapons"},
       ],
-      actions:[{l:"Browse All", href:"/monsters", primary:true}],
+      actions:[{l:"Browse All", href:"/grimoire", primary:true}],
     },
     {
       g:"◐", title:"Soundboard", desc:"Upload and play audio clips in voice channels",
@@ -438,7 +439,7 @@ function NavHub() {
 /* ─── Grimoire grid ────────────────────────────────────── */
 function GrimoireGrid() {
   return (
-    <div>
+    <div id="grimoire-grid">
       <Divider label="The Grimoire · Reference Library"/>
       <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:1,background:"var(--hair)",border:"1px solid var(--hair)"}}>
         {grimTiles.map((t,i) => (
@@ -533,6 +534,15 @@ function CommandsCodex() {
 
 /* ─── App ──────────────────────────────────────────────── */
 function App() {
+  React.useEffect(() => {
+    if (SCROLL_TO === "grimoire") {
+      setTimeout(() => {
+        const el = document.getElementById("grimoire-grid");
+        if (el) el.scrollIntoView({behavior: "smooth"});
+      }, 100);
+    }
+  }, []);
+
   return (
     <div style={{display:"flex",minHeight:"100vh"}}>
       <AppSidebar/>
@@ -564,7 +574,7 @@ function App() {
             </p>
             <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
               <a href="/characters" className="btn-eld primary"><span className="serif">✶</span> Investigators</a>
-              <a href="/monsters" className="btn-eld"><span className="serif">Ψ</span> Grimoire</a>
+              <a href="/grimoire" className="btn-eld"><span className="serif">Ψ</span> Grimoire</a>
               <a href="/admin/soundboard" className="btn-eld"><span className="serif">◐</span> Soundboard</a>
               {IS_ADMIN && <a href="/admin" className="btn-eld"><span className="serif">⚙</span> Admin</a>}
             </div>

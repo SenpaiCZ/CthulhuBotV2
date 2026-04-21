@@ -84,7 +84,7 @@
                 </div>
 
                 <div class="section-header">Costs & Casting</div>
-                <div class="row row-cols-2 row-cols-md-4 g-2 mb-4">
+                <div class="row row-cols-2 row-cols-md-5 g-2 mb-4">
                     <div class="col">
                         <div class="stat-box h-100">
                             <div class="stat-label">Magic Points</div>
@@ -95,6 +95,12 @@
                         <div class="stat-box h-100">
                             <div class="stat-label">Sanity</div>
                             <div class="stat-value text-danger">${s.costs && s.costs.sanity ? s.costs.sanity : 'None'}</div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="stat-box h-100">
+                            <div class="stat-label">POW</div>
+                            <div class="stat-value text-warning">${s.costs && s.costs.pow ? s.costs.pow : 'None'}</div>
                         </div>
                     </div>
                     <div class="col">

@@ -181,7 +181,11 @@
                                             <strong class="text-light">${atk.name}</strong>
                                             <span class="text-danger fw-bold">${atk.damage || ''}</span>
                                         </div>
-                                        <div class="small text-secondary">Success: ${atk.success_chance || ''}</div>
+                                        <div class="small text-secondary">Success: ${atk.success_chance || ''}
+                                        ${atk.difficulty_hard || atk.difficulty_extreme ? `
+                                            <span class="text-muted fst-italic ms-1" style="font-size: 0.85em;">(H: ${atk.difficulty_hard || '?'}, E: ${atk.difficulty_extreme || '?'})</span>
+                                        ` : ''}
+                                        </div>
                                     </div>
                                 `).join('')}
                             </div>

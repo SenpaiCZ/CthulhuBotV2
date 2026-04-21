@@ -157,7 +157,14 @@
                         <div class="list-group-item bg-dark border-secondary p-2 mb-1">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1 text-light">{{ atk.name }}</h6>
-                                <span class="badge bg-danger rounded-pill">{{ atk.success_chance or 'Auto' }}</span>
+                                <div class="text-end">
+                                    <span class="badge bg-danger rounded-pill">{{ atk.success_chance or 'Auto' }}</span>
+                                    {% if atk.difficulty_hard or atk.difficulty_extreme %}
+                                        <div class="small text-muted mt-1" style="font-size: 0.7em;">
+                                            H: {{ atk.difficulty_hard or '?' }} | E: {{ atk.difficulty_extreme or '?' }}
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </div>
                             <div class="mb-1 text-danger fw-bold small">Damage: {{ atk.damage }}</div>
                             {% if atk.special_effect %}
@@ -173,6 +180,9 @@
                 <p><span class="text-success fw-bold">Dodge:</span>
                 {% if monster.combat.dodge %}
                     {{ monster.combat.dodge.success_chance or 'N/A' }}
+                    {% if monster.combat.dodge.difficulty_hard or monster.combat.dodge.difficulty_extreme %}
+                        <span class="small text-muted"> (H: {{ monster.combat.dodge.difficulty_hard or '?' }}, E: {{ monster.combat.dodge.difficulty_extreme or '?' }})</span>
+                    {% endif %}
                 {% else %}
                     N/A
                 {% endif %}

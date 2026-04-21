@@ -35,13 +35,37 @@ def create_monster_embed(data, title, file=None):
     embed = discord.Embed(title=title, color=discord.Color.dark_green())
     _add_image_field(embed, file)
 
-    monster = data.get('monster_entry', data) # Handle nested structure if present
+    monster = data.get('monster_entry', data)
 
+    # Subtitle and Tags
+    header_parts = []
     if monster.get('subtitle'):
-        embed.description = f"*{monster['subtitle']}*"
+        header_parts.append(f"*{monster['subtitle']}*")
+    
+    tags = monster.get('tags', [])
+    if tags:
+        header_parts.append(f"[{', '.join(tags)}]")
+    
+    if header_parts:
+        embed.description = " ".join(header_parts)
 
-    if monster.get('description'):
-        embed.add_field(name="Description", value=_trunc(monster['description']), inline=False)
+    # Alternative Names
+    alt_names = monster.get('alternative_names')
+    if alt_names:
+        embed.add_field(name="Alternative Names", value=_trunc(", ".join(alt_names)), inline=False)
+
+    # Description & Main Entry Text
+    desc = monster.get('description', '')
+    main_text = monster.get('main_entry_text', '')
+    
+    full_desc = ""
+    if desc:
+        full_desc += desc + "\n\n"
+    if main_text and main_text != desc:
+        full_desc += main_text
+    
+    if full_desc:
+        embed.add_field(name="Description", value=_trunc(full_desc, DESC_LIMIT), inline=False)
 
     # Characteristics
     chars = monster.get('characteristics', {})
@@ -84,13 +108,21 @@ def create_monster_embed(data, title, file=None):
             combat_desc += "\n**Attacks**:\n"
             for atk in attacks:
                 atk_line = f"• **{atk.get('name', 'Attack')}** ({atk.get('success_chance', 'Auto')}%): {atk.get('damage', '?')}"
+                if atk.get('difficulty_hard') or atk.get('difficulty_extreme'):
+                    atk_line += f" (H: {atk.get('difficulty_hard', '?')}, E: {atk.get('difficulty_extreme', '?')})"
+                
                 if atk.get('special_effect'):
-                    atk_line += f" *{atk['special_effect']}*"
+                    atk_line += f"\n  *Effect: {atk['special_effect']}*"
+                if atk.get('description'):
+                    atk_line += f"\n  *{atk['description']}*"
                 combat_desc += atk_line + "\n"
 
         dodge = combat.get('dodge')
         if dodge:
-             combat_desc += f"\n**Dodge**: {dodge.get('success_chance', 'N/A')}%"
+             dodge_text = f"\n**Dodge**: {dodge.get('success_chance', 'N/A')}%"
+             if dodge.get('difficulty_hard') or dodge.get('difficulty_extreme'):
+                 dodge_text += f" (H: {dodge.get('difficulty_hard', '?')}, E: {dodge.get('difficulty_extreme', '?')})"
+             combat_desc += dodge_text
 
         embed.add_field(name="Combat", value=_trunc(combat_desc), inline=False)
 
@@ -123,7 +155,8 @@ def create_monster_embed(data, title, file=None):
     if armor:
         armor_text = f"{armor.get('rating', 'None')}"
         if armor.get('modifiers'): armor_text += f" ({armor['modifiers']})"
-        embed.add_field(name="Armor", value=armor_text, inline=True)
+        if armor.get('notes'): armor_text += f"\n*{armor['notes']}*"
+        embed.add_field(name="Armor", value=_trunc(armor_text), inline=True)
 
     spells = monster.get('spells')
     if spells:
@@ -145,19 +178,27 @@ def create_deity_embed(data, title, file=None):
     if deity.get('classification'):
         embed.description = f"*{deity['classification']}*"
 
-    if deity.get('main_entry_text'):
-        embed.add_field(name="Description", value=_trunc(deity['main_entry_text']), inline=False)
+    # Other Names
+    other_names = deity.get('other_names')
+    if other_names:
+        embed.add_field(name="Other Names", value=_trunc(", ".join(other_names)), inline=False)
 
+    # Description
+    full_desc = ""
+    if deity.get('main_entry_text'):
+        full_desc += deity['main_entry_text'] + "\n\n"
     if deity.get('description_quote'):
-        embed.add_field(name="Quote", value=_trunc(f"*{deity['description_quote']}*"), inline=False)
+        full_desc += f"*{deity['description_quote']}*"
+    
+    if full_desc:
+        embed.add_field(name="Description", value=_trunc(full_desc, DESC_LIMIT), inline=False)
 
     # Cult
     cult = deity.get('cult', {})
     if cult:
         cult_text = cult.get('text', '')
-        if len(cult_text) > 500: cult_text = cult_text[:497] + "..."
         if cult_text:
-             embed.add_field(name="Cult", value=cult_text, inline=False)
+             embed.add_field(name="Cult", value=_trunc(cult_text), inline=False)
 
         blessings = cult.get('possible_blessings', [])
         if blessings:
@@ -167,11 +208,14 @@ def create_deity_embed(data, title, file=None):
             except Exception:
                 pass
 
-    # Encounters & Magic
-    if deity.get('encounters'):
-        embed.add_field(name="Encounters", value=_trunc(str(deity['encounters'])), inline=True)
-    if deity.get('aura'):
-        embed.add_field(name="Aura", value=_trunc(str(deity['aura'])), inline=True)
+    # Encounters & Magic & Aura
+    meta_info = []
+    if deity.get('encounters'): meta_info.append(f"**Encounters**: {deity['encounters']}")
+    if deity.get('aura'): meta_info.append(f"**Aura**: {deity['aura']}")
+    if deity.get('sanity_loss'): meta_info.append(f"**Sanity Loss**: {deity['sanity_loss']}")
+    
+    if meta_info:
+        embed.add_field(name="Lore & Horror", value="\n".join(meta_info), inline=False)
 
     magic = deity.get('magic', {})
     if magic:
@@ -180,8 +224,14 @@ def create_deity_embed(data, title, file=None):
             magic_line += f"\n**Spells**: {magic['spells']}"
         embed.add_field(name="Magic", value=_trunc(magic_line), inline=False)
 
-    if deity.get('sanity_loss'):
-        embed.add_field(name="Sanity Loss", value=_trunc(str(deity['sanity_loss'])), inline=True)
+    # Powers
+    powers = deity.get('powers', [])
+    if powers:
+        try:
+            power_lines = [f"**{p.get('name', '?')}**: {p.get('description', '')}" for p in powers if isinstance(p, dict)]
+            embed.add_field(name="Powers", value=_join_trunc(power_lines), inline=False)
+        except Exception:
+            pass
 
     # Physical Manifestation
     pm = deity.get('physical_manifestation', {})
@@ -200,14 +250,25 @@ def create_deity_embed(data, title, file=None):
         if combat:
             combat_text = ""
             if combat.get('description'): combat_text += f"{combat['description']}\n"
-            combat_text += f"**Attacks**: {combat.get('attacks_per_round', 'N/A')}\n"
-            for atk in combat.get('attacks', []):
-                combat_text += f"• **{atk.get('name', 'Attack')}**: {atk.get('damage', '?')} ({atk.get('success_chance', '')})\n"
+            combat_text += f"**Attacks per Round**: {combat.get('attacks_per_round', 'N/A')}\n"
+            
+            attacks = combat.get('attacks', [])
+            for atk in attacks:
+                atk_line = f"• **{atk.get('name', 'Attack')}**: {atk.get('damage', '?')} ({atk.get('success_chance', '')})"
+                if atk.get('difficulty_hard') or atk.get('difficulty_extreme'):
+                    atk_line += f" (H: {atk.get('difficulty_hard', '?')}, E: {atk.get('difficulty_extreme', '?')})"
+                combat_text += atk_line + "\n"
+            
+            maneuvers = combat.get('special_maneuvers', [])
+            for man in maneuvers:
+                combat_text += f"• **{man.get('name', 'Maneuver')}**: {man.get('description', '')}\n"
+
             embed.add_field(name="Combat", value=_trunc(combat_text), inline=False)
 
         armor = pm.get('armor', {})
         if armor:
-            armor_text = f"**Rating**: {armor.get('rating', 'None')}\n{armor.get('notes', '')}"
+            armor_text = f"**Rating**: {armor.get('rating', 'None')}"
+            if armor.get('notes'): armor_text += f"\n*{armor['notes']}*"
             embed.add_field(name="Armor", value=_trunc(armor_text), inline=True)
 
     return embed
@@ -221,15 +282,21 @@ def create_spell_embed(data, title, file=None):
     if spell.get('category'):
         embed.description = f"*{spell['category']}*"
 
+    # Alternate Names
+    alt_names = spell.get('alternate_names')
+    if alt_names:
+        embed.add_field(name="Alternative Names", value=_trunc(", ".join(alt_names)), inline=False)
+
     effect = spell.get('effect', {})
     if effect and effect.get('description'):
-        embed.add_field(name="Effect", value=_trunc(effect['description']), inline=False)
+        embed.add_field(name="Effect", value=_trunc(effect['description'], DESC_LIMIT), inline=False)
 
     # Costs
     costs = spell.get('costs', {})
     cost_parts = []
     if costs.get('magic_points'): cost_parts.append(f"**MP**: {costs['magic_points']}")
     if costs.get('sanity'): cost_parts.append(f"**Sanity**: {costs['sanity']}")
+    if costs.get('pow'): cost_parts.append(f"**POW**: {costs['pow']}")
     if spell.get('casting_time'): cost_parts.append(f"**Time**: {spell['casting_time']}")
     if spell.get('range'): cost_parts.append(f"**Range**: {spell['range']}")
 
@@ -239,12 +306,14 @@ def create_spell_embed(data, title, file=None):
     if costs.get('components'):
         embed.add_field(name="Components", value=_trunc(str(costs['components'])), inline=False)
 
-    if effect.get('damage'):
-        embed.add_field(name="Damage", value=_trunc(str(effect['damage'])), inline=True)
-    if effect.get('opposed_roll'):
-        embed.add_field(name="Opposed Roll", value=_trunc(str(effect['opposed_roll'])), inline=True)
+    effect_meta = []
+    if effect.get('damage'): effect_meta.append(f"**Damage**: {effect['damage']}")
+    if effect.get('opposed_roll'): effect_meta.append(f"**Opposed Roll**: {effect['opposed_roll']}")
+    
+    if effect_meta:
+        embed.add_field(name="Effect Details", value=" | ".join(effect_meta), inline=True)
 
-    if spell.get('deeper_magic'):
+    if spell.get('deeper_magic') and spell['deeper_magic'] != "None listed.":
         embed.add_field(name="Deeper Magic", value=_trunc(spell['deeper_magic']), inline=False)
 
     return embed

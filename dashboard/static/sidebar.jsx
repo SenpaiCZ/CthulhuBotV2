@@ -11,7 +11,7 @@ const NAV = [
   ]},
   { group: "Keeper Tools", items: [
     { id:"characters",    label:"Investigators",     sigil:"✶", href:"/characters",        match:["characters","retired"] },
-    { id:"grimoire",      label:"Grimoire",          sigil:"Ψ", href:"/monsters",          match:["monsters","deities","spells","weapons","occupations","skills","manias","phobias","archetypes","pulp","insane","poisons","inventions"] },
+    { id:"grimoire",      label:"Grimoire",          sigil:"Ψ", href:"/grimoire",          match:["monsters","deities","spells","weapons","occupations","skills","manias","phobias","archetypes","pulp","insane","poisons","inventions","grimoire"] },
   ]},
   { group: "Audio", items: [
     { id:"soundboard",    label:"Soundboard",        sigil:"◐", href:"/admin/soundboard",  match:["soundboard","Soundboard"] },

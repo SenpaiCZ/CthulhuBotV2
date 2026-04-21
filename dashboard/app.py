@@ -1399,6 +1399,11 @@ async def save_design():
 
     return jsonify({"status": "success"})
 
+@app.route('/grimoire/')
+@app.route('/grimoire')
+async def grimoire_hub():
+    return await render_template('index.html', scroll_to="grimoire")
+
 @app.route('/monsters')
 async def admin_monsters():
     monsters_data = await _load_json_file(INFODATA_FOLDER, 'monsters.json')
