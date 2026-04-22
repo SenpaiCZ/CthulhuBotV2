@@ -15,7 +15,7 @@
     - [ ] Verify UI flow and data saving in Discord
 
 ## Phase 3: Connections System
-- [ ] Task: Implement Character Connections
+- [x] Task: Implement Character Connections (f811fd2)
     - [ ] Define the "Connection" data structure
     - [ ] Create `/character connections` command to manage relationships
     - [ ] Update Keeper views to show connections between investigators
