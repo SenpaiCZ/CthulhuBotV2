@@ -1,67 +1,91 @@
 {% extends 'base.html' %}
 
-{% block title %}Backup Settings{% endblock %}
+{% block title %}Backup Settings — CthulhuBot{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Backup System</h2>
+<div class="mb-4">
+    <div class="label">Infrastructure</div>
+    <h2 class="serif" style="fontSize:32px; margin:8px 0 0">Backup System</h2>
+</div>
 
-<div class="row">
+<div class="row g-4">
     <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-header">
-                Scheduled Backup
+        <div class="card-h h-100">
+            <window.Corners/>
+            <div class="card-header serif" style="fontSize:18px">
+                <span style="color:var(--sigil); margin-right:8px">⧗</span> Scheduled Backup
             </div>
-            <div class="card-body">
-                <p class="card-text">Set the time (UTC/Server Time) for the daily backup of the <code>data/</code> folder.</p>
+            <div class="card-body p-4">
+                <p class="serif-i mb-4" style="font-size:14px; color:var(--bone-dim)">Set the daily resonance time for vaulting the <code>data/</code> scrolls.</p>
                 <form id="backupForm" onsubmit="event.preventDefault(); saveBackupSettings();">
-                    <div class="mb-3">
-                        <label for="backupTime" class="form-label">Backup Time (24h format)</label>
-                        <input type="time" class="form-control" id="backupTime" required>
+                    <div class="mb-4">
+                        <label for="backupTime" class="label mb-2" style="display:block">Backup Time (UTC)</label>
+                        <input type="time" class="form-control bg-dark text-light border-secondary mono" id="backupTime" required>
                     </div>
-                    <button type="submit" class="btn btn-primary" id="saveBtn">Save Settings</button>
+                    <button type="submit" class="btn-eld primary w-100" style="justify-content:center" id="saveBtn">SAVE CONFIGURATION</button>
                 </form>
-                <div id="saveMessage" class="mt-2"></div>
+                <div id="saveMessage" class="mt-3"></div>
             </div>
         </div>
     </div>
 
     <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-header">
-                Manual Actions
+        <div class="card-h h-100">
+            <window.Corners/>
+            <div class="card-header serif" style="fontSize:18px">
+                <span style="color:var(--rust); margin-right:8px">⚡</span> Manual Ritual
             </div>
-            <div class="card-body">
-                <p class="card-text">Trigger a backup immediately. The zip file will be sent to the bot owner.</p>
-                <button class="btn btn-warning" onclick="runBackup()" id="runBtn">Run Backup Now</button>
-                <div id="runMessage" class="mt-2"></div>
+            <div class="card-body p-4">
+                <p class="serif-i mb-4" style="font-size:14px; color:var(--bone-dim)">Immediately seal the current knowledge. The archive will be sent to the Keeper.</p>
+                <button class="btn-eld rust w-100" style="justify-content:center" onclick="runBackup()" id="runBtn">PERFORM BACKUP NOW</button>
+                <div id="runMessage" class="mt-3"></div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-header">
-        System Backups (from Updates)
+<div class="card-h mt-4">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">🗄</span> System Backups
     </div>
-    <div class="card-body">
-        <p class="card-text">These backups are created automatically before updates by the updater script.</p>
-        <div class="table-responsive">
-            <table class="table table-striped" id="backupTable">
-                <thead>
+    <div class="card-body p-0">
+        <div class="responsive-table-container">
+            <table class="table mb-0">
+                <thead class="d-none d-md-table-header-group">
                     <tr>
-                        <th>Filename</th>
-                        <th>Size</th>
-                        <th>Created</th>
-                        <th>Actions</th>
+                        <th class="label ps-4 py-3">Filename</th>
+                        <th class="label py-3">Size</th>
+                        <th class="label py-3">Created</th>
+                        <th class="label pe-4 py-3 text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="backupList">
-                    <!-- Populated by JS -->
+                    <tr><td colspan="4" class="p-4 text-center serif-i">Consulting the archives...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
+<style>
+@media (max-width: 767.98px) {
+    .responsive-row {
+        display: block;
+        padding: 1.5rem !important;
+        border-bottom: 1px solid var(--hair-strong);
+    }
+    .responsive-row td {
+        display: block;
+        padding: 0 0 1rem 0 !important;
+        border: 0;
+    }
+    .responsive-row td:last-child {
+        padding-bottom: 0 !important;
+        margin-top: 0.5rem;
+    }
+}
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -71,75 +95,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadSystemBackups() {
     const list = document.getElementById('backupList');
-    list.innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
-
     try {
         const response = await fetch('/api/backup/files');
         const files = await response.json();
-
         list.innerHTML = '';
         if (files.length === 0) {
-            list.innerHTML = '<tr><td colspan="4" class="text-center">No backup files found.</td></tr>';
+            list.innerHTML = '<tr><td colspan="4" class="p-4 text-center serif-i">The vault is empty.</td></tr>';
             return;
         }
-
         files.forEach(file => {
             const tr = document.createElement('tr');
+            tr.className = 'responsive-row';
             tr.innerHTML = `
-                <td>${file.name}</td>
-                <td>${formatBytes(file.size)}</td>
-                <td>${file.created}</td>
-                <td>
-                    <a href="/admin/backup/download/${file.name}" class="btn btn-sm btn-info text-white me-2">Download</a>
-                    <button class="btn btn-sm btn-danger" onclick="deleteBackup('${file.name}')">Delete</button>
+                <td class="ps-4 py-3 align-middle">
+                    <span class="d-md-none label mb-1" style="display:block">Filename</span>
+                    <div class="serif" style="font-size:15px">${file.name}</div>
+                </td>
+                <td class="py-3 align-middle">
+                    <span class="d-md-none label mb-1" style="display:block">Size</span>
+                    <code class="mono" style="font-size:12px; color:var(--bone-fade)">${formatBytes(file.size)}</code>
+                </td>
+                <td class="py-3 align-middle">
+                    <span class="d-md-none label mb-1" style="display:block">Created</span>
+                    <div class="mono" style="font-size:11px">${file.created}</div>
+                </td>
+                <td class="pe-4 py-3 align-middle text-md-end">
+                    <div style="display:flex; gap:8px; justify-content: flex-end">
+                        <a href="/admin/backup/download/${file.name}" class="btn-eld on" style="padding: 6px 12px; font-size: 10px">DOWNLOAD</a>
+                        <button class="btn-eld rust" style="padding: 6px 12px; font-size: 10px" onclick="deleteBackup('${file.name}')">DELETE</button>
+                    </div>
                 </td>
             `;
             list.appendChild(tr);
         });
-
     } catch (e) {
-        list.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error loading backups: ${e}</td></tr>`;
+        list.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-danger serif-i">Error connecting to the void: ${e}</td></tr>`;
     }
 }
 
 async function deleteBackup(filename) {
-    if (!confirm(`Are you sure you want to delete ${filename}? This cannot be undone.`)) return;
-
+    if (!confirm(`Are you sure you want to incinerate ${filename}?`)) return;
     try {
         const response = await fetch('/api/backup/delete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filename: filename })
         });
         const data = await response.json();
-
-        if (data.status === 'success') {
-            loadSystemBackups(); // Refresh list
-        } else {
-            alert("Failed to delete: " + data.message);
-        }
-    } catch (e) {
-        alert("Error: " + e);
-    }
+        if (data.status === 'success') loadSystemBackups();
+    } catch (e) { alert("Error: " + e); }
 }
 
 function formatBytes(bytes, decimals = 2) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
 async function loadBackupSettings() {
-    // The value is injected by the server into the template,
-    // but here we are using a separate API call pattern or template variable.
-    // Let's use the template variable approach for simplicity if the route provides it,
-    // OR we can fetch it.
-    // Since I haven't written the route yet, I'll decide now:
-    // The route will render the template with `backup_time` variable.
-
     const serverBackupTime = "{{ backup_time }}";
     if (serverBackupTime && serverBackupTime !== "None") {
         document.getElementById('backupTime').value = serverBackupTime;
@@ -149,57 +164,29 @@ async function loadBackupSettings() {
 async function saveBackupSettings() {
     const timeInput = document.getElementById('backupTime').value;
     const btn = document.getElementById('saveBtn');
-    const msg = document.getElementById('saveMessage');
-
     btn.disabled = true;
-    msg.innerHTML = '';
-
     try {
         const response = await fetch('/api/backup/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ backup_time: timeInput })
         });
         const data = await response.json();
-
-        if (data.status === 'success') {
-            msg.innerHTML = '<div class="alert alert-success">Settings saved!</div>';
-        } else {
-            msg.innerHTML = `<div class="alert alert-danger">Error: ${data.message}</div>`;
-        }
-    } catch (e) {
-        msg.innerHTML = `<div class="alert alert-danger">Error: ${e}</div>`;
-    } finally {
-        btn.disabled = false;
-        setTimeout(() => msg.innerHTML = '', 3000);
-    }
+        if (data.status === 'success') alert("Settings saved!");
+    } catch (e) { alert("Error: " + e); }
+    finally { btn.disabled = false; }
 }
 
 async function runBackup() {
     const btn = document.getElementById('runBtn');
-    const msg = document.getElementById('runMessage');
-
-    if (!confirm("Are you sure you want to run the backup now? This will send a file to the bot owner.")) return;
-
+    if (!confirm("Start the backup ritual?")) return;
     btn.disabled = true;
-    msg.innerHTML = '<div class="text-info">Backup in progress...</div>';
-
+    btn.innerText = "COMMUNING...";
     try {
-        const response = await fetch('/api/backup/run', {
-            method: 'POST'
-        });
+        const response = await fetch('/api/backup/run', { method: 'POST' });
         const data = await response.json();
-
-        if (data.status === 'success') {
-            msg.innerHTML = `<div class="alert alert-success">Backup Success: ${data.filename}</div>`;
-        } else {
-            msg.innerHTML = `<div class="alert alert-danger">Backup Failed: ${data.message}</div>`;
-        }
-    } catch (e) {
-        msg.innerHTML = `<div class="alert alert-danger">Error: ${e}</div>`;
-    } finally {
-        btn.disabled = false;
-    }
+        if (data.status === 'success') alert("Ritual Complete: " + data.filename);
+    } catch (e) { alert("Error: " + e); }
+    finally { btn.disabled = false; btn.innerText = "PERFORM BACKUP NOW"; }
 }
 </script>
 {% endblock %}

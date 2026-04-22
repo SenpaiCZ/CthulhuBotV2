@@ -1,84 +1,90 @@
 {% extends 'base.html' %}
 
-{% block title %}Game Settings{% endblock %}
+{% block title %}Game Settings — CthulhuBot{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Game Settings</h2>
+<div class="mb-4">
+    <div class="label">Campaign Configuration</div>
+    <h2 class="serif" style="fontSize:32px; margin:8px 0 0">Game Settings</h2>
+</div>
 
-<div class="card">
-    <div class="card-header">
-        General Game Settings
+<div class="card-h mb-4">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">⚖</span> General Game Settings
     </div>
-    <div class="card-body">
-        <p class="card-text">Configure general game rules per server.</p>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover" id="settingsTable">
-                <thead>
+    <div class="card-body p-0">
+        <div class="responsive-table-container">
+            <table class="table mb-0">
+                <thead class="d-none d-md-table-header-group">
                     <tr>
-                        <th>Server Name</th>
-                        <th>Server ID</th>
-                        <th>Luck Threshold</th>
-                        <th>Max Starting Skill</th>
-                        <th>Action</th>
+                        <th class="label ps-4 py-3">Server Name</th>
+                        <th class="label py-3">Luck Threshold</th>
+                        <th class="label py-3">Max Skill</th>
+                        <th class="label pe-4 py-3 text-end">Action</th>
                     </tr>
                 </thead>
                 <tbody id="settingsBody">
-                    <tr><td colspan="5">Loading...</td></tr>
+                    <tr><td colspan="4" class="p-4 text-center serif-i">Loading data from the stars...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<div class="card mt-4">
-    <div class="card-header">
-        Loot Settings
+<div class="card-h">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">💰</span> Loot Settings
     </div>
-    <div class="card-body">
+    <div class="card-body p-4">
         <form id="lootForm">
-            <div class="row mb-3">
+            <div class="row g-4 mb-4">
                 <div class="col-md-3">
-                    <label for="currencySymbol" class="form-label">Currency Symbol</label>
-                    <input type="text" class="form-control" id="currencySymbol" placeholder="$">
+                    <label for="currencySymbol" class="label mb-2" style="display:block">Currency</label>
+                    <input type="text" class="form-control bg-dark text-light border-secondary mono" id="currencySymbol" placeholder="$">
                 </div>
                 <div class="col-md-3">
-                    <label for="moneyChance" class="form-label">Money Chance (%)</label>
-                    <input type="number" class="form-control" id="moneyChance" min="0" max="100">
+                    <label for="moneyChance" class="label mb-2" style="display:block">Money Chance (%)</label>
+                    <input type="number" class="form-control bg-dark text-light border-secondary mono" id="moneyChance" min="0" max="100">
                 </div>
                 <div class="col-md-3">
-                    <label for="moneyMin" class="form-label">Money Min</label>
-                    <input type="number" class="form-control" id="moneyMin" step="0.01">
+                    <label for="moneyMin" class="label mb-2" style="display:block">Min Money</label>
+                    <input type="number" class="form-control bg-dark text-light border-secondary mono" id="moneyMin" step="0.01">
                 </div>
                 <div class="col-md-3">
-                    <label for="moneyMax" class="form-label">Money Max</label>
-                    <input type="number" class="form-control" id="moneyMax" step="0.01">
+                    <label for="moneyMax" class="label mb-2" style="display:block">Max Money</label>
+                    <input type="number" class="form-control bg-dark text-light border-secondary mono" id="moneyMax" step="0.01">
                 </div>
             </div>
-            <div class="row mb-3">
+            <div class="row g-4 mb-4">
                 <div class="col-md-6">
-                    <label for="itemsMin" class="form-label">Min Items</label>
-                    <input type="number" class="form-control" id="itemsMin" min="0">
+                    <label for="itemsMin" class="label mb-2" style="display:block">Min Items</label>
+                    <input type="number" class="form-control bg-dark text-light border-secondary mono" id="itemsMin" min="0">
                 </div>
                 <div class="col-md-6">
-                    <label for="itemsMax" class="form-label">Max Items</label>
-                    <input type="number" class="form-control" id="itemsMax" min="0">
+                    <label for="itemsMax" class="label mb-2" style="display:block">Max Items</label>
+                    <input type="number" class="form-control bg-dark text-light border-secondary mono" id="itemsMax" min="0">
                 </div>
             </div>
 
-            <hr>
-            <h5>Loot Items (<span id="itemCount">0</span>)</h5>
-            <div class="mb-3">
+            <div style="display:flex; align-items:center; gap:12, margin-bottom:16px">
+                <span class="label">Loot Items Pool (<span id="itemCount">0</span>)</span>
+                <div style="flex:1; height:1px; background:var(--hair-strong)"></div>
+            </div>
+            
+            <div class="mb-4">
                 <div class="input-group">
-                    <input type="text" class="form-control" id="newItemInput" placeholder="New Item Name" aria-label="New Item Name" onkeypress="handleEnter(event)">
-                    <button class="btn btn-outline-success" type="button" onclick="addLootItem()" aria-label="Add loot item">Add</button>
+                    <input type="text" class="form-control bg-dark text-light border-secondary mono" id="newItemInput" placeholder="New Item Name" onkeypress="handleEnter(event)">
+                    <button class="btn-eld on" type="button" onclick="addLootItem()">+ ADD</button>
                 </div>
             </div>
 
-            <div id="lootItemsList" class="list-group mb-3" style="max-height: 400px; overflow-y: auto;">
-                <!-- Items will be injected here -->
+            <div id="lootItemsList" class="list-group mb-4" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--hair); border-radius:0">
+                <!-- Items injected here -->
             </div>
 
-            <button type="button" class="btn btn-success" id="saveLootBtn" onclick="saveLootSettings()">Save Loot Settings</button>
+            <button type="button" class="btn-eld primary w-100" style="justify-content:center" id="saveLootBtn" onclick="saveLootSettings()">SAVE LOOT CONFIGURATION</button>
         </form>
     </div>
 </div>
@@ -88,31 +94,31 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content bg-dark text-light border-secondary">
             <div class="modal-header border-secondary">
-                <h5 class="modal-title" id="soundSettingsModalLabel">Sound Settings</h5>
+                <h5 class="modal-title serif" id="soundSettingsModalLabel">Sound Settings</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <input type="hidden" id="soundSettingsGuildId">
 
-                <h6 class="border-bottom border-secondary pb-2 mb-3">Default Sounds</h6>
-                <div class="row g-3 mb-4" id="defaultSoundsContainer">
+                <div class="label mb-3" style="color:var(--sigil)">Default Roll Sounds</div>
+                <div class="row g-3 mb-5" id="defaultSoundsContainer">
                     <!-- Default dropdowns injected here -->
                 </div>
 
-                <h6 class="border-bottom border-secondary pb-2 mb-3">Individual Skill Sounds</h6>
+                <div class="label mb-3" style="color:var(--sigil)">Individual Skill Sounds</div>
                 <div id="skillSoundsContainer">
                     <!-- Skill rows injected here -->
                 </div>
 
-                <div class="mt-3">
-                    <button type="button" class="btn btn-outline-light btn-sm" onclick="addSkillSoundRow()">
-                        <i class="bi bi-plus-lg"></i> Add Skill Rule
+                <div class="mt-4">
+                    <button type="button" class="btn-eld" onclick="addSkillSoundRow()">
+                        + ADD SKILL RULE
                     </button>
                 </div>
             </div>
             <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-success" onclick="saveSoundSettings()">Save Changes</button>
+                <button type="button" class="btn-eld" data-bs-dismiss="modal">CLOSE</button>
+                <button type="button" class="btn-eld primary" onclick="saveSoundSettings()">SAVE ALL CHANGES</button>
             </div>
         </div>
     </div>
@@ -124,17 +130,46 @@
     {% endfor %}
 </datalist>
 
+<style>
+@media (max-width: 767.98px) {
+    .responsive-row {
+        display: block;
+        padding: 1.5rem !important;
+        border-bottom: 1px solid var(--hair-strong);
+    }
+    .responsive-row td {
+        display: block;
+        padding: 0 0 1rem 0 !important;
+        border: 0;
+    }
+    .responsive-row td:last-child {
+        padding-bottom: 0 !important;
+        margin-top: 0.5rem;
+    }
+}
+#lootItemsList .list-group-item {
+    background: var(--void-1);
+    color: var(--bone);
+    border-color: var(--hair);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 12px 16px;
+}
+#lootItemsList .list-group-item:hover {
+    background: var(--void-2);
+}
+</style>
+
 <script>
 let soundFiles = [];
 let soundSettingsData = {};
 let currentSoundGuildId = null;
+let currentLootItems = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     loadLootSettings();
 });
-
-let currentLootItems = [];
 
 async function loadSettings() {
     try {
@@ -144,25 +179,31 @@ async function loadSettings() {
         tbody.innerHTML = '';
 
         if (!data.guilds || data.guilds.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4">No servers found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center serif-i">No servers found in this dimension.</td></tr>';
             return;
         }
 
         data.guilds.forEach(guild => {
             const tr = document.createElement('tr');
+            tr.className = 'responsive-row';
             tr.innerHTML = `
-                <td>${guild.name}</td>
-                <td>${guild.id}</td>
-                <td>
-                    <input type="number" class="form-control" id="luck-${guild.id}" value="${guild.luck_threshold}" min="0" style="max-width: 100px;" aria-label="Luck Threshold for ${escapeHtml(guild.name)}">
+                <td class="ps-4 py-3 align-middle">
+                    <span class="d-md-none label mb-1" style="display:block">Server Name</span>
+                    <div class="serif" style="font-size:16px">${guild.name}</div>
+                    <code class="mono d-none d-md-inline" style="font-size:10px; color:var(--bone-fade)">${guild.id}</code>
                 </td>
-                <td>
-                    <input type="number" class="form-control" id="skill-${guild.id}" value="${guild.max_starting_skill}" min="1" max="99" style="max-width: 100px;" aria-label="Max Starting Skill for ${escapeHtml(guild.name)}">
+                <td class="py-3 align-middle">
+                    <span class="d-md-none label mb-1" style="display:block">Luck Threshold</span>
+                    <input type="number" class="form-control bg-dark text-light border-secondary mono" id="luck-${guild.id}" value="${guild.luck_threshold}" min="0" style="max-width: 100px; font-size:12px">
                 </td>
-                <td>
-                    <div class="btn-group">
-                        <button class="btn btn-primary btn-sm" onclick="saveSettings('${guild.id}')" aria-label="Save settings for ${escapeHtml(guild.name)}">Save</button>
-                        <button class="btn btn-secondary btn-sm" onclick="openSoundSettings(this.dataset.guildId, this.dataset.guildName)" data-guild-id="${guild.id}" data-guild-name="${escapeHtml(guild.name)}" aria-label="Manage sound settings for ${escapeHtml(guild.name)}">Sounds</button>
+                <td class="py-3 align-middle">
+                    <span class="d-md-none label mb-1" style="display:block">Max Skill</span>
+                    <input type="number" class="form-control bg-dark text-light border-secondary mono" id="skill-${guild.id}" value="${guild.max_starting_skill}" min="1" max="99" style="max-width: 100px; font-size:12px">
+                </td>
+                <td class="pe-4 py-3 align-middle text-md-end">
+                    <div style="display:flex; gap:8px; justify-content: flex-end">
+                        <button class="btn-eld primary" style="padding: 6px 12px; font-size: 10px" onclick="saveSettings('${guild.id}')">SAVE</button>
+                        <button class="btn-eld" style="padding: 6px 12px; font-size: 10px" onclick="openSoundSettings('${guild.id}', '${escapeHtml(guild.name)}')">SOUNDS</button>
                     </div>
                 </td>
             `;
@@ -171,7 +212,7 @@ async function loadSettings() {
 
     } catch (error) {
         console.error('Error loading settings:', error);
-        document.getElementById('settingsBody').innerHTML = '<tr><td colspan="5" class="text-danger">Error loading data.</td></tr>';
+        document.getElementById('settingsBody').innerHTML = '<tr><td colspan="4" class="p-4 text-center text-danger serif-i">Error loading data from the void.</td></tr>';
     }
 }
 
@@ -179,20 +220,15 @@ async function loadLootSettings() {
     try {
         const response = await fetch('/api/game/loot/data');
         const data = await response.json();
-
-        document.getElementById('currencySymbol').value = data.currency_symbol;
-        document.getElementById('moneyChance').value = data.money_chance;
-        document.getElementById('moneyMin').value = data.money_min;
-        document.getElementById('moneyMax').value = data.money_max;
-        document.getElementById('itemsMin').value = data.num_items_min;
-        document.getElementById('itemsMax').value = data.num_items_max;
-
+        document.getElementById('currencySymbol').value = data.currency_symbol || "";
+        document.getElementById('moneyChance').value = data.money_chance || 0;
+        document.getElementById('moneyMin').value = data.money_min || 0;
+        document.getElementById('moneyMax').value = data.money_max || 0;
+        document.getElementById('itemsMin').value = data.num_items_min || 0;
+        document.getElementById('itemsMax').value = data.num_items_max || 0;
         currentLootItems = data.items || [];
         renderLootList();
-
-    } catch (error) {
-        console.error("Error loading loot settings:", error);
-    }
+    } catch (e) { console.error(e); }
 }
 
 function renderLootList() {
@@ -200,27 +236,13 @@ function renderLootList() {
     const countSpan = document.getElementById('itemCount');
     list.innerHTML = '';
     countSpan.textContent = currentLootItems.length;
-
-    // Sort alphabetically for easier finding
-    // Wait, let's keep original order or user might get confused if it jumps?
-    // Usually sorted lists are easier to manage for large sets.
-    // I will sort it.
     const sortedItems = [...currentLootItems].sort((a, b) => a.localeCompare(b));
-    // But if I sort, index removal is tricky if I don't map back.
-    // I'll stick to displaying natural order but maybe I should allow search?
-    // Let's just display as is for now, maybe reversed so new ones are top? No, append is standard.
-
-    // Actually, sorting makes sense for "Loot Table".
-    // I will render sorted, but I need to know which item to remove.
-    // I can remove by value since strings are unique? Or should be.
-    // Let's assume unique strings.
-
     sortedItems.forEach(item => {
         const div = document.createElement('div');
         div.className = 'list-group-item d-flex justify-content-between align-items-center';
         div.innerHTML = `
             <span>${escapeHtml(item)}</span>
-            <button class="btn btn-danger btn-sm" onclick="removeLootItem('${escapeHtml(item.replace(/'/g, "\\'"))}')" aria-label="Remove ${escapeHtml(item)}"><i class="bi bi-trash"></i> Remove</button>
+            <button class="btn-eld rust" style="padding:4px 10px; font-size:9px" onclick="removeLootItem('${escapeHtml(item.replace(/'/g, "\\'"))}')">REMOVE</button>
         `;
         list.appendChild(div);
     });
@@ -228,23 +250,14 @@ function renderLootList() {
 
 function escapeHtml(text) {
     if (!text) return text;
-    return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 function addLootItem() {
     const input = document.getElementById('newItemInput');
     const val = input.value.trim();
     if (val) {
-        // Check duplicate
-        if (currentLootItems.includes(val)) {
-            alert("Item already exists!");
-            return;
-        }
+        if (currentLootItems.includes(val)) { alert("Item already exists!"); return; }
         currentLootItems.push(val);
         input.value = '';
         renderLootList();
@@ -259,26 +272,22 @@ function removeLootItem(itemVal) {
     }
 }
 
-function handleEnter(e) {
-    if (e.key === 'Enter') addLootItem();
-}
+function handleEnter(e) { if (e.key === 'Enter') addLootItem(); }
 
 async function saveLootSettings() {
     const btn = document.getElementById('saveLootBtn');
     const originalText = btn.innerText;
-    btn.innerText = "Saving...";
+    btn.innerText = "COMMUNING WITH THE STARS...";
     btn.disabled = true;
-
     const payload = {
         currency_symbol: document.getElementById('currencySymbol').value,
-        money_chance: document.getElementById('moneyChance').value,
-        money_min: document.getElementById('moneyMin').value,
-        money_max: document.getElementById('moneyMax').value,
-        num_items_min: document.getElementById('itemsMin').value,
-        num_items_max: document.getElementById('itemsMax').value,
+        money_chance: parseInt(document.getElementById('moneyChance').value),
+        money_min: parseFloat(document.getElementById('moneyMin').value),
+        money_max: parseFloat(document.getElementById('moneyMax').value),
+        num_items_min: parseInt(document.getElementById('itemsMin').value),
+        num_items_max: parseInt(document.getElementById('itemsMax').value),
         items: currentLootItems
     };
-
     try {
         const response = await fetch('/api/game/loot/save', {
             method: 'POST',
@@ -286,85 +295,36 @@ async function saveLootSettings() {
             body: JSON.stringify(payload)
         });
         const res = await response.json();
-
         if (res.status === 'success') {
-            btn.classList.remove('btn-success');
-            btn.classList.add('btn-primary'); // Switch color to indicate fresh state? Or keep success?
-            btn.innerText = "Saved!";
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.classList.add('btn-success');
-                btn.classList.remove('btn-primary');
-                btn.disabled = false;
-            }, 2000);
+            btn.innerText = "SAVED SUCCESSFULLY";
+            setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
         } else {
             alert("Error: " + res.message);
             btn.innerText = originalText;
             btn.disabled = false;
         }
-    } catch (e) {
-        console.error(e);
-        alert("Error saving loot settings");
-        btn.innerText = originalText;
-        btn.disabled = false;
-    }
+    } catch (e) { console.error(e); btn.innerText = originalText; btn.disabled = false; }
 }
 
 async function saveSettings(guildId) {
-    const luckInput = document.getElementById(`luck-${guildId}`);
-    const skillInput = document.getElementById(`skill-${guildId}`);
-
-    const luckValue = luckInput.value;
-    const skillValue = skillInput.value;
-
-    if (luckValue === "" || parseInt(luckValue) < 0) {
-        alert("Please enter a valid non-negative number for Luck Threshold.");
-        return;
-    }
-
-    if (skillValue === "" || parseInt(skillValue) < 1 || parseInt(skillValue) > 99) {
-        alert("Please enter a valid number (1-99) for Max Starting Skill.");
-        return;
-    }
-
+    const luckValue = document.getElementById(`luck-${guildId}`).value;
+    const skillValue = document.getElementById(`skill-${guildId}`).value;
     try {
         const response = await fetch('/api/game/settings/save_general', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 guild_id: guildId,
                 luck_value: parseInt(luckValue),
                 max_skill_value: parseInt(skillValue)
             })
         });
-
         const data = await response.json();
-
         if (data.status === 'success') {
-            // Optional: Show a toast or small indicator
-            // Button is in the next cell relative to skill input
-            const btn = skillInput.parentElement.nextElementSibling.querySelector('button');
-            const originalText = btn.innerText;
-            btn.innerText = "Saved!";
-            btn.classList.remove('btn-primary');
-            btn.classList.add('btn-success');
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.classList.remove('btn-success');
-                btn.classList.add('btn-primary');
-            }, 2000);
-        } else {
-            alert("Error: " + data.message);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert("An error occurred while saving.");
-    }
+            alert("Settings saved!");
+        } else { alert("Error: " + data.message); }
+    } catch (error) { console.error('Error:', error); }
 }
-
-// Sound Settings Logic
 
 async function fetchSoundData() {
     try {
@@ -372,22 +332,17 @@ async function fetchSoundData() {
         const data = await response.json();
         soundFiles = data.files || [];
         soundSettingsData = data.settings || {};
-    } catch (e) {
-        console.error("Error fetching sound data", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
 async function openSoundSettings(guildId, guildName) {
     currentSoundGuildId = guildId;
     const modalEl = document.getElementById('soundSettingsModal');
     const modal = new bootstrap.Modal(modalEl);
-
     document.getElementById('soundSettingsModalLabel').innerText = `Sound Settings: ${guildName}`;
     document.getElementById('soundSettingsGuildId').value = guildId;
-
     await fetchSoundData();
     renderSoundUI();
-
     modal.show();
 }
 
@@ -396,141 +351,94 @@ function renderSoundUI() {
     const skillContainer = document.getElementById('skillSoundsContainer');
     defaultContainer.innerHTML = '';
     skillContainer.innerHTML = '';
-
     const guildSettings = soundSettingsData[currentSoundGuildId] || { default: {}, skills: {} };
     const defaultSettings = guildSettings.default || {};
     const skillSettings = guildSettings.skills || {};
-
-    // Default Sounds
-    const tiers = ['Critical Success', 'Extreme Success', 'Hard Success', 'Regular Success', 'Fail', 'Fumble'];
     const tierKeys = ['critical', 'extreme', 'hard', 'regular', 'fail', 'fumble'];
-
+    const tiers = ['Critical Success', 'Extreme Success', 'Hard Success', 'Regular Success', 'Fail', 'Fumble'];
     tierKeys.forEach((key, index) => {
         const col = document.createElement('div');
         col.className = 'col-md-4';
-        const label = tiers[index];
         const value = defaultSettings[key] || '';
-
         col.innerHTML = `
-            <label class="form-label text-info" for="default-${key}">${label}</label>
-            <select class="form-select bg-secondary text-light border-secondary" id="default-${key}">
+            <label class="label mb-1" style="font-size:9px" for="default-${key}">${tiers[index]}</label>
+            <select class="form-select bg-dark text-light border-secondary mono" style="font-size:11px" id="default-${key}">
                 <option value="">(None)</option>
                 ${soundFiles.map(f => `<option value="${escapeHtml(f)}" ${f === value ? 'selected' : ''}>${escapeHtml(f)}</option>`).join('')}
             </select>
         `;
         defaultContainer.appendChild(col);
     });
-
-    // Skill Sounds
-    Object.keys(skillSettings).forEach(skillName => {
-        addSkillSoundRow(skillName, skillSettings[skillName]);
-    });
+    Object.keys(skillSettings).forEach(skillName => { addSkillSoundRow(skillName, skillSettings[skillName]); });
 }
 
 function addSkillSoundRow(skillName = '', values = {}) {
     const container = document.getElementById('skillSoundsContainer');
     const rowId = 'skill-row-' + Date.now() + Math.random().toString(36).substr(2, 5);
-
     const row = document.createElement('div');
-    row.className = 'card bg-secondary mb-3 border-dark skill-sound-row';
+    row.className = 'card-h mb-3 skill-sound-row p-3';
     row.id = rowId;
-
     const tierKeys = ['critical', 'extreme', 'hard', 'regular', 'fail', 'fumble'];
-    const tiers = ['Critical', 'Extreme', 'Hard', 'Regular', 'Fail', 'Fumble']; // Shortened
-
+    const tiers = ['Crit', 'Ext', 'Hard', 'Reg', 'Fail', 'Fum'];
     let dropdownsHtml = '';
     tierKeys.forEach((key, index) => {
         const val = values[key] || '';
         const selectId = `${rowId}-${key}`;
         dropdownsHtml += `
-            <div class="col-md-2 mb-2">
-                <label class="form-label small text-light" for="${selectId}">${tiers[index]}</label>
-                <select class="form-select form-select-sm bg-dark text-light border-secondary skill-tier-select" data-tier="${key}" id="${selectId}">
-                    <option value="">(Default)</option>
+            <div class="col-6 col-md-2 mb-2">
+                <label class="label small" style="font-size:8px" for="${selectId}">${tiers[index]}</label>
+                <select class="form-select form-select-sm bg-dark text-light border-secondary skill-tier-select mono" style="font-size:10px" data-tier="${key}" id="${selectId}">
+                    <option value="">(Def)</option>
                     ${soundFiles.map(f => `<option value="${escapeHtml(f)}" ${f === val ? 'selected' : ''}>${escapeHtml(f)}</option>`).join('')}
                 </select>
             </div>
         `;
     });
-
     row.innerHTML = `
-        <div class="card-body p-2">
-            <div class="row align-items-center mb-2">
-                <div class="col-md-10">
-                    <input type="text" class="form-control bg-dark text-light border-secondary skill-name-input" placeholder="Skill Name (e.g. Fighting (Brawl))" value="${escapeHtml(skillName)}" aria-label="Skill Name" list="availableSkills" autocomplete="off">
-                </div>
-                <div class="col-md-2 text-end">
-                    <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()" aria-label="Remove skill rule"><i class="bi bi-trash" aria-hidden="true"></i></button>
-                </div>
+        <div class="row align-items-center mb-2">
+            <div class="col-10">
+                <input type="text" class="form-control bg-dark text-light border-secondary mono" placeholder="Skill Name (e.g. Fighting (Brawl))" value="${escapeHtml(skillName)}" list="availableSkills" autocomplete="off" style="font-size:12px">
             </div>
-            <div class="row g-2">
-                ${dropdownsHtml}
+            <div class="col-2 text-end">
+                <button type="button" class="btn-eld rust" style="padding:4px 8px" onclick="document.getElementById('${rowId}').remove()">✕</button>
             </div>
         </div>
+        <div class="row g-2">${dropdownsHtml}</div>
     `;
-
     container.appendChild(row);
-
-    if (!skillName) {
-        const input = row.querySelector('.skill-name-input');
-        if (input) input.focus();
-    }
 }
 
 async function saveSoundSettings() {
     if (!currentSoundGuildId) return;
-
     const defaults = {};
     ['critical', 'extreme', 'hard', 'regular', 'fail', 'fumble'].forEach(key => {
         const val = document.getElementById(`default-${key}`).value;
         if (val) defaults[key] = val;
     });
-
     const skills = {};
     const rows = document.querySelectorAll('.skill-sound-row');
     rows.forEach(row => {
-        const nameInput = row.querySelector('.skill-name-input');
-        const name = nameInput.value.trim();
-        if (!name) return; // Skip empty names
-
+        const name = row.querySelector('input[type=text]').value.trim();
+        if (!name) return;
         const rules = {};
         row.querySelectorAll('.skill-tier-select').forEach(select => {
             const tier = select.dataset.tier;
             const val = select.value;
             if (val) rules[tier] = val;
         });
-
-        if (Object.keys(rules).length > 0) {
-            skills[name] = rules;
-        }
+        if (Object.keys(rules).length > 0) skills[name] = rules;
     });
-
-    const payload = {
-        guild_id: currentSoundGuildId,
-        default: defaults,
-        skills: skills
-    };
-
     try {
         const response = await fetch('/api/game/sounds/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ guild_id: currentSoundGuildId, default: defaults, skills: skills })
         });
         const res = await response.json();
         if (res.status === 'success') {
-            alert("Settings saved successfully!");
-            // Hide modal
-            const modalEl = document.getElementById('soundSettingsModal');
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            modal.hide();
-        } else {
-            alert("Error saving settings: " + res.message);
+            alert("Settings saved!");
+            bootstrap.Modal.getInstance(document.getElementById('soundSettingsModal')).hide();
         }
-    } catch (e) {
-        console.error(e);
-        alert("Error saving settings.");
-    }
+    } catch (e) { console.error(e); }
 }
 </script>
 {% endblock %}

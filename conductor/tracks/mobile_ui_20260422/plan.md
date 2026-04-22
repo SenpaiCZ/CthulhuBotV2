@@ -10,17 +10,17 @@
     - [x] Write a test to ensure the sidebar logic renders correctly
     - [x] Implement React/JS logic to toggle the sidebar via the hamburger menu
     - [x] Refactor the navigation links for better touch targets (44x44px minimum)
-- [~] Task: Conductor - User Manual Verification 'Phase 1: CSS Framework and Base Layout Updates' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: CSS Framework and Base Layout Updates' (Protocol in workflow.md) (4409f2e)
 
 ## Phase 2: Refactoring Admin & Settings Pages
-- [ ] Task: Refactor `admin_dashboard.html`, `bot_config.html`, and `game_settings.html`
-    - [ ] Write unit tests verifying these routes return 200 OK and incorporate the new layout structure
-    - [ ] Convert any static tables to the new Card-Based Layout on mobile
-    - [ ] Apply the new design system to all forms and inputs
-- [ ] Task: Refactor Roles, Backup, and Deleter Dashboards
-    - [ ] Verify test coverage for these routes
-    - [ ] Apply the responsive Card-Based Layout and mobile-friendly form controls
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Refactoring Admin & Settings Pages' (Protocol in workflow.md)
+- [x] Task: Refactor `admin_dashboard.html`, `bot_config.html`, and `game_settings.html` (9020b93)
+    - [x] Write unit tests verifying these routes return 200 OK and incorporate the new layout structure
+    - [x] Convert any static tables to the new Card-Based Layout on mobile
+    - [x] Apply the new design system to all forms and inputs
+- [x] Task: Refactor Roles, Backup, and Deleter Dashboards (4409f2e)
+    - [x] Verify test coverage for these routes
+    - [x] Apply the responsive Card-Based Layout and mobile-friendly form controls
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Refactoring Admin & Settings Pages' (Protocol in workflow.md)
 
 ## Phase 3: Refactoring Interactive Dashboards
 - [ ] Task: Refactor `music_dashboard.html`, `autoroom_dashboard.html`, and `polls_dashboard.html`

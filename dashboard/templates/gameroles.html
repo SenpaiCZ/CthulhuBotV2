@@ -1,19 +1,31 @@
 {% extends "base.html" %}
 
-{% block title %}Gamer Roles{% endblock %}
+{% block title %}Gamer Roles — CthulhuBot{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <h2 class="mb-4">Gamer Roles Configuration</h2>
-        <div id="loading" class="text-center">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-        <div id="guilds-container"></div>
-    </div>
+<div class="mb-4">
+    <div class="label">Server Management</div>
+    <h2 class="serif" style="fontSize:32px; margin:8px 0 0">Gamer Roles Configuration</h2>
 </div>
+
+<div id="loading" class="text-center py-5">
+    <span class="pulse-dot" style="display:inline-block; width:12px; height:12px; background:var(--sigil); border-radius:50%"></span>
+    <div class="label mt-3">Listening to server frequencies...</div>
+</div>
+
+<div id="guilds-container"></div>
+
+<style>
+.activity-item {
+    background: var(--void-1);
+    color: var(--bone);
+    border-color: var(--hair) !important;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 10px 16px;
+}
+.activity-item:hover { background: var(--void-2); }
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', loadData);
@@ -26,98 +38,83 @@ async function loadData() {
         document.getElementById('loading').style.display = 'none';
     } catch (error) {
         console.error('Error:', error);
-        document.getElementById('guilds-container').innerHTML = '<div class="alert alert-danger">Failed to load data.</div>';
+        document.getElementById('guilds-container').innerHTML = '<div class="card-h p-4 text-center text-danger serif-i"><window.Corners/>Failed to connect to the server realm.</div>';
     }
 }
 
 function renderGuilds(guilds) {
     const container = document.getElementById('guilds-container');
     container.innerHTML = '';
-
     if (guilds.length === 0) {
-        container.innerHTML = '<div class="alert alert-info">No servers found.</div>';
+        container.innerHTML = '<div class="card-h p-4 text-center serif-i"><window.Corners/>No servers found in this dimension.</div>';
         return;
     }
 
     guilds.forEach(guild => {
         const card = document.createElement('div');
-        card.className = 'card mb-4 bg-dark text-light border-secondary';
-
+        card.className = 'card-h mb-5';
+        
         let ignoredListHtml = '';
-        const ignored = guild.settings.ignored_activities || [];
-        ignored.forEach(activity => {
+        (guild.settings.ignored_activities || []).forEach(activity => {
             ignoredListHtml += `
-                <li class="list-group-item d-flex justify-content-between align-items-center bg-dark text-light border-secondary">
+                <li class="list-group-item activity-item d-flex justify-content-between align-items-center">
                     ${activity}
-                    <button class="btn btn-sm btn-outline-danger" onclick="removeIgnored('${guild.id}', '${activity}')" aria-label="Remove ignored activity ${activity}">
-                        <i class="bi bi-trash"></i>
-                    </button>
+                    <button class="btn-eld rust" style="padding:4px 8px; font-size:9px" onclick="removeIgnored('${guild.id}', '${activity}')">✕</button>
                 </li>
             `;
         });
 
         let emojiListHtml = '';
-        const emojis = guild.settings.activity_emojis || {};
-        for (const [activity, emoji] of Object.entries(emojis)) {
+        for (const [activity, emoji] of Object.entries(guild.settings.activity_emojis || {})) {
             emojiListHtml += `
-                <li class="list-group-item d-flex justify-content-between align-items-center bg-dark text-light border-secondary">
-                    <span>${emoji} <strong>${activity}</strong></span>
-                    <button class="btn btn-sm btn-outline-danger" onclick="removeEmoji('${guild.id}', '${activity}')" aria-label="Remove custom emoji for ${activity}">
-                        <i class="bi bi-trash"></i>
-                    </button>
+                <li class="list-group-item activity-item d-flex justify-content-between align-items-center">
+                    <span>${emoji} <strong style="color:var(--bone)">${activity}</strong></span>
+                    <button class="btn-eld rust" style="padding:4px 8px; font-size:9px" onclick="removeEmoji('${guild.id}', '${activity}')">✕</button>
                 </li>
             `;
         }
 
         card.innerHTML = `
-            <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">${guild.name}</h5>
+            <window.Corners/>
+            <div class="card-header d-flex justify-content-between align-items-center py-3">
+                <h5 class="serif mb-0" style="font-size:20px; color:var(--sigil)">${guild.name}</h5>
                 <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="enabled-${guild.id}"
-                           ${guild.settings.enabled ? 'checked' : ''}
-                           onchange="toggleEnabled('${guild.id}', this.checked)">
-                    <label class="form-check-label" for="enabled-${guild.id}">Enabled</label>
+                    <input class="form-check-input" type="checkbox" id="enabled-${guild.id}" ${guild.settings.enabled ? 'checked' : ''} onchange="toggleEnabled('${guild.id}', this.checked)">
+                    <label class="label ms-2" style="font-size:9px" for="enabled-${guild.id}">SYSTEM ACTIVE</label>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">Role Color</label>
-                    <div class="input-group">
-                        <input type="color" class="form-control form-control-color" id="color-${guild.id}"
-                               value="${guild.settings.color || '#0000FF'}" title="Choose your color">
-                        <button class="btn btn-outline-primary" onclick="saveColor('${guild.id}')">Save Color</button>
+            <div class="card-body p-4">
+                <div class="row g-5">
+                    <div class="col-md-4">
+                        <div class="label mb-3">Role Color Architecture</div>
+                        <div class="input-group mb-2">
+                            <input type="color" class="form-control form-control-color bg-dark border-secondary" id="color-${guild.id}" value="${guild.settings.color || '#0000FF'}" style="width:60px">
+                            <button class="btn-eld primary flex-grow-1" style="justify-content:center" onclick="saveColor('${guild.id}')">SEAL COLOR</button>
+                        </div>
+                        <div class="serif-i mt-2" style="font-size:12px; color:var(--bone-fade)">This hue will be applied to newly manifested gamer roles.</div>
                     </div>
-                    <div class="form-text text-light">This color will be applied to newly created gamer roles.</div>
-                </div>
 
-                <hr class="border-secondary">
-
-                <div class="mb-3">
-                    <label class="form-label">Ignored Activities</label>
-                    <ul class="list-group mb-2" id="ignored-list-${guild.id}">
-                        ${ignoredListHtml}
-                    </ul>
-                    <div class="input-group">
-                        <input type="text" class="form-control bg-dark text-light border-secondary"
-                               id="new-ignore-${guild.id}" placeholder="Activity Name (e.g. Custom Status)" aria-label="New ignored activity name">
-                        <button class="btn btn-outline-success" onclick="addIgnored('${guild.id}')">Add</button>
+                    <div class="col-md-4">
+                        <div class="label mb-3">Ignored Frequencies</div>
+                        <ul class="list-group mb-3" style="border:1px solid var(--hair); border-radius:0">
+                            ${ignoredListHtml || '<li class="list-group-item activity-item text-muted serif-i">No ignored activities.</li>'}
+                        </ul>
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-dark text-light border-secondary mono" id="new-ignore-${guild.id}" placeholder="Activity Name" style="font-size:12px">
+                            <button class="btn-eld on" style="padding:8px 12px" onclick="addIgnored('${guild.id}')">+ IGNORE</button>
+                        </div>
                     </div>
-                </div>
 
-                <hr class="border-secondary">
-
-                <div class="mb-3">
-                    <label class="form-label">Activity Emojis</label>
-                    <div class="form-text text-light mb-2">Set specific emojis for games. Default is 🎮.</div>
-                    <ul class="list-group mb-2" id="emoji-list-${guild.id}">
-                        ${emojiListHtml}
-                    </ul>
-                    <div class="input-group">
-                        <input type="text" class="form-control bg-dark text-light border-secondary"
-                               id="new-emoji-activity-${guild.id}" placeholder="Activity Name (e.g. Minecraft)" aria-label="Activity name for new emoji">
-                        <input type="text" class="form-control bg-dark text-light border-secondary"
-                               id="new-emoji-char-${guild.id}" placeholder="Emoji (e.g. ⛏️)" style="max-width: 80px;" aria-label="Emoji character">
-                        <button class="btn btn-outline-success" onclick="addEmoji('${guild.id}')">Set</button>
+                    <div class="col-md-4">
+                        <div class="label mb-3">Activity Sigils</div>
+                        <ul class="list-group mb-3" style="border:1px solid var(--hair); border-radius:0">
+                            ${emojiListHtml || '<li class="list-group-item activity-item text-muted serif-i">Default sigil 🎮 is used.</li>'}
+                        </ul>
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-dark text-light border-secondary mono" id="new-emoji-activity-${guild.id}" placeholder="Game Name" style="font-size:12px">
+                            <input type="text" class="form-control bg-dark text-light border-secondary text-center" id="new-emoji-char-${guild.id}" placeholder="💠" style="max-width: 60px; font-size:12px">
+                            <button class="btn-eld on" style="padding:8px 12px" onclick="addEmoji('${guild.id}')">SET</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -126,113 +123,27 @@ function renderGuilds(guilds) {
     });
 }
 
-// Global functions for inline handlers
-window.toggleEnabled = async (guildId, enabled) => {
-    try {
-        const response = await fetch('/api/gameroles/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ guild_id: guildId, enabled: enabled })
-        });
-        const res = await response.json();
-        if (res.status !== 'success') alert('Failed to save status: ' + res.message);
-    } catch (e) { alert('Error: ' + e); }
+window.toggleEnabled = async (id, e) => { try { await fetch('/api/gameroles/save', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({guild_id:id, enabled:e}) }); } catch(e){} };
+window.saveColor = async (id) => {
+    const c = document.getElementById(`color-${id}`).value;
+    try { const r = await fetch('/api/gameroles/save', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({guild_id:id, color:c}) }); if((await r.json()).status === 'success') alert('Color sealed!'); } catch(e){}
 };
-
-window.saveColor = async (guildId) => {
-    const color = document.getElementById(`color-${guildId}`).value;
-    try {
-        const response = await fetch('/api/gameroles/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ guild_id: guildId, color: color })
-        });
-        const res = await response.json();
-        if (res.status === 'success') alert('Color saved!');
-        else alert('Failed to save color: ' + res.message);
-    } catch (e) { alert('Error: ' + e); }
+window.addIgnored = async (id) => {
+    const i = document.getElementById(`new-ignore-${id}`); if(!i.value.trim()) return;
+    try { const r = await fetch('/api/gameroles/ignore/add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({guild_id:id, activity:i.value.trim()}) }); if((await r.json()).status === 'success') { i.value=''; loadData(); } } catch(e){}
 };
-
-window.addIgnored = async (guildId) => {
-    const input = document.getElementById(`new-ignore-${guildId}`);
-    const activity = input.value.trim();
-    if (!activity) return;
-
-    try {
-        const response = await fetch('/api/gameroles/ignore/add', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ guild_id: guildId, activity: activity })
-        });
-        const res = await response.json();
-        if (res.status === 'success') {
-            input.value = '';
-            loadData(); // Reload UI
-        } else {
-            alert('Failed to add: ' + res.message);
-        }
-    } catch (e) { alert('Error: ' + e); }
+window.removeIgnored = async (id, a) => {
+    if(!confirm(`Stop ignoring "${a}"?`)) return;
+    try { const r = await fetch('/api/gameroles/ignore/remove', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({guild_id:id, activity:a}) }); if((await r.json()).status === 'success') loadData(); } catch(e){}
 };
-
-window.removeIgnored = async (guildId, activity) => {
-    if (!confirm(`Stop ignoring "${activity}"?`)) return;
-    try {
-        const response = await fetch('/api/gameroles/ignore/remove', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ guild_id: guildId, activity: activity })
-        });
-        const res = await response.json();
-        if (res.status === 'success') {
-            loadData(); // Reload UI
-        } else {
-            alert('Failed to remove: ' + res.message);
-        }
-    } catch (e) { alert('Error: ' + e); }
+window.addEmoji = async (id) => {
+    const a = document.getElementById(`new-emoji-activity-${id}`).value.trim();
+    const e = document.getElementById(`new-emoji-char-${id}`).value.trim(); if(!a || !e) return;
+    try { const r = await fetch('/api/gameroles/emoji/set', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({guild_id:id, activity:a, emoji:e}) }); if((await r.json()).status === 'success') loadData(); } catch(e){}
 };
-
-window.addEmoji = async (guildId) => {
-    const activityInput = document.getElementById(`new-emoji-activity-${guildId}`);
-    const emojiInput = document.getElementById(`new-emoji-char-${guildId}`);
-
-    const activity = activityInput.value.trim();
-    const emoji = emojiInput.value.trim();
-
-    if (!activity || !emoji) return;
-
-    try {
-        const response = await fetch('/api/gameroles/emoji/set', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ guild_id: guildId, activity: activity, emoji: emoji })
-        });
-        const res = await response.json();
-        if (res.status === 'success') {
-            activityInput.value = '';
-            emojiInput.value = '';
-            loadData();
-        } else {
-            alert('Failed to set emoji: ' + res.message);
-        }
-    } catch (e) { alert('Error: ' + e); }
+window.removeEmoji = async (id, a) => {
+    if(!confirm(`Remove custom sigil for "${a}"?`)) return;
+    try { const r = await fetch('/api/gameroles/emoji/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({guild_id:id, activity:a}) }); if((await r.json()).status === 'success') loadData(); } catch(e){}
 };
-
-window.removeEmoji = async (guildId, activity) => {
-    if (!confirm(`Remove custom emoji for "${activity}"?`)) return;
-    try {
-        const response = await fetch('/api/gameroles/emoji/delete', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ guild_id: guildId, activity: activity })
-        });
-        const res = await response.json();
-        if (res.status === 'success') {
-            loadData();
-        } else {
-            alert('Failed to remove: ' + res.message);
-        }
-    } catch (e) { alert('Error: ' + e); }
-};
-
 </script>
 {% endblock %}
