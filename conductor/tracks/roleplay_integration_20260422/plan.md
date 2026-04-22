@@ -8,7 +8,7 @@
     - [ ] Verify data persistence with unit tests
 
 ## Phase 2: Discord UI & Commands
-- [ ] Task: Implement `/character backstory` command and UI
+- [x] Task: Implement `/character backstory` command and UI (ceb7734)
     - [ ] Create a new Modal for editing backstory fields
     - [ ] Update character display Embeds in `commands/printcharacter.py` or related views
     - [ ] Implement the slash command logic
