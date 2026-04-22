@@ -1,7 +1,7 @@
 # Implementation Plan: Enhance Character Management with Deep Roleplay Integration
 
 ## Phase 1: Data Model & Persistence
-- [ ] Task: Update character data schema in `loadnsave.py` and existing JSON structures
+- [x] Task: Update character data schema in `loadnsave.py` and existing JSON structures (dc36811)
     - [ ] Research current `player_stats.json` format
     - [ ] Add fields for Backstory (Description, Beliefs, etc.)
     - [ ] Implement migration/fallback for existing characters
