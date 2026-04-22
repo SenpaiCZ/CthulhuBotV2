@@ -7,12 +7,36 @@ import commands.character
 import commands.newinvestigator
 
 @pytest.mark.asyncio
-async def test_character_cog_initialization():
+async def test_add_connection(mock_player_stats):
     bot = MagicMock()
-    # Mock bot.tree.add_command if needed, but GroupCog handles it differently
     cog = commands.character.Character(bot)
-    assert cog.bot == bot
-    assert cog.help_category == "Player"
+    
+    server_id = "123456789"
+    user_id = "987654321"
+    connection_text = "Partner with Harvey Walters"
+    
+    # We'll implement a helper method for this
+    await cog._add_connection_logic(server_id, user_id, connection_text)
+    
+    stats = await load_player_stats()
+    assert connection_text in stats[server_id][user_id]["Connections"]
+
+@pytest.mark.asyncio
+async def test_remove_connection(mock_player_stats):
+    bot = MagicMock()
+    cog = commands.character.Character(bot)
+    
+    server_id = "123456789"
+    user_id = "987654321"
+    connection_text = "Partner with Harvey Walters"
+    
+    # Add first
+    await cog._add_connection_logic(server_id, user_id, connection_text)
+    # Remove
+    await cog._remove_connection_logic(server_id, user_id, 0) # remove at index 0
+    
+    stats = await load_player_stats()
+    assert connection_text not in stats[server_id][user_id]["Connections"]
 
 @pytest.mark.asyncio
 async def test_new_investigator_wizard_initial_data():

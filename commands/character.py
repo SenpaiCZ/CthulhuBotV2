@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from loadnsave import load_player_stats, load_gamemode_stats
+from loadnsave import load_player_stats, load_gamemode_stats, save_player_stats
 from commands._backstory_common import BackstoryCategorySelectView
 
 class Character(commands.GroupCog, name="character"):
@@ -66,16 +66,91 @@ class Character(commands.GroupCog, name="character"):
             if len(content) > 1024: content = content[:1021] + "..."
             embed.add_field(name=field, value=content, inline=False)
 
+        # Show Connections
+        connections = char_data.get("Connections", [])
+        if connections:
+             content = "\n".join([f"🔗 {entry}" for entry in connections])
+             if len(content) > 1024: content = content[:1021] + "..."
+             embed.add_field(name="🤝 Connections", value=content, inline=False)
+
         view = None
         if can_edit:
-            # We reuse BackstoryCategorySelectView for editing
-            # But we need to make sure it includes our specific core fields
-            # BackstoryCategorySelectView uses CATEGORIES from _backstory_common.py
             view = BackstoryCategorySelectView(interaction.user, server_id, user_id, mode="add")
-            # We can add more buttons to the view if needed, but for now reuse existing logic
             await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         else:
             await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    # --- Connections Sub-commands ---
+    connections_group = app_commands.Group(name="connections", description="🤝 Manage character connections.")
+
+    @connections_group.command(name="add", description="➕ Add a new connection/relationship.")
+    @app_commands.describe(text="Description of the connection (e.g., 'Friend with Harvey')")
+    async def connections_add(self, interaction: discord.Interaction, text: str):
+        server_id = str(interaction.guild.id)
+        user_id = str(interaction.user.id)
+        
+        success, msg = await self._add_connection_logic(server_id, user_id, text)
+        await interaction.response.send_message(msg, ephemeral=True)
+
+    @connections_group.command(name="remove", description="➖ Remove a connection.")
+    async def connections_remove(self, interaction: discord.Interaction):
+        server_id = str(interaction.guild.id)
+        user_id = str(interaction.user.id)
+        
+        player_stats = await load_player_stats()
+        if server_id not in player_stats or user_id not in player_stats[server_id]:
+             return await interaction.response.send_message("You don't have an investigator.", ephemeral=True)
+        
+        connections = player_stats[server_id][user_id].get("Connections", [])
+        if not connections:
+             return await interaction.response.send_message("No connections to remove.", ephemeral=True)
+
+        # Select Menu for removal
+        class ConnectionRemoveSelect(discord.ui.Select):
+            def __init__(self, cog, server_id, user_id, connections):
+                self.cog = cog
+                self.server_id = server_id
+                self.user_id = user_id
+                options = [discord.SelectOption(label=c[:100], value=str(i)) for i, c in enumerate(connections[:25])]
+                super().__init__(placeholder="Select connection to remove...", options=options)
+
+            async def callback(self, inter: discord.Interaction):
+                idx = int(self.values[0])
+                success, msg = await self.cog._remove_connection_logic(self.server_id, self.user_id, idx)
+                await inter.response.send_message(msg, ephemeral=True)
+                self.view.stop()
+
+        view = discord.ui.View()
+        view.add_item(ConnectionRemoveSelect(self, server_id, user_id, connections))
+        await interaction.response.send_message("Select a connection to remove:", view=view, ephemeral=True)
+
+    # --- Logic Helpers (Testable) ---
+    async def _add_connection_logic(self, server_id, user_id, text):
+        player_stats = await load_player_stats()
+        if server_id not in player_stats or user_id not in player_stats[server_id]:
+             return False, "Investigator not found."
+        
+        char_data = player_stats[server_id][user_id]
+        if "Connections" not in char_data:
+             char_data["Connections"] = []
+        
+        char_data["Connections"].append(text)
+        await save_player_stats(player_stats)
+        return True, f"✅ Added connection: **{text}**"
+
+    async def _remove_connection_logic(self, server_id, user_id, index):
+        player_stats = await load_player_stats()
+        if server_id not in player_stats or user_id not in player_stats[server_id]:
+             return False, "Investigator not found."
+        
+        char_data = player_stats[server_id][user_id]
+        connections = char_data.get("Connections", [])
+        
+        if 0 <= index < len(connections):
+             removed = connections.pop(index)
+             await save_player_stats(player_stats)
+             return True, f"🗑️ Removed connection: **{removed}**"
+        return False, "Connection index out of range."
 
 async def setup(bot):
     await bot.add_cog(Character(bot))
