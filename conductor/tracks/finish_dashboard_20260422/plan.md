@@ -5,7 +5,7 @@
     - [ ] Write unit tests verifying these routes return 200 OK and incorporate the new layout structure
     - [ ] Apply the new "Modern Cthulhu" design system, using `card-h` and `btn-eld` classes
     - [ ] Ensure mobile responsiveness and Card-Based Layouts for any tables
-- [ ] Task: Refactor `newspaper_dashboard.html`
+- [x] Task: Refactor `newspaper_dashboard.html` (c49565f)
     - [ ] Verify test coverage for this route
     - [ ] Apply the responsive Card-Based Layout and mobile-friendly form controls
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Refactoring Utilities & Tools' (Protocol in workflow.md)
