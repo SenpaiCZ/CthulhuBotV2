@@ -10,12 +10,12 @@
     - [x] Apply the responsive Card-Based Layout and mobile-friendly form controls
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Refactoring Utilities & Tools' (Protocol in workflow.md) (92e9387)
 
-## Phase 2: Refactoring Auth & Notifications
+## Phase 2: Refactoring Auth & Notifications [checkpoint: d4a7bf8]
 - [x] Task: Refactor `login.html` and `karma_notification.html` (a1180c2)
-    - [ ] Write failing UI structure tests if necessary for new markup
-    - [ ] Update the templates to use the new design system
-    - [ ] Ensure the login form and notifications look correct on mobile devices
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Refactoring Auth & Notifications' (Protocol in workflow.md)
+    - [x] Write failing UI structure tests if necessary for new markup
+    - [x] Update the templates to use the new design system
+    - [x] Ensure the login form and notifications look correct on mobile devices
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Refactoring Auth & Notifications' (Protocol in workflow.md) (d4a7bf8)
 
 ## Phase 3: Refactoring Render Pages
 - [ ] Task: Refactor character and entity render pages (`render_character.html`, `render_monster.html`, `render_deity.html`, `render_spell.html`, `render_weapon.html`)
