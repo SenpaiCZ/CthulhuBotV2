@@ -1,7 +1,7 @@
 # Implementation Plan: Finish Dashboard UI Overhaul
 
 ## Phase 1: Refactoring Utilities & Tools
-- [ ] Task: Refactor `file_browser.html` and `json_editor.html`
+- [x] Task: Refactor `file_browser.html` and `json_editor.html` (c49565f)
     - [ ] Write unit tests verifying these routes return 200 OK and incorporate the new layout structure
     - [ ] Apply the new "Modern Cthulhu" design system, using `card-h` and `btn-eld` classes
     - [ ] Ensure mobile responsiveness and Card-Based Layouts for any tables
