@@ -21,8 +21,8 @@
     - [ ] Update Keeper views to show connections between investigators
     - [ ] Verify functionality
 
-## Phase 4: Finalization
+## Phase 4: Finalization [checkpoint: e0d502c]
 - [x] Task: Documentation & Cleanup (9020b93)
     - [ ] Update README if necessary
     - [ ] Final manual verification of all features
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Finalization' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Finalization' (Protocol in workflow.md) (e0d502c)
