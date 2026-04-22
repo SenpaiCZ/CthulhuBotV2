@@ -3,7 +3,16 @@ import os
 import json
 from unittest.mock import MagicMock, patch, AsyncMock
 from loadnsave import load_player_stats, save_player_stats
+import commands.character
 import commands.newinvestigator
+
+@pytest.mark.asyncio
+async def test_character_cog_initialization():
+    bot = MagicMock()
+    # Mock bot.tree.add_command if needed, but GroupCog handles it differently
+    cog = commands.character.Character(bot)
+    assert cog.bot == bot
+    assert cog.help_category == "Player"
 
 @pytest.mark.asyncio
 async def test_new_investigator_wizard_initial_data():
@@ -36,6 +45,7 @@ async def test_new_investigator_wizard_initial_data():
         
         for field in required_fields:
             assert field in backstory, f"Field '{field}' missing from Backstory in new character"
+            assert isinstance(backstory[field], list), f"Field '{field}' should be a list"
         
         assert "Connections" in char_data
         assert char_data["Connections"] == []

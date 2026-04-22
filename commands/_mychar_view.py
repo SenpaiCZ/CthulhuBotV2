@@ -913,16 +913,47 @@ class CharacterDashboardView(View):
         )
 
         backstory = self.char_data.get("Backstory", {})
+        
+        # --- 1. Core Backstory Fields ---
+        core_fields = [
+            ("Personal Description", "👤"),
+            ("Ideology/Beliefs", "⚖️"),
+            ("Significant People", "👥"),
+            ("Meaningful Locations", "📍"),
+            ("Treasured Possessions", "💎"),
+            ("Traits", "🎭")
+        ]
+        
+        legacy_map = {
+            "Ideology/Beliefs": "Ideology and Beliefs"
+        }
 
-        # Helper to format list entries
-        def format_entries(entries):
-            if isinstance(entries, list):
-                if not entries: return "None"
-                return "\n".join([f"• {entry}" for entry in entries])
-            return str(entries)
+        has_core = False
+        for field, emoji in core_fields:
+            val = backstory.get(field)
+            if not val and field in legacy_map:
+                val = backstory.get(legacy_map[field])
+            
+            if val:
+                if isinstance(val, list):
+                    content = "\n".join([f"• {entry}" for entry in val])
+                else:
+                    content = str(val)
+                
+                if content:
+                    if len(content) > 1024: content = content[:1021] + "..."
+                    embed.add_field(name=f"{emoji} {field}", value=content, inline=False)
+                    has_core = True
 
-        # Inventory / Assets specific handling
-        inventory_keys = ["Assets", "Gear", "Possessions", "Cash", "Equipment", "Weapons"]
+        # --- 2. Connections ---
+        connections = self.char_data.get("Connections", [])
+        if connections:
+            content = "\n".join([f"🔗 {entry}" for entry in connections])
+            if len(content) > 1024: content = content[:1021] + "..."
+            embed.add_field(name="🤝 Connections", value=content, inline=False)
+
+        # --- 3. Inventory / Assets ---
+        inventory_keys = ["Assets", "Gear", "Possessions", "Cash", "Equipment", "Weapons", "Gear and Possessions"]
         inventory_text = ""
 
         for key in inventory_keys:
@@ -931,36 +962,35 @@ class CharacterDashboardView(View):
                 if not value: continue
 
                 is_cash = (key == "Cash")
-                # Assets might be long text, so let's check
-                # If it's a list of strings, format nicely.
-                # If key is Assets, maybe show fewer items but full text?
-                # For now, treat all lists similarly but with different emojis.
-
                 formatted_list = self._format_inventory_list(value, limit=5, is_cash=is_cash)
                 inventory_text += f"**{key}:**\n{formatted_list}\n\n"
 
         if inventory_text:
             embed.add_field(name="🎒 Inventory & Assets", value=inventory_text, inline=False)
-            if len(inventory_text) > 500: # Heuristic for "long inventory"
-                 embed.set_footer(text="Tip: Use the dropdown menu below to manage all items.")
-        else:
+        elif not has_core:
             embed.add_field(name="🎒 Inventory & Assets", value="🎒 **Inventory is empty.**\nUse the 'Add Item' button below to get started!", inline=False)
 
-        # Other Backstory elements
+        # --- 4. Other Backstory elements ---
+        core_names = [f[0] for f in core_fields] + list(legacy_map.values())
         for key, value in backstory.items():
-            if key in inventory_keys or key == "Pulp Talents": continue
-            # Pulp talents handled separately or just skipped if standard mode
+            if key in inventory_keys or key in core_names or key == "Pulp Talents": continue
+            
+            if isinstance(value, list):
+                if not value: continue
+                content = "\n".join([f"• {entry}" for entry in value])
+            else:
+                content = str(value)
+            
+            if content:
+                if len(content) > 1024: content = content[:1021] + "..."
+                embed.add_field(name=key, value=content, inline=False)
 
-            content = format_entries(value)
-            # Truncate if too long
-            if len(content) > 1000:
-                content = content[:1000] + "..."
-
-            embed.add_field(name=key, value=content, inline=False)
-
-        # Pulp Talents if applicable
+        # --- 5. Pulp Talents ---
         if "Pulp Talents" in backstory and self.current_mode == "Pulp of Cthulhu":
-            embed.add_field(name="🦸 Pulp Talents", value=format_entries(backstory["Pulp Talents"]), inline=False)
+            val = backstory["Pulp Talents"]
+            if val:
+                content = "\n".join([f"• {entry}" for entry in val])
+                embed.add_field(name="🦸 Pulp Talents", value=content, inline=False)
 
         return embed
 
