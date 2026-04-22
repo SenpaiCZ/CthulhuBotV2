@@ -57,7 +57,41 @@ async def load_player_stats():
     if _PLAYER_STATS_CACHE is not None:
         return _PLAYER_STATS_CACHE
 
-    _PLAYER_STATS_CACHE = await _load_json_file(DATA_FOLDER, 'player_stats.json')
+    data = await _load_json_file(DATA_FOLDER, 'player_stats.json')
+    
+    # --- Migration / Schema Enforcement ---
+    updated = False
+    required_backstory_fields = [
+        "Personal Description", "Ideology/Beliefs", "Significant People",
+        "Meaningful Locations", "Treasured Possessions", "Traits"
+    ]
+    
+    for server_id, characters in data.items():
+        if not isinstance(characters, dict): continue
+        for user_id, char_data in characters.items():
+            if not isinstance(char_data, dict): continue
+            
+            # Ensure Backstory exists and is a dict
+            if "Backstory" not in char_data or not isinstance(char_data["Backstory"], dict):
+                char_data["Backstory"] = {}
+                updated = True
+            
+            backstory = char_data["Backstory"]
+            for field in required_backstory_fields:
+                if field not in backstory:
+                    backstory[field] = ""
+                    updated = True
+            
+            # Ensure Connections exists and is a list
+            if "Connections" not in char_data:
+                char_data["Connections"] = []
+                updated = True
+            elif not isinstance(char_data["Connections"], list):
+                char_data["Connections"] = [] # Reset if invalid
+                updated = True
+    
+    _PLAYER_STATS_CACHE = data
+    # We don't save immediately to avoid churn, but it will be saved on next save_player_stats
     return _PLAYER_STATS_CACHE
 
 async def save_player_stats(player_stats):

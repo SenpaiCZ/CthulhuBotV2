@@ -1037,7 +1037,17 @@ class newinvestigator(commands.Cog):
             "Move": 0, "Build": 0, "Damage Bonus": 0,
             "Age": 0,
             "Occupation": "Unknown", "Credit Rating": 0, "Game Mode": "Call of Cthulhu",
-            "Backstory": {'Pulp Talents': []}, "Custom Emojis": {},
+            "Backstory": {
+                "Pulp Talents": [],
+                "Personal Description": "",
+                "Ideology/Beliefs": "",
+                "Significant People": "",
+                "Meaningful Locations": "",
+                "Treasured Possessions": "",
+                "Traits": ""
+            },
+            "Connections": [],
+            "Custom Emojis": {},
             **BASE_SKILLS
         }
         view = BasicInfoStartView(self, new_char, player_stats)
