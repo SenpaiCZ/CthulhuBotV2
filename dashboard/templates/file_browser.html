@@ -1,23 +1,66 @@
 {% extends 'base.html' %}
 
-{% block title %}Browse {{ folder }}{% endblock %}
+{% block title %}Browse {{ folder }} — CthulhuBot{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Browse {{ folder }}</li>
-  </ol>
-</nav>
-
-<h3>Files in <code>{{ folder }}</code></h3>
-
-<div class="list-group mt-3">
-    {% for file in files %}
-    <a href="/admin/edit/{{ folder }}/{{ file }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-        {{ file }}
-        <span class="badge bg-primary rounded-pill">Edit</span>
-    </a>
-    {% endfor %}
+<div class="mb-4">
+    <div class="label">System Archives</div>
+    <h2 class="serif" style="fontSize:32px; margin:8px 0 0">Files in <code>{{ folder }}</code></h2>
 </div>
+
+<div class="card-h">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">🗇</span> Scroll Collection
+    </div>
+    <div class="card-body p-0">
+        <div class="responsive-table-container">
+            <table class="table mb-0 align-middle">
+                <thead class="d-none d-md-table-header-group">
+                    <tr>
+                        <th class="label ps-4 py-3">Filename</th>
+                        <th class="label pe-4 py-3 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr class="responsive-row">
+                        <td class="ps-4 py-3">
+                            <span class="d-md-none label mb-1" style="display:block">Filename</span>
+                            <div class="mono" style="font-size:14px; color:var(--bone)">{{ file }}</div>
+                        </td>
+                        <td class="pe-4 py-3 text-md-end">
+                            <a href="/admin/edit/{{ folder }}/{{ file }}" class="btn-eld primary" style="padding: 6px 12px; font-size: 10px">EDIT SCROLL</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not files %}
+                    <tr>
+                        <td colspan="2" class="p-5 text-center serif-i text-muted">No scrolls found in this chamber.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+@media (max-width: 767.98px) {
+    .responsive-row {
+        display: block;
+        padding: 1.5rem !important;
+        border-bottom: 1px solid var(--hair-strong);
+    }
+    .responsive-row td {
+        display: block;
+        padding: 0 0 1rem 0 !important;
+        border: 0;
+    }
+    .responsive-row td:last-child {
+        padding-bottom: 0 !important;
+        margin-top: 0.5rem;
+    }
+}
+</style>
 {% endblock %}

@@ -1,58 +1,60 @@
 {% extends 'base.html' %}
 
-{% block title %}Edit {{ filename }}{% endblock %}
+{% block title %}Edit {{ filename }} — CthulhuBot{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
-    <li class="breadcrumb-item"><a href="/admin/browse/{{ folder }}">{{ folder }}</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{{ filename }}</li>
-  </ol>
-</nav>
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>Editing: {{ filename }}</h3>
-    <div>
-        <span id="typeInfo" class="text-muted me-2 small"></span>
-        <button class="btn btn-outline-info" id="toggleViewBtn" style="display: none;">
-            Switch to Visual Editor
-        </button>
-    </div>
+<div class="mb-4">
+    <div class="label">Archive Editor</div>
+    <h2 class="serif" style="fontSize:32px; margin:8px 0 0">Editing: <code>{{ filename }}</code></h2>
 </div>
 
-<div class="alert alert-success d-none" id="saveMessage">Saved successfully!</div>
-<div class="alert alert-danger d-none" id="errorMessage">Error saving file.</div>
-
-<!-- Raw Editor -->
-<div class="mb-3" id="rawEditorContainer">
-    <textarea class="form-control" id="jsonContent" rows="20" style="font-family: monospace;">{{ content }}</textarea>
-</div>
-
-<!-- Visual Editor -->
-<div class="mb-3 d-none" id="visualEditorContainer">
-    <div class="table-responsive border rounded p-2" style="max-height: 600px; overflow-y: auto;">
-        <table class="table table-dark table-striped table-hover mb-0" id="visualTable">
-            <thead class="sticky-top bg-dark">
-                <tr id="visualTheadRow">
-                    <!-- Headers injected by JS -->
-                </tr>
-            </thead>
-            <tbody id="visualTbody">
-                <!-- Rows injected by JS -->
-            </tbody>
-        </table>
+<div class="card-h mb-4">
+    <window.Corners/>
+    <div class="card-header d-flex justify-content-between align-items-center py-3">
+        <div class="serif" style="font-size:18px">
+            <span style="color:var(--sigil); margin-right:8px">✎</span> Content Scroll
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span id="typeInfo" class="mono" style="font-size:10px; color:var(--bone-fade)"></span>
+            <button class="btn-eld on" id="toggleViewBtn" style="display: none; padding: 6px 12px; font-size: 9px">
+                SWITCH TO VISUAL RITUAL
+            </button>
+        </div>
     </div>
-    <div class="mt-2">
-        <button class="btn btn-outline-success btn-sm" id="addRowBtn">
-            ➕ Add Row
-        </button>
-    </div>
-</div>
+    <div class="card-body p-4">
+        <div class="alert alert-success d-none mb-4" id="saveMessage" style="background:rgba(120,220,170,0.1); border-color:var(--sigil); color:var(--sigil); font-family:var(--font-mono); font-size:12px">The knowledge has been sealed.</div>
+        <div class="alert alert-danger d-none mb-4" id="errorMessage" style="background:rgba(180,70,60,0.1); border-color:var(--rust); color:var(--rust); font-family:var(--font-mono); font-size:12px">An error occurred while communing with the disk.</div>
 
-<div class="d-flex gap-2">
-    <button class="btn btn-success" id="saveBtn">Save Changes</button>
-    <a href="/admin/browse/{{ folder }}" class="btn btn-secondary">Cancel</a>
+        <!-- Raw Editor -->
+        <div id="rawEditorContainer">
+            <textarea class="form-control bg-dark text-light border-secondary mono" id="jsonContent" rows="20" style="font-size:13px; line-height:1.5; color:var(--sigil) !important">{{ content }}</textarea>
+        </div>
+
+        <!-- Visual Editor -->
+        <div class="d-none" id="visualEditorContainer">
+            <div class="responsive-table-container border border-secondary mb-3" style="max-height: 600px; overflow-y: auto;">
+                <table class="table table-dark mb-0" id="visualTable">
+                    <thead class="sticky-top bg-dark">
+                        <tr id="visualTheadRow">
+                            <!-- Headers injected by JS -->
+                        </tr>
+                    </thead>
+                    <tbody id="visualTbody">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-2">
+                <button class="btn-eld on" id="addRowBtn" style="padding: 6px 12px; font-size: 10px">
+                    ✚ ADD ROW
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer p-4 border-top border-secondary d-flex gap-3">
+        <button class="btn-eld primary" id="saveBtn">SEAL CHANGES</button>
+        <a href="/admin/browse/{{ folder }}" class="btn-eld">CANCEL</a>
+    </div>
 </div>
 
 <script>
@@ -95,10 +97,10 @@
                 if (isSimple) {
                     structureType = 'list';
                     toggleBtn.style.display = 'inline-block';
-                    typeInfo.textContent = "List detected";
+                    typeInfo.textContent = "LIST DETECTED";
                 } else {
                     structureType = 'complex';
-                    typeInfo.textContent = "Complex List (Visual Editor Disabled)";
+                    typeInfo.textContent = "COMPLEX LIST (VISUAL DISABLED)";
                 }
             } else if (typeof data === 'object' && data !== null) {
                 // Check if simple dict of strings
@@ -107,10 +109,10 @@
                 if (isSimple) {
                     structureType = 'dict';
                     toggleBtn.style.display = 'inline-block';
-                    typeInfo.textContent = "Dictionary detected";
+                    typeInfo.textContent = "DICTIONARY DETECTED";
                 } else {
                     structureType = 'complex';
-                    typeInfo.textContent = "Complex Object (Visual Editor Disabled)";
+                    typeInfo.textContent = "COMPLEX OBJECT (VISUAL DISABLED)";
                 }
             } else {
                 structureType = 'complex';
@@ -128,7 +130,7 @@
 
             rawContainer.classList.add('d-none');
             visualContainer.classList.remove('d-none');
-            toggleBtn.textContent = "Switch to Raw Editor";
+            toggleBtn.textContent = "SWITCH TO RAW SCROLL";
             currentMode = 'visual';
         } catch (e) {
             alert("Cannot switch to Visual Editor: Invalid JSON in Raw view.");
@@ -140,7 +142,7 @@
 
         visualContainer.classList.add('d-none');
         rawContainer.classList.remove('d-none');
-        toggleBtn.textContent = "Switch to Visual Editor";
+        toggleBtn.textContent = "SWITCH TO VISUAL RITUAL";
         currentMode = 'raw';
     }
 
@@ -149,11 +151,10 @@
         theadRow.innerHTML = '';
 
         if (structureType === 'list') {
-            theadRow.innerHTML = '<th style="width: 90%">Value</th><th style="width: 10%">Action</th>';
+            theadRow.innerHTML = '<th class="label ps-3 py-2">Value</th><th class="label text-center py-2" style="width: 80px">Action</th>';
             data.forEach(val => addRowHTML(null, val));
         } else if (structureType === 'dict') {
-            theadRow.innerHTML = '<th style="width: 30%">Key</th><th style="width: 60%">Value</th><th style="width: 10%">Action</th>';
-            // Sort keys for better UX?
+            theadRow.innerHTML = '<th class="label ps-3 py-2" style="width: 30%">Key</th><th class="label py-2">Value</th><th class="label text-center py-2" style="width: 80px">Action</th>';
             const keys = Object.keys(data).sort();
             keys.forEach(key => addRowHTML(key, data[key]));
         }
@@ -161,33 +162,32 @@
 
     function addRowHTML(key, val) {
         const tr = document.createElement('tr');
+        tr.className = 'border-secondary';
 
         let html = '';
         if (structureType === 'dict') {
-            // Escape quotes in values for the input value attribute
             const safeKey = key ? key.replace(/"/g, '&quot;') : '';
             const safeVal = val ? val.replace(/"/g, '&quot;') : '';
             html += `
-                <td><input type="text" class="form-control key-input" value="${safeKey}" placeholder="Key"></td>
-                <td><input type="text" class="form-control val-input" value="${safeVal}" placeholder="Value"></td>
+                <td class="ps-3"><input type="text" class="form-control bg-dark text-light border-secondary mono" value="${safeKey}" placeholder="Key" style="font-size:12px"></td>
+                <td><input type="text" class="form-control bg-dark text-light border-secondary mono" value="${safeVal}" placeholder="Value" style="font-size:12px"></td>
             `;
         } else {
             const safeVal = val ? val.replace(/"/g, '&quot;') : '';
             html += `
-                <td><input type="text" class="form-control val-input" value="${safeVal}" placeholder="Value"></td>
+                <td class="ps-3"><input type="text" class="form-control bg-dark text-light border-secondary mono" value="${safeVal}" placeholder="Value" style="font-size:12px"></td>
             `;
         }
 
         html += `
             <td class="text-center">
-                <button class="btn btn-outline-danger btn-sm delete-row" title="Delete">🗑️</button>
+                <button class="btn-eld rust delete-row" title="Banish Row" style="border:0; padding:4px 8px">✕</button>
             </td>
         `;
 
         tr.innerHTML = html;
         tbody.appendChild(tr);
 
-        // Bind delete event
         tr.querySelector('.delete-row').addEventListener('click', () => {
             tr.remove();
         });
@@ -195,7 +195,6 @@
 
     function addRow() {
         addRowHTML('', '');
-        // Focus the new input
         const rows = tbody.querySelectorAll('tr');
         const lastRow = rows[rows.length - 1];
         const firstInput = lastRow.querySelector('input');
@@ -204,17 +203,18 @@
 
     function updateRawFromVisual() {
         if (structureType === 'list') {
-            const inputs = tbody.querySelectorAll('.val-input');
+            const inputs = tbody.querySelectorAll('input');
             const arr = Array.from(inputs).map(input => input.value);
             textarea.value = JSON.stringify(arr, null, 4);
         } else if (structureType === 'dict') {
             const obj = {};
             const rows = tbody.querySelectorAll('tr');
             rows.forEach(row => {
-                const key = row.querySelector('.key-input').value;
-                const val = row.querySelector('.val-input').value;
-                if (key) { // Ignore empty keys? Or allow empty keys? JSON allows empty strings.
-                    obj[key] = val;
+                const inputs = row.querySelectorAll('input');
+                if (inputs.length === 2) {
+                    const key = inputs[0].value;
+                    const val = inputs[1].value;
+                    if (key) obj[key] = val;
                 }
             });
             textarea.value = JSON.stringify(obj, null, 4);
@@ -227,7 +227,6 @@
         const saveMsg = document.getElementById('saveMessage');
         const errorMsg = document.getElementById('errorMessage');
 
-        // Sync if in visual mode
         if (currentMode === 'visual') {
             updateRawFromVisual();
         }
@@ -235,16 +234,17 @@
         const content = textarea.value;
 
         btn.disabled = true;
+        btn.innerText = "SEALING...";
         saveMsg.classList.add('d-none');
         errorMsg.classList.add('d-none');
 
         try {
-            // Validate JSON first
             JSON.parse(content);
         } catch (e) {
-            errorMsg.textContent = "Invalid JSON: " + e.message;
+            errorMsg.textContent = "CORRUPTED KNOWLEDGE (Invalid JSON): " + e.message;
             errorMsg.classList.remove('d-none');
             btn.disabled = false;
+            btn.innerText = "SEAL CHANGES";
             return;
         }
 
@@ -260,17 +260,18 @@
             const result = await response.json();
             if (response.ok) {
                 saveMsg.classList.remove('d-none');
-                // Re-check structure in case user pasted something new in Raw mode
                 checkStructure();
+                setTimeout(() => saveMsg.classList.add('d-none'), 3000);
             } else {
-                errorMsg.textContent = "Error: " + result.message;
+                errorMsg.textContent = "RITUAL FAILED: " + result.message;
                 errorMsg.classList.remove('d-none');
             }
         } catch (e) {
-            errorMsg.textContent = "Network Error: " + e.message;
+            errorMsg.textContent = "VOID CONNECTION ERROR: " + e.message;
             errorMsg.classList.remove('d-none');
         } finally {
             btn.disabled = false;
+            btn.innerText = "SEAL CHANGES";
         }
     });
 </script>
