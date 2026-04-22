@@ -3,99 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ name }} - Occupation Render</title>
+    <title>{{ name }} — Occupation Render</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/themes.css') }}" rel="stylesheet">
     {% include 'includes/font_styles.html' %}
     <style>
         body {
-            background-color: #000;
+            background-color: var(--void-0);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 40px;
+            -webkit-font-smoothing: antialiased;
         }
 
         .coc-sheet {
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-            font-family: var(--font-body, 'Courier New', Courier, monospace);
-            border: 2px solid var(--theme-primary-dark, #2E8B57);
-            padding: 20px;
-            border-radius: 5px;
-            width: 800px;
+            background: linear-gradient(160deg, var(--void-1), var(--void-0));
+            color: var(--bone);
+            font-family: var(--font-body, var(--font-sans));
+            border: 2px solid var(--sigil-deep);
+            padding: 40px;
+            width: 850px;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
         }
+
+        .corners span {
+            position: absolute; width: 20px; height: 20px; border-color: var(--sigil); opacity: 0.6;
+        }
+        .corners span:nth-child(1) { top: -2px; left: -2px; border-top: 2px solid; border-left: 2px solid; }
+        .corners span:nth-child(2) { top: -2px; right: -2px; border-top: 2px solid; border-right: 2px solid; }
+        .corners span:nth-child(3) { bottom: -2px; left: -2px; border-bottom: 2px solid; border-left: 2px solid; }
+        .corners span:nth-child(4) { bottom: -2px; right: -2px; border-bottom: 2px solid; border-right: 2px solid; }
 
         .section-header {
-            background-color: var(--theme-primary-dark, #2E8B57);
-            color: #fff;
-            padding: 5px 10px;
-            font-weight: bold;
+            font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: var(--bone-fade);
+            background: var(--void-2); padding: 8px 16px; margin: 32px 0 16px; border-left: 3px solid var(--sigil);
             text-transform: uppercase;
-            margin-top: 15px;
-            margin-bottom: 10px;
-            border-radius: 3px;
         }
-
-        .occupation-image {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #333;
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
+        
+        .accent-sigil { color: var(--sigil) !important; }
+        .accent-amber { color: var(--amber) !important; }
     </style>
 </head>
 <body>
     <div class="coc-sheet">
-        {% set final_image = image_url or occupation.link %}
-        {% if final_image %}
-        <div class="d-flex align-items-start">
+        <div class="corners"><span></span><span></span><span></span><span></span></div>
+
+        <div class="d-flex align-items-start gap-4">
             <div class="flex-grow-1">
-        {% endif %}
+                <div class="mb-4">
+                    <div class="label" style="color:var(--sigil); font-size:10px; letter-spacing:4px">INVESTIGATOR BACKGROUND</div>
+                    <h1 class="serif" style="font-size:3.5rem; color:var(--sigil); margin:8px 0 0; line-height:1">{{ name }}</h1>
+                    <div class="serif-i" style="color:var(--bone-fade); font-size:1.4rem; margin-top:4px">{{ occupation.era or 'All Eras' }}</div>
+                </div>
 
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div>
-                <h1 class="display-5 mb-0 text-success">{{ name }}</h1>
-                <div class="text-secondary fst-italic fs-5">{{ occupation.era or 'Any Era' }}</div>
+                <div class="card-h p-4 mb-5" style="border-left: 4px solid var(--sigil); font-size: 16px; line-height: 1.6; color: var(--bone)">
+                    <window.Corners/>
+                    {% if occupation.description %}
+                        {{ occupation.description }}
+                    {% else %}
+                        <em class="text-muted">No historical documentation exists for this vocation.</em>
+                    {% endif %}
+                </div>
             </div>
+
+            {% set final_image = image_url or occupation.link %}
+            {% if final_image %}
+            <div style="width: 280px; flex-shrink: 0; padding-top: 10px">
+                <img src="{{ final_image }}" class="img-fluid border border-secondary shadow-lg" alt="{{ name }}" style="width: 100%;">
+            </div>
+            {% endif %}
         </div>
 
-        <div class="card bg-dark border-secondary mb-4">
-            <div class="card-body">
-                {% if occupation.description %}
-                    <p class="card-text border-start border-success border-3 ps-3">{{ occupation.description }}</p>
-                {% endif %}
+        <div class="row g-4">
+            <div class="col-6">
+                <div class="section-header">Financial & Social</div>
+                <div class="card-h p-4">
+                    <window.Corners/>
+                    <div class="mb-3">
+                        <div class="label" style="font-size:9px; color:var(--amber)">CREDIT RATING</div>
+                        <div class="serif accent-amber" style="font-size:1.5rem; font-weight:bold">{{ occupation.credit_rating }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="label" style="font-size:9px">SKILL POINTS</div>
+                        <div class="serif" style="font-size:1.1rem">{{ occupation.skill_points }}</div>
+                    </div>
+                    <div>
+                        <div class="label" style="font-size:9px">SUGGESTED CONTACTS</div>
+                        <div class="serif-i" style="font-size:13px; color:var(--bone-dim)">{{ occupation.suggested_contacts or 'None' }}</div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="section-header">Details</div>
-        <ul class="list-group list-group-flush bg-transparent">
-            <li class="list-group-item bg-transparent border-secondary ps-0 py-2">
-                <strong class="text-warning">Skill Points:</strong> <span class="text-light">{{ occupation.skill_points }}</span>
-            </li>
-            <li class="list-group-item bg-transparent border-secondary ps-0 py-2">
-                <strong class="text-warning">Credit Rating:</strong> <span class="text-light">{{ occupation.credit_rating }}</span>
-            </li>
-            <li class="list-group-item bg-transparent border-secondary ps-0 py-2">
-                <strong class="text-warning">Suggested Contacts:</strong> <span class="text-light">{{ occupation.suggested_contacts }}</span>
-            </li>
-        </ul>
-
-        {% if final_image %}
-            </div>
-            <div class="ms-3" style="width: 300px; flex-shrink: 0;">
-                <img src="{{ final_image }}" class="img-fluid rounded border border-secondary" alt="{{ name }}" style="width: 100%; object-fit: contain;">
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="section-header">Skills</div>
-        <div class="card bg-dark border-secondary">
-            <div class="card-body">
-                <p class="card-text">{{ occupation.skills }}</p>
+            <div class="col-6">
+                <div class="section-header">Professional Skills</div>
+                <div class="card-h p-4 h-100">
+                    <window.Corners/>
+                    <div class="serif-i" style="font-size:15px; color:var(--bone-dim); line-height:1.6">
+                        {{ occupation.skills }}
+                    </div>
+                </div>
             </div>
         </div>
     </div>

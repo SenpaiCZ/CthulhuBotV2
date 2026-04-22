@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark" data-theme="{{ dashboard_theme|default('cthulhu') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Occult Script</title>
+    <title>Occult Script — CthulhuBot</title>
+    <link href="{{ url_for('static', filename='css/themes.css') }}" rel="stylesheet">
+    {% include 'includes/font_styles.html' %}
     <style>
         {% if font_filename %}
         @font-face {
@@ -19,42 +21,46 @@
             align-items: flex-start;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 40px;
+            -webkit-font-smoothing: antialiased;
         }
 
         .script-container {
             background-color: #fdf5e6;
-            background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
-            padding: 40px;
-            max-width: 800px;
+            background: #fdf5e6 url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E");
+            padding: 60px 80px;
+            max-width: 900px;
             text-align: center;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 30px 70px rgba(0,0,0,0.5);
             border: 1px solid #dcdcdc;
+            position: relative;
+        }
+
+        /* Burned edge simulation */
+        .script-container::before {
+            content: ""; position: absolute; inset: 0; pointer-events: none;
+            box-shadow: inset 0 0 40px rgba(139,69,19,0.15);
         }
 
         .script-text {
             {% if font_filename %}
             font-family: 'CustomScript', serif;
             {% else %}
-            font-family: serif; /* Fallback */
+            font-family: var(--font-serif, serif);
             {% endif %}
-            font-size: 3em;
-            color: #111;
-            line-height: 1.4;
-            /* Text shadow/glow for effect? */
-            text-shadow: 0px 0px 2px rgba(0,0,0,0.5);
+            font-size: 3.5rem;
+            color: #1a1a1a;
+            line-height: 1.3;
+            text-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.2);
+            word-wrap: break-word;
         }
     </style>
 </head>
 <body>
-
-    <div class="coc-sheet" style="padding: 10px;">
-        <div class="script-container">
-            <div class="script-text">
-                {{ text }}
-            </div>
+    <div class="script-container">
+        <div class="script-text">
+            {{ text }}
         </div>
     </div>
-
 </body>
 </html>

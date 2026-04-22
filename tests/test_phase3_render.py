@@ -46,19 +46,31 @@ async def test_render_monster_uses_palette(client):
         assert 'oklch' in html or '--sigil' in html
 
 @pytest.mark.asyncio
-async def test_render_deity_uses_palette(client):
-    """Test deity render uses oklch palette"""
-    with patch('dashboard.app.load_deities_data', new_callable=AsyncMock) as mock_load:
-        mock_load.return_value = {"deities": [{
-            "deity_entry": {
-                "name": "Cthulhu",
-                "physical_manifestation": {
-                    "characteristics": {"HP": 100},
-                    "combat": {"attacks_per_round": 1, "dodge": {"success_chance": 30}}
-                }
-            }
-        }]}
-        response = await client.get('/render/deity?name=Cthulhu')
+async def test_render_archetype_uses_palette(client):
+    """Test archetype render uses oklch palette"""
+    with patch('dashboard.app.load_archetype_data', new_callable=AsyncMock) as mock_load:
+        mock_load.return_value = {"Adventurer": {"description": "A brave soul.", "adjustments": []}}
+        response = await client.get('/render/archetype?name=Adventurer')
+        assert response.status_code == 200
+        html = await response.get_data(as_text=True)
+        assert 'oklch' in html or '--sigil' in html
+
+@pytest.mark.asyncio
+async def test_render_occupation_uses_palette(client):
+    """Test occupation render uses oklch palette"""
+    with patch('dashboard.app.load_occupations_data', new_callable=AsyncMock) as mock_load:
+        mock_load.return_value = {"Antiquarian": {"description": "Old stuff.", "skills": "History"}}
+        response = await client.get('/render/occupation?name=Antiquarian')
+        assert response.status_code == 200
+        html = await response.get_data(as_text=True)
+        assert 'oklch' in html or '--sigil' in html
+
+@pytest.mark.asyncio
+async def test_render_poison_uses_palette(client):
+    """Test poison render uses oklch palette"""
+    with patch('dashboard.app.load_poisons_data', new_callable=AsyncMock) as mock_load:
+        mock_load.return_value = {"Arsenic": {"Onset Time": "Minutes", "Symptoms": "Death", "Damage": "1D10", "Note": "Bad."}}
+        response = await client.get('/render/poison?name=Arsenic')
         assert response.status_code == 200
         html = await response.get_data(as_text=True)
         assert 'oklch' in html or '--sigil' in html

@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark" data-theme="{{ dashboard_theme|default('cthulhu') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Morse Code</title>
+    <title>Morse Code — CthulhuBot</title>
+    <link href="{{ url_for('static', filename='css/themes.css') }}" rel="stylesheet">
+    {% include 'includes/font_styles.html' %}
     <style>
         {% if font_filename %}
         @font-face {
@@ -19,27 +21,30 @@
             align-items: flex-start;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 40px;
+            -webkit-font-smoothing: antialiased;
         }
 
         .morse-container {
-            padding: 40px;
-            max-width: 800px;
+            padding: 50px;
+            max-width: 900px;
             text-align: left;
             background-color: white;
+            border: 1px solid #eee;
         }
 
         .morse-text {
             {% if font_filename %}
             font-family: 'CustomScript', serif;
             {% else %}
-            font-family: serif;
+            font-family: var(--font-mono, monospace);
             {% endif %}
-            font-size: 2.5em;
+            font-size: 2.2rem;
             color: black;
-            line-height: 1.6;
+            line-height: 1.8;
             word-wrap: break-word;
-            white-space: pre-wrap; /* Preserve newlines */
+            white-space: pre-wrap;
+            letter-spacing: 2px;
         }
     </style>
 </head>

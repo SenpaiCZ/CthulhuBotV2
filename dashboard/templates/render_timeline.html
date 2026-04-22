@@ -3,76 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }} - {{ type }} Render</title>
+    <title>{{ title }} — Historical Timeline</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/themes.css') }}" rel="stylesheet">
     {% include 'includes/font_styles.html' %}
     <style>
         body {
-            background-color: #000;
+            background-color: var(--void-0);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 40px;
+            -webkit-font-smoothing: antialiased;
         }
 
         .coc-sheet {
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-            font-family: var(--font-body, 'Courier New', Courier, monospace);
-            border: 2px solid var(--theme-primary-dark, #2E8B57);
-            padding: 20px;
-            border-radius: 5px;
-            width: 800px;
+            background: linear-gradient(160deg, var(--void-1), var(--void-0));
+            color: var(--bone);
+            font-family: var(--font-body, var(--font-sans));
+            border: 2px solid var(--sigil-deep);
+            padding: 40px;
+            width: 900px;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
         }
 
+        .corners span {
+            position: absolute; width: 20px; height: 20px; border-color: var(--sigil); opacity: 0.6;
+        }
+        .corners span:nth-child(1) { top: -2px; left: -2px; border-top: 2px solid; border-left: 2px solid; }
+        .corners span:nth-child(2) { top: -2px; right: -2px; border-top: 2px solid; border-right: 2px solid; }
+        .corners span:nth-child(3) { bottom: -2px; left: -2px; border-bottom: 2px solid; border-left: 2px solid; }
+        .corners span:nth-child(4) { bottom: -2px; right: -2px; border-bottom: 2px solid; border-right: 2px solid; }
+
         .section-header {
-            background-color: var(--theme-primary-dark, #2E8B57);
-            color: #fff;
-            padding: 5px 10px;
-            font-weight: bold;
+            font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: var(--bone-fade);
+            background: var(--void-2); padding: 8px 16px; margin: 32px 0 16px; border-left: 3px solid var(--sigil);
             text-transform: uppercase;
-            margin-top: 15px;
-            margin-bottom: 10px;
-            border-radius: 3px;
         }
     </style>
 </head>
 <body>
     <div class="coc-sheet">
-        {% if image_url %}
-        <div class="d-flex align-items-start">
+        <div class="corners"><span></span><span></span><span></span><span></span></div>
+
+        <div class="d-flex align-items-start gap-4">
             <div class="flex-grow-1">
-        {% endif %}
-
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div>
-                <h1 class="display-5 mb-0 text-success">{{ title }}</h1>
-                <span class="badge bg-secondary text-uppercase">{{ type }}</span>
+                <div class="mb-4">
+                    <div class="label" style="color:var(--sigil); font-size:10px; letter-spacing:4px">HISTORICAL CHRONICLE</div>
+                    <h1 class="serif" style="font-size:3.5rem; color:var(--sigil); margin:8px 0 0; line-height:1">{{ title }}</h1>
+                </div>
             </div>
+
+            {% if image_url %}
+            <div style="width: 250px; flex-shrink: 0; padding-top: 10px">
+                <img src="{{ image_url }}" class="img-fluid border border-secondary shadow-lg" alt="{{ title }}" style="width: 100%;">
+            </div>
+            {% endif %}
         </div>
 
-        <div class="card bg-dark border-secondary">
-            <div class="card-body">
-                <ul class="list-group list-group-flush bg-transparent">
-                    {% for event in events %}
-                    <li class="list-group-item bg-transparent border-secondary ps-0 py-2 text-light">
-                        {{ event | format_custom_emoji | format_bold | safe }}
-                    </li>
-                    {% endfor %}
-                </ul>
+        <div class="section-header">Recorded Events</div>
+        <div class="card-h p-0 overflow-hidden">
+            <window.Corners/>
+            {% for event in events %}
+            <div style="padding: 20px 32px; border-bottom: {{ '1px solid var(--hair)' if not loop.last else 'none' }}; font-size: 16px; color: var(--bone-dim); line-height: 1.6; position: relative">
+                <span style="color: var(--sigil); margin-right: 12px; font-family: var(--font-serif); font-size: 20px">✶</span>
+                {{ event | format_custom_emoji | safe }}
             </div>
+            {% endfor %}
+            {% if not events %}
+            <div class="p-5 text-center serif-i text-muted">No temporal resonance detected for this period.</div>
+            {% endif %}
         </div>
-
-        {% if image_url %}
-            </div>
-            <div class="ms-3" style="width: 300px; flex-shrink: 0;">
-                <img src="{{ image_url }}" class="img-fluid rounded border border-secondary" alt="{{ title }}" style="width: 100%; object-fit: contain;">
-            </div>
-        </div>
-        {% endif %}
     </div>
 </body>
 </html>
