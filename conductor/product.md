@@ -10,7 +10,7 @@ The primary development focus is to deliver a seamless RPG gaming experience via
 The bot's features are primarily geared toward **Keepers (Game Masters)**, empowering them with the tools needed to effortlessly manage sessions, reference rules quickly, orchestrate immersive audio, and maintain the narrative flow of their campaigns.
 
 ## Key Features & Community Goals
-*   **Roleplay Depth:** Expanding on roleplay mechanics, character backstories, and deep immersion features to foster richer storytelling.
+*   **Roleplay Depth:** Advanced backstory management (Description, Beliefs, Traits, etc.) and a dedicated Connections system to foster meaningful character relationships and richer storytelling.
 *   **Character Management:** Intuitive creation and tracking of investigator sheets, stats, and inventory via Discord UI and web dashboard.
 *   **The Grimoire:** A comprehensive, searchable codex for quick rule, item, and lore lookups.
 *   **Immersive Audio:** High-quality background music and soundboard effects to set the perfect investigative or horrific tone.
