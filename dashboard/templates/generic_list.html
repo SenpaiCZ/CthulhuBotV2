@@ -1,90 +1,92 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ title }} - CoC Bot{% endblock %}
+{% block title %}{{ title }} — Grimoire{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row mb-4">
-        <div class="col-12 text-center">
-            <h1 class="display-5 text-success mb-3">{{ title }}</h1>
-            <div class="d-flex justify-content-center">
-                <div class="col-md-6 col-sm-10">
-                    <input type="text" id="searchInput" class="form-control bg-dark text-light border-secondary" placeholder="Search {{ title }}..." aria-label="Search {{ title }}">
+<div class="mb-4">
+    <div class="label">Reference Library</div>
+    <h2 class="serif" style="fontSize:32px; margin:8px 0 0">{{ title }}</h2>
+</div>
+
+<div class="card-h mb-5">
+    <window.Corners/>
+    <div class="card-body p-4">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-muted" style="borderRight:0">⌕</span>
+                    <input type="text" id="searchInput" class="form-control bg-dark text-light border-secondary" placeholder="Search {{ title.lower() }}..." style="fontSize:14px; borderLeft:0">
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="cardGrid">
-        {% if data %}
-            {% for key, description in data.items() | sort %}
-            <div class="col card-col">
-                <div class="card h-100 bg-dark border-secondary">
-                    <div class="card-header border-secondary text-success fw-bold">
-                        {{ key }}
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text text-light" style="white-space: pre-wrap;">{{ description }}</p>
-                    </div>
-                    {% if is_admin %}
-                    <div class="card-footer border-secondary">
-                        <button class="btn btn-sm btn-outline-secondary w-100" onclick="openImageModal('{{ type_slug }}', '{{ key | replace("'", "\\'") }}')">Manage Image</button>
-                    </div>
-                    {% endif %}
-                </div>
+            <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                <span class="label" style="font-size:9px; color:var(--bone-fade)">TOTAL ENTRIES: <span id="itemCount" class="mono" style="color:var(--sigil)">0</span></span>
             </div>
-            {% endfor %}
-        {% else %}
-            <div class="col-12 text-center text-muted">No items found.</div>
-        {% endif %}
-    </div>
-
-    <div id="noResults" class="row mt-5 hidden">
-        <div class="col-12 text-center text-muted">
-            <h4>No results found</h4>
         </div>
     </div>
 </div>
 
+<div class="row g-4" id="cardGrid">
+    {% if data %}
+        {% for key, description in data.items() | sort %}
+        <div class="col-md-6 col-lg-4 card-col">
+            <div class="card-h h-100">
+                <window.Corners/>
+                <div class="card-header py-3 d-flex justify-content-between align-items-start">
+                    <div class="serif" style="font-size:18px; color:var(--sigil)">{{ key }}</div>
+                    {% if is_admin %}
+                    <button class="btn-eld" style="padding:4px 8px; font-size:8px" onclick="openImageModal('{{ type_slug }}', '{{ key | replace("'", "\\'") }}')">IMAGE</button>
+                    {% endif %}
+                </div>
+                <div class="card-body p-4">
+                    <div class="serif-i" style="font-size:14px; color:var(--bone-dim); line-height:1.6; white-space: pre-wrap;">{{ description }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="serif-i text-muted" style="font-size:20px">No entries found in this collection.</div>
+        </div>
+    {% endif %}
+</div>
+
+<div id="noResults" class="text-center py-5 d-none">
+    <div class="serif-i text-muted" style="font-size:20px">No results match your search.</div>
+    <div class="label mt-2">The archives remain silent.</div>
+</div>
+
 <script>
-    document.getElementById('searchInput').addEventListener('input', function() {
+    const searchInput = document.getElementById('searchInput');
+    const cols = document.querySelectorAll('.card-col');
+    const noResults = document.getElementById('noResults');
+    const itemCount = document.getElementById('itemCount');
+
+    function updateCount() {
+        const visible = document.querySelectorAll('.card-col:not(.d-none)').length;
+        itemCount.textContent = visible;
+    }
+
+    searchInput.addEventListener('input', function() {
         const filter = this.value.toLowerCase();
-        const cols = document.querySelectorAll('.card-col');
         let hasVisible = false;
 
         cols.forEach(col => {
-            const card = col.querySelector('.card');
-            const title = card.querySelector('.card-header').textContent.toLowerCase();
-            const text = card.querySelector('.card-text').textContent.toLowerCase();
+            const title = col.querySelector('.serif').textContent.toLowerCase();
+            const text = col.querySelector('.serif-i').textContent.toLowerCase();
 
             if (title.includes(filter) || text.includes(filter)) {
-                col.classList.remove('hidden');
+                col.classList.remove('d-none');
                 hasVisible = true;
             } else {
-                col.classList.add('hidden');
+                col.classList.add('d-none');
             }
         });
 
-        const noResults = document.getElementById('noResults');
-        if (hasVisible) {
-            noResults.classList.add('hidden');
-        } else {
-            noResults.classList.remove('hidden');
-        }
+        noResults.classList.toggle('d-none', hasVisible);
+        updateCount();
     });
-</script>
 
-<style>
-    .hidden {
-        display: none !important;
-    }
-    .card {
-        transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-    }
-    .card:hover {
-        transform: translateY(-2px);
-        border-color: var(--cthulhu-green-main) !important;
-        box-shadow: 0 4px 8px rgba(46, 139, 87, 0.2);
-    }
-</style>
+    // Initial count
+    updateCount();
+</script>
 {% endblock %}

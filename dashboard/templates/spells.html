@@ -1,184 +1,200 @@
 {% extends 'base.html' %}
 
-{% block title %}Spells - CoC Bot{% endblock %}
+{% block title %}Spells — Grimoire{% endblock %}
 
 {% block content %}
-<div class="container-fluid dashboard-container">
-    <div class="sidebar-panel">
-        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
-            <h5 class="m-0 text-success">Grimoire</h5>
-        </div>
-        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
-            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search..." aria-label="Search spells">
-        </div>
-        <div class="list-group list-group-flush sidebar-list" id="spellList">
-            {% if data and data.spells %}
-                {% for item in data.spells %}
-                    {% set s = item.spell_entry %}
-                    <button type="button" class="list-group-item list-group-item-action spell-list-item" onclick="showSpell({{ loop.index0 }})">
-                        {{ s.name }}
-                    </button>
-                {% endfor %}
-            {% else %}
-                <div class="p-3 text-center text-muted">No spells found.</div>
-            {% endif %}
-        </div>
-    </div>
+<div id="spells-root"></div>
+{% endblock %}
 
-    <div class="detail-panel" id="detailPanel">
-        <div id="spell-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
-            <h2 class="text-muted" style="opacity: 0.3;">Select a spell</h2>
-            <p class="text-secondary">View detailed incantations from the archives.</p>
-        </div>
+{% block scripts %}
+<script type="text/babel" data-presets="react">
+const SPELLS_DATA = {{ data.spells | tojson }};
+const TYPE_SLUG = '{{ type_slug }}';
 
-        <div id="spell-content" class="hidden">
-            <!-- Template content populated by JS -->
-        </div>
-    </div>
-</div>
+{% raw %}
+const { useState, useMemo, useEffect } = React;
 
-<script>
-    // Search Functionality
-    document.getElementById('searchInput').addEventListener('input', function() {
-        const filter = this.value.toLowerCase();
-        const items = document.querySelectorAll('.spell-list-item');
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if(text.includes(filter)) {
-                item.classList.remove('hidden');
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-    });
-
-    // Pass Python data to JS safely
-    const spells = {{ data.spells | tojson }};
-
-    function showSpell(index) {
-        try {
-            const s = spells[index].spell_entry;
-            const container = document.getElementById('spell-content');
-            const placeholder = document.getElementById('spell-placeholder');
-
-            // Highlight active item
-            document.querySelectorAll('.spell-list-item').forEach((el, i) => {
-                if(i === index) el.classList.add('active');
-                else el.classList.remove('active');
-            });
-
-            let html = `
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h1 class="display-5 mb-0 text-success">${s.name}</h1>
-                        <div class="text-secondary fst-italic fs-5">${s.category || 'Unknown Category'}</div>
-                    </div>
-                </div>
-
-                <div id="image-control-container" class="mb-4"></div>
-
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-body">
-                        ${s.effect && s.effect.description ? `<p class="card-text border-start border-success border-3 ps-3">${s.effect.description}</p>` : ''}
-                    </div>
-                </div>
-
-                <div class="section-header">Costs & Casting</div>
-                <div class="row row-cols-2 row-cols-md-5 g-2 mb-4">
-                    <div class="col">
-                        <div class="stat-box h-100">
-                            <div class="stat-label">Magic Points</div>
-                            <div class="stat-value text-info">${s.costs && s.costs.magic_points ? s.costs.magic_points : 'None'}</div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="stat-box h-100">
-                            <div class="stat-label">Sanity</div>
-                            <div class="stat-value text-danger">${s.costs && s.costs.sanity ? s.costs.sanity : 'None'}</div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="stat-box h-100">
-                            <div class="stat-label">POW</div>
-                            <div class="stat-value text-warning">${s.costs && s.costs.pow ? s.costs.pow : 'None'}</div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="stat-box h-100">
-                            <div class="stat-label">Casting Time</div>
-                            <div class="stat-value text-light">${s.casting_time || 'Instantaneous'}</div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="stat-box h-100">
-                            <div class="stat-label">Range</div>
-                            <div class="stat-value text-light">${s.range || 'Touch'}</div>
-                        </div>
-                    </div>
-                </div>
-
-                ${s.costs && s.costs.components ? `
-                <div class="mb-3">
-                    <h6 class="text-success fw-bold">Components:</h6>
-                    <p class="text-light">${s.costs.components}</p>
-                </div>` : ''}
-
-                <div class="row">
-                    <div class="col-lg-6">
-                        ${s.effect && s.effect.damage ? `
-                        <div class="mb-3">
-                            <div class="card bg-dark border-secondary">
-                                <div class="card-body">
-                                    <h6 class="card-title text-danger">Damage</h6>
-                                    <p class="card-text fs-5 fw-bold">${s.effect.damage}</p>
-                                </div>
-                            </div>
-                        </div>` : ''}
-                    </div>
-
-                    <div class="col-lg-6">
-                        ${s.effect && s.effect.opposed_roll ? `
-                        <div class="mb-3">
-                            <div class="card bg-dark border-secondary">
-                                <div class="card-body">
-                                    <h6 class="card-title text-warning">Opposed Roll</h6>
-                                    <p class="card-text fs-5 fw-bold">${s.effect.opposed_roll}</p>
-                                </div>
-                            </div>
-                        </div>` : ''}
-                    </div>
-                </div>
-
-                ${s.deeper_magic ? `
-                <div class="mt-4">
-                    <div class="section-header">Deeper Magic</div>
-                    <div class="card bg-dark border-secondary">
-                        <div class="card-body">
-                            <p class="card-text text-light fst-italic">${s.deeper_magic}</p>
-                        </div>
-                    </div>
-                </div>` : ''}
-
-                ${s.alternate_names ? `
-                    <div class="mt-5 pt-3 border-top border-secondary small text-muted text-center">
-                        <em>Also known as: ${s.alternate_names.join(', ')}</em>
-                    </div>
-                ` : ''}
-            `;
-
-            container.innerHTML = html;
-
-            initImageControl('image-control-container', '{{ type_slug }}', s.name);
-
-            container.classList.remove('hidden');
-            placeholder.style.setProperty('display', 'none', 'important');
-            placeholder.classList.remove('d-flex');
-
-            document.getElementById('detailPanel').scrollTop = 0;
-        } catch (e) {
-            console.error(e);
-            alert("Error rendering spell: " + e.message);
-        }
+function SpellDetail({spell}) {
+  const [imageUrl, setImageUrl] = useState(null);
+  
+  useEffect(() => {
+    if (spell) {
+      const s = spell.spell_entry;
+      fetch(`/api/images/check?type_slug=${TYPE_SLUG}&name=${encodeURIComponent(s.name)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.found) setImageUrl(data.url + '?t=' + new Date().getTime());
+          else setImageUrl(null);
+        })
+        .catch(() => setImageUrl(null));
     }
+  }, [spell]);
+
+  if (!spell) {
+    return (
+      <div style={{display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", height:"100%", textAlign:"center", opacity:0.3, minHeight:400}}>
+        <div className="serif" style={{fontSize:28, color:"var(--bone-fade)"}}>Select an incantation from the archives</div>
+      </div>
+    );
+  }
+  const s = spell.spell_entry;
+
+  return (
+    <div style={{position:'relative'}}>
+      <div style={{display:'flex', gap:40, alignItems:'flex-start', marginBottom:30, flexWrap:'wrap'}}>
+        <div style={{flex:1, minWidth:300}}>
+          <div className="label" style={{color:"var(--sigil)"}}>Arcane Incantation</div>
+          <h1 className="serif" style={{fontSize:48, color:"var(--sigil)", margin:"8px 0"}}>{s.name}</h1>
+          <div className="serif-i" style={{color:"var(--bone-fade)", fontSize:20, marginBottom:16}}>{s.category || 'Unknown Category'}</div>
+        </div>
+        
+        {imageUrl && (
+          <div style={{maxWidth: 400, flex: "1 0 300px"}}>
+            <img src={imageUrl} alt={s.name} style={{width:'100%', border:'1px solid var(--hair-strong)', boxShadow:'0 10px 30px rgba(0,0,0,0.5)'}} />
+          </div>
+        )}
+      </div>
+
+      <div className="card-h p-4 mb-5" style={{borderLeft: '4px solid var(--sigil)', fontSize:'17px', lineHeight:1.6, color:"var(--bone)"}}>
+         <window.Corners/>
+         {s.effect?.description}
+      </div>
+
+      <div className="label mb-3" style={{color:"var(--sigil)"}}>Costs & Casting</div>
+      <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(120px, 1fr))", gap:10, marginBottom:40}}>
+        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
+          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>MAGIC POINTS</div>
+          <div style={{fontSize:18, color:"var(--sigil)", fontWeight:600}}>{s.costs?.magic_points || 'None'}</div>
+        </div>
+        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
+          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>SANITY</div>
+          <div style={{fontSize:18, color:"var(--rust)", fontWeight:600}}>{s.costs?.sanity || 'None'}</div>
+        </div>
+        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
+          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>POW</div>
+          <div style={{fontSize:18, color:"var(--amber)", fontWeight:600}}>{s.costs?.pow || 'None'}</div>
+        </div>
+        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
+          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>CASTING TIME</div>
+          <div style={{fontSize:15, color:"var(--bone)", fontWeight:600}}>{s.casting_time || 'Instant'}</div>
+        </div>
+        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
+          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>RANGE</div>
+          <div style={{fontSize:15, color:"var(--bone)", fontWeight:600}}>{s.range || 'Touch'}</div>
+        </div>
+      </div>
+
+      <div className="row g-4">
+          <div className="col-lg-6">
+              <div className="label mb-3" style={{color:"var(--sigil)"}}>Arcane Components</div>
+              <div className="card-h p-4 h-100">
+                  <window.Corners/>
+                  <div className="serif-i" style={{fontSize:14, color:"var(--bone-dim)", lineHeight:1.6}}>
+                      {s.costs?.components || "No material components required for this ritual."}
+                  </div>
+              </div>
+          </div>
+          <div className="col-lg-6">
+              <div className="label mb-3" style={{color:"var(--sigil)"}}>Effect Potential</div>
+              <div className="card-h p-4 h-100 d-flex flex-column gap-3">
+                  <window.Corners/>
+                  {s.effect?.damage && (
+                      <div>
+                          <div className="label" style={{fontSize:9, color:"var(--rust)"}}>DAMAGE</div>
+                          <div className="mono" style={{fontSize:18, color:"var(--rust)", fontWeight:"bold"}}>{s.effect.damage}</div>
+                      </div>
+                  )}
+                  {s.effect?.opposed_roll && (
+                      <div>
+                          <div className="label" style={{fontSize:9, color:"var(--amber)"}}>OPPOSED ROLL</div>
+                          <div className="serif" style={{fontSize:16, color:"var(--bone)"}}>{s.effect.opposed_roll}</div>
+                      </div>
+                  )}
+                  {!s.effect?.damage && !s.effect?.opposed_roll && (
+                      <div className="serif-i text-muted">Standard non-combative effect.</div>
+                  )}
+              </div>
+          </div>
+      </div>
+
+      {s.deeper_magic && (
+        <div className="mt-5">
+          <div className="label mb-3" style={{color:"var(--sigil)"}}>Deeper Magic</div>
+          <div className="card-h p-4" style={{background:"rgba(120,220,170,0.02)", borderTop:"2px solid var(--sigil)"}}>
+            <window.Corners/>
+            <div className="serif-i" style={{fontSize:15, lineHeight:1.7, color:"var(--bone-dim)"}}>
+                {s.deeper_magic}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {s.alternate_names && s.alternate_names.length > 0 && (
+        <div className="mt-5 pt-4 text-center border-top border-secondary">
+          <div className="label" style={{fontSize:9, color:"var(--bone-fade)", marginBottom:8}}>ALSO KNOWN AS</div>
+          <div className="serif-i" style={{fontSize:14, color:"var(--bone-fade)"}}>{s.alternate_names.join(', ')}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SpellsApp() {
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState(null);
+  
+  const filtered = useMemo(() => {
+    return SPELLS_DATA.filter(item => {
+      const name = item.spell_entry?.name || '';
+      return name.toLowerCase().includes(search.toLowerCase());
+    });
+  }, [search]);
+
+  return (
+    <div className="row g-0" style={{margin:"-2rem -3rem", height:"calc(100vh - 72px)"}}>
+      <div className="col-md-3 h-100 d-flex flex-column border-end border-secondary" style={{background:"var(--void-1)"}}>
+        <div className="p-4 border-bottom border-secondary">
+          <div className="label mb-3">Grimoire Scrolls</div>
+          <div className="input-group">
+             <span className="input-group-text bg-dark border-secondary text-muted" style={{borderRight:0}}>⌕</span>
+             <input type="text" className="form-control bg-dark text-light border-secondary" placeholder="Search spells…" value={search} onChange={e => setSearch(e.target.value)} style={{fontSize:13, borderLeft:0}} />
+          </div>
+        </div>
+        <div style={{flex:1, overflowY:"auto"}}>
+            {filtered.length > 0 ? (
+                filtered.map((item, i) => {
+                    const name = item.spell_entry?.name || 'Unknown';
+                    const isActive = selected?.spell_entry?.name === name;
+                    return (
+                        <button key={i} 
+                            onClick={() => setSelected(item)}
+                            className="w-100 border-0 text-start py-3 px-4 transition-all"
+                            style={{
+                                background: isActive ? "rgba(120,220,170,0.08)" : "transparent",
+                                color: isActive ? "var(--sigil)" : "var(--bone-dim)",
+                                borderLeft: isActive ? "3px solid var(--sigil)" : "3px solid transparent",
+                                fontSize: 14,
+                                borderBottom: "1px solid var(--hair)"
+                            }}
+                        >
+                            {name}
+                        </button>
+                    );
+                })
+            ) : (
+                <div className="p-5 text-center serif-i text-muted">No incantations found.</div>
+            )}
+        </div>
+      </div>
+      <div className="col-md-9 h-100" style={{overflowY:"auto", padding:"40px 60px 100px"}}>
+         <SpellDetail spell={selected} />
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('spells-root'));
+root.render(<SpellsApp />);
+{% endraw %}
 </script>
 {% endblock %}

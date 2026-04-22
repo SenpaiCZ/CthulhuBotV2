@@ -1,229 +1,275 @@
 {% extends 'base.html' %}
 
-{% block title %}Deities - CoC Bot{% endblock %}
+{% block title %}Deities — Grimoire{% endblock %}
 
 {% block content %}
-<div class="container-fluid dashboard-container">
-    <div class="sidebar-panel">
-        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
-            <h5 class="m-0 text-success">Pantheon</h5>
-        </div>
-        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
-            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search..." aria-label="Search deities">
-        </div>
-        <div class="list-group list-group-flush sidebar-list" id="monsterList">
-            {% if data and data.deities %}
-                {% for item in data.deities %}
-                    {% set d = item.deity_entry %}
-                    <button type="button" class="list-group-item list-group-item-action monster-list-item" onclick="showDeity({{ loop.index0 }})">
-                        {{ d.name }}
-                    </button>
-                {% endfor %}
-            {% else %}
-                <div class="p-3 text-center text-muted">No deities found.</div>
-            {% endif %}
-        </div>
-    </div>
+<div id="deities-root"></div>
+{% endblock %}
 
-    <div class="detail-panel" id="detailPanel">
-        <div id="monster-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
-            <h2 class="text-muted" style="opacity: 0.3;">Select a Deity</h2>
-            <p class="text-secondary">Explore the cosmic entities.</p>
-        </div>
+{% block scripts %}
+<script type="text/babel" data-presets="react">
+const DEITIES_DATA = {{ data.deities | tojson }};
+const STAT_EMOJIS = {{ stat_emojis | tojson }};
+const TYPE_SLUG = '{{ type_slug }}';
 
-        <div id="monster-content" class="hidden">
-            <!-- Content populated by JS -->
-        </div>
-    </div>
-</div>
+{% raw %}
+const { useState, useMemo, useEffect } = React;
 
-<script>
-    // Search Functionality
-    document.getElementById('searchInput').addEventListener('input', function() {
-        const filter = this.value.toLowerCase();
-        const items = document.querySelectorAll('.monster-list-item');
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if(text.includes(filter)) {
-                item.classList.remove('hidden');
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-    });
-
-    const deities = {{ data.deities | tojson }};
-    const statEmojis = {{ stat_emojis | tojson }};
-
-    function showDeity(index) {
-        try {
-            const d = deities[index].deity_entry;
-            const container = document.getElementById('monster-content');
-            const placeholder = document.getElementById('monster-placeholder');
-
-            // Highlight active item
-            document.querySelectorAll('.monster-list-item').forEach((el, i) => {
-                if(i === index) el.classList.add('active');
-                else el.classList.remove('active');
-            });
-
-            // Physical Manifestation Check
-            const pm = d.physical_manifestation || {};
-            const chars = pm.characteristics || {};
-            const combat = pm.combat || {};
-            const armor = pm.armor || {};
-
-            let html = `
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h1 class="display-5 mb-0 text-success">${d.name}</h1>
-                        <div class="text-secondary fst-italic fs-5">${d.classification || 'Unknown Entity'}</div>
-                    </div>
-                    <div class="text-end">
-                        ${(d.other_names || []).map(name => `<span class="badge bg-secondary me-1">${name}</span>`).join('')}
-                    </div>
-                </div>
-
-                <div id="image-control-container" class="mb-4"></div>
-
-                ${d.description_quote ? `<div class="quote-block">"${d.description_quote}"</div>` : ''}
-
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-body">
-                        ${d.main_entry_text ? `<p class="card-text text-light">${d.main_entry_text}</p>` : '<em class="text-muted">No main entry text available.</em>'}
-                    </div>
-                </div>
-
-                <div class="row g-4">
-                    <!-- Cult Column -->
-                    <div class="col-lg-6">
-                        <div class="card border-secondary bg-dark h-100">
-                            <div class="card-header border-secondary bg-transparent text-success fw-bold">Cult & Worship</div>
-                            <div class="card-body">
-                                ${d.cult ? `
-                                    <p class="card-text small text-secondary">${d.cult.text || ''}</p>
-                                    ${d.cult.possible_blessings ? `
-                                        <hr class="border-secondary">
-                                        <h6 class="card-subtitle mb-2 text-muted small text-uppercase">Possible Blessings</h6>
-                                        <ul class="list-unstyled mb-0">
-                                            ${d.cult.possible_blessings.map(b => `<li class="mb-2"><strong class="text-success">${b.name}:</strong> <span class="text-secondary small">${b.description}</span></li>`).join('')}
-                                        </ul>
-                                    ` : ''}
-                                ` : '<p class="text-muted">No cult information.</p>'}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Encounters & Magic Column -->
-                    <div class="col-lg-6">
-                        <div class="card border-secondary bg-dark mb-3">
-                            <div class="card-header border-secondary bg-transparent text-success fw-bold">Encounters & Aura</div>
-                            <div class="card-body">
-                                <p class="mb-1"><strong class="text-light">Encounters:</strong> <span class="text-muted">${d.encounters || 'None detailed.'}</span></p>
-                                <p class="mb-0"><strong class="text-light">Aura:</strong> <span class="text-muted">${d.aura || 'None detailed.'}</span></p>
-                            </div>
-                        </div>
-
-                        <div class="card border-secondary bg-dark">
-                             <div class="card-header border-secondary bg-transparent text-success fw-bold">Magic & Powers</div>
-                             <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-4 text-center border-end border-secondary">
-                                        <div class="small text-muted">POW</div>
-                                        <div class="fw-bold text-light">${d.magic ? d.magic.pow : 'N/A'}</div>
-                                    </div>
-                                    <div class="col-4 text-center border-end border-secondary">
-                                        <div class="small text-muted">MP</div>
-                                        <div class="fw-bold text-info">${d.magic ? d.magic.magic_points : 'N/A'}</div>
-                                    </div>
-                                    <div class="col-4 text-center">
-                                        <div class="small text-muted">Sanity</div>
-                                        <div class="fw-bold text-danger">${d.sanity_loss || 'N/A'}</div>
-                                    </div>
-                                </div>
-                                <p class="small text-secondary mb-2"><strong>Spells:</strong> ${d.magic ? d.magic.spells : 'None'}</p>
-                                ${d.powers ? `
-                                    <h6 class="text-muted small text-uppercase mt-3">Special Powers</h6>
-                                    <ul class="list-unstyled mb-0 small">
-                                        ${d.powers.map(p => `<li class="mb-1"><strong class="text-warning">${p.name}:</strong> <span class="text-muted">${p.description}</span></li>`).join('')}
-                                    </ul>
-                                ` : ''}
-                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Physical Manifestation Section -->
-                <div class="section-header">Physical Manifestation <span class="fs-6 text-muted ms-2 fw-normal">${pm.title || ''}</span></div>
-
-                <div class="row row-cols-4 row-cols-md-8 g-2 mb-4">
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['STR'] || ''} STR</div><div class="stat-value">${chars.STR || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['CON'] || ''} CON</div><div class="stat-value">${chars.CON || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['SIZ'] || ''} SIZ</div><div class="stat-value">${chars.SIZ || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['DEX'] || ''} DEX</div><div class="stat-value">${chars.DEX || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['HP'] || ''} HP</div><div class="stat-value text-danger">${chars.HP || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['DB'] || ''} DB</div><div class="stat-value">${chars.DB || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['Build'] || ''} Build</div><div class="stat-value">${chars.Build || '-'}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">${statEmojis['Move'] || ''} Move</div><div class="stat-value">${chars.Move || '-'}</div></div></div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-7">
-                        <h6 class="text-success fw-bold">Combat Capabilities</h6>
-                        <p class="small text-muted mb-2">${combat.description || ''}</p>
-                        <p class="mb-2"><span class="fw-bold text-light">Attacks per round:</span> ${combat.attacks_per_round || 'N/A'}</p>
-
-                        ${combat.attacks ? `
-                            <div class="list-group list-group-flush border rounded border-secondary mb-3">
-                                ${combat.attacks.map(atk => `
-                                    <div class="list-group-item bg-dark border-secondary">
-                                        <div class="d-flex justify-content-between">
-                                            <strong class="text-light">${atk.name}</strong>
-                                            <span class="text-danger fw-bold">${atk.damage || ''}</span>
-                                        </div>
-                                        <div class="small text-secondary">Success: ${atk.success_chance || ''}
-                                        ${atk.difficulty_hard || atk.difficulty_extreme ? `
-                                            <span class="text-muted fst-italic ms-1" style="font-size: 0.85em;">(H: ${atk.difficulty_hard || '?'}, E: ${atk.difficulty_extreme || '?'})</span>
-                                        ` : ''}
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="col-md-5">
-                        ${combat.special_maneuvers ? `
-                            <h6 class="text-success fw-bold">Special Maneuvers</h6>
-                            <ul class="list-group list-group-flush bg-transparent mb-3">
-                                ${combat.special_maneuvers.map(sm => `<li class="list-group-item bg-transparent border-0 px-0 py-1"><strong class="text-warning">${sm.name}:</strong> <span class="text-secondary small">${sm.description}</span></li>`).join('')}
-                            </ul>
-                        ` : ''}
-
-                        <div class="card bg-secondary bg-opacity-10 border-secondary">
-                            <div class="card-body py-2">
-                                <h6 class="small text-uppercase text-success fw-bold mb-0">Armor</h6>
-                                <div class="fs-5 fw-bold text-light">${armor.rating || 'None'}</div>
-                                <div class="small text-muted">${armor.notes || ''}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            container.innerHTML = html;
-
-            initImageControl('image-control-container', '{{ type_slug }}', d.name);
-
-            container.classList.remove('hidden');
-            placeholder.style.setProperty('display', 'none', 'important');
-            placeholder.classList.remove('d-flex');
-
-            document.getElementById('detailPanel').scrollTop = 0;
-
-        } catch (e) {
-            console.error(e);
-            alert("Error rendering deity: " + e.message);
-        }
+function DeityDetail({deity}) {
+  const [imageUrl, setImageUrl] = useState(null);
+  
+  useEffect(() => {
+    if (deity) {
+      const d = deity.deity_entry;
+      fetch(`/api/images/check?type_slug=${TYPE_SLUG}&name=${encodeURIComponent(d.name)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.found) setImageUrl(data.url + '?t=' + new Date().getTime());
+          else setImageUrl(null);
+        })
+        .catch(() => setImageUrl(null));
     }
+  }, [deity]);
+
+  if (!deity) {
+    return (
+      <div style={{display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", height:"100%", textAlign:"center", opacity:0.3, minHeight:400}}>
+        <div className="serif" style={{fontSize:28, color:"var(--bone-fade)"}}>Select a deity from the archives</div>
+      </div>
+    );
+  }
+  const d = deity.deity_entry;
+  const pm = d.physical_manifestation || {};
+  const chars = pm.characteristics || {};
+  const combat = pm.combat || {};
+  const armor = pm.armor || {};
+
+  return (
+    <div style={{position:'relative'}}>
+      <div style={{display:'flex', gap:40, alignItems:'flex-start', marginBottom:30, flexWrap:'wrap'}}>
+        <div style={{flex:1, minWidth:300}}>
+          <div className="label" style={{color:"var(--sigil)"}}>Cosmic Entity</div>
+          <h1 className="serif" style={{fontSize:48, color:"var(--sigil)", margin:"8px 0"}}>{d.name}</h1>
+          <div className="serif-i" style={{color:"var(--bone-fade)", fontSize:20, marginBottom:16}}>{d.classification || 'Unknown Pantheon'}</div>
+          <div style={{display:'flex', flexWrap:'wrap', gap:6, marginBottom:16}}>
+            {d.other_names && d.other_names.map(name => <span key={name} className="badge bg-dark border border-secondary" style={{fontSize:10, borderRadius:0, padding:"4px 8px"}}>{name.toUpperCase()}</span>)}
+          </div>
+        </div>
+        
+        {imageUrl && (
+          <div style={{maxWidth: 400, flex: "1 0 300px"}}>
+            <img src={imageUrl} alt={d.name} style={{width:'100%', border:'1px solid var(--hair-strong)', boxShadow:'0 10px 30px rgba(0,0,0,0.5)'}} />
+          </div>
+        )}
+      </div>
+
+      {d.description_quote && (
+          <div className="serif-i mb-5" style={{fontSize:18, color:"var(--bone-fade)", padding:"0 40px", borderLeft:"2px solid var(--hair-strong)", fontStyle:"italic"}}>
+              "{d.description_quote}"
+          </div>
+      )}
+
+      <div className="card-h p-4 mb-5" style={{borderLeft: '4px solid var(--sigil)', fontSize:'16px', lineHeight:1.6, color:"var(--bone)"}}>
+         <window.Corners/>
+         {d.main_entry_text || "The archives are silent regarding this entity's true nature."}
+      </div>
+
+      <div className="row g-5">
+          <div className="col-lg-6">
+              <div className="label mb-3" style={{color:"var(--sigil)"}}>Cult & Resonance</div>
+              <div className="card-h p-4 h-100">
+                  <window.Corners/>
+                  {d.cult ? (
+                      <>
+                          <div className="serif-i mb-4" style={{fontSize:14, color:"var(--bone-dim)", lineHeight:1.6}}>{d.cult.text}</div>
+                          {d.cult.possible_blessings && (
+                              <div>
+                                  <div className="label mb-3" style={{fontSize:9}}>POSSIBLE BLESSINGS</div>
+                                  {d.cult.possible_blessings.map((b, i) => (
+                                      <div key={i} className="mb-3">
+                                          <div className="serif" style={{color:"var(--sigil)", fontSize:15}}>{b.name}</div>
+                                          <div style={{fontSize:12, color:"var(--bone-fade)"}}>{b.description}</div>
+                                      </div>
+                                  ))}
+                              </div>
+                          )}
+                      </>
+                  ) : <div className="serif-i text-muted">No organized cult information exists.</div>}
+              </div>
+          </div>
+          <div className="col-lg-6">
+              <div className="label mb-3" style={{color:"var(--sigil)"}}>Manifestation Attributes</div>
+              <div className="card-h p-4 mb-4">
+                  <window.Corners/>
+                  <div className="row g-4 text-center">
+                      <div className="col-4">
+                          <div className="label" style={{fontSize:9}}>POW</div>
+                          <div className="mono" style={{fontSize:18, color:"var(--amber)"}}>{d.magic?.pow || '—'}</div>
+                      </div>
+                      <div className="col-4">
+                          <div className="label" style={{fontSize:9}}>MP</div>
+                          <div className="mono" style={{fontSize:18, color:"var(--sigil)"}}>{d.magic?.magic_points || '—'}</div>
+                      </div>
+                      <div className="col-4">
+                          <div className="label" style={{fontSize:9}}>SAN LOSS</div>
+                          <div className="mono" style={{fontSize:18, color:"var(--rust)"}}>{d.sanity_loss || '—'}</div>
+                      </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-top border-secondary">
+                      <div className="label mb-2" style={{fontSize:9}}>KNOWN ARCANA</div>
+                      <div className="serif-i" style={{fontSize:14, color:"var(--bone-dim)"}}>{d.magic?.spells || 'None'}</div>
+                  </div>
+              </div>
+              
+              <div className="card-h p-4">
+                  <window.Corners/>
+                  <div className="mb-3">
+                      <div className="label mb-1" style={{fontSize:9}}>ENCOUNTERS</div>
+                      <div style={{fontSize:13, color:"var(--bone-dim)"}}>{d.encounters || 'None detailed.'}</div>
+                  </div>
+                  <div>
+                      <div className="label mb-1" style={{fontSize:9}}>AURA</div>
+                      <div style={{fontSize:13, color:"var(--bone-dim)"}}>{d.aura || 'None detailed.'}</div>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      {pm.title && (
+          <div className="mt-5">
+              <div className="label mb-3" style={{color:"var(--sigil)"}}>Physical Manifestation: <span className="serif" style={{fontSize:16}}>{pm.title}</span></div>
+              
+              <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(100px, 1fr))", gap:10, marginBottom:32}}>
+                {['STR','CON','SIZ','DEX','HP','DB','Build','Move'].map(stat => (
+                    <div key={stat} className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:10, textAlign:"center"}}>
+                        <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4}}>{STAT_EMOJIS[stat]} {stat}</div>
+                        <div style={{fontSize:16, color: stat === 'HP' ? 'var(--rust)' : 'var(--bone)', fontWeight:600}}>{chars[stat] || '—'}</div>
+                    </div>
+                ))}
+              </div>
+
+              <div className="row g-4">
+                  <div className="col-lg-7">
+                      <div className="label mb-3" style={{fontSize:9}}>COMBAT CAPABILITIES</div>
+                      <div className="card-h p-0 overflow-hidden">
+                          <window.Corners/>
+                          <div style={{padding:'12px 20px', background:'var(--void-4)', borderBottom:'1px solid var(--hair)', fontSize:'12px', color:"var(--bone-fade)"}}>
+                            <strong>ATTACKS PER ROUND:</strong> {combat.attacks_per_round || '—'}
+                          </div>
+                          {combat.attacks?.map((atk, i) => (
+                            <div key={i} style={{padding:'16px 20px', borderBottom: i < combat.attacks.length-1 ? '1px solid var(--hair)' : 'none'}}>
+                              <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+                                <div>
+                                  <div className="serif" style={{color:'var(--sigil)', fontSize:'17px'}}>{atk.name}</div>
+                                  <div className="mono" style={{fontSize:'12px', color:'var(--rust)', marginTop:4}}>DAMAGE: {atk.damage}</div>
+                                </div>
+                                <div style={{textAlign:'right'}}>
+                                  <div className="mono" style={{fontSize:'18px', color:'var(--sigil)'}}>{atk.success_chance}%</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                  </div>
+                  <div className="col-lg-5">
+                      <div className="label mb-3" style={{fontSize:9}}>SPECIAL MANEUVERS & ARMOR</div>
+                      {combat.special_maneuvers && (
+                          <div className="mb-4">
+                              {combat.special_maneuvers.map((sm, i) => (
+                                  <div key={i} className="mb-3">
+                                      <div className="serif" style={{color:"var(--amber)", fontSize:15}}>{sm.name}</div>
+                                      <div style={{fontSize:12, color:"var(--bone-fade)"}}>{sm.description}</div>
+                                  </div>
+                              ))}
+                          </div>
+                      )}
+                      <div className="card-h p-3" style={{background:"rgba(120,220,170,0.02)"}}>
+                          <window.Corners/>
+                          <div className="label" style={{fontSize:9, marginBottom:6}}>ARMOR</div>
+                          <div className="serif" style={{fontSize:18, color:"var(--bone)"}}>{armor.rating || 'None'}</div>
+                          {armor.notes && <div className="serif-i" style={{fontSize:12, color:"var(--bone-fade)", marginTop:4}}>{armor.notes}</div>}
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {d.powers && (
+          <div className="mt-5">
+              <div className="label mb-3" style={{color:"var(--sigil)"}}>Divine Powers</div>
+              <div className="row g-4">
+                {d.powers.map((p, i) => (
+                  <div key={i} className="col-md-6">
+                    <div className="card-h p-4 h-100" style={{borderTop:'2px solid var(--sigil)'}}>
+                      <window.Corners/>
+                      <div className="serif" style={{color:'var(--sigil)', marginBottom:10, fontSize:'18px'}}>{p.name}</div>
+                      <div style={{fontSize:14, lineHeight:1.6, color:'var(--bone-dim)'}}>{p.description}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+          </div>
+      )}
+    </div>
+  );
+}
+
+function DeitiesApp() {
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState(null);
+  
+  const filtered = useMemo(() => {
+    return DEITIES_DATA.filter(item => {
+      const name = item.deity_entry?.name || '';
+      return name.toLowerCase().includes(search.toLowerCase());
+    });
+  }, [search]);
+
+  return (
+    <div className="row g-0" style={{margin:"-2rem -3rem", height:"calc(100vh - 72px)"}}>
+      <div className="col-md-3 h-100 d-flex flex-column border-end border-secondary" style={{background:"var(--void-1)"}}>
+        <div className="p-4 border-bottom border-secondary">
+          <div className="label mb-3">Pantheon Browser</div>
+          <div className="input-group">
+             <span className="input-group-text bg-dark border-secondary text-muted" style={{borderRight:0}}>⌕</span>
+             <input type="text" className="form-control bg-dark text-light border-secondary" placeholder="Search entities…" value={search} onChange={e => setSearch(e.target.value)} style={{fontSize:13, borderLeft:0}} />
+          </div>
+        </div>
+        <div style={{flex:1, overflowY:"auto"}}>
+            {filtered.length > 0 ? (
+                filtered.map((item, i) => {
+                    const name = item.deity_entry?.name || 'Unknown';
+                    const isActive = selected?.deity_entry?.name === name;
+                    return (
+                        <button key={i} 
+                            onClick={() => setSelected(item)}
+                            className="w-100 border-0 text-start py-3 px-4 transition-all"
+                            style={{
+                                background: isActive ? "rgba(120,220,170,0.08)" : "transparent",
+                                color: isActive ? "var(--sigil)" : "var(--bone-dim)",
+                                borderLeft: isActive ? "3px solid var(--sigil)" : "3px solid transparent",
+                                fontSize: 14,
+                                borderBottom: "1px solid var(--hair)"
+                            }}
+                        >
+                            {name}
+                        </button>
+                    );
+                })
+            ) : (
+                <div className="p-5 text-center serif-i text-muted">No deities found.</div>
+            )}
+        </div>
+      </div>
+      <div className="col-md-9 h-100" style={{overflowY:"auto", padding:"40px 60px 100px"}}>
+         <DeityDetail deity={selected} />
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('deities-root'));
+root.render(<DeitiesApp />);
+{% endraw %}
 </script>
 {% endblock %}

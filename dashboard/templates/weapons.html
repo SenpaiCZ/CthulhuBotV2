@@ -1,113 +1,161 @@
 {% extends 'base.html' %}
 
-{% block title %}Weapons - CoC Bot{% endblock %}
+{% block title %}Armory — Grimoire{% endblock %}
 
 {% block content %}
-<div class="container-fluid dashboard-container">
-    <div class="sidebar-panel">
-        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
-            <h5 class="m-0 text-success">Armory</h5>
-        </div>
-        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
-            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search..." aria-label="Search weapons">
-        </div>
-        <div class="list-group list-group-flush sidebar-list" id="weaponList">
-            {% if data %}
-                {% for name in data.keys()|sort %}
-                    <button type="button" class="list-group-item list-group-item-action weapon-list-item" data-name="{{ name }}" onclick="showWeapon(this.dataset.name)">
-                        {{ name }}
-                    </button>
-                {% endfor %}
-            {% else %}
-                <div class="p-3 text-center text-muted">No weapons found.</div>
-            {% endif %}
-        </div>
-    </div>
+<div id="weapons-root"></div>
+{% endblock %}
 
-    <div class="detail-panel" id="detailPanel">
-        <div id="weapon-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
-            <h2 class="text-muted" style="opacity: 0.3;">Select a weapon</h2>
-            <p class="text-secondary">View detailed statistics from the armory.</p>
-        </div>
+{% block scripts %}
+<script type="text/babel" data-presets="react">
+const WEAPONS_DATA = {{ data | tojson }};
+const TYPE_SLUG = '{{ type_slug }}';
 
-        <div id="weapon-content" class="hidden">
-            <!-- Template content populated by JS -->
-        </div>
-    </div>
-</div>
+{% raw %}
+const { useState, useMemo, useEffect } = React;
 
-<script>
-    // Search Functionality
-    document.getElementById('searchInput').addEventListener('input', function() {
-        const filter = this.value.toLowerCase();
-        const items = document.querySelectorAll('.weapon-list-item');
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if(text.includes(filter)) {
-                item.classList.remove('hidden');
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-    });
-
-    // Pass Python data to JS safely
-    const weapons = {{ data | tojson }};
-
-    function showWeapon(name) {
-        try {
-            const w = weapons[name];
-            const container = document.getElementById('weapon-content');
-            const placeholder = document.getElementById('weapon-placeholder');
-
-            // Highlight active item
-            document.querySelectorAll('.weapon-list-item').forEach((el) => {
-                if(el.textContent.trim() === name) el.classList.add('active');
-                else el.classList.remove('active');
-            });
-
-            let html = `
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h1 class="display-5 mb-0 text-success">${name}</h1>
-                        <div class="text-secondary fst-italic fs-5">${w.year || ''}</div>
-                    </div>
-                    <div class="text-end">
-                         <span class="badge bg-secondary me-1">${w.cost || ''}</span>
-                    </div>
-                </div>
-
-                <div id="image-control-container" class="mb-4"></div>
-
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-body">
-                        <p class="card-text border-start border-success border-3 ps-3">${w.description || ''}</p>
-                    </div>
-                </div>
-
-                <div class="section-header">Statistics</div>
-                <div class="row row-cols-2 row-cols-md-3 g-2 mb-4">
-                    <div class="col"><div class="stat-box"><div class="stat-label">Damage</div><div class="stat-value text-danger">${w.damage || ''}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">Range</div><div class="stat-value">${w.range || ''}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">Capacity</div><div class="stat-value">${w.capacity || ''}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">Shots/Round</div><div class="stat-value">${w.shots_per_round || ''}</div></div></div>
-                    <div class="col"><div class="stat-box"><div class="stat-label">Malfunction</div><div class="stat-value text-warning">${w.malfunction || ''}</div></div></div>
-                </div>
-            `;
-
-            container.innerHTML = html;
-
-            initImageControl('image-control-container', '{{ type_slug }}', name);
-
-            container.classList.remove('hidden');
-            placeholder.style.setProperty('display', 'none', 'important');
-            placeholder.classList.remove('d-flex');
-
-            document.getElementById('detailPanel').scrollTop = 0;
-        } catch (e) {
-            console.error(e);
-            alert("Error rendering weapon: " + e.message);
-        }
+function WeaponDetail({weapon, name}) {
+  const [imageUrl, setImageUrl] = useState(null);
+  
+  useEffect(() => {
+    if (weapon && name) {
+      fetch(`/api/images/check?type_slug=${TYPE_SLUG}&name=${encodeURIComponent(name)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.found) setImageUrl(data.url + '?t=' + new Date().getTime());
+          else setImageUrl(null);
+        })
+        .catch(() => setImageUrl(null));
     }
+  }, [weapon, name]);
+
+  if (!weapon) {
+    return (
+      <div style={{display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", height:"100%", textAlign:"center", opacity:0.3, minHeight:400}}>
+        <div className="serif" style={{fontSize:28, color:"var(--bone-fade)"}}>Select a weapon from the armory</div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{position:'relative'}}>
+      <div style={{display:'flex', gap:40, alignItems:'flex-start', marginBottom:30, flexWrap:'wrap'}}>
+        <div style={{flex:1, minWidth:300}}>
+          <div className="label" style={{color:"var(--sigil)"}}>Investigator Armament</div>
+          <h1 className="serif" style={{fontSize:48, color:"var(--sigil)", margin:"8px 0"}}>{name}</h1>
+          <div style={{display:"flex", gap:12, alignItems:"center"}}>
+              <div className="serif-i" style={{color:"var(--bone-fade)", fontSize:20}}>{weapon.year || 'Era Unknown'}</div>
+              {weapon.cost && <span className="badge bg-dark border border-secondary mono" style={{fontSize:10, borderRadius:0, padding:"4px 8px"}}>{weapon.cost.toUpperCase()}</span>}
+          </div>
+        </div>
+        
+        {imageUrl && (
+          <div style={{maxWidth: 400, flex: "1 0 300px"}}>
+            <img src={imageUrl} alt={name} style={{width:'100%', border:'1px solid var(--hair-strong)', boxShadow:'0 10px 30px rgba(0,0,0,0.5)'}} />
+          </div>
+        )}
+      </div>
+
+      <div className="card-h p-4 mb-5" style={{borderLeft: '4px solid var(--sigil)', fontSize:'17px', lineHeight:1.6, color:"var(--bone)"}}>
+         <window.Corners/>
+         {weapon.description || "No historical records available for this particular instrument of conflict."}
+      </div>
+
+      <div className="label mb-3" style={{color:"var(--sigil)"}}>Weapon Statistics</div>
+      <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(130px, 1fr))", gap:10, marginBottom:40}}>
+        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
+          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>DAMAGE</div>
+          <div style={{fontSize:20, color:"var(--rust)", fontWeight:600}}>{weapon.damage || '—'}</div>
+        </div>
+        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
+          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>RANGE</div>
+          <div style={{fontSize:16, color:"var(--bone)", fontWeight:600}}>{weapon.range || '—'}</div>
+        </div>
+        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
+          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>CAPACITY</div>
+          <div style={{fontSize:16, color:"var(--bone)", fontWeight:600}}>{weapon.capacity || '—'}</div>
+        </div>
+        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
+          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>SHOTS/ROUND</div>
+          <div style={{fontSize:16, color:"var(--bone)", fontWeight:600}}>{weapon.shots_per_round || '—'}</div>
+        </div>
+        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
+          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>MALFUNCTION</div>
+          <div style={{fontSize:16, color:"var(--amber)", fontWeight:600}}>{weapon.malfunction || '—'}</div>
+        </div>
+      </div>
+      
+      {weapon.special_rules && (
+          <div className="mt-4">
+              <div className="label mb-3" style={{color:"var(--sigil)"}}>Special Attributes</div>
+              <div className="card-h p-4" style={{background:"rgba(180,70,60,0.02)", borderTop:"2px solid var(--rust)"}}>
+                <window.Corners/>
+                <div style={{fontSize:14, lineHeight:1.6, color:"var(--bone-dim)"}}>
+                    {weapon.special_rules}
+                </div>
+              </div>
+          </div>
+      )}
+    </div>
+  );
+}
+
+function WeaponsApp() {
+  const [search, setSearch] = useState('');
+  const [selectedName, setSelectedName] = useState(null);
+  
+  const weaponNames = useMemo(() => {
+    return Object.keys(WEAPONS_DATA).sort();
+  }, []);
+
+  const filteredNames = useMemo(() => {
+    return weaponNames.filter(name => name.toLowerCase().includes(search.toLowerCase()));
+  }, [weaponNames, search]);
+
+  return (
+    <div className="row g-0" style={{margin:"-2rem -3rem", height:"calc(100vh - 72px)"}}>
+      <div className="col-md-3 h-100 d-flex flex-column border-end border-secondary" style={{background:"var(--void-1)"}}>
+        <div className="p-4 border-bottom border-secondary">
+          <div className="label mb-3">Armory Browser</div>
+          <div className="input-group">
+             <span className="input-group-text bg-dark border-secondary text-muted" style={{borderRight:0}}>⌕</span>
+             <input type="text" className="form-control bg-dark text-light border-secondary" placeholder="Search weapons…" value={search} onChange={e => setSearch(e.target.value)} style={{fontSize:13, borderLeft:0}} />
+          </div>
+        </div>
+        <div style={{flex:1, overflowY:"auto"}}>
+            {filteredNames.length > 0 ? (
+                filteredNames.map((name, i) => {
+                    const isActive = selectedName === name;
+                    return (
+                        <button key={i} 
+                            onClick={() => setSelectedName(name)}
+                            className="w-100 border-0 text-start py-3 px-4 transition-all"
+                            style={{
+                                background: isActive ? "rgba(120,220,170,0.08)" : "transparent",
+                                color: isActive ? "var(--sigil)" : "var(--bone-dim)",
+                                borderLeft: isActive ? "3px solid var(--sigil)" : "3px solid transparent",
+                                fontSize: 14,
+                                borderBottom: "1px solid var(--hair)"
+                            }}
+                        >
+                            {name}
+                        </button>
+                    );
+                })
+            ) : (
+                <div className="p-5 text-center serif-i text-muted">No armaments found.</div>
+            )}
+        </div>
+      </div>
+      <div className="col-md-9 h-100" style={{overflowY:"auto", padding:"40px 60px 100px"}}>
+         <WeaponDetail weapon={selectedName ? WEAPONS_DATA[selectedName] : null} name={selectedName} />
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('weapons-root'));
+root.render(<WeaponsApp />);
+{% endraw %}
 </script>
 {% endblock %}

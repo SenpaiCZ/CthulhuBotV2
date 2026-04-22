@@ -27,11 +27,11 @@
     - [x] Write failing UI structure tests if necessary for new markup
     - [x] Apply mobile-friendly design and interactive controls for music and polls
     - [x] Ensure interactive elements are usable on touch devices
-- [~] Task: Conductor - User Manual Verification 'Phase 3: Refactoring Interactive Dashboards' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Refactoring Interactive Dashboards' (Protocol in workflow.md) (6d26240)
 
 ## Phase 4: Refactoring Codex & Reference Pages
-- [ ] Task: Refactor `monsters.html`, `spells.html`, `weapons.html` and other list templates
-    - [ ] Write route tests confirming the lists render without errors
-    - [ ] Convert large data tables into stackable cards via CSS
-    - [ ] Apply the design overhaul to all remaining list items (explicitly excluding pages with `origin`)
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Refactoring Codex & Reference Pages' (Protocol in workflow.md)
+- [x] Task: Refactor `monsters.html`, `spells.html`, `weapons.html` and other list templates (dc36811)
+    - [x] Write route tests confirming the lists render without errors
+    - [x] Convert large data tables into stackable cards via CSS
+    - [x] Apply the design overhaul to all remaining list items (explicitly excluding pages with `origin`)
+- [~] Task: Conductor - User Manual Verification 'Phase 4: Refactoring Codex & Reference Pages' (Protocol in workflow.md)

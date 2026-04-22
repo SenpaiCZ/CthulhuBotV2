@@ -1,181 +1,105 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Font Management{% endblock %}
+{% block title %}Font Management — CthulhuBot{% endblock %}
 
 {% block content %}
-<div class="card bg-dark text-light border-secondary">
-    <div class="card-header border-secondary">
-        <h3 class="card-title mb-0">Font Management</h3>
+<div class="mb-4">
+    <div class="label">Aesthetics</div>
+    <h2 class="serif" style="fontSize:32px; margin:8px 0 0">Font Management</h2>
+</div>
+
+<div class="card-h mb-5">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">✚</span> Upload New Font Scroll
     </div>
-    <div class="card-body">
-        <div class="mb-4">
-            <h5>Upload New Font</h5>
-            <div class="input-group">
-                <select class="form-select bg-secondary text-light border-secondary" id="fontCategory" style="max-width: 150px;">
-                    <option value="Decorative" selected>Decorative</option>
-                    <option value="Cryptic">Cryptic</option>
-                </select>
-                <input type="file" class="form-control bg-secondary text-light border-secondary" id="fontFile" accept=".ttf,.otf,.woff,.woff2" multiple>
-                <button class="btn btn-success" type="button" onclick="uploadFonts()">Upload</button>
+    <div class="card-body p-4">
+        <p class="serif-i mb-4" style="font-size:14px; color:var(--bone-dim)">Accepted ancient formats: <code>.ttf</code>, <code>.otf</code>, <code>.woff</code>, <code>.woff2</code></p>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="row g-4 align-items-end">
+                <div class="col-md-9">
+                    <label for="fontFile" class="label mb-2" style="display:block">Font File</label>
+                    <input type="file" class="form-control bg-dark text-light border-secondary" id="fontFile" name="fontFile" accept=".ttf,.otf,.woff,.woff2" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn-eld primary w-100" style="justify-content:center" onclick="uploadFont()">UPLOAD FONT</button>
+                </div>
             </div>
-            <div id="uploadStatus" class="mt-2"></div>
-        </div>
+        </form>
+    </div>
+</div>
 
-        <hr class="border-secondary">
-
-        <h5>Installed Fonts</h5>
-        <div class="table-responsive">
-            <table class="table table-dark table-hover">
-                <thead>
+<div class="card-h">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">🗇</span> Uploaded Font Archives
+    </div>
+    <div class="card-body p-0">
+        <div class="responsive-table-container">
+            <table class="table mb-0 align-middle">
+                <thead class="d-none d-md-table-header-group">
                     <tr>
-                        <th>Font Filename</th>
-                        <th>Preview</th>
-                        <th>Actions</th>
+                        <th class="label ps-4 py-3">Font Name</th>
+                        <th class="label py-3">Visual Preview</th>
+                        <th class="label pe-4 py-3 text-end">Action</th>
                     </tr>
                 </thead>
-                <tbody id="fontListBody">
-                    <!-- Fonts will be loaded here -->
+                <tbody>
+                    {% if fonts %}
+                        {% for font in fonts %}
+                        <tr class="responsive-row">
+                            <td class="ps-4 py-3">
+                                <span class="d-md-none label mb-1" style="display:block">Font Name</span>
+                                <div class="mono" style="font-size:14px">{{ font }}</div>
+                            </td>
+                            <td class="py-3">
+                                <span class="d-md-none label mb-1" style="display:block">Visual Preview</span>
+                                <div style="font-family: '{{ font }}'; font-size: 24px; color: var(--sigil)">The stars are right. 0123456789</div>
+                            </td>
+                            <td class="pe-4 py-3 text-md-end">
+                                <button class="btn-eld rust" style="padding: 6px 12px; font-size: 10px" onclick="deleteFont('{{ font }}')">BANISH</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="3" class="p-5 text-center serif-i text-muted">No custom font scrolls found in the archives.</td></tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
+<style>
+@media (max-width: 767.98px) {
+    .responsive-row { display: block; padding: 1.5rem !important; border-bottom: 1px solid var(--hair-strong); }
+    .responsive-row td { display: block; padding: 0 0 1rem 0 !important; border: 0; }
+    .responsive-row td:last-child { padding-bottom: 0 !important; margin-top: 0.5rem; }
+}
+</style>
+
 <script>
-async function loadFonts() {
-    try {
-        const response = await fetch('/api/fonts/list');
-        const data = await response.json();
-        const tbody = document.getElementById('fontListBody');
-        tbody.innerHTML = '';
-
-        if (data.fonts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No custom fonts installed.</td></tr>';
-            return;
-        }
-
-        data.fonts.forEach(fontObj => {
-            const font = fontObj.filename;
-            const category = fontObj.category || 'Decorative';
-
-            const row = document.createElement('tr');
-
-            // Create font-face dynamically for preview
-            // Replace non-alphanumeric in font name for safe CSS identifier
-            const fontName = font.replace(/[^a-zA-Z0-9]/g, '_');
-            const fontUrl = `/fonts/${font}`;
-
-            // Check if style already exists (to avoid duplicates on reload)
-            if (!document.getElementById(`style-${fontName}`)) {
-                const style = document.createElement('style');
-                style.id = `style-${fontName}`;
-                style.textContent = `
-                    @font-face {
-                        font-family: 'Preview-${fontName}';
-                        src: url('${fontUrl}');
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-
-            row.innerHTML = `
-                <td>${font}</td>
-                <td style="font-family: 'Preview-${fontName}', serif; font-size: 1.5em;">The quick brown fox jumps over the lazy dog.</td>
-                <td>
-                    <select class="form-select form-select-sm bg-dark text-light border-secondary mb-1" onchange="updateCategory('${font}', this.value)">
-                        <option value="Decorative" ${category === 'Decorative' ? 'selected' : ''}>Decorative</option>
-                        <option value="Cryptic" ${category === 'Cryptic' ? 'selected' : ''}>Cryptic</option>
-                    </select>
-                    <button class="btn btn-sm btn-danger w-100" onclick="deleteFont('${font}')">Delete</button>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-    } catch (e) {
-        console.error("Error loading fonts:", e);
-    }
-}
-
-async function uploadFonts() {
+async function uploadFont() {
     const fileInput = document.getElementById('fontFile');
-    const categorySelect = document.getElementById('fontCategory');
-    const status = document.getElementById('uploadStatus');
-
-    if (fileInput.files.length === 0) {
-        status.innerHTML = '<span class="text-danger">Please select a file.</span>';
-        return;
-    }
-
+    if (!fileInput.files.length) { alert("Select a file first."); return; }
     const formData = new FormData();
-    for (let i = 0; i < fileInput.files.length; i++) {
-        formData.append('files', fileInput.files[i]);
-    }
-    formData.append('category', categorySelect.value);
-
-    status.innerHTML = '<span class="text-info">Uploading...</span>';
-
+    formData.append('fontFile', fileInput.files[0]);
     try {
-        const response = await fetch('/api/fonts/upload', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            let msg = '<span class="text-success">Uploaded successfully:</span><ul>';
-            data.results.forEach(res => msg += `<li>${res}</li>`);
-            msg += '</ul>';
-            status.innerHTML = msg;
-            fileInput.value = '';
-            loadFonts();
-        } else {
-            status.innerHTML = `<span class="text-danger">Error: ${data.message}</span>`;
-        }
-    } catch (e) {
-        status.innerHTML = `<span class="text-danger">Error: ${e.message}</span>`;
-    }
+        const r = await fetch('/api/fonts/upload', { method:'POST', body:formData });
+        const d = await r.json();
+        if(d.status === 'success') location.reload();
+        else alert("Error: " + d.message);
+    } catch(e) { alert("Error: " + e); }
 }
 
-async function deleteFont(filename) {
-    if (!confirm(`Are you sure you want to delete ${filename}?`)) return;
-
+async function deleteFont(name) {
+    if(!confirm(`Banish font "${name}" from the archives?`)) return;
     try {
-        const response = await fetch('/api/fonts/delete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filename: filename })
-        });
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            loadFonts();
-        } else {
-            alert('Error deleting font: ' + data.message);
-        }
-    } catch (e) {
-        alert('Error: ' + e.message);
-    }
+        const r = await fetch('/api/fonts/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:name}) });
+        const d = await r.json();
+        if(d.status === 'success') location.reload();
+        else alert("Error: " + d.message);
+    } catch(e) { alert("Error: " + e); }
 }
-
-async function updateCategory(filename, category) {
-    try {
-        const response = await fetch('/api/fonts/update_category', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filename: filename, category: category })
-        });
-        const data = await response.json();
-
-        if (data.status !== 'success') {
-            alert('Error updating category: ' + data.message);
-            loadFonts(); // Reload to revert UI
-        }
-    } catch (e) {
-        alert('Error: ' + e.message);
-        loadFonts();
-    }
-}
-
-document.addEventListener('DOMContentLoaded', loadFonts);
 </script>
 {% endblock %}

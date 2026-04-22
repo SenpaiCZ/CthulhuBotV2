@@ -1,107 +1,136 @@
 {% extends 'base.html' %}
 
-{% block title %}Pulp Talents - CoC Bot{% endblock %}
+{% block title %}{{ title }} — Grimoire{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row mb-4">
-        <div class="col-12 text-center">
-            <h1 class="display-5 text-success mb-3">Pulp Talents</h1>
-            <div class="d-flex justify-content-center">
-                <div class="col-md-6 col-sm-10">
-                    <input type="text" id="searchInput" class="form-control bg-dark text-light border-secondary" placeholder="Search Talents..." aria-label="Search talents">
-                </div>
-            </div>
-        </div>
-    </div>
+<div id="talents-root"></div>
+{% endblock %}
 
-    <div id="talentsContainer">
-        {% for category, talents in data.items() %}
-        <div class="category-section mb-5">
-            <h3 class="text-success border-bottom border-secondary pb-2 mb-4 category-header">{{ category }}</h3>
+{% block scripts %}
+<script type="text/babel" data-presets="react">
+const TALENTS_DATA = {{ data | tojson }};
+const TYPE_SLUG = '{{ type_slug }}';
+const PAGE_TITLE = '{{ title }}';
 
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 card-grid">
-                {% for talent_str in talents %}
-                    {% set talent = talent_str | parse_pulp_talent %}
-                    <div class="col card-col">
-                        <div class="card h-100 bg-dark border-secondary">
-                            <div class="card-header border-secondary text-success fw-bold">
-                                {{ talent.name }}
-                            </div>
-                            <div class="card-body">
-                                <p class="card-text text-light">{{ talent.description }}</p>
-                            </div>
-                            {% if is_admin %}
-                            <div class="card-footer border-secondary">
-                                <button class="btn btn-sm btn-outline-secondary w-100" onclick="openImageModal('{{ type_slug }}', '{{ talent.name | replace("'", "\\'") }}')">Manage Image</button>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endfor %}
-    </div>
+{% raw %}
+const { useState, useMemo, useEffect } = React;
 
-    <div id="noResults" class="row mt-5 hidden">
-        <div class="col-12 text-center text-muted">
-            <h4>No results found</h4>
-        </div>
-    </div>
-</div>
+function TalentDetail({item, name}) {
+  const [imageUrl, setImageUrl] = useState(null);
+  
+  useEffect(() => {
+    if (item && name) {
+      fetch(`/api/images/check?type_slug=${TYPE_SLUG}&name=${encodeURIComponent(name)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.found) setImageUrl(data.url + '?t=' + new Date().getTime());
+          else setImageUrl(null);
+        })
+        .catch(() => setImageUrl(null));
+    }
+  }, [item, name]);
 
-<script>
-    document.getElementById('searchInput').addEventListener('input', function() {
-        const filter = this.value.toLowerCase();
-        const categories = document.querySelectorAll('.category-section');
-        let globalVisible = false;
+  if (!item) {
+    return (
+      <div style={{display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", height:"100%", textAlign:"center", opacity:0.3, minHeight:400}}>
+        <div className="serif" style={{fontSize:28, color:"var(--bone-fade)"}}>Select a talent from the archives</div>
+      </div>
+    );
+  }
 
-        categories.forEach(section => {
-            const cols = section.querySelectorAll('.card-col');
-            let sectionVisible = false;
-
-            cols.forEach(col => {
-                const card = col.querySelector('.card');
-                const title = card.querySelector('.card-header').textContent.toLowerCase();
-                const text = card.querySelector('.card-text').textContent.toLowerCase();
-
-                if (title.includes(filter) || text.includes(filter)) {
-                    col.classList.remove('hidden');
-                    sectionVisible = true;
-                    globalVisible = true;
-                } else {
-                    col.classList.add('hidden');
-                }
-            });
-
-            if (sectionVisible) {
-                section.classList.remove('hidden');
-            } else {
-                section.classList.add('hidden');
-            }
-        });
-
-        const noResults = document.getElementById('noResults');
-        if (globalVisible) {
-            noResults.classList.add('hidden');
-        } else {
-            noResults.classList.remove('hidden');
+  const formatBold = (text) => {
+    if (!text) return '';
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={i} style={{color:"var(--sigil)"}}>{part.slice(2, -2)}</strong>;
         }
+        return part;
     });
-</script>
+  };
 
-<style>
-    .hidden {
-        display: none !important;
-    }
-    .card {
-        transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-    }
-    .card:hover {
-        transform: translateY(-2px);
-        border-color: var(--cthulhu-green-main) !important;
-        box-shadow: 0 4px 8px rgba(46, 139, 87, 0.2);
-    }
-</style>
+  return (
+    <div style={{position:'relative'}}>
+      <div style={{display:'flex', gap:40, alignItems:'flex-start', marginBottom:30, flexWrap:'wrap'}}>
+        <div style={{flex:1, minWidth:300}}>
+          <div className="label" style={{color:"var(--sigil)"}}>{PAGE_TITLE}</div>
+          <h1 className="serif" style={{fontSize:48, color:"var(--sigil)", margin:"8px 0"}}>{name}</h1>
+        </div>
+        
+        {imageUrl && (
+          <div style={{maxWidth: 400, flex: "1 0 300px"}}>
+            <img src={imageUrl} alt={name} style={{width:'100%', border:'1px solid var(--hair-strong)', boxShadow:'0 10px 30px rgba(0,0,0,0.5)'}} />
+          </div>
+        )}
+      </div>
+
+      <div className="card-h p-5" style={{borderTop: '2px solid var(--sigil)', fontSize:'18px', lineHeight:1.7, color:"var(--bone)"}}>
+         <window.Corners/>
+         <div className="serif-i">
+            {formatBold(item)}
+         </div>
+      </div>
+      
+      {window.IS_ADMIN && (
+          <div className="mt-4 text-end">
+              <button className="btn-eld" onClick={() => window.openImageModal(TYPE_SLUG, name)}>MANAGE IMAGE</button>
+          </div>
+      )}
+    </div>
+  );
+}
+
+function TalentsApp() {
+  const [search, setSearch] = useState('');
+  const [selectedName, setSelectedName] = useState(null);
+  
+  const names = useMemo(() => Object.keys(TALENTS_DATA).sort(), []);
+  const filtered = useMemo(() => names.filter(n => n.toLowerCase().includes(search.toLowerCase())), [names, search]);
+
+  return (
+    <div className="row g-0" style={{margin:"-2rem -3rem", height:"calc(100vh - 72px)"}}>
+      <div className="col-md-3 h-100 d-flex flex-column border-end border-secondary" style={{background:"var(--void-1)"}}>
+        <div className="p-4 border-bottom border-secondary">
+          <div className="label mb-3">Talent Browser</div>
+          <div className="input-group">
+             <span className="input-group-text bg-dark border-secondary text-muted" style={{borderRight:0}}>⌕</span>
+             <input type="text" className="form-control bg-dark text-light border-secondary" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} style={{fontSize:13, borderLeft:0}} />
+          </div>
+        </div>
+        <div style={{flex:1, overflowY:"auto"}}>
+            {filtered.length > 0 ? (
+                filtered.map((name, i) => {
+                    const isActive = selectedName === name;
+                    return (
+                        <button key={i} 
+                            onClick={() => setSelectedName(name)}
+                            className="w-100 border-0 text-start py-3 px-4 transition-all"
+                            style={{
+                                background: isActive ? "rgba(120,220,170,0.08)" : "transparent",
+                                color: isActive ? "var(--sigil)" : "var(--bone-dim)",
+                                borderLeft: isActive ? "3px solid var(--sigil)" : "3px solid transparent",
+                                fontSize: 14,
+                                borderBottom: "1px solid var(--hair)"
+                            }}
+                        >
+                            {name}
+                        </button>
+                    );
+                })
+            ) : (
+                <div className="p-5 text-center serif-i text-muted">No talents found.</div>
+            )}
+        </div>
+      </div>
+      <div className="col-md-9 h-100" style={{overflowY:"auto", padding:"40px 60px 100px"}}>
+         <TalentDetail item={selectedName ? TALENTS_DATA[selectedName] : null} name={selectedName} />
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('talents-root'));
+root.render(<TalentsApp />);
+{% endraw %}
+</script>
 {% endblock %}

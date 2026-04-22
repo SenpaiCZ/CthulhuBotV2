@@ -1,389 +1,180 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Giveaway Dashboard{% endblock %}
+{% block title %}Giveaways — CthulhuBot{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12 mb-4">
-        <h1>🎉 Giveaway Management</h1>
-        <p class="lead">Create and manage giveaways for your server.</p>
+<div class="mb-4">
+    <div class="label">Server Engagement</div>
+    <h2 class="serif" style="fontSize:32px; margin:8px 0 0">Giveaways</h2>
+</div>
+
+<div class="card-h mb-5">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">✦</span> Create New Bounty
+    </div>
+    <div class="card-body p-4">
+        <form id="create-giveaway-form" class="row g-4">
+            <div class="col-md-3">
+                <label for="guild-select" class="label mb-2" style="display:block">Server</label>
+                <select class="form-select bg-dark text-light border-secondary" id="guild-select" required style="font-size:13px">
+                    <option value="" selected disabled>Select Server...</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="channel-select" class="label mb-2" style="display:block">Target Channel</label>
+                <select class="form-select bg-dark text-light border-secondary" id="channel-select" required disabled style="font-size:13px">
+                    <option value="" selected disabled>Select Channel...</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="prize-input" class="label mb-2" style="display:block">Prize / Bounty</label>
+                <input type="text" class="form-control bg-dark text-light border-secondary serif" id="prize-input" placeholder="Ancient Scroll of Knowledge" required style="font-size:16px">
+            </div>
+            <div class="col-md-3">
+                <label for="winners-input" class="label mb-2" style="display:block">Winner Count</label>
+                <input type="number" class="form-control bg-dark text-light border-secondary mono" id="winners-input" value="1" min="1" required style="font-size:13px">
+            </div>
+            <div class="col-md-3">
+                <label for="duration-input" class="label mb-2" style="display:block">Duration (Minutes)</label>
+                <input type="number" class="form-control bg-dark text-light border-secondary mono" id="duration-input" value="60" min="1" required style="font-size:13px">
+            </div>
+            <div class="col-md-6 d-flex align-items-end justify-content-end">
+                <button type="submit" class="btn-eld primary w-100 w-md-auto" id="create-btn">MANIFEST BOUNTY</button>
+            </div>
+        </form>
     </div>
 </div>
 
-<div class="row" id="loading">
-    <div class="col-12 text-center">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p>Loading giveaways...</p>
+<div class="card-h">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">📜</span> Active Giveaways
     </div>
-</div>
-
-<div id="dashboard-content" style="display: none;">
-
-    <!-- Guild Selector -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <label for="guildSelect" class="form-label">Select Server:</label>
-            <select class="form-select" id="guildSelect" onchange="loadGuildData()">
-                <!-- Populated by JS -->
-            </select>
+    <div class="card-body p-0">
+        <div class="responsive-table-container">
+            <table class="table mb-0 align-middle" id="giveaways-table">
+                <thead class="d-none d-md-table-header-group">
+                    <tr>
+                        <th class="label ps-4 py-3">Server / Channel</th>
+                        <th class="label py-3">Prize</th>
+                        <th class="label py-3">Ends (UTC)</th>
+                        <th class="label py-3 text-center">Entries</th>
+                        <th class="label pe-4 py-3 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
-    </div>
-
-    <div class="row">
-        <!-- Create Giveaway Form -->
-        <div class="col-lg-4 mb-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">Create New Giveaway</h5>
-                </div>
-                <div class="card-body">
-                    <form id="createForm">
-                        <div class="mb-3">
-                            <label for="channelSelect" class="form-label">Channel</label>
-                            <select class="form-select" id="channelSelect" required>
-                                <option value="" disabled selected>Select Channel...</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="giveawayTitle" class="form-label">Title</label>
-                            <input type="text" class="form-control" id="giveawayTitle" placeholder="e.g. Steam Key Giveaway" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="giveawayDesc" class="form-label">Description (Optional)</label>
-                            <textarea class="form-control" id="giveawayDesc" rows="3" placeholder="Description of the prize..."></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="giveawayDuration" class="form-label">Duration</label>
-                            <input type="text" class="form-control" id="giveawayDuration" placeholder="e.g. 1h, 30m, 2d (leave empty for manual end)">
-                        </div>
-                        <div class="mb-3">
-                            <label for="prizeSecret" class="form-label">Prize Secret (Hidden)</label>
-                            <input type="text" class="form-control" id="prizeSecret" placeholder="e.g. AAAAA-BBBBB-CCCCC" required>
-                            <div class="form-text">This will be sent via DM to the winner automatically.</div>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-success">Create Giveaway</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+        <div id="loading-spinner" class="text-center py-5">
+            <span class="pulse-dot" style="display:inline-block; width:12px; height:12px; background:var(--sigil); border-radius:50%"></span>
         </div>
-
-        <!-- Active Giveaways -->
-        <div class="col-lg-8 mb-4">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">Active Giveaways</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle" id="activeTable">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Channel</th>
-                                    <th>Entries</th>
-                                    <th>Time Left</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Populated by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                    <div id="noActive" class="text-center text-muted py-3" style="display: none;">
-                        No active giveaways.
-                    </div>
-                </div>
-            </div>
-
-            <!-- Past Giveaways -->
-            <div class="card shadow-sm">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="card-title mb-0">History</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover" id="historyTable">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Winner</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Populated by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+        <div id="no-data-message" class="text-center py-5 d-none">
+            <p class="serif-i text-muted">No active bounties currently manifest.</p>
         </div>
     </div>
 </div>
 
-{% endblock %}
+<style>
+@media (max-width: 767.98px) {
+    .responsive-row { display: block; padding: 1.5rem !important; border-bottom: 1px solid var(--hair-strong); }
+    .responsive-row td { display: block; padding: 0 0 1rem 0 !important; border: 0; }
+    .responsive-row td:last-child { padding-bottom: 0 !important; margin-top: 0.5rem; }
+}
+</style>
 
-{% block scripts %}
 <script>
-    let allData = [];
+let globalData = null;
+document.addEventListener('DOMContentLoaded', fetchData);
+document.getElementById('guild-select').addEventListener('change', e => updateChannelSelect(e.target.value));
+document.getElementById('create-giveaway-form').addEventListener('submit', async e => { e.preventDefault(); await createGiveaway(); });
 
-    document.addEventListener('DOMContentLoaded', function() {
-        fetchData();
+async function fetchData() {
+    try {
+        const response = await fetch('/api/giveaway/data');
+        const data = await response.json();
+        globalData = data;
+        populateGuildSelect(data.guilds);
+        renderTable(data.giveaways);
+        document.getElementById('loading-spinner').classList.add('d-none');
+    } catch (e) { console.error(e); }
+}
 
-        document.getElementById('createForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            createGiveaway();
-        });
+function populateGuildSelect(guilds) {
+    const s = document.getElementById('guild-select');
+    s.innerHTML = '<option value="" selected disabled>Select Server...</option>';
+    guilds.forEach(g => { const o = document.createElement('option'); o.value = g.id; o.textContent = g.name; s.appendChild(o); });
+}
 
-        // Start timer update loop
-        setInterval(updateTimers, 1000);
+function updateChannelSelect(guildId) {
+    const s = document.getElementById('channel-select');
+    s.innerHTML = '<option value="" selected disabled>Select Channel...</option>';
+    s.disabled = true;
+    if (!guildId || !globalData) return;
+    const g = globalData.guilds.find(x => x.id === guildId);
+    if (g?.channels) {
+        g.channels.forEach(ch => { const o = document.createElement('option'); o.value = ch.id; o.textContent = ch.name; s.appendChild(o); });
+        s.disabled = false;
+    }
+}
+
+function renderTable(giveaways) {
+    const tbody = document.querySelector('#giveaways-table tbody');
+    tbody.innerHTML = '';
+    const msg = document.getElementById('no-data-message');
+    if (!giveaways || giveaways.length === 0) { msg.classList.remove('d-none'); return; }
+    msg.classList.add('d-none');
+    giveaways.forEach(g => {
+        const tr = document.createElement('tr');
+        tr.className = 'responsive-row';
+        tr.innerHTML = `
+            <td class="ps-4 py-3 align-middle">
+                <span class="d-md-none label mb-1" style="display:block">Server / Channel</span>
+                <div class="serif" style="font-size:15px">${g.guild_name}</div>
+                <div class="mono" style="font-size:11px; color:var(--sigil)">#${g.channel_name}</div>
+            </td>
+            <td class="py-3 align-middle">
+                <span class="d-md-none label mb-1" style="display:block">Prize</span>
+                <div class="serif" style="font-size:16px; color:var(--bone)">${g.prize}</div>
+            </td>
+            <td class="py-3 align-middle">
+                <span class="d-md-none label mb-1" style="display:block">Ends</span>
+                <div class="mono" style="font-size:12px; color:var(--amber)">${g.end_time}</div>
+            </td>
+            <td class="py-3 align-middle text-md-center">
+                <span class="d-md-none label mb-1" style="display:block">Entries</span>
+                <span class="badge bg-secondary mono" style="font-size:11px; border-radius:0">${g.entries || 0}</span>
+            </td>
+            <td class="pe-4 py-3 align-middle text-md-end">
+                <button class="btn-eld rust" style="padding: 6px 12px; font-size: 10px" onclick="endGiveaway('${g.guild_id}', '${g.message_id}')">END NOW</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
     });
+}
 
-    function updateTimers() {
-        const timers = document.querySelectorAll('.giveaway-timer');
-        const now = Date.now() / 1000; // current time in seconds
+async function createGiveaway() {
+    const g = document.getElementById('guild-select').value;
+    const c = document.getElementById('channel-select').value;
+    const p = document.getElementById('prize-input').value.trim();
+    const w = document.getElementById('winners-input').value;
+    const d = document.getElementById('duration-input').value;
+    if (!g || !c || !p || !w || !d) return;
+    const btn = document.getElementById('create-btn');
+    btn.disabled = true; btn.innerText = "MANIFESTING...";
+    try {
+        const r = await fetch('/api/giveaway/create', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ guild_id:g, channel_id:c, prize:p, winners:parseInt(w), duration:parseInt(d) }) });
+        if ((await r.json()).status === 'success') { await fetchData(); document.getElementById('prize-input').value = ''; alert("Bounty manifested!"); }
+    } catch (e) { console.error(e); }
+    finally { btn.disabled = false; btn.innerText = "MANIFEST BOUNTY"; }
+}
 
-        timers.forEach(timer => {
-            const end = parseFloat(timer.getAttribute('data-end'));
-            if (!end) return;
-
-            const diff = end - now;
-
-            if (diff <= 0) {
-                timer.textContent = "Ending...";
-                timer.classList.add('text-danger');
-            } else {
-                // Format duration
-                const d = Math.floor(diff / 86400);
-                const h = Math.floor((diff % 86400) / 3600);
-                const m = Math.floor((diff % 3600) / 60);
-                const s = Math.floor(diff % 60);
-
-                let text = "";
-                if (d > 0) text += `${d}d `;
-                if (h > 0) text += `${h}h `;
-                if (m > 0) text += `${m}m `;
-                text += `${s}s`;
-
-                timer.textContent = text;
-                timer.classList.remove('text-danger', 'text-warning'); // Reset classes
-                if (diff < 300) { // Less than 5 mins
-                    timer.classList.add('text-warning');
-                }
-            }
-        });
-    }
-
-    async function fetchData() {
-        const loadingDiv = document.getElementById('loading');
-        const contentDiv = document.getElementById('dashboard-content');
-        try {
-            const response = await fetch('/api/giveaway/data');
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            allData = data.guilds || [];
-
-            populateGuildSelect();
-            loadingDiv.style.display = 'none';
-            contentDiv.style.display = 'block';
-
-            // Load first guild if available
-            if (allData.length > 0) {
-                loadGuildData();
-            }
-        } catch (error) {
-            console.error('Error fetching data:', error);
-            loadingDiv.innerHTML = `<div class="alert alert-danger" role="alert">
-                <i class="fas fa-exclamation-triangle"></i> Failed to load giveaway data: ${escapeHtml(error.message)}
-            </div>`;
-        }
-    }
-
-    function populateGuildSelect() {
-        const select = document.getElementById('guildSelect');
-        select.innerHTML = '';
-        allData.forEach((guild, index) => {
-            const option = document.createElement('option');
-            option.value = index; // Use index to reference array
-            option.text = guild.name;
-            select.appendChild(option);
-        });
-    }
-
-    function loadGuildData() {
-        const index = document.getElementById('guildSelect').value;
-        const guild = allData[index];
-        if (!guild) return;
-
-        // Populate Channel Select
-        const channelSelect = document.getElementById('channelSelect');
-        channelSelect.innerHTML = '<option value="" disabled selected>Select Channel...</option>';
-        guild.channels.forEach(channel => {
-            const opt = document.createElement('option');
-            opt.value = channel.id;
-            opt.text = `#${channel.name}`;
-            channelSelect.appendChild(opt);
-        });
-
-        // Populate Active Table
-        const activeTbody = document.querySelector('#activeTable tbody');
-        activeTbody.innerHTML = '';
-        let hasActive = false;
-
-        // Populate History Table
-        const historyTbody = document.querySelector('#historyTable tbody');
-        historyTbody.innerHTML = '';
-
-        guild.giveaways.forEach(gw => {
-            if (gw.status === 'active') {
-                hasActive = true;
-                const tr = document.createElement('tr');
-
-                // Calculate initial time left or placeholder
-                let timeDisplay = "No Limit";
-                if (gw.end_time) {
-                    timeDisplay = `<span class="giveaway-timer" data-end="${gw.end_time}">Calculating...</span>`;
-                }
-
-                tr.innerHTML = `
-                    <td><strong>${escapeHtml(gw.title)}</strong></td>
-                    <td><span class="badge bg-light text-dark">${escapeHtml(gw.channel_name)}</span></td>
-                    <td>${gw.participant_count}</td>
-                    <td>${timeDisplay}</td>
-                    <td>
-                        <button class="btn btn-sm btn-danger" onclick="endGiveaway('${guild.id}', '${gw.message_id}')">End</button>
-                    </td>
-                `;
-                activeTbody.appendChild(tr);
-            } else {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${escapeHtml(gw.title)}</td>
-                    <td>${gw.winner_name ? '<span class="badge bg-success">' + escapeHtml(gw.winner_name) + '</span>' : '<span class="badge bg-secondary">None</span>'}</td>
-                    <td><span class="badge bg-secondary">${gw.status}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-warning" onclick="rerollGiveaway('${guild.id}', '${gw.message_id}')">Reroll</button>
-                    </td>
-                `;
-                historyTbody.appendChild(tr);
-            }
-        });
-
-        document.getElementById('noActive').style.display = hasActive ? 'none' : 'block';
-    }
-
-    async function createGiveaway() {
-        const index = document.getElementById('guildSelect').value;
-        const guild = allData[index];
-
-        const channelId = document.getElementById('channelSelect').value;
-        const title = document.getElementById('giveawayTitle').value;
-        const desc = document.getElementById('giveawayDesc').value;
-        const duration = document.getElementById('giveawayDuration').value;
-        const prize = document.getElementById('prizeSecret').value;
-
-        if (!channelId || !title || !prize) {
-            alert("Please fill in all required fields.");
-            return;
-        }
-
-        const btn = document.querySelector('#createForm button[type="submit"]');
-        btn.disabled = true;
-        btn.textContent = "Creating...";
-
-        try {
-            const response = await fetch('/api/giveaway/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    guild_id: guild.id,
-                    channel_id: channelId,
-                    title: title,
-                    description: desc,
-                    prize_secret: prize,
-                    duration: duration
-                })
-            });
-
-            const result = await response.json();
-            if (result.status === 'success') {
-                alert("Giveaway Created!");
-                document.getElementById('createForm').reset();
-                fetchData(); // Reload data
-            } else {
-                alert("Error: " + result.message);
-            }
-        } catch (error) {
-            console.error(error);
-            alert("An error occurred.");
-        } finally {
-            btn.disabled = false;
-            btn.textContent = "Create Giveaway";
-        }
-    }
-
-    async function endGiveaway(guildId, messageId) {
-        if (!confirm("Are you sure you want to end this giveaway? A winner will be picked immediately.")) return;
-
-        try {
-            const response = await fetch('/api/giveaway/end', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    guild_id: guildId,
-                    message_id: messageId
-                })
-            });
-            const result = await response.json();
-            if (result.status === 'success') {
-                alert(result.message);
-                fetchData();
-            } else {
-                alert("Error: " + result.message);
-            }
-        } catch (e) {
-            alert("Error: " + e);
-        }
-    }
-
-    async function rerollGiveaway(guildId, messageId) {
-        if (!confirm("Are you sure you want to reroll the winner for this giveaway?")) return;
-
-        try {
-            const response = await fetch('/api/giveaway/reroll', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    guild_id: guildId,
-                    message_id: messageId
-                })
-            });
-            const result = await response.json();
-            if (result.status === 'success') {
-                alert(result.message);
-                fetchData();
-            } else {
-                alert("Error: " + result.message);
-            }
-        } catch (e) {
-            alert("Error: " + e);
-        }
-    }
-
-    function escapeHtml(text) {
-        if (!text) return "";
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
+async function endGiveaway(g, mid) {
+    if (!confirm("End this bounty ritual early?")) return;
+    try {
+        const r = await fetch('/api/giveaway/end', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ guild_id:g, message_id:mid }) });
+        if ((await r.json()).status === 'success') await fetchData();
+    } catch (e) { console.error(e); }
+}
 </script>
 {% endblock %}

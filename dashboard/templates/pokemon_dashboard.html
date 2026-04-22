@@ -1,346 +1,161 @@
 {% extends 'base.html' %}
 
-{% block title %}Pokemon GO{% endblock %}
+{% block title %}Pokemon Go Tracker — CthulhuBot{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Pokemon GO Events</h2>
-<p class="text-muted">Manage event notifications and settings.</p>
+<div class="mb-4">
+    <div class="label">Extra-Dimensional Entities</div>
+    <h2 class="serif" style="fontSize:32px; margin:8px 0 0">Pokemon GO Tracker</h2>
+</div>
 
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>Event Data</strong>
-                <button class="btn btn-sm btn-primary" id="refresh-btn" onclick="refreshEvents()">
-                    <i class="bi bi-arrow-clockwise"></i> Force Update
-                </button>
+<div class="card-h mb-5">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">✚</span> Add New Portal (Tracker)
+    </div>
+    <div class="card-body p-4">
+        <form id="add-pogo-form" class="row g-4">
+            <div class="col-md-4">
+                <label for="guild-select" class="label mb-2" style="display:block">Server</label>
+                <select class="form-select bg-dark text-light border-secondary" id="guild-select" required style="font-size:13px">
+                    <option value="" selected disabled>Select Server...</option>
+                </select>
             </div>
-            <div class="card-body">
-                <p>Last scrape found <span id="event-count" class="fw-bold">0</span> upcoming events.</p>
-                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                    <table class="table table-sm table-hover" id="events-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Event</th>
-                                <th>Type</th>
-                                <th>Link</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Populated via JS -->
-                        </tbody>
-                    </table>
-                </div>
+            <div class="col-md-4">
+                <label for="channel-select" class="label mb-2" style="display:block">Target Channel</label>
+                <select class="form-select bg-dark text-light border-secondary" id="channel-select" required disabled style="font-size:13px">
+                    <option value="" selected disabled>Select Channel...</option>
+                </select>
             </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn-eld primary w-100" id="add-btn" style="justify-content:center">OPEN PORTAL</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card-h">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">⌘</span> Active Dimensional Anchors
+    </div>
+    <div class="card-body p-0">
+        <div class="responsive-table-container">
+            <table class="table mb-0 align-middle" id="pogo-table">
+                <thead class="d-none d-md-table-header-group">
+                    <tr>
+                        <th class="label ps-4 py-3">Server</th>
+                        <th class="label py-3">Channel</th>
+                        <th class="label py-3">Status</th>
+                        <th class="label pe-4 py-3 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="loading-spinner" class="text-center py-5">
+            <span class="pulse-dot" style="display:inline-block; width:12px; height:12px; background:var(--sigil); border-radius:50%"></span>
+        </div>
+        <div id="no-data-message" class="text-center py-5 d-none">
+            <p class="serif-i text-muted">No dimensional trackers active.</p>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <strong>Server Configuration</strong>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label for="guild-select" class="form-label">Select Server</label>
-                    <select class="form-select" id="guild-select">
-                        <option value="" selected disabled>Select Server...</option>
-                    </select>
-                </div>
-
-                <form id="config-form" class="d-none">
-                    <input type="hidden" id="guild-id">
-
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="channel-select" class="form-label">Notification Channel</label>
-                            <select class="form-select" id="channel-select">
-                                <option value="">None</option>
-                            </select>
-                            <div class="form-text">Where notifications will be sent.</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="role-select" class="form-label">Notification Role</label>
-                            <select class="form-select" id="role-select">
-                                <option value="">None</option>
-                            </select>
-                            <div class="form-text">Role to ping (optional).</div>
-                        </div>
-
-                        <div class="col-md-12">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="daily-summary">
-                                <label class="form-check-label" for="daily-summary">Enable Daily Summary (08:00 AM)</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="weekly-summary">
-                                <label class="form-check-label" for="weekly-summary">Enable Weekly Summary (Sunday 20:00)</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="event-start">
-                                <label class="form-check-label" for="event-start">Enable Event Start Notification</label>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="advance-minutes" class="form-label">Advance Notification Time (Minutes)</label>
-                            <input type="number" class="form-control" id="advance-minutes" min="5" max="1440" value="120">
-                            <div class="form-text">How many minutes before event start to notify (Default: 120 = 2 hours).</div>
-                        </div>
-
-                        <div class="col-12">
-                            <hr>
-                            <h6 class="mb-3">Manual Actions (No Ping)</h6>
-                            <button type="button" class="btn btn-info text-white me-2" id="push-weekly-btn" onclick="pushWeekly()">
-                                <i class="bi bi-calendar-week"></i> Push Weekly Summary
-                            </button>
-                            <button type="button" class="btn btn-warning text-dark" id="push-next-btn" onclick="pushNext()">
-                                <i class="bi bi-skip-forward"></i> Push Next Event
-                            </button>
-                        </div>
-
-                        <div class="col-12 text-end">
-                            <button type="submit" class="btn btn-success" id="save-btn">
-                                <span id="save-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                                Save Settings
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+<style>
+@media (max-width: 767.98px) {
+    .responsive-row { display: block; padding: 1.5rem !important; border-bottom: 1px solid var(--hair-strong); }
+    .responsive-row td { display: block; padding: 0 0 1rem 0 !important; border: 0; }
+    .responsive-row td:last-child { padding-bottom: 0 !important; margin-top: 0.5rem; }
+}
+</style>
 
 <script>
 let globalData = null;
-
 document.addEventListener('DOMContentLoaded', () => {
     fetchData();
-
-    document.getElementById('guild-select').addEventListener('change', (e) => {
-        loadGuildConfig(e.target.value);
-    });
-
-    document.getElementById('config-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await saveConfig();
-    });
+    document.getElementById('guild-select').addEventListener('change', e => updateChannelSelect(e.target.value));
+    document.getElementById('add-pogo-form').addEventListener('submit', async e => { e.preventDefault(); await addTracker(); });
 });
 
 async function fetchData() {
     try {
-        const response = await fetch('/api/pokemon/data');
+        const response = await fetch('/api/pogo/data');
         const data = await response.json();
         globalData = data;
+        populateGuildSelect(data.guilds);
+        renderTable(data.trackers);
+        document.getElementById('loading-spinner').classList.add('d-none');
+    } catch (e) { console.error(e); }
+}
 
-        // Populate Events
-        const tbody = document.querySelector('#events-table tbody');
-        tbody.innerHTML = '';
-        document.getElementById('event-count').textContent = data.events.length;
+function populateGuildSelect(guilds) {
+    const s = document.getElementById('guild-select');
+    s.innerHTML = '<option value="" selected disabled>Select Server...</option>';
+    guilds.forEach(g => { const o = document.createElement('option'); o.value = g.id; o.textContent = g.name; s.appendChild(o); });
+}
 
-        data.events.forEach(ev => {
-            const tr = document.createElement('tr');
-            // Format date nicely
-            let dateStr = ev.start_time.replace('T', ' ');
-            tr.innerHTML = `
-                <td>${dateStr}</td>
-                <td>${ev.title}</td>
-                <td><span class="badge bg-secondary">${ev.type}</span></td>
-                <td><a href="${ev.link}" target="_blank">Link</a></td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        // Populate Guild Select if not already populated
-        const select = document.getElementById('guild-select');
-        if (select.options.length <= 1) {
-            data.guilds.forEach(guild => {
-                const option = document.createElement('option');
-                option.value = guild.id;
-                option.textContent = guild.name;
-                select.appendChild(option);
-            });
-        }
-
-        // If a guild is already selected, reload its config (in case of refresh)
-        if (select.value) {
-            loadGuildConfig(select.value);
-        }
-
-    } catch (error) {
-        console.error("Error loading data:", error);
+function updateChannelSelect(guildId) {
+    const s = document.getElementById('channel-select');
+    s.innerHTML = '<option value="" selected disabled>Select Channel...</option>';
+    s.disabled = true;
+    if (!guildId || !globalData) return;
+    const g = globalData.guilds.find(x => x.id === guildId);
+    if (g?.channels) {
+        g.channels.forEach(ch => { const o = document.createElement('option'); o.value = ch.id; o.textContent = ch.name; s.appendChild(o); });
+        s.disabled = false;
     }
 }
 
-function loadGuildConfig(guildId) {
-    if (!globalData) return;
-    const guild = globalData.guilds.find(g => g.id === guildId);
-    if (!guild) return;
-
-    const form = document.getElementById('config-form');
-    form.classList.remove('d-none');
-    document.getElementById('guild-id').value = guildId;
-
-    // Channels
-    const channelSelect = document.getElementById('channel-select');
-    channelSelect.innerHTML = '<option value="">None</option>';
-    guild.channels.forEach(ch => {
-        const opt = document.createElement('option');
-        opt.value = ch.id;
-        opt.textContent = ch.name;
-        channelSelect.appendChild(opt);
+function renderTable(trackers) {
+    const tbody = document.querySelector('#pogo-table tbody');
+    tbody.innerHTML = '';
+    const msg = document.getElementById('no-data-message');
+    if (!trackers || trackers.length === 0) { msg.classList.remove('d-none'); return; }
+    msg.classList.add('d-none');
+    trackers.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.className = 'responsive-row';
+        tr.innerHTML = `
+            <td class="ps-4 py-3 align-middle">
+                <span class="d-md-none label mb-1" style="display:block">Server</span>
+                <div class="serif" style="font-size:15px">${t.guild_name}</div>
+            </td>
+            <td class="py-3 align-middle">
+                <span class="d-md-none label mb-1" style="display:block">Channel</span>
+                <div class="mono" style="font-size:12px; color:var(--sigil)">#${t.channel_name}</div>
+            </td>
+            <td class="py-3 align-middle">
+                <span class="d-md-none label mb-1" style="display:block">Status</span>
+                <span class="badge bg-success mono" style="font-size:9px; border-radius:0">ACTIVE</span>
+            </td>
+            <td class="pe-4 py-3 align-middle text-md-end">
+                <button class="btn-eld rust" style="padding: 6px 12px; font-size: 10px" onclick="deleteTracker('${t.guild_id}', '${t.channel_id}')">CLOSE PORTAL</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
     });
-    channelSelect.value = guild.config.channel_id;
-
-    // Roles
-    const roleSelect = document.getElementById('role-select');
-    roleSelect.innerHTML = '<option value="">None</option>';
-    guild.roles.forEach(r => {
-        const opt = document.createElement('option');
-        opt.value = r.id;
-        opt.textContent = r.name;
-        roleSelect.appendChild(opt);
-    });
-    roleSelect.value = guild.config.role_id;
-
-    // Toggles
-    document.getElementById('daily-summary').checked = guild.config.daily_summary_enabled;
-    document.getElementById('weekly-summary').checked = guild.config.weekly_summary_enabled;
-    document.getElementById('event-start').checked = guild.config.event_start_enabled;
-
-    // Number
-    document.getElementById('advance-minutes').value = guild.config.advance_minutes;
 }
 
-async function saveConfig() {
-    const guildId = document.getElementById('guild-id').value;
-    const btn = document.getElementById('save-btn');
-    const spinner = document.getElementById('save-spinner');
-
-    btn.disabled = true;
-    spinner.classList.remove('d-none');
-
-    const payload = {
-        guild_id: guildId,
-        channel_id: document.getElementById('channel-select').value,
-        role_id: document.getElementById('role-select').value,
-        daily_summary_enabled: document.getElementById('daily-summary').checked,
-        weekly_summary_enabled: document.getElementById('weekly-summary').checked,
-        event_start_enabled: document.getElementById('event-start').checked,
-        advance_minutes: document.getElementById('advance-minutes').value
-    };
-
+async function addTracker() {
+    const g = document.getElementById('guild-select').value;
+    const c = document.getElementById('channel-select').value;
+    if (!g || !c) return;
+    const btn = document.getElementById('add-btn');
+    btn.disabled = true; btn.innerText = "OPENING...";
     try {
-        const response = await fetch('/api/pokemon/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
-        const res = await response.json();
-        if (res.status === 'success') {
-            alert("Settings saved!");
-            // Update local globalData to reflect changes without full reload
-            const guild = globalData.guilds.find(g => g.id === guildId);
-            if (guild) {
-                guild.config = payload;
-            }
-        } else {
-            alert("Error: " + res.message);
-        }
-    } catch (e) {
-        alert("Failed to save settings.");
-    } finally {
-        btn.disabled = false;
-        spinner.classList.add('d-none');
-    }
+        const r = await fetch('/api/pogo/add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ guild_id: g, channel_id: c }) });
+        if ((await r.json()).status === 'success') { await fetchData(); alert("Portal opened!"); }
+    } catch (e) { console.error(e); }
+    finally { btn.disabled = false; btn.innerText = "OPEN PORTAL"; }
 }
 
-async function refreshEvents() {
-    const btn = document.getElementById('refresh-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
-
+async function deleteTracker(g, c) {
+    if (!confirm("Seal this dimensional portal?")) return;
     try {
-        const response = await fetch('/api/pokemon/refresh', { method: 'POST' });
-        const res = await response.json();
-        if (res.status === 'success') {
-            await fetchData(); // Reload table
-            alert(`Updated! Found ${res.count} events.`);
-        } else {
-            alert("Error: " + res.message);
-        }
-    } catch (e) {
-        alert("Failed to refresh events.");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Force Update';
-    }
-}
-
-async function pushWeekly() {
-    const guildId = document.getElementById('guild-id').value;
-    if (!guildId) return;
-
-    if (!confirm("Are you sure you want to push the weekly summary to this server?")) return;
-
-    const btn = document.getElementById('push-weekly-btn');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
-
-    try {
-        const response = await fetch('/api/pokemon/push_weekly', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({guild_id: guildId})
-        });
-        const res = await response.json();
-        if (res.status === 'success') {
-            alert("Weekly summary sent!");
-        } else {
-            alert("Error: " + res.message);
-        }
-    } catch (e) {
-        alert("Failed to send request.");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-    }
-}
-
-async function pushNext() {
-    const guildId = document.getElementById('guild-id').value;
-    if (!guildId) return;
-
-    if (!confirm("Are you sure you want to push the next event notification to this server?")) return;
-
-    const btn = document.getElementById('push-next-btn');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
-
-    try {
-        const response = await fetch('/api/pokemon/push_next', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({guild_id: guildId})
-        });
-        const res = await response.json();
-        if (res.status === 'success') {
-            alert("Next event notification sent!");
-        } else {
-            alert("Error: " + res.message);
-        }
-    } catch (e) {
-        alert("Failed to send request.");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-    }
+        const r = await fetch('/api/pogo/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ guild_id: g, channel_id: c }) });
+        if ((await r.json()).status === 'success') await fetchData();
+    } catch (e) { console.error(e); }
 }
 </script>
 {% endblock %}

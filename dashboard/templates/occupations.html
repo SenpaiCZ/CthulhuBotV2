@@ -1,124 +1,145 @@
 {% extends 'base.html' %}
 
-{% block title %}Occupations - CoC Bot{% endblock %}
+{% block title %}Occupations — Grimoire{% endblock %}
 
 {% block content %}
-<div class="container-fluid dashboard-container">
-    <div class="sidebar-panel">
-        <div class="card-header bg-dark text-white p-2 text-center border border-secondary border-bottom-0 rounded-top">
-            <h5 class="m-0 text-success">Occupations</h5>
-        </div>
-        <div class="p-2 border border-secondary border-bottom-0 border-top-0 bg-dark">
-            <input type="text" id="searchInput" class="form-control form-control-sm bg-secondary text-light border-secondary" placeholder="Search..." aria-label="Search occupations">
-        </div>
-        <div class="list-group list-group-flush sidebar-list" id="itemList">
-            {% if data %}
-                {% for key in data.keys() | sort %}
-                    <button type="button" class="list-group-item list-group-item-action item-list-item" onclick="showItem('{{ key | escape }}')">
-                        {{ key }}
-                    </button>
-                {% endfor %}
-            {% else %}
-                <div class="p-3 text-center text-muted">No occupations found.</div>
-            {% endif %}
-        </div>
-    </div>
+<div id="occupations-root"></div>
+{% endblock %}
 
-    <div class="detail-panel" id="detailPanel">
-        <div id="item-placeholder" class="text-center d-flex flex-column justify-content-center h-100">
-            <h2 class="text-muted" style="opacity: 0.3;">Select an occupation</h2>
-            <p class="text-secondary">View detailed information.</p>
-        </div>
+{% block scripts %}
+<script type="text/babel" data-presets="react">
+const OCCUPATIONS_DATA = {{ data | tojson }};
+const TYPE_SLUG = '{{ type_slug }}';
 
-        <div id="item-content" class="hidden p-4">
-            <!-- Content -->
-        </div>
-    </div>
-</div>
+{% raw %}
+const { useState, useMemo, useEffect } = React;
 
-<script>
-    document.getElementById('searchInput').addEventListener('input', function() {
-        const filter = this.value.toLowerCase();
-        const items = document.querySelectorAll('.item-list-item');
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if(text.includes(filter)) {
-                item.classList.remove('hidden');
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-    });
-
-    const data = {{ data | tojson }};
-
-    function formatBold(text) {
-        if (!text) return '';
-        return text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+function OccupationDetail({item, name}) {
+  const [imageUrl, setImageUrl] = useState(null);
+  
+  useEffect(() => {
+    if (item && name) {
+      fetch(`/api/images/check?type_slug=${TYPE_SLUG}&name=${encodeURIComponent(name)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.found) setImageUrl(data.url + '?t=' + new Date().getTime());
+          else setImageUrl(null);
+        })
+        .catch(() => setImageUrl(null));
     }
+  }, [item, name]);
 
-    function showItem(key) {
-        const txt = document.createElement("textarea");
-        txt.innerHTML = key;
-        const decodedKey = txt.value;
+  if (!item) {
+    return (
+      <div style={{display:"flex", flexDirection:"column", justifyContent:"center", alignItems:"center", height:"100%", textAlign:"center", opacity:0.3, minHeight:400}}>
+        <div className="serif" style={{fontSize:28, color:"var(--bone-fade)"}}>Select a profession from the archives</div>
+      </div>
+    );
+  }
 
-        const item = data[decodedKey];
-        const container = document.getElementById('item-content');
-        const placeholder = document.getElementById('item-placeholder');
+  return (
+    <div style={{position:'relative'}}>
+      <div style={{display:'flex', gap:40, alignItems:'flex-start', marginBottom:30, flexWrap:'wrap'}}>
+        <div style={{flex:1, minWidth:300}}>
+          <div className="label" style={{color:"var(--sigil)"}}>Investigator Background</div>
+          <h1 className="serif" style={{fontSize:48, color:"var(--sigil)", margin:"8px 0"}}>{name}</h1>
+          <div className="serif-i" style={{color:"var(--bone-fade)", fontSize:20, marginBottom:16}}>{item.Era || 'All Eras'}</div>
+        </div>
+        
+        {imageUrl && (
+          <div style={{maxWidth: 400, flex: "1 0 300px"}}>
+            <img src={imageUrl} alt={name} style={{width:'100%', border:'1px solid var(--hair-strong)', boxShadow:'0 10px 30px rgba(0,0,0,0.5)'}} />
+          </div>
+        )}
+      </div>
 
-        if (!item) return;
+      <div className="card-h p-4 mb-5" style={{borderLeft: '4px solid var(--sigil)', fontSize:'17px', lineHeight:1.6, color:"var(--bone)"}}>
+         <window.Corners/>
+         {item.Description || "No specific historical background detailed for this vocation."}
+      </div>
 
-        document.querySelectorAll('.item-list-item').forEach(el => {
-            if(el.textContent.trim() === decodedKey) el.classList.add('active');
-            else el.classList.remove('active');
-        });
+      <div className="row g-4 mb-5">
+          <div className="col-md-6">
+              <div className="label mb-3" style={{color:"var(--sigil)"}}>Professional Skills</div>
+              <div className="card-h p-4 h-100">
+                  <window.Corners/>
+                  <div style={{fontSize:15, color:"var(--bone-dim)", lineHeight:1.7}}>
+                      {item.Skills}
+                  </div>
+              </div>
+          </div>
+          <div className="col-md-6">
+              <div className="label mb-3" style={{color:"var(--sigil)"}}>Financial Standing</div>
+              <div className="card-h p-4 h-100 d-flex flex-column gap-3">
+                  <window.Corners/>
+                  <div>
+                      <div className="label" style={{fontSize:9}}>CREDIT RATING</div>
+                      <div className="mono" style={{fontSize:20, color:"var(--amber)", fontWeight:"bold"}}>{item['Credit Rating']}</div>
+                  </div>
+                  {item['Skill Points'] && (
+                      <div className="pt-3 border-top border-secondary">
+                          <div className="label" style={{fontSize:9}}>OCCUPATIONAL SKILL POINTS</div>
+                          <div className="serif" style={{fontSize:16, color:"var(--bone)"}}>{item['Skill Points']}</div>
+                      </div>
+                  )}
+              </div>
+          </div>
+      </div>
+    </div>
+  );
+}
 
-        let html = `
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <h1 class="display-5 mb-0 text-success">${decodedKey}</h1>
-            </div>
+function OccupationsApp() {
+  const [search, setSearch] = useState('');
+  const [selectedName, setSelectedName] = useState(null);
+  
+  const names = useMemo(() => Object.keys(OCCUPATIONS_DATA).sort(), []);
+  const filtered = useMemo(() => names.filter(n => n.toLowerCase().includes(search.toLowerCase())), [names, search]);
 
-            <div id="image-control-container" class="mb-4"></div>
+  return (
+    <div className="row g-0" style={{margin:"-2rem -3rem", height:"calc(100vh - 72px)"}}>
+      <div className="col-md-3 h-100 d-flex flex-column border-end border-secondary" style={{background:"var(--void-1)"}}>
+        <div className="p-4 border-bottom border-secondary">
+          <div className="label mb-3">Vocation Browser</div>
+          <div className="input-group">
+             <span className="input-group-text bg-dark border-secondary text-muted" style={{borderRight:0}}>⌕</span>
+             <input type="text" className="form-control bg-dark text-light border-secondary" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} style={{fontSize:13, borderLeft:0}} />
+          </div>
+        </div>
+        <div style={{flex:1, overflowY:"auto"}}>
+            {filtered.length > 0 ? (
+                filtered.map((name, i) => {
+                    const isActive = selectedName === name;
+                    return (
+                        <button key={i} 
+                            onClick={() => setSelectedName(name)}
+                            className="w-100 border-0 text-start py-3 px-4 transition-all"
+                            style={{
+                                background: isActive ? "rgba(120,220,170,0.08)" : "transparent",
+                                color: isActive ? "var(--sigil)" : "var(--bone-dim)",
+                                borderLeft: isActive ? "3px solid var(--sigil)" : "3px solid transparent",
+                                fontSize: 14,
+                                borderBottom: "1px solid var(--hair)"
+                            }}
+                        >
+                            {name}
+                        </button>
+                    );
+                })
+            ) : (
+                <div className="p-5 text-center serif-i text-muted">No vocations found.</div>
+            )}
+        </div>
+      </div>
+      <div className="col-md-9 h-100" style={{overflowY:"auto", padding:"40px 60px 100px"}}>
+         <OccupationDetail item={selectedName ? OCCUPATIONS_DATA[selectedName] : null} name={selectedName} />
+      </div>
+    </div>
+  );
+}
 
-            <div class="row">
-                <div class="col-12">
-                    <div class="card bg-dark border-secondary mb-4">
-                        <div class="card-body">
-                            <p class="card-text border-start border-success border-3 ps-3">${formatBold(item.description)}</p>
-                        </div>
-                    </div>
-
-                    <div class="card bg-dark border-secondary mb-4">
-                        <div class="card-header border-secondary text-success">Stats</div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item bg-transparent border-secondary text-light">
-                                <span class="fw-bold text-secondary">Era:</span> ${item.era || 'N/A'}
-                            </li>
-                            <li class="list-group-item bg-transparent border-secondary text-light">
-                                <span class="fw-bold text-secondary">Skill Points:</span> ${item.skill_points || 'N/A'}
-                            </li>
-                            <li class="list-group-item bg-transparent border-secondary text-light">
-                                <span class="fw-bold text-secondary">Credit Rating:</span> ${item.credit_rating || 'N/A'}
-                            </li>
-                        </ul>
-                    </div>
-
-                    <h5 class="text-success border-bottom border-secondary pb-2 mb-3">Suggested Contacts</h5>
-                    <p class="text-light">${formatBold(item.suggested_contacts || 'None')}</p>
-
-                    <h5 class="text-success border-bottom border-secondary pb-2 mb-3 mt-4">Skills</h5>
-                    <p class="text-light">${formatBold(item.skills || 'None')}</p>
-                </div>
-            </div>
-        `;
-
-        container.innerHTML = html;
-
-        initImageControl('image-control-container', '{{ type_slug }}', decodedKey);
-
-        container.classList.remove('hidden');
-        placeholder.style.setProperty('display', 'none', 'important');
-        placeholder.classList.remove('d-flex');
-    }
+const root = ReactDOM.createRoot(document.getElementById('occupations-root'));
+root.render(<OccupationsApp />);
+{% endraw %}
 </script>
 {% endblock %}

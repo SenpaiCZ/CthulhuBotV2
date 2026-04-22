@@ -1,481 +1,184 @@
 {% extends 'base.html' %}
 
-{% block title %}Karma Settings{% endblock %}
+{% block title %}Karma Settings — CthulhuBot{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Karma Settings</h2>
-<p class="text-muted">Configure the reaction channel, emojis, and role thresholds for the Karma system.</p>
+<div class="mb-4">
+    <div class="label">Server Management</div>
+    <h2 class="serif" style="fontSize:32px; margin:8px 0 0">Karma System</h2>
+</div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th style="width: 15%;">Server</th>
-                        <th style="width: 20%;">Karma Channel</th>
-                        <th style="width: 20%;">Notify Channel</th>
-                        <th style="width: 10%;">Upvote</th>
-                        <th style="width: 10%;">Downvote</th>
-                        <th style="width: 10%;">Roles</th>
-                        <th style="width: 15%;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for guild in guilds %}
-                    <tr>
-                        <td>
-                            <strong>{{ guild.name }}</strong><br>
-                            <small class="text-muted">{{ guild.id }}</small>
-                        </td>
-                        <td>
-                            <select class="form-select" id="channel-{{ guild.id }}">
-                                <option value="none">Disabled</option>
-                                {% for channel in guild.channels %}
-                                <option value="{{ channel.id }}" {% if guild.settings.get('channel_id')|string == channel.id %}selected{% endif %}>
-                                    #{{ channel.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </td>
-                        <td>
-                            <select class="form-select" id="notify-channel-{{ guild.id }}">
-                                <option value="none">Disabled</option>
-                                {% for channel in guild.channels %}
-                                <option value="{{ channel.id }}" {% if guild.settings.get('notification_channel_id')|string == channel.id %}selected{% endif %}>
-                                    #{{ channel.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </td>
-                        <td>
-                            <input type="text" class="form-control" id="upvote-{{ guild.id }}"
-                                   value="{{ guild.settings.get('upvote_emoji', '👌') }}" placeholder="👌">
-                        </td>
-                        <td>
-                            <input type="text" class="form-control" id="downvote-{{ guild.id }}"
-                                   value="{{ guild.settings.get('downvote_emoji', '🤏') }}" placeholder="🤏">
-                        </td>
-                        <td>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="openRolesModal('{{ guild.id }}')">
-                                <i class="bi bi-person-badge"></i> Manage Roles
-                            </button>
-                            <small class="d-block text-muted mt-1">
-                                {{ guild.resolved_roles|length }} thresholds
-                            </small>
-                        </td>
-                        <td>
-                            <div class="btn-group-vertical w-100">
-                                <button class="btn btn-primary btn-sm mb-1" onclick="saveKarma('{{ guild.id }}')">
-                                    <i class="bi bi-save"></i> Save
-                                </button>
-                                <button class="btn btn-info btn-sm text-white mb-1" onclick="openUsersModal('{{ guild.id }}')">
-                                    <i class="bi bi-people"></i> Users
-                                </button>
-                                <button class="btn btn-secondary btn-sm mb-1" onclick="autoDetectKarma('{{ guild.id }}', this)">
-                                    <i class="bi bi-magic"></i> Auto Detect
-                                </button>
-                                <button class="btn btn-warning btn-sm" onclick="recalculateKarma('{{ guild.id }}')">
-                                    <i class="bi bi-arrow-clockwise"></i> Recalc
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<div class="card-h mb-5">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">⌘</span> Select Server
+    </div>
+    <div class="card-body p-4">
+        <select class="form-select bg-dark text-light border-secondary" id="guild-select" style="font-size:14px">
+            <option value="" selected disabled>Select Server to Configure...</option>
+        </select>
     </div>
 </div>
 
-<!-- Users Modal -->
-<div class="modal fade" id="usersModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Karma Leaderboard</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-sm">
-                        <thead>
-                            <tr>
-                                <th>Rank</th>
-                                <th>User</th>
-                                <th>Score</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTableBody">
-                            <!-- JS Injected -->
-                        </tbody>
-                    </table>
+<div id="config-section" class="d-none">
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card-h h-100">
+                <window.Corners/>
+                <div class="card-header d-flex justify-content-between align-items-center py-3">
+                    <div class="serif" style="font-size:18px"><span style="color:var(--sigil); margin-right:8px">⚙</span> Core Mechanics</div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="karma-enabled" onchange="saveBasic()">
+                        <label class="label ms-1" style="font-size:8px">ACTIVE</label>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <label for="karma-emoji" class="label mb-2" style="display:block">Trigger Sigil (Emoji)</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-dark text-light border-secondary text-center" id="karma-emoji" placeholder="⭐" style="max-width: 80px">
+                            <button class="btn-eld primary" onclick="saveBasic()">SEAL</button>
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label for="karma-cooldown" class="label mb-2" style="display:block">Resonance Cooldown (Seconds)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control bg-dark text-light border-secondary mono" id="karma-cooldown" min="0" value="0">
+                            <button class="btn-eld primary" onclick="saveBasic()">SEAL</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card-h h-100">
+                <window.Corners/>
+                <div class="card-header serif py-3" style="font-size:18px">
+                    <span style="color:var(--sigil); margin-right:8px">📢</span> Notifications
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <label for="notif-channel" class="label mb-2" style="display:block">Announcement Channel</label>
+                        <select class="form-select bg-dark text-light border-secondary" id="notif-channel" onchange="saveBasic()" style="font-size:13px"></select>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="notif-dm" onchange="saveBasic()">
+                        <label class="label ms-2" for="notif-dm" style="font-size:10px">WHISPER TO USER (DM)</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-h mt-4">
+        <window.Corners/>
+        <div class="card-header serif py-3" style="font-size:18px">
+            <span style="color:var(--sigil); margin-right:8px">✧</span> Rank Architecture (Role Tiers)
+        </div>
+        <div class="card-body p-4">
+            <div id="roles-container" class="row g-3 mb-4"></div>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="label mb-2">Role to Manifest</label>
+                    <select class="form-select bg-dark text-light border-secondary" id="new-role-id" style="font-size:13px"></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="label mb-2">Karma Threshold</label>
+                    <input type="number" class="form-control bg-dark text-light border-secondary mono" id="new-role-req" min="1" placeholder="100">
+                </div>
+                <div class="col-md-3">
+                    <button class="btn-eld primary w-100" style="justify-content:center" onclick="addRole()">BIND RANK</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Roles Modal -->
-<div class="modal fade" id="rolesModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Manage Karma Roles</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="modalGuildId">
-                <div class="alert alert-info">
-                    <small>Users will be granted the role corresponding to the highest threshold they have surpassed. If they drop below, they are demoted to the previous tier.</small>
-                </div>
-
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th style="width: 30%;">Karma Threshold</th>
-                            <th style="width: 50%;">Role</th>
-                            <th style="width: 20%;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="rolesTableBody">
-                        <!-- Rows injected by JS -->
-                    </tbody>
-                </table>
-
-                <hr>
-                <h6>Add New Threshold</h6>
-                <div class="row g-2 align-items-center">
-                    <div class="col-md-3">
-                        <input type="number" id="newThreshold" class="form-control" placeholder="Karma Amount">
-                    </div>
-                    <div class="col-md-6">
-                        <select id="newRole" class="form-select">
-                            <option value="">Select a role...</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-success w-100" onclick="addRoleRow()">
-                            <i class="bi bi-plus-lg"></i> Add
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="saveRoles()">Save Changes</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Data Injection -->
-<script>
-    const guildData = {
-        {% for guild in guilds %}
-        "{{ guild.id }}": {
-            "name": {{ guild.name | tojson }},
-            "roles": {{ guild.roles_list | tojson }},
-            "current": {{ guild.resolved_roles | tojson }}
-        },
-        {% endfor %}
-    };
-</script>
 
 <script>
-let currentRoleList = []; // Helper to track state in modal
+let globalData = null;
+let currentGuildId = null;
 
-function openRolesModal(guildId) {
-    const data = guildData[guildId];
-    if (!data) return;
+document.addEventListener('DOMContentLoaded', fetchData);
+document.getElementById('guild-select').addEventListener('change', e => loadConfig(e.target.value));
 
-    document.getElementById('modalGuildId').value = guildId;
-    document.querySelector('.modal-title').innerText = `Manage Karma Roles - ${data.name}`;
-
-    // Populate Dropdown
-    const select = document.getElementById('newRole');
-    select.innerHTML = '<option value="">Select a role...</option>';
-    data.roles.forEach(role => {
-        const option = document.createElement('option');
-        option.value = role.id;
-        option.text = role.name;
-        select.appendChild(option);
-    });
-
-    // Populate Table
-    currentRoleList = JSON.parse(JSON.stringify(data.current)); // Deep copy
-    renderRoleTable();
-
-    // Show Modal
-    const modal = new bootstrap.Modal(document.getElementById('rolesModal'));
-    modal.show();
+async function fetchData() {
+    const r = await fetch('/api/karma/data');
+    globalData = await r.json();
+    const s = document.getElementById('guild-select');
+    s.innerHTML = '<option value="" selected disabled>Select Server...</option>';
+    globalData.guilds.forEach(g => { const o = document.createElement('option'); o.value = g.id; o.textContent = g.name; s.appendChild(o); });
 }
 
-function renderRoleTable() {
-    const tbody = document.getElementById('rolesTableBody');
-    tbody.innerHTML = '';
+function loadConfig(guildId) {
+    currentGuildId = guildId;
+    const g = globalData.guilds.find(x => x.id === guildId);
+    if(!g) return;
+    document.getElementById('config-section').classList.remove('d-none');
+    
+    document.getElementById('karma-enabled').checked = g.config.enabled;
+    document.getElementById('karma-emoji').value = g.config.emoji || '⭐';
+    document.getElementById('karma-cooldown').value = g.config.cooldown || 0;
+    document.getElementById('notif-dm').checked = g.config.notify_dm;
 
-    // Sort by threshold desc
-    currentRoleList.sort((a, b) => parseInt(b.threshold) - parseInt(a.threshold));
+    const chS = document.getElementById('notif-channel');
+    chS.innerHTML = '<option value="">(None - Disabled)</option>';
+    g.channels.forEach(ch => { const o = document.createElement('option'); o.value = ch.id; o.textContent = ch.name; chS.appendChild(o); });
+    chS.value = g.config.notification_channel || '';
 
-    currentRoleList.forEach((item, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><strong>${item.threshold}</strong></td>
-            <td>${item.role_name} <span class="text-muted" style="font-size: 0.8em">(${item.role_id})</span></td>
-            <td>
-                <button class="btn btn-danger btn-sm" onclick="removeRoleRow(${index})">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
+    const roleS = document.getElementById('new-role-id');
+    roleS.innerHTML = '<option value="" disabled selected>Select Role...</option>';
+    g.roles.forEach(r => { const o = document.createElement('option'); o.value = r.id; o.textContent = r.name; roleS.appendChild(o); });
+
+    renderRoles(g.config.roles, g.roles);
+}
+
+function renderRoles(karmaRoles, allRoles) {
+    const container = document.getElementById('roles-container');
+    container.innerHTML = '';
+    const sorted = Object.entries(karmaRoles).sort((a,b) => a[1]-b[1]);
+    sorted.forEach(([rid, req]) => {
+        const rName = allRoles.find(x => x.id === rid)?.name || 'Unknown Role';
+        const col = document.createElement('div');
+        col.className = 'col-md-4';
+        col.innerHTML = `
+            <div class="card-h p-3 d-flex justify-content-between align-items-center" style="background:var(--void-2)">
+                <window.Corners/>
+                <div>
+                    <div class="serif" style="font-size:15px; color:var(--sigil)">${rName}</div>
+                    <div class="mono" style="font-size:10px; color:var(--bone-fade)">REQ: ${req}</div>
+                </div>
+                <button class="btn-eld rust" style="padding:4px 8px" onclick="removeRole('${rid}')">✕</button>
+            </div>
         `;
-        tbody.appendChild(tr);
+        container.appendChild(col);
     });
 }
 
-function addRoleRow() {
-    const thresholdInput = document.getElementById('newThreshold');
-    const roleSelect = document.getElementById('newRole');
-
-    const threshold = parseInt(thresholdInput.value);
-    const roleId = roleSelect.value;
-    const roleName = roleSelect.options[roleSelect.selectedIndex]?.text;
-
-    if (!threshold || isNaN(threshold)) {
-        alert("Please enter a valid karma amount.");
-        return;
-    }
-    if (!roleId) {
-        alert("Please select a role.");
-        return;
-    }
-
-    // Check duplicate threshold
-    if (currentRoleList.some(r => parseInt(r.threshold) === threshold)) {
-        alert("A rule for this karma threshold already exists. Remove it first.");
-        return;
-    }
-
-    currentRoleList.push({
-        threshold: threshold,
-        role_id: roleId,
-        role_name: roleName
-    });
-
-    renderRoleTable();
-
-    // Reset inputs
-    thresholdInput.value = '';
-    roleSelect.value = '';
-}
-
-function removeRoleRow(index) {
-    currentRoleList.splice(index, 1);
-    renderRoleTable();
-}
-
-async function saveRoles() {
-    const guildId = document.getElementById('modalGuildId').value;
-    const saveBtn = document.querySelector('#rolesModal .btn-primary');
-
-    // Prepare payload
-    // Server expects list of {threshold, role_id}
+async function saveBasic() {
     const payload = {
-        guild_id: guildId,
-        roles: currentRoleList.map(item => ({
-            threshold: item.threshold,
-            role_id: item.role_id
-        }))
+        guild_id: currentGuildId,
+        enabled: document.getElementById('karma-enabled').checked,
+        emoji: document.getElementById('karma-emoji').value,
+        cooldown: parseInt(document.getElementById('karma-cooldown').value),
+        notification_channel: document.getElementById('notif-channel').value || null,
+        notify_dm: document.getElementById('notif-dm').checked
     };
-
-    try {
-        saveBtn.disabled = true;
-        saveBtn.innerText = "Saving...";
-
-        const response = await fetch('/api/karma/roles/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            alert("Roles updated successfully! The bot is now updating user roles in the background.");
-            // Update local data so re-opening modal shows new state without reload
-            guildData[guildId].current = currentRoleList;
-
-            // Close modal
-            const modalEl = document.getElementById('rolesModal');
-            const modalInstance = bootstrap.Modal.getInstance(modalEl);
-            modalInstance.hide();
-
-            // Optional: Refresh page to update the "X thresholds" count, or just update it via DOM
-            location.reload();
-        } else {
-            alert("Error: " + data.message);
-        }
-
-    } catch (e) {
-        console.error(e);
-        alert("Failed to save roles.");
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerText = "Save Changes";
-    }
+    await fetch('/api/karma/save_config', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
 }
 
-async function saveKarma(guildId) {
-    const channelId = document.getElementById(`channel-${guildId}`).value;
-    const notifyChannelId = document.getElementById(`notify-channel-${guildId}`).value;
-    const upvoteEmoji = document.getElementById(`upvote-${guildId}`).value;
-    const downvoteEmoji = document.getElementById(`downvote-${guildId}`).value;
-
-    if (!upvoteEmoji || !downvoteEmoji) {
-        alert("Please specify both emojis.");
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/karma/save', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                guild_id: guildId,
-                channel_id: channelId,
-                notification_channel_id: notifyChannelId,
-                upvote_emoji: upvoteEmoji,
-                downvote_emoji: downvoteEmoji
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            alert("Karma settings updated successfully!");
-        } else {
-            alert("Error: " + data.message);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert("An error occurred while saving karma settings.");
-    }
+async function addRole() {
+    const rid = document.getElementById('new-role-id').value;
+    const req = document.getElementById('new-role-req').value;
+    if(!rid || !req) return;
+    const r = await fetch('/api/karma/role/add', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({guild_id:currentGuildId, role_id:rid, requirement:parseInt(req)}) });
+    if((await r.json()).status === 'success') { await fetchData(); loadConfig(currentGuildId); }
 }
 
-async function openUsersModal(guildId) {
-    const tbody = document.getElementById('usersTableBody');
-    tbody.innerHTML = '<tr><td colspan="3" class="text-center">Loading...</td></tr>';
-
-    const modal = new bootstrap.Modal(document.getElementById('usersModal'));
-    modal.show();
-
-    try {
-        const response = await fetch(`/api/karma/users/${guildId}`);
-        const data = await response.json();
-
-        tbody.innerHTML = '';
-        if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" class="text-center">No data found.</td></tr>';
-            return;
-        }
-
-        data.forEach((user, index) => {
-            const tr = document.createElement('tr');
-
-            // Rank
-            const tdRank = document.createElement('td');
-            tdRank.textContent = `#${index + 1}`;
-            tr.appendChild(tdRank);
-
-            // User
-            const tdUser = document.createElement('td');
-            tdUser.textContent = user.name + " "; // Safe text content
-            const smallId = document.createElement('span');
-            smallId.className = "text-muted small";
-            smallId.textContent = `(${user.user_id})`;
-            tdUser.appendChild(smallId);
-            tr.appendChild(tdUser);
-
-            // Score
-            const tdScore = document.createElement('td');
-            const strongScore = document.createElement('strong');
-            strongScore.textContent = user.score;
-            tdScore.appendChild(strongScore);
-            tr.appendChild(tdScore);
-
-            tbody.appendChild(tr);
-        });
-
-    } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error loading data.</td></tr>';
-        console.error(e);
-    }
-}
-
-async function autoDetectKarma(guildId, btn) {
-    const channelId = document.getElementById(`channel-${guildId}`).value;
-    const notifyChannelId = document.getElementById(`notify-channel-${guildId}`).value;
-
-    if (channelId === "none" || notifyChannelId === "none") {
-        alert("Please select both a Karma Channel and a Notification Channel before using Auto Detect.");
-        return;
-    }
-
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Detecting...';
-
-    try {
-        const response = await fetch('/api/karma/detect_emojis', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                guild_id: guildId,
-                channel_id: channelId
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.status === 'success') {
-            document.getElementById(`upvote-${guildId}`).value = data.upvote;
-            document.getElementById(`downvote-${guildId}`).value = data.downvote;
-            alert("✅ Detection successful!\n\nUpvote and Downvote fields have been populated with the most frequent emojis found.\n\nPlease verify them and click 'Save'.");
-        } else {
-            alert("❌ Detection failed: " + data.message);
-        }
-
-    } catch (e) {
-        console.error(e);
-        alert("An error occurred during detection.");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-    }
-}
-
-async function recalculateKarma(guildId) {
-    if (!confirm("⚠️ WARNING: This will RESET all karma stats for this server and scan the entire history of the configured channel to rebuild them.\n\nThis process may take a while. Continue?")) {
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/karma/recalculate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ guild_id: guildId })
-        });
-        const data = await response.json();
-        alert(data.message);
-    } catch (e) {
-        alert("Error triggering recalculation.");
-        console.error(e);
-    }
+async function removeRole(rid) {
+    if(!confirm("Banish this role rank?")) return;
+    const r = await fetch('/api/karma/role/remove', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({guild_id:currentGuildId, role_id:rid}) });
+    if((await r.json()).status === 'success') { await fetchData(); loadConfig(currentGuildId); }
 }
 </script>
 {% endblock %}

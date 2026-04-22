@@ -1,338 +1,258 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Enrollment Wizard - CoC Bot{% endblock %}
+{% block title %}Enrollment Wizard — CthulhuBot{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <h1 class="display-4"><i class="bi bi-magic"></i> Enrollment Wizard</h1>
-        <p class="lead text-muted">Configure the new user enrollment process.</p>
-    </div>
+<div class="mb-4">
+    <div class="label">Server Onboarding</div>
+    <h2 class="serif" style="fontSize:32px; margin:8px 0 0">Enrollment Wizard</h2>
 </div>
 
-<div id="loader" class="text-center">
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+<div class="card-h mb-5">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">⌘</span> Select Server
     </div>
-</div>
-
-<div id="main-content" style="display: none;">
-    <!-- Guild Selector -->
-    <div class="card mb-4 bg-dark text-white border-secondary">
-        <div class="card-header border-secondary">
-            <h5 class="card-title mb-0">Select Server</h5>
-        </div>
-        <div class="card-body">
-            <select id="guildSelect" class="form-select bg-dark text-white border-secondary">
-                <!-- Populated by JS -->
-            </select>
-        </div>
-    </div>
-
-    <!-- Wizard Config -->
-    <div class="card mb-4 bg-dark text-white border-secondary">
-        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0">Configuration</h5>
-            <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="enableSwitch">
-                <label class="form-check-label" for="enableSwitch">Enable Wizard</label>
-            </div>
-        </div>
-        <div class="card-body">
-            <div class="mb-3">
-                <label for="finalMessage" class="form-label">Final Message</label>
-                <textarea class="form-control bg-dark text-white border-secondary" id="finalMessage" rows="2" placeholder="Message sent after completion..."></textarea>
-                <div class="form-text text-muted">Use this to welcome users or give further instructions.</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pages Manager -->
-    <div class="card mb-4 bg-dark text-white border-secondary">
-        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0">Wizard Pages</h5>
-            <button class="btn btn-primary btn-sm" onclick="addPage()"><i class="bi bi-plus-lg"></i> Add Page</button>
-        </div>
-        <div class="card-body">
-            <div id="pagesContainer" class="accordion accordion-flush bg-dark">
-                <!-- Pages populated here -->
-            </div>
-        </div>
-    </div>
-
-    <div class="d-grid gap-2">
-        <button class="btn btn-success btn-lg" onclick="saveConfig()">Save Configuration</button>
-    </div>
-</div>
-
-<!-- Hidden Templates -->
-<template id="pageTemplate">
-    <div class="accordion-item bg-dark text-white border-secondary mb-3 rounded page-item" data-id="">
-        <h2 class="accordion-header" id="heading-ID">
-            <button class="accordion-button collapsed bg-secondary text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-ID">
-                <span class="page-title-preview">New Page</span>
-            </button>
-        </h2>
-        <div id="collapse-ID" class="accordion-collapse collapse" data-bs-parent="#pagesContainer">
-            <div class="accordion-body border border-top-0 border-secondary rounded-bottom">
-                <div class="mb-3">
-                    <label class="form-label">Page Title</label>
-                    <input type="text" class="form-control bg-dark text-white border-secondary page-title" oninput="updatePreview(this)">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-control bg-dark text-white border-secondary page-desc" rows="2"></textarea>
-                </div>
-
-                <h6 class="mt-4">Options (Roles)</h6>
-                <div class="options-container mb-3">
-                    <!-- Options go here -->
-                </div>
-                <button class="btn btn-outline-info btn-sm mb-3" onclick="addOption(this)"><i class="bi bi-plus"></i> Add Option</button>
-
-                <div class="d-flex justify-content-end gap-2 border-top border-secondary pt-3">
-                    <button class="btn btn-outline-light btn-sm" onclick="movePageUp(this)"><i class="bi bi-arrow-up"></i> Move Up</button>
-                    <button class="btn btn-outline-light btn-sm" onclick="movePageDown(this)"><i class="bi bi-arrow-down"></i> Move Down</button>
-                    <button class="btn btn-danger btn-sm" onclick="deletePage(this)"><i class="bi bi-trash"></i> Delete Page</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
-
-<template id="optionTemplate">
-    <div class="input-group mb-2 option-row">
-        <span class="input-group-text bg-dark border-secondary text-white"><i class="bi bi-emoji-smile"></i></span>
-        <input type="text" class="form-control bg-dark text-white border-secondary option-emoji" placeholder="Emoji" style="max-width: 60px;">
-
-        <span class="input-group-text bg-dark border-secondary text-white">Label</span>
-        <input type="text" class="form-control bg-dark text-white border-secondary option-label" placeholder="Display Text">
-
-        <span class="input-group-text bg-dark border-secondary text-white">Role</span>
-        <select class="form-select bg-dark text-white border-secondary option-role">
-            <option value="">No Role</option>
-            <!-- Roles populated here -->
+    <div class="card-body p-4">
+        <select class="form-select bg-dark text-light border-secondary" id="guild-select" style="font-size:14px">
+            <option value="" selected disabled>Select Server to Configure...</option>
         </select>
-
-        <button class="btn btn-outline-danger" type="button" onclick="this.closest('.option-row').remove()" aria-label="Remove option"><i class="bi bi-x"></i></button>
     </div>
-</template>
+</div>
 
-{% endblock %}
+<div id="config-section" class="d-none">
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card-h h-100">
+                <window.Corners/>
+                <div class="card-header d-flex justify-content-between align-items-center py-3">
+                    <div class="serif" style="font-size:18px"><span style="color:var(--sigil); margin-right:8px">⚙</span> Core Wizard Settings</div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="enroll-enabled" onchange="saveBasic()">
+                        <label class="label ms-1" style="font-size:8px">ACTIVE</label>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <label for="enroll-channel" class="label mb-2" style="display:block">Deployment Channel</label>
+                        <select class="form-select bg-dark text-light border-secondary" id="enroll-channel" onchange="saveBasic()" style="font-size:13px"></select>
+                        <div class="serif-i mt-2" style="font-size:12px; color:var(--bone-fade)">Where the wizard button will be manifested.</div>
+                    </div>
+                    <div>
+                        <button class="btn-eld primary w-100" style="justify-content:center" onclick="deployWizard()">MANIFEST WIZARD BUTTON</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-{% block scripts %}
+        <div class="col-md-6">
+            <div class="card-h h-100">
+                <window.Corners/>
+                <div class="card-header serif py-3" style="font-size:18px">
+                    <span style="color:var(--sigil); margin-right:8px">📜</span> Visual Scrolls (Embed)
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <label for="enroll-title" class="label mb-2" style="display:block">Wizard Title</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary serif" id="enroll-title" onchange="saveBasic()">
+                    </div>
+                    <div class="mb-3">
+                        <label for="enroll-desc" class="label mb-2" style="display:block">Description Scroll</label>
+                        <textarea class="form-control bg-dark text-light border-secondary serif-i" id="enroll-desc" rows="3" onchange="saveBasic()"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-h mt-4">
+        <window.Corners/>
+        <div class="card-header serif py-3" style="font-size:18px">
+            <span style="color:var(--sigil); margin-right:8px">✧</span> Step Architecture (Options)
+        </div>
+        <div class="card-body p-4">
+            <div id="steps-container" class="mb-4"></div>
+            <button class="btn-eld" onclick="addStep()">+ ADD NEW STEP</button>
+        </div>
+    </div>
+</div>
+
+<!-- Step Modal -->
+<div class="modal fade" id="stepModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title serif" id="stepModalLabel">Step Configuration</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="edit-step-index">
+                <div class="mb-3">
+                    <label class="label mb-2">Internal ID</label>
+                    <input type="text" class="form-control bg-dark text-light border-secondary mono" id="step-id" placeholder="e.g. alignment">
+                </div>
+                <div class="mb-3">
+                    <label class="label mb-2">Display Label</label>
+                    <input type="text" class="form-control bg-dark text-light border-secondary serif" id="step-label" placeholder="Select your path">
+                </div>
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" id="step-required">
+                    <label class="label ms-2" for="step-required">MANDATORY STEP</label>
+                </div>
+                
+                <div class="label mb-2">Available Choices</div>
+                <div id="choices-container" class="mb-3 d-flex flex-column gap-2"></div>
+                <button class="btn-eld on w-100" style="justify-content:center" onclick="addChoice()">+ ADD CHOICE</button>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button class="btn-eld" data-bs-dismiss="modal">CANCEL</button>
+                <button class="btn-eld primary" onclick="saveStep()">SEAL STEP</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-let guildData = [];
+let globalData = null;
 let currentGuildId = null;
+let editingStep = null;
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadData();
+document.addEventListener('DOMContentLoaded', fetchData);
+document.getElementById('guild-select').addEventListener('change', e => loadConfig(e.target.value));
 
-    document.getElementById('guildSelect').addEventListener('change', (e) => {
-        currentGuildId = e.target.value;
-        renderConfig();
-    });
-});
-
-async function loadData() {
-    try {
-        const response = await fetch('/api/enroll/data');
-        const data = await response.json();
-        guildData = data.guilds;
-
-        const select = document.getElementById('guildSelect');
-        select.innerHTML = '';
-
-        if (guildData.length === 0) {
-            select.innerHTML = '<option>No guilds found</option>';
-            return;
-        }
-
-        guildData.forEach(g => {
-            const opt = document.createElement('option');
-            opt.value = g.id;
-            opt.textContent = g.name;
-            select.appendChild(opt);
-        });
-
-        if (guildData.length > 0) {
-            currentGuildId = guildData[0].id;
-            renderConfig();
-        }
-
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-
-    } catch (e) {
-        console.error(e);
-        alert("Failed to load data");
-    }
+async function fetchData() {
+    const r = await fetch('/api/enroll/data');
+    globalData = await r.json();
+    const s = document.getElementById('guild-select');
+    s.innerHTML = '<option value="" selected disabled>Select Server...</option>';
+    globalData.guilds.forEach(g => { const o = document.createElement('option'); o.value = g.id; o.textContent = g.name; s.appendChild(o); });
 }
 
-function renderConfig() {
-    const guild = guildData.find(g => g.id === currentGuildId);
-    if (!guild) return;
+function loadConfig(guildId) {
+    currentGuildId = guildId;
+    const g = globalData.guilds.find(x => x.id === guildId);
+    if(!g) return;
+    document.getElementById('config-section').classList.remove('d-none');
+    document.getElementById('enroll-enabled').checked = g.config.enabled;
+    document.getElementById('enroll-title').value = g.config.title || '';
+    document.getElementById('enroll-desc').value = g.config.description || '';
+    const chS = document.getElementById('enroll-channel');
+    chS.innerHTML = '<option value="" disabled selected>Select Channel...</option>';
+    g.channels.forEach(ch => { const o = document.createElement('option'); o.value = ch.id; o.textContent = ch.name; chS.appendChild(o); });
+    chS.value = g.config.channel_id || '';
+    renderSteps(g.config.steps);
+}
 
-    document.getElementById('enableSwitch').checked = guild.config.enabled;
-    document.getElementById('finalMessage').value = guild.config.final_message;
-
-    const pagesContainer = document.getElementById('pagesContainer');
-    pagesContainer.innerHTML = '';
-
-    guild.config.pages.forEach((page, index) => {
-        addPageUI(page, guild.roles);
+function renderSteps(steps) {
+    const container = document.getElementById('steps-container');
+    container.innerHTML = '';
+    (steps || []).forEach((s, i) => {
+        const div = document.createElement('div');
+        div.className = 'card-h p-3 mb-3 d-flex justify-content-between align-items-center';
+        div.innerHTML = `
+            <window.Corners/>
+            <div>
+                <div class="serif" style="font-size:16px; color:var(--sigil)">${s.label} <small class="mono" style="font-size:10px; color:var(--bone-fade)">(${s.id})</small></div>
+                <div class="label" style="font-size:8px">${s.choices.length} CHOICES · ${s.required ? 'MANDATORY' : 'OPTIONAL'}</div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn-eld" style="padding:6px 12px; font-size:10px" onclick="editStep(${i})">EDIT</button>
+                <button class="btn-eld rust" style="padding:6px 12px; font-size:10px" onclick="deleteStep(${i})">✕</button>
+            </div>
+        `;
+        container.appendChild(div);
     });
 }
 
-function addPage() {
-    const guild = guildData.find(g => g.id === currentGuildId);
-    if (!guild) return;
-
-    addPageUI({ title: "New Page", description: "", options: [] }, guild.roles);
+async function saveBasic() {
+    const payload = {
+        guild_id: currentGuildId,
+        enabled: document.getElementById('enroll-enabled').checked,
+        channel_id: document.getElementById('enroll-channel').value,
+        title: document.getElementById('enroll-title').value,
+        description: document.getElementById('enroll-desc').value
+    };
+    await fetch('/api/enroll/save_config', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
 }
 
-function addPageUI(pageData, roles) {
-    const container = document.getElementById('pagesContainer');
-    const id = 'page-' + Date.now() + Math.random().toString(36).substr(2, 5);
-
-    const template = document.getElementById('pageTemplate');
-    const clone = template.content.cloneNode(true);
-
-    const item = clone.querySelector('.accordion-item');
-    item.dataset.id = id;
-
-    clone.querySelector('.accordion-header').id = 'heading-' + id;
-    clone.querySelector('.accordion-button').dataset.bsTarget = '#collapse-' + id;
-    const btn = clone.querySelector('.accordion-button');
-    btn.textContent = pageData.title || "New Page";
-    btn.classList.remove('collapsed');
-    btn.setAttribute('aria-expanded', 'true');
-
-    const collapse = clone.querySelector('.accordion-collapse');
-    collapse.id = 'collapse-' + id;
-    collapse.dataset.bsParent = '#pagesContainer'; // Keep accordion behavior
-    collapse.classList.add('show'); // Auto-expand new page
-
-    clone.querySelector('.page-title').value = pageData.title || "";
-    clone.querySelector('.page-desc').value = pageData.description || "";
-
-    const optsContainer = clone.querySelector('.options-container');
-
-    if (pageData.options) {
-        pageData.options.forEach(opt => {
-            addOptionUI(optsContainer, opt, roles);
-        });
-    }
-
-    container.appendChild(clone);
+function editStep(idx) {
+    const g = globalData.guilds.find(x => x.id === currentGuildId);
+    editingStep = g.config.steps[idx];
+    document.getElementById('edit-step-index').value = idx;
+    document.getElementById('step-id').value = editingStep.id;
+    document.getElementById('step-label').value = editingStep.label;
+    document.getElementById('step-required').checked = editingStep.required;
+    renderChoices(editingStep.choices);
+    new bootstrap.Modal(document.getElementById('stepModal')).show();
 }
 
-function updatePreview(input) {
-    const header = input.closest('.accordion-item').querySelector('.accordion-button');
-    header.textContent = input.value || "New Page";
+function addStep() {
+    editingStep = { id:'', label:'', required:true, choices:[] };
+    document.getElementById('edit-step-index').value = -1;
+    document.getElementById('step-id').value = '';
+    document.getElementById('step-label').value = '';
+    document.getElementById('step-required').checked = true;
+    renderChoices([]);
+    new bootstrap.Modal(document.getElementById('stepModal')).show();
 }
 
-function addOption(btn) {
-    const container = btn.previousElementSibling;
-    const guild = guildData.find(g => g.id === currentGuildId);
-    addOptionUI(container, {}, guild.roles);
-}
-
-function addOptionUI(container, data, roles) {
-    const template = document.getElementById('optionTemplate');
-    const clone = template.content.cloneNode(true);
-
-    clone.querySelector('.option-emoji').value = data.emoji || "";
-    clone.querySelector('.option-label').value = data.label || "";
-
-    const select = clone.querySelector('.option-role');
-    roles.forEach(role => {
-        const opt = document.createElement('option');
-        opt.value = role.id;
-        opt.textContent = role.name;
-        opt.style.color = role.color !== '#000000' ? role.color : 'inherit';
-        if (data.role_id === role.id) opt.selected = true;
-        select.appendChild(opt);
+function renderChoices(choices) {
+    const container = document.getElementById('choices-container');
+    container.innerHTML = '';
+    const g = globalData.guilds.find(x => x.id === currentGuildId);
+    choices.forEach((c, i) => {
+        const div = document.createElement('div');
+        div.className = 'd-flex gap-2 mb-2';
+        let roleOpts = g.roles.map(r => `<option value="${r.id}" ${r.id === c.role_id ? 'selected' : ''}>${r.name}</option>`).join('');
+        div.innerHTML = `
+            <input type="text" class="form-control bg-dark text-light border-secondary serif" placeholder="Label" value="${c.label}" style="font-size:12px">
+            <select class="form-select bg-dark text-light border-secondary mono" style="font-size:11px">${roleOpts}</select>
+            <button class="btn-eld rust" style="border:0" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(div);
     });
-
-    container.appendChild(clone);
 }
 
-function deletePage(btn) {
-    if (confirm("Remove this page?")) {
-        btn.closest('.page-item').remove();
-    }
+function addChoice() {
+    const div = document.createElement('div');
+    div.className = 'd-flex gap-2 mb-2';
+    const g = globalData.guilds.find(x => x.id === currentGuildId);
+    let roleOpts = g.roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+    div.innerHTML = `<input type="text" class="form-control bg-dark text-light border-secondary serif" placeholder="Label" style="font-size:12px"><select class="form-select bg-dark text-light border-secondary mono" style="font-size:11px">${roleOpts}</select><button class="btn-eld rust" style="border:0" onclick="this.parentElement.remove()">✕</button>`;
+    document.getElementById('choices-container').appendChild(div);
 }
 
-function movePageUp(btn) {
-    const item = btn.closest('.page-item');
-    const prev = item.previousElementSibling;
-    if (prev) item.parentNode.insertBefore(item, prev);
-}
-
-function movePageDown(btn) {
-    const item = btn.closest('.page-item');
-    const next = item.nextElementSibling;
-    if (next) item.parentNode.insertBefore(next, item); // Insert before next's sibling is buggy if last
-    if (next) next.after(item);
-}
-
-async function saveConfig() {
-    const guild = guildData.find(g => g.id === currentGuildId);
-    if (!guild) return;
-
-    const enabled = document.getElementById('enableSwitch').checked;
-    const finalMsg = document.getElementById('finalMessage').value;
-
-    const pages = [];
-    document.querySelectorAll('.page-item').forEach(item => {
-        const title = item.querySelector('.page-title').value;
-        const desc = item.querySelector('.page-desc').value;
-
-        const options = [];
-        item.querySelectorAll('.option-row').forEach(row => {
-            options.push({
-                emoji: row.querySelector('.option-emoji').value,
-                label: row.querySelector('.option-label').value,
-                role_id: row.querySelector('.option-role').value
-            });
-        });
-
-        if (options.length > 0) {
-            pages.push({
-                title: title,
-                description: desc,
-                options: options
-            });
-        }
+async function saveStep() {
+    const idx = parseInt(document.getElementById('edit-step-index').value);
+    const id = document.getElementById('step-id').value.trim();
+    const label = document.getElementById('step-label').value.trim();
+    if(!id || !label) return;
+    const choices = [];
+    document.querySelectorAll('#choices-container > div').forEach(div => {
+        const cL = div.querySelector('input').value.trim();
+        const cR = div.querySelector('select').value;
+        if(cL && cR) choices.push({ label: cL, role_id: cR });
     });
+    const g = globalData.guilds.find(x => x.id === currentGuildId);
+    const steps = [...(g.config.steps || [])];
+    const newStep = { id, label, required: document.getElementById('step-required').checked, choices };
+    if(idx === -1) steps.push(newStep); else steps[idx] = newStep;
+    const r = await fetch('/api/enroll/save_steps', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({guild_id:currentGuildId, steps}) });
+    if((await r.json()).status === 'success') { await fetchData(); loadConfig(currentGuildId); bootstrap.Modal.getInstance(document.getElementById('stepModal')).hide(); }
+}
 
-    // Optimistic UI update
-    guild.config.enabled = enabled;
-    guild.config.final_message = finalMsg;
-    guild.config.pages = pages;
+async function deleteStep(idx) {
+    if(!confirm("Banish this step from the architecture?")) return;
+    const g = globalData.guilds.find(x => x.id === currentGuildId);
+    const steps = g.config.steps.filter((_, i) => i !== idx);
+    const r = await fetch('/api/enroll/save_steps', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({guild_id:currentGuildId, steps}) });
+    if((await r.json()).status === 'success') { await fetchData(); loadConfig(currentGuildId); }
+}
 
-    try {
-        const response = await fetch('/api/enroll/save', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                guild_id: currentGuildId,
-                enabled: enabled,
-                final_message: finalMsg,
-                pages: pages
-            })
-        });
-
-        const res = await response.json();
-        if (res.status === 'success') {
-            alert("Configuration saved successfully!");
-        } else {
-            alert("Error saving: " + res.message);
-        }
-    } catch (e) {
-        alert("Network error: " + e);
-    }
+async function deployWizard() {
+    if(!confirm("Manifest the wizard button in the designated channel?")) return;
+    const r = await fetch('/api/enroll/deploy', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({guild_id:currentGuildId}) });
+    alert((await r.json()).message);
 }
 </script>
 {% endblock %}
