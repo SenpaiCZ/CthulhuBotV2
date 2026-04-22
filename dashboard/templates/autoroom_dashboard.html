@@ -1,57 +1,60 @@
 {% extends 'base.html' %}
 
-{% block title %}Auto Rooms{% endblock %}
+{% block title %}Auto Rooms — CthulhuBot{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Auto Rooms</h2>
-<p class="text-muted">Configure automatic voice channel creation for your servers.</p>
+<div class="mb-4">
+    <div class="label">Automation</div>
+    <h2 class="serif" style="fontSize:32px; margin:8px 0 0">Auto Rooms</h2>
+</div>
 
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <strong>Select Server</strong>
-            </div>
-            <div class="card-body">
-                <select class="form-select" id="guild-select">
-                    <option value="" selected disabled>Select Server...</option>
-                </select>
-            </div>
-        </div>
+<div class="card-h mb-4">
+    <window.Corners/>
+    <div class="card-header serif" style="fontSize:18px">
+        <span style="color:var(--sigil); margin-right:8px">⌘</span> Select Server
+    </div>
+    <div class="card-body p-4">
+        <select class="form-select bg-dark text-light border-secondary" id="guild-select" style="font-size:14px">
+            <option value="" selected disabled>Select Server to Configure...</option>
+        </select>
     </div>
 </div>
 
 <div id="config-section" class="d-none">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>Configuration</strong>
-            <span id="current-guild-name" class="badge bg-secondary"></span>
+    <div class="card-h">
+        <window.Corners/>
+        <div class="card-header d-flex justify-content-between align-items-center py-3">
+            <div class="serif" style="font-size:18px">
+                <span style="color:var(--sigil); margin-right:8px">⚙</span> Configuration
+            </div>
+            <span id="current-guild-name" class="badge bg-secondary mono" style="font-size:10px; letter-spacing:0.1em; border-radius:0">SERVER</span>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             <form id="autoroom-form">
-                <div class="mb-3">
-                    <label for="source-channel" class="form-label">Source Voice Channel (Entry)</label>
-                    <select class="form-select" id="source-channel">
+                <div class="mb-4">
+                    <label for="source-channel" class="label mb-2" style="display:block">Source Voice Channel (Entry)</label>
+                    <select class="form-select bg-dark text-light border-secondary" id="source-channel" style="font-size:13px">
                         <option value="" selected disabled>Select Voice Channel...</option>
                     </select>
-                    <div class="form-text">Users joining this channel will trigger a new room creation.</div>
+                    <div class="serif-i mt-2" style="font-size:12px; color:var(--bone-fade)">Users joining this channel will trigger a new room creation ritual.</div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="target-category" class="form-label">Target Category</label>
-                    <select class="form-select" id="target-category">
+                <div class="mb-5">
+                    <label for="target-category" class="label mb-2" style="display:block">Target Category</label>
+                    <select class="form-select bg-dark text-light border-secondary" id="target-category" style="font-size:13px">
                         <option value="" selected disabled>Select Category...</option>
                     </select>
-                    <div class="form-text">New voice channels will be created in this category.</div>
+                    <div class="serif-i mt-2" style="font-size:12px; color:var(--bone-fade)">New voice channels will be manifested within this category.</div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" id="save-btn">
-                    <span id="save-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                    Save Configuration
-                </button>
-                <button type="button" class="btn btn-danger float-end" id="disable-btn">
-                    Disable Auto Room
-                </button>
+                <div style="display:flex; gap:12px; flex-wrap:wrap">
+                    <button type="submit" class="btn-eld primary" id="save-btn">
+                        SEAL CONFIGURATION
+                    </button>
+                    <button type="button" class="btn-eld rust ms-md-auto" id="disable-btn">
+                        DISABLE AUTO ROOM
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -63,19 +66,16 @@ let currentGuildId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     fetchData();
-
     document.getElementById('guild-select').addEventListener('change', (e) => {
         loadGuildConfig(e.target.value);
     });
-
     document.getElementById('autoroom-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         await saveConfig();
     });
-
     document.getElementById('disable-btn').addEventListener('click', async () => {
-        if(confirm("Are you sure you want to disable Auto Room for this server?")) {
-            await saveConfig(true); // true = disable/clear
+        if(confirm("Are you sure you want to stop the auto-room manifesting for this server?")) {
+            await saveConfig(true);
         }
     });
 });
@@ -87,14 +87,14 @@ async function fetchData() {
         globalData = data;
         populateGuildSelect(data.guilds);
     } catch (error) {
-        console.error("Error loading data:", error);
+        console.error(error);
         alert("Failed to load Auto Room data.");
     }
 }
 
 function populateGuildSelect(guilds) {
     const select = document.getElementById('guild-select');
-    select.innerHTML = '<option value="" selected disabled>Select Server...</option>';
+    select.innerHTML = '<option value="" selected disabled>Select Server to Configure...</option>';
     guilds.forEach(guild => {
         const option = document.createElement('option');
         option.value = guild.id;
@@ -108,10 +108,9 @@ function loadGuildConfig(guildId) {
     const guild = globalData.guilds.find(g => g.id === guildId);
     if (!guild) return;
 
-    document.getElementById('current-guild-name').textContent = guild.name;
+    document.getElementById('current-guild-name').textContent = guild.name.toUpperCase();
     document.getElementById('config-section').classList.remove('d-none');
 
-    // Populate Source Channels
     const sourceSelect = document.getElementById('source-channel');
     sourceSelect.innerHTML = '<option value="" selected disabled>Select Voice Channel...</option>';
     guild.voice_channels.forEach(ch => {
@@ -121,7 +120,6 @@ function loadGuildConfig(guildId) {
         sourceSelect.appendChild(option);
     });
 
-    // Populate Target Categories
     const targetSelect = document.getElementById('target-category');
     targetSelect.innerHTML = '<option value="" selected disabled>Select Category...</option>';
     guild.categories.forEach(cat => {
@@ -131,22 +129,15 @@ function loadGuildConfig(guildId) {
         targetSelect.appendChild(option);
     });
 
-    // Set Current Values
-    if (guild.config.channel_id) {
-        sourceSelect.value = guild.config.channel_id;
-    }
-    if (guild.config.category_id) {
-        targetSelect.value = guild.config.category_id;
-    }
+    if (guild.config.channel_id) sourceSelect.value = guild.config.channel_id;
+    if (guild.config.category_id) targetSelect.value = guild.config.category_id;
 }
 
 async function saveConfig(disable = false) {
     if (!currentGuildId) return;
-
     const sourceId = document.getElementById('source-channel').value;
     const categoryId = document.getElementById('target-category').value;
     const btn = document.getElementById('save-btn');
-    const spinner = document.getElementById('save-spinner');
 
     if (!disable && (!sourceId || !categoryId)) {
         alert("Please select both a source channel and a target category.");
@@ -154,7 +145,7 @@ async function saveConfig(disable = false) {
     }
 
     btn.disabled = true;
-    spinner.classList.remove('d-none');
+    btn.innerText = "COMMUNING...";
 
     try {
         const payload = {
@@ -162,19 +153,15 @@ async function saveConfig(disable = false) {
             channel_id: disable ? null : sourceId,
             category_id: disable ? null : categoryId
         };
-
         const response = await fetch('/api/autorooms/save', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         });
-
         const res = await response.json();
         if (res.status === 'success') {
-            alert(disable ? "Auto Room disabled." : "Configuration saved!");
-            // Refresh data to keep local state in sync
+            alert(disable ? "Auto Room disabled." : "Configuration sealed!");
             await fetchData();
-            // Re-load the current guild to update UI (though values should remain mostly same)
             loadGuildConfig(currentGuildId);
         } else {
             alert("Error: " + res.message);
@@ -184,7 +171,7 @@ async function saveConfig(disable = false) {
         alert("Failed to save configuration.");
     } finally {
         btn.disabled = false;
-        spinner.classList.add('d-none');
+        btn.innerText = "SEAL CONFIGURATION";
     }
 }
 </script>

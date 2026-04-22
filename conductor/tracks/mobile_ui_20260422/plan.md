@@ -20,14 +20,14 @@
 - [x] Task: Refactor Roles, Backup, and Deleter Dashboards (4409f2e)
     - [x] Verify test coverage for these routes
     - [x] Apply the responsive Card-Based Layout and mobile-friendly form controls
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Refactoring Admin & Settings Pages' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Refactoring Admin & Settings Pages' (Protocol in workflow.md) (639189c)
 
 ## Phase 3: Refactoring Interactive Dashboards
-- [ ] Task: Refactor `music_dashboard.html`, `autoroom_dashboard.html`, and `polls_dashboard.html`
-    - [ ] Write failing UI structure tests if necessary for new markup
-    - [ ] Apply mobile-friendly design and interactive controls for music and polls
-    - [ ] Ensure interactive elements are usable on touch devices
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Refactoring Interactive Dashboards' (Protocol in workflow.md)
+- [x] Task: Refactor `music_dashboard.html`, `autoroom_dashboard.html`, and `polls_dashboard.html` (ceb7734)
+    - [x] Write failing UI structure tests if necessary for new markup
+    - [x] Apply mobile-friendly design and interactive controls for music and polls
+    - [x] Ensure interactive elements are usable on touch devices
+- [~] Task: Conductor - User Manual Verification 'Phase 3: Refactoring Interactive Dashboards' (Protocol in workflow.md)
 
 ## Phase 4: Refactoring Codex & Reference Pages
 - [ ] Task: Refactor `monsters.html`, `spells.html`, `weapons.html` and other list templates
