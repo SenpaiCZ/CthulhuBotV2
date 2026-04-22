@@ -1,14 +1,14 @@
 # Implementation Plan: Finish Dashboard UI Overhaul
 
-## Phase 1: Refactoring Utilities & Tools
+## Phase 1: Refactoring Utilities & Tools [checkpoint: 92e9387]
 - [x] Task: Refactor `file_browser.html` and `json_editor.html` (c49565f)
-    - [ ] Write unit tests verifying these routes return 200 OK and incorporate the new layout structure
-    - [ ] Apply the new "Modern Cthulhu" design system, using `card-h` and `btn-eld` classes
-    - [ ] Ensure mobile responsiveness and Card-Based Layouts for any tables
+    - [x] Write unit tests verifying these routes return 200 OK and incorporate the new layout structure
+    - [x] Apply the new "Modern Cthulhu" design system, using `card-h` and `btn-eld` classes
+    - [x] Ensure mobile responsiveness and Card-Based Layouts for any tables
 - [x] Task: Refactor `newspaper_dashboard.html` (c49565f)
-    - [ ] Verify test coverage for this route
-    - [ ] Apply the responsive Card-Based Layout and mobile-friendly form controls
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Refactoring Utilities & Tools' (Protocol in workflow.md)
+    - [x] Verify test coverage for this route
+    - [x] Apply the responsive Card-Based Layout and mobile-friendly form controls
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Refactoring Utilities & Tools' (Protocol in workflow.md) (92e9387)
 
 ## Phase 2: Refactoring Auth & Notifications
 - [ ] Task: Refactor `login.html` and `karma_notification.html`
