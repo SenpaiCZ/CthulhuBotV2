@@ -148,7 +148,7 @@ function AdminDashboard() {
       <div className="card-h p-4 mt-4" style={{textAlign:"center"}}>
           <window.Corners/>
           <div className="label mb-3">System Actions</div>
-          <div style={{display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap"}}>
+          <div style={{display:"flex", gap:16, justifyContent:"center", flexWrap:"wrap", alignItems:"center"}}>
               <button className="btn-eld" onClick={async () => {
                   try {
                       const r = await fetch('/api/admin/sync_guild', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
@@ -157,6 +157,13 @@ function AdminDashboard() {
                   } catch(e) { alert('Error: ' + e); }
               }}>↻ SYNC SLASH COMMANDS</button>
               
+              <div style={{display:"flex", alignItems:"center", gap:8, border:"1px solid var(--hair-strong)", padding:"8px 12px", background:"var(--void-2)"}}>
+                  <div className="form-check form-switch m-0">
+                      <input className="form-check-input" type="checkbox" id="updateInfodataCheck" style={{cursor:"pointer"}} />
+                      <label className="label ms-2" style={{fontSize:9, cursor:"pointer"}} htmlFor="updateInfodataCheck">UPDATE GAME DATA</label>
+                  </div>
+              </div>
+
               <button className="btn-eld rust" onClick={() => window.confirmUpdate()}>↑ UPDATE FROM GITHUB</button>
           </div>
       </div>
