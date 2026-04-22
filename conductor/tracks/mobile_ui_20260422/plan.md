@@ -1,16 +1,16 @@
 # Implementation Plan: Mobile-Friendly Dashboard UI Overhaul
 
 ## Phase 1: CSS Framework and Base Layout Updates
-- [ ] Task: Update `base.html` and `themes.css` with responsive design foundations
-    - [ ] Write or verify basic structural route tests for the main layout
-    - [ ] Implement media queries and CSS grid/flexbox foundations for mobile responsiveness
-    - [ ] Add the hamburger menu button and hidden sidebar styles for mobile in `themes.css`
-    - [ ] Ensure `index.html` and `soundboard.html` still look correct with the new base styles
-- [ ] Task: Update Sidebar Component (`sidebar.jsx` or equivalent)
-    - [ ] Write a test to ensure the sidebar logic renders correctly
-    - [ ] Implement React/JS logic to toggle the sidebar via the hamburger menu
-    - [ ] Refactor the navigation links for better touch targets (44x44px minimum)
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: CSS Framework and Base Layout Updates' (Protocol in workflow.md)
+- [x] Task: Update `base.html` and `themes.css` with responsive design foundations
+    - [x] Write or verify basic structural route tests for the main layout
+    - [x] Implement media queries and CSS grid/flexbox foundations for mobile responsiveness
+    - [x] Add the hamburger menu button and hidden sidebar styles for mobile in `themes.css`
+    - [x] Ensure `index.html` and `soundboard.html` still look correct with the new base styles
+- [x] Task: Update Sidebar Component (`sidebar.jsx` or equivalent)
+    - [x] Write a test to ensure the sidebar logic renders correctly
+    - [x] Implement React/JS logic to toggle the sidebar via the hamburger menu
+    - [x] Refactor the navigation links for better touch targets (44x44px minimum)
+- [~] Task: Conductor - User Manual Verification 'Phase 1: CSS Framework and Base Layout Updates' (Protocol in workflow.md)
 
 ## Phase 2: Refactoring Admin & Settings Pages
 - [ ] Task: Refactor `admin_dashboard.html`, `bot_config.html`, and `game_settings.html`

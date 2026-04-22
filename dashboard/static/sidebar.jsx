@@ -67,12 +67,15 @@ function AppSidebar() {
   });
   const [active] = React.useState(detectActive);
   const [online, setOnline] = React.useState(true);
+  const [mobileVisible, setMobileVisible] = React.useState(false);
 
   const toggle = () => setCollapsed(c => {
     const next = !c;
     try { localStorage.setItem(storageKey, next ? "1" : "0"); } catch {}
     return next;
   });
+
+  const toggleMobile = () => setMobileVisible(v => !v);
 
   /* Poll bot status */
   React.useEffect(() => {
@@ -88,112 +91,148 @@ function AppSidebar() {
     return () => clearInterval(id);
   }, []);
 
+  /* Listen for global toggle event */
+  React.useEffect(() => {
+    const handler = () => setMobileVisible(v => !v);
+    window.addEventListener('toggle-sidebar', handler);
+    return () => window.removeEventListener('toggle-sidebar', handler);
+  }, []);
+
   const W = collapsed ? 68 : 256;
 
   return (
-    <aside style={{
-      width: W, flexShrink: 0,
-      background: "var(--void-1)",
-      borderRight: "1px solid var(--hair)",
-      display: "flex", flexDirection: "column",
-      position: "sticky", top: 0, alignSelf: "flex-start",
-      height: "100vh", overflow: "hidden",
-      transition: "width .25s cubic-bezier(.4,0,.2,1)",
-      zIndex: 50,
-    }}>
+    <>
+      {/* Mobile Backdrop */}
+      {mobileVisible && (
+        <div 
+          onClick={toggleMobile}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", 
+            backdropFilter: "blur(4px)", zIndex: 40,
+          }} 
+          className="sidebar-backdrop"
+        />
+      )}
 
-      {/* Brand */}
-      <a href="/" style={{
-        padding: collapsed ? "20px 13px" : "22px 20px",
-        borderBottom: "1px solid var(--hair)",
-        display: "flex", alignItems: "center", gap: 12,
-        textDecoration: "none", color: "inherit",
-        flexShrink: 0,
-      }}>
-        <div style={{color:"var(--sigil)", flexShrink:0, animation:"breathe 5.5s ease-in-out infinite"}}>
-          <SidebarSigil size={collapsed ? 38 : 42}/>
-        </div>
-        {!collapsed && (
-          <div style={{overflow:"hidden"}}>
-            <div style={{fontFamily:"'IM Fell English SC','IM Fell English',serif", fontSize:18, lineHeight:1, letterSpacing:"0.05em", whiteSpace:"nowrap"}}>CthulhuBot</div>
-            <div style={{fontFamily:"'IBM Plex Mono',monospace", fontSize:8, letterSpacing:"0.26em", color:"var(--bone-fade)", marginTop:4, whiteSpace:"nowrap"}}>KEEPER · v2</div>
+      <aside style={{
+        width: W, flexShrink: 0,
+        background: "var(--void-1)",
+        borderRight: "1px solid var(--hair)",
+        display: "flex", flexDirection: "column",
+        position: "sticky", top: 0, alignSelf: "flex-start",
+        height: "100vh", overflow: "hidden",
+        transition: "width .25s cubic-bezier(.4,0,.2,1), transform .25s ease",
+        zIndex: 50,
+      }} className={`sidebar-main ${mobileVisible ? 'mobile-show' : ''}`}>
+
+        {/* Brand */}
+        <a href="/" style={{
+          padding: collapsed ? "20px 13px" : "22px 20px",
+          borderBottom: "1px solid var(--hair)",
+          display: "flex", alignItems: "center", gap: 12,
+          textDecoration: "none", color: "inherit",
+          flexShrink: 0,
+        }}>
+          <div style={{color:"var(--sigil)", flexShrink:0, animation:"breathe 5.5s ease-in-out infinite"}}>
+            <SidebarSigil size={collapsed ? 38 : 42}/>
           </div>
-        )}
-      </a>
+          {!collapsed && (
+            <div style={{overflow:"hidden"}}>
+              <div style={{fontFamily:"var(--font-serif)", fontSize:18, lineHeight:1, letterSpacing:"0.05em", whiteSpace:"nowrap"}}>CthulhuBot</div>
+              <div style={{fontFamily:"var(--font-mono)", fontSize:8, letterSpacing:"0.26em", color:"var(--bone-fade)", marginTop:4, whiteSpace:"nowrap"}}>KEEPER · v2</div>
+            </div>
+          )}
+        </a>
 
-      {/* Nav */}
-      <nav style={{flex:1, overflowY:"auto", overflowX:"hidden", padding: collapsed ? "12px 8px" : "16px 12px"}}>
-        {NAV.map(group => (
-          <div key={group.group} style={{marginBottom:20}}>
-            {!collapsed && (
-              <div style={{fontFamily:"'IBM Plex Mono',monospace", fontSize:10, letterSpacing:"0.22em", textTransform:"uppercase", color:"var(--bone-fade)", padding:"0 8px 7px"}}>
-                {group.group}
+        {/* Nav */}
+        <nav style={{flex:1, overflowY:"auto", overflowX:"hidden", padding: collapsed ? "12px 8px" : "16px 12px"}}>
+          {NAV.map(group => (
+            <div key={group.group} style={{marginBottom:20}}>
+              {!collapsed && (
+                <div style={{fontFamily:"var(--font-mono)", fontSize:10, letterSpacing:"0.22em", textTransform:"uppercase", color:"var(--bone-fade)", padding:"0 8px 7px"}}>
+                  {group.group}
+                </div>
+              )}
+              {group.items.map(item => {
+                const isActive = active === item.id;
+                return (
+                  <a key={item.id} href={item.href} title={item.label}
+                    style={{
+                      display:"flex", alignItems:"center", gap:10,
+                      padding: collapsed ? "9px 0" : "8px 10px",
+                      justifyContent: collapsed ? "center" : "flex-start",
+                      color: isActive ? "var(--sigil)" : "var(--bone-dim)",
+                      background: isActive ? "rgba(120,220,170,0.06)" : "transparent",
+                      borderLeft: isActive ? "2px solid var(--sigil)" : "2px solid transparent",
+                      fontSize: 13, letterSpacing:"0.02em",
+                      transition: "all .15s",
+                      textDecoration: "none",
+                    }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = "var(--bone)"; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = "var(--bone-dim)"; }}
+                  >
+                    <span style={{
+                      fontFamily:"var(--font-serif)",
+                      fontSize:14, width:16, textAlign:"center", flexShrink:0,
+                      color: isActive ? "var(--sigil)" : "var(--bone-fade)",
+                    }}>{item.sigil}</span>
+                    {!collapsed && <span style={{flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.label}</span>}
+                  </a>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div style={{padding: collapsed ? "12px 8px" : "14px 16px", borderTop:"1px solid var(--hair)", flexShrink:0}}>
+          {!collapsed ? (
+            <div>
+              <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:10}}>
+                <span style={{
+                  width:7, height:7, borderRadius:"50%", flexShrink:0,
+                  background: online ? "var(--sigil)" : "var(--bone-fade)",
+                  boxShadow: online ? "0 0 8px var(--sigil-g)" : "none",
+                  animation: online ? "pulse-dot 2.2s ease-in-out infinite" : "none",
+                }}/>
+                <span style={{fontFamily:"var(--font-mono)", fontSize:9, letterSpacing:"0.18em", color: online ? "var(--bone-dim)" : "var(--bone-fade)"}}>
+                  {online ? "ONLINE" : "OFFLINE"}
+                </span>
               </div>
-            )}
-            {group.items.map(item => {
-              const isActive = active === item.id;
-              return (
-                <a key={item.id} href={item.href} title={item.label}
-                  style={{
-                    display:"flex", alignItems:"center", gap:10,
-                    padding: collapsed ? "9px 0" : "8px 10px",
-                    justifyContent: collapsed ? "center" : "flex-start",
-                    color: isActive ? "var(--sigil)" : "var(--bone-dim)",
-                    background: isActive ? "rgba(120,220,170,0.06)" : "transparent",
-                    borderLeft: isActive ? "2px solid var(--sigil)" : "2px solid transparent",
-                    fontSize: 13, letterSpacing:"0.02em",
-                    transition: "all .15s",
-                    textDecoration: "none",
-                  }}
-                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = "var(--bone)"; }}
-                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = "var(--bone-dim)"; }}
-                >
-                  <span style={{
-                    fontFamily:"'IM Fell English SC','IM Fell English',serif",
-                    fontSize:14, width:16, textAlign:"center", flexShrink:0,
-                    color: isActive ? "var(--sigil)" : "var(--bone-fade)",
-                  }}>{item.sigil}</span>
-                  {!collapsed && <span style={{flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{item.label}</span>}
-                </a>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-
-      {/* Footer */}
-      <div style={{padding: collapsed ? "12px 8px" : "14px 16px", borderTop:"1px solid var(--hair)", flexShrink:0}}>
-        {!collapsed ? (
-          <div>
-            <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:10}}>
+              <button onClick={toggle}
+                style={{fontFamily:"var(--font-mono)", fontSize:9, letterSpacing:"0.18em", color:"var(--bone-fade)", cursor:"pointer", background:"none", border:"none"}}>
+                ⟨ COLLAPSE
+              </button>
+            </div>
+          ) : (
+            <div style={{display:"flex", flexDirection:"column", gap:8, alignItems:"center"}}>
               <span style={{
-                width:7, height:7, borderRadius:"50%", flexShrink:0,
+                width:7, height:7, borderRadius:"50%",
                 background: online ? "var(--sigil)" : "var(--bone-fade)",
                 boxShadow: online ? "0 0 8px var(--sigil-g)" : "none",
                 animation: online ? "pulse-dot 2.2s ease-in-out infinite" : "none",
               }}/>
-              <span style={{fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:"0.18em", color: online ? "var(--bone-dim)" : "var(--bone-fade)"}}>
-                {online ? "ONLINE" : "OFFLINE"}
-              </span>
+              <button onClick={toggle} style={{color:"var(--bone-fade)", cursor:"pointer", background:"none", border:"none", fontSize:14}}>⟩</button>
             </div>
-            <button onClick={toggle}
-              style={{fontFamily:"'IBM Plex Mono',monospace", fontSize:9, letterSpacing:"0.18em", color:"var(--bone-fade)", cursor:"pointer", background:"none", border:"none"}}>
-              ⟨ COLLAPSE
-            </button>
-          </div>
-        ) : (
-          <div style={{display:"flex", flexDirection:"column", gap:8, alignItems:"center"}}>
-            <span style={{
-              width:7, height:7, borderRadius:"50%",
-              background: online ? "var(--sigil)" : "var(--bone-fade)",
-              boxShadow: online ? "0 0 8px var(--sigil-g)" : "none",
-              animation: online ? "pulse-dot 2.2s ease-in-out infinite" : "none",
-            }}/>
-            <button onClick={toggle} style={{color:"var(--bone-fade)", cursor:"pointer", background:"none", border:"none", fontSize:14}}>⟩</button>
-          </div>
-        )}
-      </div>
-    </aside>
+          )}
+        </div>
+      </aside>
+
+      <style>{`
+        .sidebar-backdrop { display: none; }
+        @media (max-width: 991.98px) {
+          .sidebar-backdrop { display: block; }
+          .sidebar-main {
+            position: fixed !important;
+            transform: translateX(-100%);
+            width: 256px !important;
+          }
+          .sidebar-main.mobile-show {
+            transform: translateX(0);
+          }
+        }
+      `}</style>
+    </>
   );
 }
 

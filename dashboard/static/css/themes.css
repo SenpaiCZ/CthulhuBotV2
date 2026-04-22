@@ -1,29 +1,55 @@
-:root, [data-bs-theme="dark"] {
-    /* Default fallback variables (Cthulhu) if not overridden */
-    --theme-primary-dark: #1b4d3e;
-    --theme-primary-main: #2E8B57; /* SeaGreen */
-    --theme-primary-bright: #00ff7f; /* SpringGreen */
-    --theme-bg-dark: #0a0a0a;
-    --theme-bg-card: #151515;
-    --theme-navbar-bg: #050505;
-    --theme-text-color: #e0e0e0;
-    --theme-link-color: #66cdaa; /* MediumAquamarine */
-    --theme-border-color: #333;
-    --theme-accent-hover: rgba(46, 139, 87, 0.1);
-    --theme-primary-rgb: 46, 139, 87;
+:root {
+    /* --- Modern Cthulhu Design System (oklch) --- */
+    --void-0: #020305;
+    --void-1: #05070a;
+    --void-2: #0a0d11;
+    --void-3: #10141a;
+    --void-4: #161b23;
+    --hair: rgba(190,210,195,0.08);
+    --hair-strong: rgba(190,210,195,0.15);
+    --bone: oklch(0.96 0.008 75);
+    --bone-dim: oklch(0.88 0.01 75);
+    --bone-fade: oklch(0.65 0.01 75);
+    --sigil: oklch(0.78 0.16 152);
+    --sigil-deep: oklch(0.52 0.14 152);
+    --sigil-glow: oklch(0.85 0.18 152 / 0.35);
+    --sigil-g: oklch(0.85 0.18 152 / 0.6);
+    --rust: oklch(0.62 0.16 28);
+    --rust-deep: oklch(0.45 0.15 28);
+    --amber: oklch(0.78 0.13 75);
+
+    /* --- Legacy Variable Fallbacks (Themed) --- */
+    --theme-primary-dark: var(--sigil-deep);
+    --theme-primary-main: var(--sigil);
+    --theme-primary-bright: var(--sigil);
+    --theme-bg-dark: var(--void-0);
+    --theme-bg-card: var(--void-1);
+    --theme-navbar-bg: var(--void-0);
+    --theme-text-color: var(--bone);
+    --theme-link-color: var(--sigil);
+    --theme-border-color: var(--hair);
+    --theme-accent-hover: rgba(var(--theme-primary-rgb), 0.1);
+    --theme-primary-rgb: 120, 220, 170; /* Approximate sigil green */
 
     /* Bootstrap Overrides */
     --bs-primary: var(--theme-primary-main);
     --bs-primary-rgb: var(--theme-primary-rgb);
-
     --bs-body-bg: var(--theme-bg-dark);
     --bs-body-color: var(--theme-text-color);
-
     --bs-link-color: var(--theme-link-color);
     --bs-link-hover-color: var(--theme-primary-bright);
-
     --bs-border-color: var(--theme-border-color);
-    --bs-border-color-translucent: rgba(255, 255, 255, 0.15);
+    --bs-border-color-translucent: var(--hair-strong);
+    
+    /* Typography */
+    --font-serif: "IM Fell English SC", "IM Fell English", serif;
+    --font-sans: "Inter Tight", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+[data-bs-theme="dark"] {
+    --bs-body-bg: var(--void-0);
+    --bs-body-color: var(--bone);
 }
 
 /* --- THEMES --- */
@@ -112,7 +138,146 @@
     --theme-primary-rgb: 64, 64, 64;
 }
 
-/* Navbar Customization */
+/* ============================================================
+   GLOBAL STYLES & ATMOSPHERE
+   ============================================================ */
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--void-0);
+    color: var(--bone);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+
+/* Atmospheric noise and vignette */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.06;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 998;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+}
+
+.serif { font-family: var(--font-serif); letter-spacing: 0.02em; }
+.serif-i { font-family: var(--font-serif); font-style: italic; }
+.mono { font-family: var(--font-mono); }
+
+/* Custom selection */
+::selection {
+    background: var(--sigil-glow);
+    color: var(--bone);
+}
+
+/* --- ANIMATIONS --- */
+
+@keyframes breathe {
+    0%, 100% { filter: drop-shadow(0 0 10px var(--sigil-glow)); }
+    50%       { filter: drop-shadow(0 0 22px var(--sigil-glow)); }
+}
+
+@keyframes flicker {
+    0%, 92%, 100% { opacity: 1; }
+    93%           { opacity: 0.35; }
+    94%           { opacity: 1; }
+    96%           { opacity: 0.65; }
+    97%           { opacity: 1; }
+}
+.flicker { animation: flicker 7s infinite; }
+
+@keyframes pulse-dot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%       { transform: scale(1.4); opacity: 0.5; }
+}
+.pulse-dot { animation: pulse-dot 2.2s ease-in-out infinite; }
+
+/* --- ELDER BUTTONS --- */
+.btn-eld {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: transparent;
+    border: 1px solid var(--hair-strong);
+    color: var(--bone);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transition: all .2s;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-eld:hover {
+    border-color: var(--sigil);
+    color: var(--sigil);
+    box-shadow: inset 0 0 24px rgba(120,220,170,0.08);
+}
+
+.btn-eld.primary {
+    border-color: var(--sigil-deep);
+    color: var(--sigil);
+    background: rgba(80,160,120,0.04);
+}
+
+.btn-eld.primary:hover {
+    background: rgba(80,160,120,0.1);
+    box-shadow: 0 0 20px rgba(120,220,170,0.15), inset 0 0 20px rgba(120,220,170,0.08);
+}
+
+.btn-eld.rust {
+    border-color: var(--rust-deep);
+    color: var(--rust);
+}
+
+.btn-eld.rust:hover {
+    background: rgba(180,70,60,0.08);
+}
+
+/* --- MODERN CARDS --- */
+.card-h {
+    background: linear-gradient(160deg, var(--void-1), var(--void-0));
+    border: 1px solid var(--hair);
+    position: relative;
+}
+
+.card-h::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(135deg, rgba(255,255,255,0.02), transparent 30%);
+}
+
+.corner-tl, .corner-tr, .corner-bl, .corner-br {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-color: var(--sigil);
+    opacity: 0.55;
+    pointer-events: none;
+}
+.corner-tl { top: -1px; left: -1px; border-top: 1px solid; border-left: 1px solid; }
+.corner-tr { top: -1px; right: -1px; border-top: 1px solid; border-right: 1px solid; }
+.corner-bl { bottom: -1px; left: -1px; border-bottom: 1px solid; border-left: 1px solid; }
+.corner-br { bottom: -1px; right: -1px; border-bottom: 1px solid; border-right: 1px solid; }
+
+/* Existing Navbar Overrides */
 .navbar-dark.bg-dark {
     background-color: rgba(1, 2, 3, 0.92) !important;
     border-bottom: 1px solid var(--theme-primary-dark);

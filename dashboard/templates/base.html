@@ -4,8 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}CoC Bot Dashboard{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Inter+Tight:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <!-- Frameworks -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+
     <link href="{{ url_for('static', filename='css/themes.css') }}" rel="stylesheet">
 
     {% include 'includes/font_styles.html' %}
@@ -15,150 +27,48 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-    <a href="#main-content" class="visually-hidden-focusable position-absolute p-3 bg-dark text-white" style="z-index: 2000; left: 0; top: 0;">Skip to main content</a>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="/">🐙 CthulhuBot</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/grimoire">Grimoire</a></li>
-                </ul>
-                <ul class="navbar-nav">
-                    {% if is_admin %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="keeperDropdown" role="button" data-bs-toggle="dropdown">
-                            Keeper Tools
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li class="dropstart">
-                                <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Characters</a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="/characters">Active Characters</a></li>
-                                    <li><a class="dropdown-item" href="/retired">Retired Characters</a></li>
-                                </ul>
-                            </li>
-                            <li class="dropstart">
-                                <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Grimoire</a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="/grimoire">Browse Grimoire</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="/monsters">Monsters</a></li>
-                                    <li><a class="dropdown-item" href="/deities">Deities</a></li>
-                                    <li><a class="dropdown-item" href="/spells">Spells</a></li>
-                                </ul>
-                            </li>
-                            <li class="dropstart">
-                                <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Pulp</a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="/archetypes">Archetypes</a></li>
-                                    <li><a class="dropdown-item" href="/pulp_talents">Talents</a></li>
-                                    <li><a class="dropdown-item" href="/insane_talents">Insane Talents</a></li>
-                                </ul>
-                            </li>
-                            <li class="dropstart">
-                                <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Reference</a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="/occupations">Occupations</a></li>
-                                    <li><a class="dropdown-item" href="/skills">Skills</a></li>
-                                    <li><a class="dropdown-item" href="/inventions">Inventions</a></li>
-                                    <li><a class="dropdown-item" href="/years">Years</a></li>
-                                    <li><a class="dropdown-item" href="/manias">Mania</a></li>
-                                    <li><a class="dropdown-item" href="/phobias">Phobia</a></li>
-                                    <li><a class="dropdown-item" href="/weapons">Weapons</a></li>
-                                    <li><a class="dropdown-item" href="/poisons">Poisons</a></li>
-                                </ul>
-                            </li>
-                            <li class="dropstart">
-                                <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Administration</a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="/admin/game_settings">Game Settings</a></li>
-                                    <li><a class="dropdown-item" href="/admin/browse/infodata">Info Data</a></li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="audioDropdown" role="button" data-bs-toggle="dropdown">
-                            Audio
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/admin/soundboard">Soundboard</a></li>
-                            <li><a class="dropdown-item" href="/admin/music">Music Bot</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="serverAdminDropdown" role="button" data-bs-toggle="dropdown">
-                            Server Administration
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li class="dropstart">
-                                <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Automatization</a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="/admin/gameroles">Gamer Roles</a></li>
-                                    <li><a class="dropdown-item" href="/admin/autorooms">Auto rooms</a></li>
-                                    <li><a class="dropdown-item" href="/admin/deleter">Auto Deleter</a></li>
-                                    <li><a class="dropdown-item" href="/admin/reactionroles">Reaction Roles</a></li>
-                                    <li><a class="dropdown-item" href="/admin/karma">Karma System</a></li>
-                                    <li><a class="dropdown-item" href="/admin/giveaway">Giveaways</a></li>
-                                    <li><a class="dropdown-item" href="/admin/polls">Polls</a></li>
-                                    <li><a class="dropdown-item" href="/admin/reminders">Reminders</a></li>
-                                    <li><a class="dropdown-item" href="/admin/enroll">Enrollment Wizard</a></li>
-                                </ul>
-                            </li>
-                            <li class="dropstart">
-                                <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Information</a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="/admin/rss">RSS Feeds</a></li>
-                                    <li><a class="dropdown-item" href="/admin/pokemon">Pokemon Go</a></li>
-                                    <li><a class="dropdown-item" href="/admin/fonts">Fonts</a></li>
-                                </ul>
-                            </li>
-                            <li class="dropstart">
-                                <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Server</a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="/admin/bot_config">Bot Configuration</a></li>
-                                    <li><a class="dropdown-item" href="/admin/browse/data">Data Files</a></li>
-                                    <li><a class="dropdown-item" href="/admin/backup">Backup System</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="confirmUpdate(); return false;">System Update</a></li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                            Admin
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/admin">Admin Dashboard</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
-                        </ul>
-                    </li>
-                    {% else %}
-                    <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <div style="display:flex; min-height:100vh;">
+        <div id="sidebar-root"></div>
+        <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
+            
+            <header style="display:flex; align-items:center; gap:16px; padding:16px 32px; border-bottom:1px solid var(--hair); background:linear-gradient(180deg, var(--void-0), transparent); position:sticky; top:0; z-index:10; backdrop-filter:blur(6px);">
+                <button class="d-lg-none btn-eld" id="mobile-menu-toggle" style="padding: 8px;">
+                    <i class="bi bi-list" style="font-size: 20px;"></i>
+                </button>
+                
+                <div class="d-none d-md-block mono flicker" id="clock-display" style="font-size:10px; letter-spacing:0.22em; color:var(--sigil);">00:00:00</div>
+                <span class="d-none d-md-block" style="width:1px; height:14px; background:var(--hair-strong);"></span>
+                <div class="d-none d-sm-block mono" id="date-display" style="font-size:10px; letter-spacing:0.18em; color:var(--bone-fade);">DATE</div>
+                
+                <div style="flex:1"></div>
+                
+                <div class="d-none d-md-flex" style="align-items:center; gap:6px; border:1px solid var(--hair); padding:7px 12px; min-width:280px; background:var(--void-1);">
+                    <span class="serif" style="color:var(--bone-fade); font-size:14px;">⌕</span>
+                    <input id="global-search" placeholder="Search the grimoire…" style="flex:1; background:transparent; border:0; outline:0; color:var(--bone); font-family:inherit; font-size:12px; letter-spacing:0.02em;">
+                </div>
 
-    <main id="main-content" class="container mt-4" tabindex="-1">
-        {% block content %}{% endblock %}
-        <footer class="coc-footer">
-            <div>
-                <em>"That is not dead which can eternal lie, and with strange aeons even death may die."</em>
-            </div>
-            <div class="mt-1">
-                <a href="https://github.com/SenpaiCZ/CthulhuBotV2" target="_blank" rel="noopener">
-                    <i class="bi bi-github"></i> CthulhuBotV2
-                </a>
-            </div>
-        </footer>
-    </main>
+                {% if is_admin %}
+                <a href="/admin" class="btn-eld primary d-none d-sm-inline-flex" style="font-size:11px;"><span class="serif" style="font-size:14px;">⚙</span> Admin</a>
+                <a href="/logout" class="btn-eld rust" style="font-size:11px;">Logout</a>
+                {% else %}
+                <a href="/login" class="btn-eld" style="font-size:11px;">Login</a>
+                {% endif %}
+            </header>
+
+            <main id="main-content" class="container-fluid p-4 p-md-5" style="flex:1; display:flex; flex-direction:column; gap:28px;" tabindex="-1">
+                {% block content %}{% endblock %}
+                
+                <footer class="coc-footer mt-auto">
+                    <div>
+                        <em class="serif-i">"That is not dead which can eternal lie, and with strange aeons even death may die."</em>
+                    </div>
+                    <div class="mono mt-2" style="font-size:9px; letter-spacing:0.22em;">
+                        CTHULHUBOT V2 · <a href="https://github.com/SenpaiCZ/CthulhuBotV2" target="_blank" rel="noopener">GITHUB</a>
+                    </div>
+                </footer>
+            </main>
+        </div>
+    </div>
 
     <div id="reconnecting-overlay" class="reconnect-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; color: white; align-items: center; justify-content: center; flex-direction: column; gap: 1rem;">
         <div class="reconnect-pulse">
@@ -186,7 +96,7 @@
     </div>
 
     <script>
-    const IS_ADMIN = {{ is_admin|tojson }};
+    const IS_ADMIN = {{ is_admin|tojson if is_admin is defined else 'false' }};
 
     // Status Polling
     let wasOffline = false;
@@ -198,7 +108,7 @@
                 const data = await response.json();
                 if (data.status === 'online') {
                     if (wasOffline) {
-                        location.reload(); // Reload page to refresh state
+                        location.reload();
                     }
                     overlay.style.display = 'none';
                     wasOffline = false;
@@ -214,45 +124,25 @@
             overlay.style.display = 'flex';
             wasOffline = true;
         }
-    }, 3000);
+    }, 5000);
 
     async function confirmUpdate() {
         if (confirm("Are you sure you want to update the bot? This will restart the system.")) {
-            const checkbox = document.getElementById('updateInfodataCheck');
-            const updateInfodata = checkbox ? checkbox.checked : false;
-
             try {
                 const response = await fetch('/api/admin/update', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ update_infodata: updateInfodata })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ update_infodata: false })
                 });
                 const data = await response.json();
-                if (data.status === 'success') {
-                    alert(data.message);
-                    // Optionally disable UI or show loader
-                } else {
-                    alert('Update failed: ' + data.message);
-                }
+                alert(data.status === 'success' ? data.message : 'Update failed: ' + data.message);
             } catch (error) {
                 alert('Error connecting to server: ' + error);
             }
         }
     }
 
-    // Fix for nested dropdowns on mobile (prevent closing parent)
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.dropdown-menu .dropdown-toggle').forEach(function(element) {
-            element.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            });
-        });
-    });
-
-    // Image Management Helper
+    // Image Management Helpers
     async function initImageControl(containerId, typeSlug, name) {
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -261,43 +151,34 @@
              try {
                 const response = await fetch(`/api/images/check?type_slug=${encodeURIComponent(typeSlug)}&name=${encodeURIComponent(name)}`);
                 const data = await response.json();
-
                 if (data.found) {
-                     container.innerHTML = `
-                        <div class="mb-3 text-center">
-                            <img src="${data.url + '?t=' + new Date().getTime()}" class="img-fluid rounded" style="max-height: 200px;">
-                        </div>
-                     `;
+                     container.innerHTML = `<div class="mb-3 text-center"><img src="${data.url + '?t=' + new Date().getTime()}" class="img-fluid rounded" style="max-height: 200px;"></div>`;
                 } else {
                      container.innerHTML = '';
                 }
-             } catch(e) {
-                 console.error(e);
-             }
+             } catch(e) { console.error(e); }
              return;
         }
 
         container.innerHTML = `
-            <div class="card bg-dark border-secondary">
-                <div class="card-header border-secondary text-light">Image Management</div>
-                <div class="card-body">
-                    <div id="${containerId}-preview" class="mb-3 text-center" style="display:none;">
-                        <img src="" class="img-fluid rounded" style="max-height: 200px;">
-                        <div class="mt-2">
-                            <button class="btn btn-sm btn-danger" onclick="deleteImage('${typeSlug}', '${name.replace(/'/g, "\\'")}', '${containerId}')">Delete Image</button>
-                        </div>
+            <div class="card-h p-3">
+                <Corners/>
+                <div class="label mb-2">Image Management</div>
+                <div id="${containerId}-preview" class="mb-3 text-center" style="display:none;">
+                    <img src="" class="img-fluid rounded" style="max-height: 200px;">
+                    <div class="mt-2">
+                        <button class="btn-eld rust" onclick="deleteImage('${typeSlug}', '${name.replace(/'/g, "\\'")}', '${containerId}')">Delete Image</button>
                     </div>
-                    <div id="${containerId}-upload">
-                        <div class="input-group">
-                            <input type="file" class="form-control bg-secondary text-light border-secondary" id="${containerId}-file" accept=".png,.jpg,.jpeg,.webp">
-                            <button class="btn btn-success" type="button" onclick="uploadImage('${typeSlug}', '${name.replace(/'/g, "\\'")}', '${containerId}')">Upload</button>
-                        </div>
-                    </div>
-                    <div id="${containerId}-status" class="mt-2 small"></div>
                 </div>
+                <div id="${containerId}-upload">
+                    <div class="input-group">
+                        <input type="file" class="form-control bg-dark text-light border-secondary" id="${containerId}-file" accept=".png,.jpg,.jpeg,.webp">
+                        <button class="btn-eld on" type="button" onclick="uploadImage('${typeSlug}', '${name.replace(/'/g, "\\'")}', '${containerId}')">Upload</button>
+                    </div>
+                </div>
+                <div id="${containerId}-status" class="mt-2 small"></div>
             </div>
         `;
-
         checkImage(typeSlug, name, containerId);
     }
 
@@ -305,65 +186,43 @@
         try {
             const response = await fetch(`/api/images/check?type_slug=${encodeURIComponent(typeSlug)}&name=${encodeURIComponent(name)}`);
             const data = await response.json();
-
             const preview = document.getElementById(`${containerId}-preview`);
             const upload = document.getElementById(`${containerId}-upload`);
-            const img = preview.querySelector('img');
-
             if (data.found) {
-                img.src = data.url + '?t=' + new Date().getTime(); // Cache bust
+                preview.querySelector('img').src = data.url + '?t=' + new Date().getTime();
                 preview.style.display = 'block';
                 upload.style.display = 'none';
             } else {
                 preview.style.display = 'none';
                 upload.style.display = 'block';
             }
-        } catch (e) {
-            console.error("Error checking image", e);
-        }
+        } catch (e) { console.error("Error checking image", e); }
     }
 
     async function uploadImage(typeSlug, name, containerId) {
         const fileInput = document.getElementById(`${containerId}-file`);
         const status = document.getElementById(`${containerId}-status`);
-
-        if (fileInput.files.length === 0) {
-            status.innerHTML = '<span class="text-danger">Please select a file.</span>';
-            return;
-        }
-
+        if (fileInput.files.length === 0) { status.innerHTML = '<span class="text-danger">Please select a file.</span>'; return; }
         const formData = new FormData();
         formData.append('type_slug', typeSlug);
         formData.append('name', name);
         formData.append('file', fileInput.files[0]);
-
         status.innerHTML = '<span class="text-info">Uploading...</span>';
-
         try {
-            const response = await fetch('/api/images/upload', {
-                method: 'POST',
-                body: formData
-            });
+            const response = await fetch('/api/images/upload', { method: 'POST', body: formData });
             const data = await response.json();
-
             if (data.status === 'success') {
                 status.innerHTML = '<span class="text-success">Uploaded successfully.</span>';
-                checkImage(typeSlug, name, containerId); // Refresh
-                fileInput.value = ''; // Clear input
-            } else {
-                status.innerHTML = `<span class="text-danger">Error: ${data.message}</span>`;
-            }
-        } catch (e) {
-            status.innerHTML = `<span class="text-danger">Error: ${e.message}</span>`;
-        }
+                checkImage(typeSlug, name, containerId);
+                fileInput.value = '';
+            } else { status.innerHTML = `<span class="text-danger">Error: ${data.message}</span>`; }
+        } catch (e) { status.innerHTML = `<span class="text-danger">Error: ${e.message}</span>`; }
     }
 
     async function deleteImage(typeSlug, name, containerId) {
         if (!confirm("Are you sure you want to delete this image?")) return;
-
         const status = document.getElementById(`${containerId}-status`);
         status.innerHTML = '<span class="text-info">Deleting...</span>';
-
         try {
             const response = await fetch('/api/images/delete', {
                 method: 'POST',
@@ -371,30 +230,66 @@
                 body: JSON.stringify({ type_slug: typeSlug, name: name })
             });
             const data = await response.json();
-
             if (data.status === 'success') {
                 status.innerHTML = '<span class="text-success">Deleted.</span>';
-                checkImage(typeSlug, name, containerId); // Refresh
-            } else {
-                status.innerHTML = `<span class="text-danger">Error: ${data.message}</span>`;
-            }
-        } catch (e) {
-            status.innerHTML = `<span class="text-danger">Error: ${e.message}</span>`;
-        }
+                checkImage(typeSlug, name, containerId);
+            } else { status.innerHTML = `<span class="text-danger">Error: ${data.message}</span>`; }
+        } catch (e) { status.innerHTML = `<span class="text-danger">Error: ${e.message}</span>`; }
     }
 
     function openImageModal(typeSlug, name) {
         const modalEl = document.getElementById('imageModal');
         const modal = new bootstrap.Modal(modalEl);
         document.getElementById('imageModalLabel').textContent = `Manage Image: ${name}`;
-        // Clear previous content status to avoid confusion
         const containerId = 'modal-image-control';
         document.getElementById(containerId).innerHTML = '';
-
         modal.show();
-        // Wait for modal to show slightly or just run
         initImageControl(containerId, typeSlug, name);
     }
+    </script>
+
+    <script type="text/babel" data-presets="react" src="{{ url_for('static', filename='sidebar.jsx') }}"></script>
+    <script type="text/babel" data-presets="react">
+    (function() {
+        const Corners = () => <div className="corners"><span/></div>;
+        window.Corners = Corners;
+        
+        const root = ReactDOM.createRoot(document.getElementById('sidebar-root'));
+        root.render(<window.AppSidebar />);
+        
+        // Mobile menu toggle logic
+        document.getElementById('mobile-menu-toggle').addEventListener('click', () => {
+            window.dispatchEvent(new CustomEvent('toggle-sidebar'));
+        });
+
+        // Search logic
+        const searchInput = document.getElementById('global-search');
+        if (searchInput) {
+            searchInput.addEventListener('keydown', e => {
+                if (e.key === "Enter" && e.target.value.trim()) {
+                    window.location.href = "/monsters?q=" + encodeURIComponent(e.target.value.trim());
+                }
+            });
+        }
+
+        // Clock & Date
+        function updateClock() {
+            const now = new Date();
+            const p = n => String(now[n]()).padStart(2, "0");
+            const clockEl = document.getElementById('clock-display');
+            if (clockEl) {
+                const hours = String(now.getHours()).padStart(2, "0");
+                const minutes = String(now.getMinutes()).padStart(2, "0");
+                const seconds = String(now.getSeconds()).padStart(2, "0");
+                clockEl.textContent = `${hours}:${minutes}:${seconds}`;
+            }
+            
+            const dateEl = document.getElementById('date-display');
+            if (dateEl) dateEl.textContent = now.toLocaleDateString("en-US", {weekday:"short", month:"short", day:"numeric", year:"numeric"}).toUpperCase();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    })();
     </script>
 
     {% block scripts %}{% endblock %}
