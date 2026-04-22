@@ -7,7 +7,7 @@
 ## Features
 
 *   🛠️ **Slash Commands**: Fully integrated with Discord's Slash Commands (`/`) for a modern and intuitive user experience.
-*   🕵️‍♂️ **Character Management**: Create, update, and manage investigator sheets, including stats, skills, backstories, and inventory.
+*   🕵️‍♂️ **Character Management**: Create, update, and manage investigator sheets, including stats, skills, inventory, and rich backstory elements (Description, Beliefs, Connections, etc.).
 *   🎲 **Advanced Dice Rolling**: Interactive rolls with support for Bonus/Penalty dice, Luck spending, and Pushing rolls.
 *   🐙 **The Grimoire (Codex)**: Extensive library of game information including firearms, inventions, monsters, deities, spells, madness tables, phobias/manias, and historical events.
 *   👊 **Pulp Cthulhu Support**: Includes Pulp Archetypes, Talents, Insane Talents, and modified character creation rules.
@@ -35,6 +35,8 @@
 The bot uses **Slash Commands** (`/`). Legacy prefix commands have been removed, with the exception of `!sync`.
 
 ### 🐙 Investigator Tools
+*   `/character backstory`: 📜 View or edit your character's backstory with dedicated fields for Description, Beliefs, and more.
+*   `/character connections`: 🤝 Manage relationships between investigators.
 *   `/newinvestigator`: 🕵️‍♂️ Start the character creation wizard.
 *   `/mycharacter`: 📜 View your character sheet.
 *   `/stat`: 📊 View or edit specific stats on your sheet.
