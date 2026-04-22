@@ -22,7 +22,7 @@
     - [x] Write route tests confirming the pages render without errors
     - [x] Apply the design overhaul to these pages
     - [x] **CRITICALLY: Do NOT modify any files with "origin" in the title.**
-- [ ] Task: Refactor remaining render pages (`render_archetype.html`, `render_pulp_talent.html`, `render_occupation.html`, `render_poison.html`, `render_simple_entry.html`, `render_timeline.html`, `render_letter.html`, `render_script.html`, `render_telegram.html`, `render_morse.html`)
-    - [ ] Verify test coverage for these routes
-    - [ ] Apply the responsive design system
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Refactoring Render Pages' (Protocol in workflow.md)
+- [x] Task: Refactor remaining render pages (`render_archetype.html`, `render_pulp_talent.html`, `render_occupation.html`, `render_poison.html`, `render_simple_entry.html`, `render_timeline.html`, `render_letter.html`, `render_script.html`, `render_telegram.html`, `render_morse.html`) (28ff905)
+    - [x] Verify test coverage for these routes
+    - [x] Apply the responsive design system
+- [~] Task: Conductor - User Manual Verification 'Phase 3: Refactoring Render Pages' (Protocol in workflow.md)
