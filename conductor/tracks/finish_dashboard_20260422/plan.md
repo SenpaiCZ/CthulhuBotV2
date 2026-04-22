@@ -11,7 +11,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Refactoring Utilities & Tools' (Protocol in workflow.md) (92e9387)
 
 ## Phase 2: Refactoring Auth & Notifications
-- [ ] Task: Refactor `login.html` and `karma_notification.html`
+- [x] Task: Refactor `login.html` and `karma_notification.html` (a1180c2)
     - [ ] Write failing UI structure tests if necessary for new markup
     - [ ] Update the templates to use the new design system
     - [ ] Ensure the login form and notifications look correct on mobile devices
