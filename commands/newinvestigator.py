@@ -1039,12 +1039,12 @@ class newinvestigator(commands.Cog):
             "Occupation": "Unknown", "Credit Rating": 0, "Game Mode": "Call of Cthulhu",
             "Backstory": {
                 "Pulp Talents": [],
-                "Personal Description": "",
-                "Ideology/Beliefs": "",
-                "Significant People": "",
-                "Meaningful Locations": "",
-                "Treasured Possessions": "",
-                "Traits": ""
+                "Personal Description": [],
+                "Ideology/Beliefs": [],
+                "Significant People": [],
+                "Meaningful Locations": [],
+                "Treasured Possessions": [],
+                "Traits": []
             },
             "Connections": [],
             "Custom Emojis": {},

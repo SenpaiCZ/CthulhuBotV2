@@ -79,7 +79,14 @@ async def load_player_stats():
             backstory = char_data["Backstory"]
             for field in required_backstory_fields:
                 if field not in backstory:
-                    backstory[field] = ""
+                    backstory[field] = []
+                    updated = True
+                elif not isinstance(backstory[field], list):
+                    # Convert to list if it was a string
+                    if isinstance(backstory[field], str) and backstory[field]:
+                         backstory[field] = [backstory[field]]
+                    else:
+                         backstory[field] = []
                     updated = True
             
             # Ensure Connections exists and is a list
