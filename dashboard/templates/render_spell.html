@@ -3,172 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ spell.name }} - Spell Render</title>
+    <title>{{ spell.name }} — Spell Render</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/themes.css') }}" rel="stylesheet">
     {% include 'includes/font_styles.html' %}
     <style>
         body {
-            background-color: #000;
+            background-color: var(--void-0);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 40px;
+            -webkit-font-smoothing: antialiased;
         }
 
         .coc-sheet {
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-            font-family: var(--font-body, 'Courier New', Courier, monospace);
-            border: 2px solid var(--theme-primary-dark, #2E8B57);
-            padding: 20px;
-            border-radius: 5px;
+            background: linear-gradient(160deg, var(--void-1), var(--void-0));
+            color: var(--bone);
+            font-family: var(--font-body, var(--font-sans));
+            border: 2px solid var(--sigil-deep);
+            padding: 40px;
             width: 800px;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
         }
 
+        .corners span {
+            position: absolute; width: 20px; height: 20px; border-color: var(--sigil); opacity: 0.6;
+        }
+        .corners span:nth-child(1) { top: -2px; left: -2px; border-top: 2px solid; border-left: 2px solid; }
+        .corners span:nth-child(2) { top: -2px; right: -2px; border-top: 2px solid; border-right: 2px solid; }
+        .corners span:nth-child(3) { bottom: -2px; left: -2px; border-bottom: 2px solid; border-left: 2px solid; }
+        .corners span:nth-child(4) { bottom: -2px; right: -2px; border-bottom: 2px solid; border-right: 2px solid; }
+
         .stat-box {
-            background: #0f0f0f;
-            border: 1px solid #333;
-            padding: 5px;
-            border-radius: 5px;
-            text-align: center;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            background: var(--void-2); border: 1px solid var(--hair-strong); padding: 12px 8px; text-align: center; height: 100%;
+            display: flex; flex-direction: column; justify-content: center;
         }
-        .stat-label {
-            font-size: 0.8em;
-            color: #888;
-            text-transform: uppercase;
-        }
-        .stat-value {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
+        .stat-label { font-family: var(--font-mono); font-size: 9px; color: var(--bone-fade); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .stat-value { font-family: var(--font-serif); font-weight: bold; font-size: 1.25rem; color: var(--bone); }
+        
         .section-header {
-            background-color: var(--theme-primary-dark, #2E8B57);
-            color: #fff;
-            padding: 5px 10px;
-            font-weight: bold;
+            font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: var(--bone-fade);
+            background: var(--void-2); padding: 8px 16px; margin: 32px 0 16px; border-left: 3px solid var(--sigil);
             text-transform: uppercase;
-            margin-top: 15px;
-            margin-bottom: 10px;
-            border-radius: 3px;
-            font-family: var(--font-headers, sans-serif) !important;
         }
+        
+        .accent-sigil { color: var(--sigil) !important; }
+        .accent-rust { color: var(--rust) !important; }
     </style>
 </head>
 <body>
     <div class="coc-sheet">
-        {% if image_url %}
-        <div class="d-flex align-items-start">
+        <div class="corners"><span></span><span></span><span></span><span></span></div>
+
+        <div class="d-flex align-items-start gap-4">
             <div class="flex-grow-1">
-        {% endif %}
+                <div class="mb-4">
+                    <div class="label" style="color:var(--sigil); font-size:10px; letter-spacing:4px">ARCANE INCANTATION</div>
+                    <h1 class="serif" style="font-size:3.5rem; color:var(--sigil); margin:8px 0 0; line-height:1">{{ spell.name }}</h1>
+                    <div class="serif-i" style="color:var(--bone-fade); font-size:1.4rem; margin-top:4px">{{ spell.category or 'Unclassified' }}</div>
+                </div>
 
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div>
-                <h1 class="display-5 mb-0 text-success">{{ spell.name }}</h1>
-                <div class="text-secondary fst-italic fs-5">{{ spell.category or 'Unknown Category' }}</div>
+                <div class="card-h p-4 mb-5" style="border-left: 4px solid var(--sigil); font-size: 17px; line-height: 1.6; color: var(--bone)">
+                    <window.Corners/>
+                    {% if spell.effect and spell.effect.description %}
+                        {{ spell.effect.description }}
+                    {% else %}
+                        <em class="text-muted">The precise effects of this ritual are unknown.</em>
+                    {% endif %}
+                </div>
             </div>
-        </div>
 
-        <div class="card bg-dark border-secondary mb-4">
-            <div class="card-body">
-                {% if spell.effect and spell.effect.description %}
-                    <p class="card-text border-start border-success border-3 ps-3">{{ spell.effect.description }}</p>
-                {% endif %}
+            {% if image_url %}
+            <div style="width: 280px; flex-shrink: 0; padding-top: 10px">
+                <img src="{{ image_url }}" class="img-fluid border border-secondary shadow-lg" alt="{{ spell.name }}" style="width: 100%;">
             </div>
+            {% endif %}
         </div>
 
         <div class="section-header">Costs & Casting</div>
-        <div class="row row-cols-2 row-cols-md-4 g-2 mb-4">
+        <div class="row row-cols-4 g-2 mb-4">
             <div class="col">
                 <div class="stat-box">
                     <div class="stat-label">Magic Points</div>
-                    <div class="stat-value text-info">{{ spell.costs.magic_points if spell.costs and spell.costs.magic_points else 'None' }}</div>
+                    <div class="stat-value accent-sigil">{{ spell.costs.magic_points if (spell.costs and spell.costs.magic_points) else 'None' }}</div>
                 </div>
             </div>
             <div class="col">
                 <div class="stat-box">
                     <div class="stat-label">Sanity</div>
-                    <div class="stat-value text-danger">{{ spell.costs.sanity if spell.costs and spell.costs.sanity else 'None' }}</div>
+                    <div class="stat-value accent-rust">{{ spell.costs.sanity if (spell.costs and spell.costs.sanity) else 'None' }}</div>
                 </div>
             </div>
             <div class="col">
                 <div class="stat-box">
                     <div class="stat-label">Casting Time</div>
-                    <div class="stat-value text-light">{{ spell.casting_time or 'Instantaneous' }}</div>
+                    <div class="stat-value" style="font-size: 1rem">{{ spell.casting_time or 'Instant' }}</div>
                 </div>
             </div>
             <div class="col">
                 <div class="stat-box">
                     <div class="stat-label">Range</div>
-                    <div class="stat-value text-light">{{ spell.range or 'Touch' }}</div>
+                    <div class="stat-value" style="font-size: 1rem">{{ spell.range or 'Touch' }}</div>
                 </div>
             </div>
         </div>
 
         {% if spell.costs and spell.costs.components %}
-        <div class="mb-3 p-2 bg-dark border border-secondary rounded">
-            <strong class="text-success text-uppercase small">Components:</strong>
-            <span class="text-light ms-2">{{ spell.costs.components }}</span>
+        <div class="mb-4">
+            <div class="label mb-2" style="font-size:9px">ARCANE COMPONENTS</div>
+            <div class="card-h p-3">
+                <window.Corners/>
+                <span class="serif-i" style="font-size:14px; color:var(--bone-dim)">{{ spell.costs.components }}</span>
+            </div>
         </div>
         {% endif %}
 
-        <div class="row">
-            <div class="col-lg-6">
-                {% if spell.effect and spell.effect.damage %}
-                <div class="mb-3">
-                    <div class="card bg-dark border-secondary">
-                        <div class="card-body p-2">
-                            <h6 class="card-title text-danger small text-uppercase mb-1">Damage</h6>
-                            <p class="card-text fw-bold">{{ spell.effect.damage }}</p>
-                        </div>
-                    </div>
+        <div class="row g-3">
+            {% if spell.effect and spell.effect.damage %}
+            <div class="col-6">
+                <div class="stat-box p-3">
+                    <div class="label" style="font-size:9px; color:var(--rust); margin-bottom:8px">POTENTIAL DAMAGE</div>
+                    <div class="mono" style="font-size:1.5rem; color:var(--rust); font-weight:bold">{{ spell.effect.damage }}</div>
                 </div>
-                {% endif %}
             </div>
+            {% endif %}
 
-            <div class="col-lg-6">
-                {% if spell.effect and spell.effect.opposed_roll %}
-                <div class="mb-3">
-                    <div class="card bg-dark border-secondary">
-                        <div class="card-body p-2">
-                            <h6 class="card-title text-warning small text-uppercase mb-1">Opposed Roll</h6>
-                            <p class="card-text fw-bold">{{ spell.effect.opposed_roll }}</p>
-                        </div>
-                    </div>
+            {% if spell.effect and spell.effect.opposed_roll %}
+            <div class="col-6">
+                <div class="stat-box p-3">
+                    <div class="label" style="font-size:9px; color:var(--amber); margin-bottom:8px">OPPOSED ROLL</div>
+                    <div class="serif" style="font-size:1.25rem">{{ spell.effect.opposed_roll }}</div>
                 </div>
-                {% endif %}
             </div>
+            {% endif %}
         </div>
 
         {% if spell.deeper_magic %}
-        <div class="mt-4">
+        <div class="mt-5">
             <div class="section-header">Deeper Magic</div>
-            <div class="card bg-dark border-secondary">
-                <div class="card-body">
-                    <p class="card-text text-light fst-italic">{{ spell.deeper_magic }}</p>
-                </div>
+            <div class="card-h p-4" style="background:rgba(120,220,170,0.02)">
+                <window.Corners/>
+                <div class="serif-i" style="font-size:15px; line-height:1.7; color:var(--bone-dim)">{{ spell.deeper_magic }}</div>
             </div>
         </div>
         {% endif %}
 
         {% if spell.alternate_names %}
-            <div class="mt-4 pt-2 border-top border-secondary small text-muted text-center">
-                <em>Also known as: {{ spell.alternate_names | join(', ') }}</em>
+            <div class="mt-5 pt-3 border-top border-secondary text-center">
+                <div class="label" style="font-size:9px; color:var(--bone-fade)">ALSO KNOWN AS</div>
+                <div class="serif-i" style="font-size:13px; color:var(--bone-fade)">{{ spell.alternate_names | join(', ') }}</div>
             </div>
-        {% endif %}
-
-        {% if image_url %}
-            </div>
-            <div class="ms-3" style="width: 300px; flex-shrink: 0;">
-                <img src="{{ image_url }}" class="img-fluid rounded border border-secondary" alt="{{ spell.name }}" style="width: 100%; object-fit: contain;">
-            </div>
-        </div>
         {% endif %}
     </div>
 </body>

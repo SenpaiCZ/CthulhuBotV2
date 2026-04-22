@@ -3,100 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ weapon_name }} - Weapon Render</title>
+    <title>{{ weapon_name }} — Weapon Render</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/themes.css') }}" rel="stylesheet">
     {% include 'includes/font_styles.html' %}
     <style>
         body {
-            background-color: #000;
+            background-color: var(--void-0);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 40px;
+            -webkit-font-smoothing: antialiased;
         }
 
         .coc-sheet {
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-            font-family: var(--font-body, 'Courier New', Courier, monospace);
-            border: 2px solid var(--theme-primary-dark, #2E8B57);
-            padding: 20px;
-            border-radius: 5px;
-            width: 800px;
+            background: linear-gradient(160deg, var(--void-1), var(--void-0));
+            color: var(--bone);
+            font-family: var(--font-body, var(--font-sans));
+            border: 2px solid var(--sigil-deep);
+            padding: 40px;
+            width: 850px;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
         }
 
+        .corners span {
+            position: absolute; width: 20px; height: 20px; border-color: var(--sigil); opacity: 0.6;
+        }
+        .corners span:nth-child(1) { top: -2px; left: -2px; border-top: 2px solid; border-left: 2px solid; }
+        .corners span:nth-child(2) { top: -2px; right: -2px; border-top: 2px solid; border-right: 2px solid; }
+        .corners span:nth-child(3) { bottom: -2px; left: -2px; border-bottom: 2px solid; border-left: 2px solid; }
+        .corners span:nth-child(4) { bottom: -2px; right: -2px; border-bottom: 2px solid; border-right: 2px solid; }
+
         .stat-box {
-            background: #0f0f0f;
-            border: 1px solid #333;
-            padding: 5px;
-            border-radius: 5px;
-            text-align: center;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            background: var(--void-2); border: 1px solid var(--hair-strong); padding: 12px 8px; text-align: center; height: 100%;
+            display: flex; flex-direction: column; justify-content: center;
         }
-        .stat-label {
-            font-size: 0.8em;
-            color: #888;
-            text-transform: uppercase;
-        }
-        .stat-value {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
+        .stat-label { font-family: var(--font-mono); font-size: 9px; color: var(--bone-fade); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .stat-value { font-family: var(--font-serif); font-weight: bold; font-size: 1.25rem; color: var(--bone); }
+        
         .section-header {
-            background-color: var(--theme-primary-dark, #2E8B57);
-            color: #fff;
-            padding: 5px 10px;
-            font-weight: bold;
+            font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: var(--bone-fade);
+            background: var(--void-2); padding: 8px 16px; margin: 32px 0 16px; border-left: 3px solid var(--sigil);
             text-transform: uppercase;
-            margin-top: 15px;
-            margin-bottom: 10px;
-            border-radius: 3px;
-            font-family: var(--font-headers, sans-serif) !important;
         }
+        
+        .accent-sigil { color: var(--sigil) !important; }
+        .accent-rust { color: var(--rust) !important; }
     </style>
 </head>
 <body>
     <div class="coc-sheet">
-        {% if image_url %}
-        <div class="d-flex align-items-start">
+        <div class="corners"><span></span><span></span><span></span><span></span></div>
+
+        <div class="d-flex align-items-start gap-4">
             <div class="flex-grow-1">
-        {% endif %}
+                <div class="mb-4">
+                    <div class="label" style="color:var(--sigil); font-size:10px; letter-spacing:4px">INVESTIGATOR ARMAMENT</div>
+                    <h1 class="serif" style="font-size:3.5rem; color:var(--sigil); margin:8px 0 0; line-height:1">{{ weapon_name }}</h1>
+                    <div style="display:flex; gap:12px; align-items:center; margin-top:8px">
+                        <div class="serif-i" style="color:var(--bone-fade); font-size:1.4rem">{{ weapon.year or 'All Eras' }}</div>
+                        {% if weapon.cost %}<span class="badge bg-dark border border-secondary mono" style="font-size:10px; borderRadius:0; padding:4px 8px">{{ weapon.cost|upper }}</span>{% endif %}
+                    </div>
+                </div>
 
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div>
-                <h1 class="display-5 mb-0 text-success">{{ weapon_name }}</h1>
-                <div class="text-secondary fst-italic fs-5">{{ weapon.year }}</div>
+                <div class="card-h p-4 mb-5" style="border-left: 4px solid var(--sigil); font-size: 16px; line-height: 1.6; color: var(--bone)">
+                    <window.Corners/>
+                    {% if weapon.description %}
+                        {{ weapon.description }}
+                    {% else %}
+                        <em class="text-muted">No historical documentation exists for this instrument.</em>
+                    {% endif %}
+                </div>
             </div>
-            <div class="text-end">
-                <span class="badge bg-secondary me-1">{{ weapon.cost }}</span>
+
+            {% if image_url %}
+            <div style="width: 300px; flex-shrink: 0; padding-top: 10px">
+                <img src="{{ image_url }}" class="img-fluid border border-secondary shadow-lg" alt="{{ weapon_name }}" style="width: 100%;">
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="section-header">Weapon Statistics</div>
+        <div class="row row-cols-5 g-2 mb-4">
+            <div class="col">
+                <div class="stat-box">
+                    <div class="stat-label">Damage</div>
+                    <div class="stat-value accent-rust">{{ weapon.damage or '—' }}</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="stat-box">
+                    <div class="stat-label">Range</div>
+                    <div class="stat-value" style="font-size:1rem">{{ weapon.range or '—' }}</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="stat-box">
+                    <div class="stat-label">Capacity</div>
+                    <div class="stat-value" style="font-size:1rem">{{ weapon.capacity or '—' }}</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="stat-box">
+                    <div class="stat-label">Shots/Rnd</div>
+                    <div class="stat-value" style="font-size:1rem">{{ weapon.shots_per_round or '—' }}</div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="stat-box">
+                    <div class="stat-label">Malfunction</div>
+                    <div class="stat-value" style="color:var(--amber)">{{ weapon.malfunction or '—' }}</div>
+                </div>
             </div>
         </div>
 
-        <div class="card bg-dark border-secondary mb-4">
-            <div class="card-body">
-                <p class="card-text border-start border-success border-3 ps-3">{{ weapon.description }}</p>
-            </div>
-        </div>
-
-        <div class="section-header">Statistics</div>
-        <div class="row row-cols-2 row-cols-md-3 g-2 mb-4">
-            <div class="col"><div class="stat-box"><div class="stat-label">Damage</div><div class="stat-value text-danger">{{ weapon.damage }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">Range</div><div class="stat-value">{{ weapon.range }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">Capacity</div><div class="stat-value">{{ weapon.capacity }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">Shots/Round</div><div class="stat-value">{{ weapon.shots_per_round }}</div></div></div>
-            <div class="col"><div class="stat-box"><div class="stat-label">Malfunction</div><div class="stat-value text-warning">{{ weapon.malfunction }}</div></div></div>
-        </div>
-
-        {% if image_url %}
-            </div>
-            <div class="ms-3" style="width: 300px; flex-shrink: 0;">
-                <img src="{{ image_url }}" class="img-fluid rounded border border-secondary" alt="{{ weapon_name }}" style="width: 100%; object-fit: contain;">
+        {% if weapon.special_rules %}
+        <div class="mt-4">
+            <div class="label mb-2" style="font-size:9px">SPECIAL ATTRIBUTES</div>
+            <div class="card-h p-4" style="background:rgba(180,70,60,0.02); border-top: 1px solid var(--rust)">
+                <window.Corners/>
+                <div style="font-size:14px; line-height:1.6; color:var(--bone-dim)">{{ weapon.special_rules }}</div>
             </div>
         </div>
         {% endif %}
