@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Finish Dashboard UI Overhaul**
+- [x] **Track: Finish Dashboard UI Overhaul**
   *Link: [./tracks/finish_dashboard_20260422/](./tracks/finish_dashboard_20260422/)*
