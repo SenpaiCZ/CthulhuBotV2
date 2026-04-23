@@ -1407,19 +1407,19 @@ async def grimoire_hub():
 @app.route('/monsters')
 async def admin_monsters():
     monsters_data = await _load_json_file(INFODATA_FOLDER, 'monsters.json')
-    stat_emojis = {k: emoji.emojize(v, language='alias') for k, v in emojis.stat_emojis.items()}
+    stat_emojis = emojis.web_symbols
     return await render_template('monsters.html', data=monsters_data, stat_emojis=stat_emojis, type_slug="monster")
 
 @app.route('/deities')
 async def admin_deities():
     deities_data = await _load_json_file(INFODATA_FOLDER, 'deities.json')
-    stat_emojis = {k: emoji.emojize(v, language='alias') for k, v in emojis.stat_emojis.items()}
+    stat_emojis = emojis.web_symbols
     return await render_template('deities.html', data=deities_data, stat_emojis=stat_emojis, type_slug="deity")
 
 @app.route('/spells')
 async def admin_spells():
     spells_data = await _load_json_file(INFODATA_FOLDER, 'spells.json')
-    stat_emojis = {k: emoji.emojize(v, language='alias') for k, v in emojis.stat_emojis.items()}
+    stat_emojis = emojis.web_symbols
     return await render_template('spells.html', data=spells_data, stat_emojis=stat_emojis, type_slug="spell")
 
 @app.route('/weapons')

@@ -108,11 +108,11 @@ function renderGuilds(guilds) {
                     <div class="col-md-4">
                         <div class="label mb-3">Activity Sigils</div>
                         <ul class="list-group mb-3" style="border:1px solid var(--hair); border-radius:0">
-                            ${emojiListHtml || '<li class="list-group-item activity-item text-muted serif-i">Default sigil 🎮 is used.</li>'}
+                            ${emojiListHtml || '<li class="list-group-item activity-item text-muted serif-i">Default sigil ⚔ is used.</li>'}
                         </ul>
                         <div class="input-group">
                             <input type="text" class="form-control bg-dark text-light border-secondary mono" id="new-emoji-activity-${guild.id}" placeholder="Game Name" style="font-size:12px">
-                            <input type="text" class="form-control bg-dark text-light border-secondary text-center" id="new-emoji-char-${guild.id}" placeholder="💠" style="max-width: 60px; font-size:12px">
+                            <input type="text" class="form-control bg-dark text-light border-secondary text-center" id="new-emoji-char-${guild.id}" placeholder="✧" style="max-width: 60px; font-size:12px">
                             <button class="btn-eld on" style="padding:8px 12px" onclick="addEmoji('${guild.id}')">SET</button>
                         </div>
                     </div>

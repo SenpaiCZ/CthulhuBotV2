@@ -62,24 +62,29 @@ function SpellDetail({spell}) {
 
       <div className="label mb-3" style={{color:"var(--sigil)"}}>Costs & Casting</div>
       <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(120px, 1fr))", gap:10, marginBottom:40}}>
-        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
-          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>MAGIC POINTS</div>
+        <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+          <window.Corners/>
+          <div style={{fontSize:10, color:"var(--sigil)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>✧ MAGIC POINTS</div>
           <div style={{fontSize:18, color:"var(--sigil)", fontWeight:600}}>{s.costs?.magic_points || 'None'}</div>
         </div>
-        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
-          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>SANITY</div>
+        <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+          <window.Corners/>
+          <div style={{fontSize:10, color:"var(--rust)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>⚖ SANITY</div>
           <div style={{fontSize:18, color:"var(--rust)", fontWeight:600}}>{s.costs?.sanity || 'None'}</div>
         </div>
-        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
-          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>POW</div>
+        <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+          <window.Corners/>
+          <div style={{fontSize:10, color:"var(--amber)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>⚡ POW</div>
           <div style={{fontSize:18, color:"var(--amber)", fontWeight:600}}>{s.costs?.pow || 'None'}</div>
         </div>
-        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
-          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>CASTING TIME</div>
+        <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+          <window.Corners/>
+          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>⧗ CASTING TIME</div>
           <div style={{fontSize:15, color:"var(--bone)", fontWeight:600}}>{s.casting_time || 'Instant'}</div>
         </div>
-        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
-          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>RANGE</div>
+        <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+          <window.Corners/>
+          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>◎ RANGE</div>
           <div style={{fontSize:15, color:"var(--bone)", fontWeight:600}}>{s.range || 'Touch'}</div>
         </div>
       </div>

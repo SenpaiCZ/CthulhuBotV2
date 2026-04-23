@@ -63,24 +63,29 @@ function WeaponDetail({weapon, name}) {
 
       <div className="label mb-3" style={{color:"var(--sigil)"}}>Weapon Statistics</div>
       <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(130px, 1fr))", gap:10, marginBottom:40}}>
-        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
-          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>DAMAGE</div>
+        <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+          <window.Corners/>
+          <div style={{fontSize:10, color:"var(--rust)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>⚔ DAMAGE</div>
           <div style={{fontSize:20, color:"var(--rust)", fontWeight:600}}>{weapon.damage || '—'}</div>
         </div>
-        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
-          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>RANGE</div>
+        <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+          <window.Corners/>
+          <div style={{fontSize:10, color:"var(--sigil)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>◎ RANGE</div>
           <div style={{fontSize:16, color:"var(--bone)", fontWeight:600}}>{weapon.range || '—'}</div>
         </div>
-        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
-          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>CAPACITY</div>
+        <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+          <window.Corners/>
+          <div style={{fontSize:10, color:"var(--sigil)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>✶ CAPACITY</div>
           <div style={{fontSize:16, color:"var(--bone)", fontWeight:600}}>{weapon.capacity || '—'}</div>
         </div>
-        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
-          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>SHOTS/ROUND</div>
+        <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+          <window.Corners/>
+          <div style={{fontSize:10, color:"var(--sigil)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>⚡ SHOTS/ROUND</div>
           <div style={{fontSize:16, color:"var(--bone)", fontWeight:600}}>{weapon.shots_per_round || '—'}</div>
         </div>
-        <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:12, textAlign:"center"}}>
-          <div style={{fontSize:10, color:"var(--bone-fade)", marginBottom:4, letterSpacing:"0.1em"}}>MALFUNCTION</div>
+        <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+          <window.Corners/>
+          <div style={{fontSize:10, color:"var(--amber)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>⌫ MALFUNCTION</div>
           <div style={{fontSize:16, color:"var(--amber)", fontWeight:600}}>{weapon.malfunction || '—'}</div>
         </div>
       </div>

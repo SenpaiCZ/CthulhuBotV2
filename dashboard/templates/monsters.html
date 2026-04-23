@@ -41,15 +41,16 @@ function MonsterDetail({monster, statEmojis}) {
   const m = monster.monster_entry;
   
   const renderStat = (key, val) => {
-    const emojiStr = STAT_EMOJIS[key] || '';
+    const symbolStr = statEmojis[key] || statEmojis['Default'] || '✶';
     let valStr = typeof val === 'object' ? (val.average || val.value || val) : val;
     let rollStr = typeof val === 'object' ? val.roll : null;
     
     return (
-      <div key={key} className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:10, textAlign:"center"}}>
-        <div style={{fontSize:11, color:"var(--bone-fade)", marginBottom:4}}>{emojiStr} {key}</div>
-        <div style={{fontSize:16, color:"var(--bone)", fontWeight:600}}>{valStr}</div>
-        {rollStr && <div style={{fontSize:9, opacity:0.7, marginTop:2, color:"var(--bone-fade)"}}>{rollStr}</div>}
+      <div key={key} className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+        <window.Corners/>
+        <div style={{fontSize:10, color:"var(--sigil)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>{symbolStr} {key}</div>
+        <div style={{fontSize:18, color:"var(--bone)", fontWeight:600}}>{valStr}</div>
+        {rollStr && <div style={{fontSize:9, opacity:0.6, marginTop:2, color:"var(--bone-fade)"}}>{rollStr}</div>}
       </div>
     );
   };
@@ -100,25 +101,30 @@ function MonsterDetail({monster, statEmojis}) {
 
           <div className="label mb-3" style={{color:"var(--sigil)"}}>Derived Attributes</div>
           <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(100px, 1fr))", gap:10, marginBottom:32}}>
-            <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:10, textAlign:"center"}}>
-              <div style={{fontSize:11, color:"var(--bone-fade)", marginBottom:4}}>HP</div>
-              <div style={{fontSize:16, color:"var(--rust)", fontWeight:600}}>{m.derived_stats?.hit_points}</div>
+            <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+              <window.Corners/>
+              <div style={{fontSize:10, color:"var(--rust)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>❣ HP</div>
+              <div style={{fontSize:18, color:"var(--rust)", fontWeight:600}}>{m.derived_stats?.hit_points}</div>
             </div>
-            <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:10, textAlign:"center"}}>
-              <div style={{fontSize:11, color:"var(--bone-fade)", marginBottom:4}}>DB</div>
-              <div style={{fontSize:16, color:"var(--bone)", fontWeight:600}}>{m.derived_stats?.damage_bonus}</div>
+            <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+              <window.Corners/>
+              <div style={{fontSize:10, color:"var(--sigil)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>⚔ DB</div>
+              <div style={{fontSize:18, color:"var(--bone)", fontWeight:600}}>{m.derived_stats?.damage_bonus}</div>
             </div>
-            <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:10, textAlign:"center"}}>
-              <div style={{fontSize:11, color:"var(--bone-fade)", marginBottom:4}}>Build</div>
-              <div style={{fontSize:16, color:"var(--bone)", fontWeight:600}}>{m.derived_stats?.build}</div>
+            <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+              <window.Corners/>
+              <div style={{fontSize:10, color:"var(--sigil)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>✶ Build</div>
+              <div style={{fontSize:18, color:"var(--bone)", fontWeight:600}}>{m.derived_stats?.build}</div>
             </div>
-            <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:10, textAlign:"center"}}>
-              <div style={{fontSize:11, color:"var(--bone-fade)", marginBottom:4}}>MP</div>
-              <div style={{fontSize:16, color:"var(--sigil)", fontWeight:600}}>{m.derived_stats?.magic_points}</div>
+            <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+              <window.Corners/>
+              <div style={{fontSize:10, color:"var(--sigil)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>✧ MP</div>
+              <div style={{fontSize:18, color:"var(--sigil)", fontWeight:600}}>{m.derived_stats?.magic_points}</div>
             </div>
-            <div className="stat-box" style={{border:"1px solid var(--hair-strong)", background:"var(--void-2)", padding:10, textAlign:"center"}}>
-              <div style={{fontSize:11, color:"var(--bone-fade)", marginBottom:4}}>Move</div>
-              <div style={{fontSize:16, color:"var(--bone)", fontWeight:600}}>
+            <div className="card-h" style={{padding:12, textAlign:"center", background:"var(--void-2)"}}>
+              <window.Corners/>
+              <div style={{fontSize:10, color:"var(--sigil)", marginBottom:4, fontFamily:"var(--font-mono)", letterSpacing:"0.1em"}}>✶ Move</div>
+              <div style={{fontSize:18, color:"var(--bone)", fontWeight:600}}>
                 {typeof m.derived_stats?.move === 'object' ? m.derived_stats.move.base : m.derived_stats?.move}
               </div>
             </div>

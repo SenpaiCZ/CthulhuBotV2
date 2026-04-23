@@ -175,15 +175,16 @@
 
         <!-- Derived & Combat -->
         <div class="row g-2 mb-4">
-            {% for k, l in [('Move','👣'),('Build','💪'),('Damage Bonus','⚔'),('Dodge','💨')] %}
+            {% for k, l in [('Move','✶'),('Build','✶'),('Damage Bonus','⚔'),('Dodge','⌁')] %}
             <div class="col-3">
                 <div class="coc-stat-box d-flex justify-content-between align-items-center px-3" style="height: 100%">
-                    <div class="coc-label mb-0">{{ k|upper }}</div>
+                    <div class="coc-label mb-0">{{ l }} {{ k|upper }}</div>
                     <div class="mono" style="font-size:14px; font-weight:bold; color:var(--bone)">{{ char.get(k, '—') }}</div>
                 </div>
             </div>
             {% endfor %}
         </div>
+
 
         <!-- Skills -->
         <div class="coc-section-title">Skills & Proficiencies</div>

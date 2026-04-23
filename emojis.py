@@ -246,9 +246,41 @@ stat_emojis = {
       "Chainsaw": "🪓",
   }
 
-def get_stat_emoji(stat_name):
+web_symbols = {
+      "STR": "✶",
+      "DEX": "⌁",
+      "CON": "⚖",
+      "INT": "◎",
+      "POW": "⚡",
+      "APP": "✧",
+      "EDU": "✎",
+      "SIZ": "👤",
+      "HP": "❣",
+      "MP": "✧",
+      "LUCK": "✦",
+      "SAN": "⚖",
+      "Age": "⧗",
+      "Residence": "◎",
+      "Occupation": "✶",
+      "Move": "✶",
+      "Build": "✶",
+      "Damage Bonus": "⚔",
+      "DB": "⚔",
+      "History": "Ψ",
+      "Occult": "✷",
+      "Library Use": "✎",
+      "Cthulhu Mythos": "Ψ",
+      "Default": "✶"
+}
+
+def get_stat_emoji(stat_name, web_mode=False):
   # 1. Exact match
-  if stat_name in stat_emojis:
+  source = web_symbols if web_mode else stat_emojis
+  
+  if stat_name in source:
+      return source[stat_name]
+  
+  if not web_mode and stat_name in stat_emojis:
       return stat_emojis[stat_name]
 
   # 2. Check for "Name (Specialization)" pattern

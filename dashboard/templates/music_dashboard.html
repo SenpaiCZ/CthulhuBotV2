@@ -131,19 +131,19 @@ function renderGuild(guildId, guildData) {
         const vol = track.volume ?? 50;
         const loopMode = track.loop_mode ?? 'off';
         
-        const loopLabel = loopMode === 'track' ? '🔂 TRACK' : loopMode === 'queue' ? '🔁 QUEUE' : 'OFF';
+        const loopLabel = loopMode === 'track' ? '✧ TRACK' : loopMode === 'queue' ? '◎ QUEUE' : 'OFF';
         const loopClass = loopMode !== 'off' ? 'primary' : '';
 
         const art = thumbnail
             ? `<img src="${thumbnail}" alt="cover" class="track-art">`
-            : `<div class="track-art-placeholder">🎵</div>`;
+            : `<div class="track-art-placeholder">♪</div>`;
 
         const titleHtml = url
             ? `<a href="${url}" target="_blank" rel="noopener">${title}</a>`
             : title;
 
         const pauseBtn = isPaused
-            ? `<button class="btn-eld primary" onclick="ctrl('${guildId}', 'resume')">▶ RESUME</button>`
+            ? `<button class="btn-eld primary" onclick="ctrl('${guildId}', 'resume')">⌁ RESUME</button>`
             : `<button class="btn-eld" onclick="ctrl('${guildId}', 'pause')">⏸ PAUSE</button>`;
 
         const progHtml = progressBar(track.elapsed, track.duration);
@@ -159,7 +159,7 @@ function renderGuild(guildId, guildData) {
                     </div>
                     ${progHtml}
                     <div class="volume-row">
-                        <label>🔊</label>
+                        <label>♪</label>
                         <input type="range" min="0" max="100" value="${vol}" 
                             oninput="this.nextElementSibling.textContent=this.value+'%'"
                             onchange="ctrl('${guildId}', 'volume', this.value)">
@@ -169,9 +169,9 @@ function renderGuild(guildId, guildData) {
             </div>
             <div class="controls-row">
                 ${pauseBtn}
-                <button class="btn-eld" onclick="ctrl('${guildId}', 'skip')">⏭ SKIP</button>
-                <button class="btn-eld ${loopClass}" onclick="ctrl('${guildId}', 'loop')">🔄 LOOP MODE</button>
-                <button class="btn-eld rust" onclick="banTrack('${guildId}', '${url}')">🚫 BAN SONG</button>
+                <button class="btn-eld" onclick="ctrl('${guildId}', 'skip')">⌁ SKIP</button>
+                <button class="btn-eld ${loopClass}" onclick="ctrl('${guildId}', 'loop')">◎ LOOP MODE</button>
+                <button class="btn-eld rust" onclick="banTrack('${guildId}', '${url}')">⌫ BAN SONG</button>
             </div>`;
     }
 
@@ -194,7 +194,7 @@ function renderGuild(guildId, guildData) {
         }).join('');
         const moreNote = queue.length > 10 ? `<div class="p-3 text-center label" style="font-size:9px; color:var(--bone-fade)">…AND ${queue.length - 10} MORE TRACKS IN THE VOID</div>` : '';
         queueHtml = `<div class="queue-section">
-            <div class="queue-title">📚 Upcoming Resonance (${queue.length})</div>
+            <div class="queue-title">Ψ Upcoming Resonance (${queue.length})</div>
             ${rows}${moreNote}
         </div>`;
     }
