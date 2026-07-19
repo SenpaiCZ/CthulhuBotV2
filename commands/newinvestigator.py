@@ -1477,7 +1477,9 @@ class newinvestigator(commands.Cog):
         app = char_data.get("APP", 0)
         pow_stat = char_data.get("POW", 0)
         formula = info.get("skill_points", "EDU × 4")
-        formula = formula.replace("x", "×").replace("X", "×").replace("*", "×").replace("–", "-")
+        # Note: don't blindly replace "X" here — "DEX" contains an uppercase X,
+        # and a blanket replace corrupts it into "DE×" before parsing.
+        formula = formula.replace("x", "×").replace("*", "×").replace("–", "-")
         if "Varies" in formula: return 0
         try:
             if formula == "EDU × 4": return edu * 4

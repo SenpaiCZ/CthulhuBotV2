@@ -108,3 +108,19 @@ def test_calculate_occupation_points_unparseable_formula_returns_zero(wizard):
     # Unparseable formulas that don't throw exceptions return 0, not a fallback to EDU×4.
     # The fallback only triggers on actual exceptions.
     assert wizard.calculate_occupation_points(char_data, info) == 0
+
+
+def test_calculate_occupation_points_dex_formula_computes_correctly(wizard):
+    # Regression test: formula normalization used to blindly replace every "X"
+    # character with "×", corrupting "DEX" into "DE×" and making any DEX-based
+    # term silently evaluate to 0 instead of its real value.
+    char_data = {"EDU": 60, "DEX": 50, "STR": 40, "APP": 45, "POW": 55}
+    info = {"skill_points": "EDU × 2 + DEX × 2"}
+    assert wizard.calculate_occupation_points(char_data, info) == 220
+
+
+def test_calculate_occupation_points_dex_in_or_clause_can_win(wizard):
+    char_data = {"EDU": 60, "DEX": 80, "STR": 40, "APP": 45, "POW": 55}
+    info = {"skill_points": "(EDU×2 or DEX×2)"}
+    # DEX*2=160 beats EDU*2=120, so the "or" branch should select 160.
+    assert wizard.calculate_occupation_points(char_data, info) == 160
