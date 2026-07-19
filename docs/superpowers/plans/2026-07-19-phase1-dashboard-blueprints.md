@@ -41,6 +41,20 @@ regardless of blueprint.
   same commit as the state extraction — a dangling import to the old path would silently create a
   second, disconnected dict and break shared mixer/volume state between the dashboard and the music
   cog.
+- **`url_for()` endpoint namespacing (discovered during Task 3 — applies to every remaining
+  blueprint task).** Quart always namespaces a blueprint's route endpoints as
+  `<blueprint_name>.<endpoint>` (e.g. `login` becomes `core.login`), even if the route decorator
+  passes an explicit `endpoint=` kwarg — that kwarg is a no-op once the route lives on a blueprint.
+  Every task that moves a route MUST grep the **entire repo** (`dashboard/app.py`, every remaining
+  blueprint file, every file under `dashboard/templates/*.html`) for `url_for('<old_endpoint_name>'`
+  for each function it moves, and update every hit to the `<blueprint_name>.<old_endpoint_name>`
+  form. Missing one silently produces a `werkzeug.routing.exceptions.BuildError` at runtime on
+  whatever code path calls it — not something the route-inventory sweep's GET-based smoke test can
+  catch, since `url_for()` failures happen inside a handler's own logic, not at routing time. Task 3
+  had to update 23 `url_for('login')` call sites in `dashboard/app.py`, 1 `url_for('index')` inside
+  its own moved `logout` handler, and 2 template references — expect a similar (usually smaller)
+  fixup in most later tasks. `admin_dashboard` is a known not-yet-migrated endpoint referenced by
+  `core.py`'s `login`; whichever task moves it must update that reference too.
 - Route line-range references below (e.g. "lines 346–528") refer to `dashboard/app.py` **as it
   exists at the start of this plan**, i.e. after Phase 0 and the DEX-formula fix, at commit
   `ebc2393`. Line numbers will shift after each task removes code — always locate the target
