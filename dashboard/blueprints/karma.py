@@ -1,6 +1,5 @@
 from collections import Counter
 from quart import Blueprint, request, jsonify, render_template, redirect, url_for
-import discord
 
 from dashboard.app import app, is_admin
 from loadnsave import load_karma_settings, save_karma_settings
