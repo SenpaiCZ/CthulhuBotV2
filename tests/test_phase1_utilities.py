@@ -37,7 +37,7 @@ async def test_file_browser_route(client):
 async def test_json_editor_route(client):
     """Test that /admin/edit/infodata/monsters.json returns 200 OK and uses new design system in content"""
     await login(client)
-    with patch('dashboard.app._load_json_file', new_callable=AsyncMock) as mock_load_json:
+    with patch('dashboard.blueprints.file_browser._load_json_file', new_callable=AsyncMock) as mock_load_json:
         mock_load_json.return_value = {"test": "data"}
         response = await client.get('/admin/edit/infodata/monsters.json')
         assert response.status_code == 200
