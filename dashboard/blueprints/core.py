@@ -212,7 +212,7 @@ async def login():
             if ip in _failed_login_attempts:
                 del _failed_login_attempts[ip]
             session['logged_in'] = True
-            return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('admin.admin_dashboard'))
         else:
             # Sentinel: Record failure
             record_login_failure(ip)
