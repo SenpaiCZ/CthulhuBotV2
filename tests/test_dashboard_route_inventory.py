@@ -2,10 +2,12 @@ import re
 import pytest
 from dashboard.app import app
 
-# Recorded once, at the start of Phase 1 (commit ebc2393) — this is the exact number
-# of registered URL rules before any blueprint split. It must not change across this
-# phase's tasks: Phase 1 only moves routes between files, it never adds or removes one.
-EXPECTED_RULE_COUNT = len(list(app.url_map.iter_rules()))
+# Fixed historical baseline captured before the blueprint split began (commit 0548eb3,
+# via `len(list(app.url_map.iter_rules()))` — includes Quart's auto-registered "static"
+# endpoint alongside the 156 real routes). Hardcoded, not recomputed, so this test can
+# actually detect a route silently vanishing in a later commit — recomputing it live
+# would make the comparison a tautology that can never fail.
+EXPECTED_RULE_COUNT = 157
 
 
 def _dummy_path(rule_str):
@@ -21,7 +23,8 @@ def client():
 
 def test_registered_route_count_is_stable():
     """Phase 1 must not add or remove routes — only move them between files."""
-    assert len(list(app.url_map.iter_rules())) == EXPECTED_RULE_COUNT
+    actual = len(list(app.url_map.iter_rules()))
+    assert actual == EXPECTED_RULE_COUNT, f"expected {EXPECTED_RULE_COUNT} routes, found {actual}"
 
 
 # Routes confirmed to 404 from their own business logic on dummy-arg data, not from
