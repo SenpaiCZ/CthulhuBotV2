@@ -13,8 +13,6 @@ import emoji
 import emojis
 import feedparser
 import datetime
-import time
-import psutil
 from quart import Quart, render_template, request, redirect, url_for, session, jsonify, abort, send_from_directory
 from markupsafe import escape
 from loadnsave import (
@@ -54,8 +52,8 @@ from .file_utils import (
 
 from dashboard.state import (
     SOUNDBOARD_FOLDER, BACKUP_FOLDER, IMAGES_FOLDER, FONTS_FOLDER, OLD_FONTS_FOLDER,
-    server_volumes, guild_mixers, _failed_login_attempts, BASIC_FONTS, _PUBLIC_API,
-    _APP_START, MORSE_CODE_MAP,
+    server_volumes, guild_mixers, BASIC_FONTS, _PUBLIC_API,
+    MORSE_CODE_MAP,
 )
 
 app = Quart(__name__)
@@ -156,35 +154,6 @@ async def check_api_auth():
 def is_admin():
     return session.get('logged_in', False)
 
-def check_rate_limit(ip):
-    """
-    Sentinel: Check if IP is rate limited for login.
-    Limit: 5 attempts per 60 seconds.
-    """
-    now = time.time()
-    attempts = _failed_login_attempts.get(ip, [])
-    # Filter out old attempts
-    attempts = [t for t in attempts if now - t < 60]
-
-    if not attempts:
-        if ip in _failed_login_attempts:
-            del _failed_login_attempts[ip]
-    else:
-        _failed_login_attempts[ip] = attempts
-
-    if len(attempts) >= 5:
-        return False
-    return True
-
-def record_login_failure(ip):
-    """
-    Sentinel: Record a failed login attempt.
-    """
-    now = time.time()
-    if ip not in _failed_login_attempts:
-        _failed_login_attempts[ip] = []
-    _failed_login_attempts[ip].append(now)
-
 def format_bold(text):
     if not isinstance(text, str):
         return text
@@ -271,6 +240,9 @@ def get_image_url(type_slug, name):
 
     return None
 
+from dashboard.blueprints.core import core_bp
+app.register_blueprint(core_bp)
+
 import asyncio
 
 async def get_or_join_voice_channel(guild_id, channel_id):
@@ -331,188 +303,6 @@ async def inject_theme():
         'special': ''
     })
     return dict(dashboard_theme=theme, dashboard_fonts=fonts, origin_fonts=origin_fonts)
-
-@app.route('/api/status')
-async def bot_status():
-    is_ready = app.bot is not None and app.bot.is_ready()
-    secs = int(time.monotonic() - _APP_START)
-    d, rem = divmod(secs, 86400)
-    h, rem = divmod(rem, 3600)
-    m = rem // 60
-    uptime = (f"{d}d " if d else "") + f"{h:02d}h {m:02d}m"
-    latency = round(app.bot.latency * 1000) if is_ready else 0
-    guilds = len(app.bot.guilds) if is_ready else 0
-    try:
-        proc = psutil.Process()
-        mem_mb = round(proc.memory_info().rss / 1024 / 1024)
-    except Exception:
-        mem_mb = 0
-    return jsonify({
-        "status": "online",
-        "ready": is_ready,
-        "uptime": uptime,
-        "latency_ms": latency,
-        "guilds": guilds,
-        "memory_mb": mem_mb,
-    })
-
-@app.route('/fonts/<path:filename>')
-async def serve_fonts(filename):
-    try:
-        full_path = os.path.abspath(os.path.join(FONTS_FOLDER, filename))
-        if os.path.commonpath([full_path, os.path.abspath(FONTS_FOLDER)]) != os.path.abspath(FONTS_FOLDER):
-            return "Invalid file path", 400
-    except ValueError:
-        return "Invalid file path", 400
-
-    return await send_from_directory(FONTS_FOLDER, filename)
-
-@app.route('/images/<path:filename>')
-async def serve_image(filename):
-    try:
-        full_path = os.path.abspath(os.path.join(IMAGES_FOLDER, filename))
-        if os.path.commonpath([full_path, os.path.abspath(IMAGES_FOLDER)]) != os.path.abspath(IMAGES_FOLDER):
-            return "Invalid file path", 400
-    except ValueError:
-        return "Invalid file path", 400
-
-    return await send_from_directory(IMAGES_FOLDER, filename)
-
-@app.route('/api/images/upload', methods=['POST'])
-async def upload_image():
-    if not is_admin(): return "Unauthorized", 401
-
-    form = await request.form
-    files = await request.files
-
-    type_slug = form.get('type_slug')
-    name = form.get('name')
-    file = files.get('file')
-
-    if not type_slug or not name or not file:
-        return jsonify({"status": "error", "message": "Missing arguments"}), 400
-
-    if not file.filename:
-        return jsonify({"status": "error", "message": "No file selected"}), 400
-
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in ALLOWED_IMAGE_EXTENSIONS:
-        return jsonify({"status": "error", "message": "Invalid file type"}), 400
-
-    # Ensure type directory exists
-    safe_type = sanitize_filename(type_slug)
-    target_dir = os.path.join(IMAGES_FOLDER, safe_type)
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
-
-    # Sanitize name
-    safe_name = sanitize_filename(name)
-    filename = f"{safe_name}{ext}"
-    target_path = os.path.join(target_dir, filename)
-
-    # Remove any existing images with different extensions for this entry
-    for other_ext in ALLOWED_IMAGE_EXTENSIONS:
-        other_filename = f"{safe_name}{other_ext}"
-        other_path = os.path.join(target_dir, other_filename)
-        if os.path.exists(other_path):
-            os.remove(other_path)
-
-    try:
-        # Save file
-        file_bytes = file.read()
-        if asyncio.iscoroutine(file_bytes):
-            file_bytes = await file_bytes
-
-        with open(target_path, 'wb') as f:
-            f.write(file_bytes)
-
-        return jsonify({"status": "success", "url": f"/images/{safe_type}/{filename}"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/api/images/delete', methods=['POST'])
-async def delete_image():
-    if not is_admin(): return "Unauthorized", 401
-
-    data = await request.get_json()
-    type_slug = data.get('type_slug')
-    name = data.get('name')
-
-    if not type_slug or not name:
-        return jsonify({"status": "error", "message": "Missing arguments"}), 400
-
-    safe_type = sanitize_filename(type_slug)
-    safe_name = sanitize_filename(name)
-    target_dir = os.path.join(IMAGES_FOLDER, safe_type)
-
-    deleted = False
-
-    if os.path.exists(target_dir):
-        for ext in ALLOWED_IMAGE_EXTENSIONS:
-            filename = f"{safe_name}{ext}"
-            target_path = os.path.join(target_dir, filename)
-            if os.path.exists(target_path):
-                try:
-                    os.remove(target_path)
-                    deleted = True
-                except Exception as e:
-                    return jsonify({"status": "error", "message": str(e)}), 500
-
-    if deleted:
-        return jsonify({"status": "success"})
-    else:
-        return jsonify({"status": "error", "message": "Image not found"}), 404
-
-@app.route('/api/images/check', methods=['GET'])
-async def check_image():
-    type_slug = request.args.get('type_slug')
-    name = request.args.get('name')
-
-    if not type_slug or not name:
-        return jsonify({"found": False}), 400
-
-    url = get_image_url(type_slug, name)
-    if url:
-        return jsonify({"found": True, "url": url})
-    else:
-        return jsonify({"found": False})
-
-@app.route('/')
-async def index():
-    return await render_template('index.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-async def login():
-    if request.method == 'POST':
-        # Sentinel: Rate Limiting
-        ip = request.remote_addr
-        if not check_rate_limit(ip):
-             return await render_template('login.html', error="Too many failed attempts. Please try again later."), 429
-
-        form = await request.form
-        password = form.get('password')
-        settings = await load_settings_async()
-
-        # Sentinel: Prevent timing attacks
-        input_password = password or ""
-        expected_password = settings.get('admin_password', 'changeme') or ""
-
-        if secrets.compare_digest(input_password, expected_password):
-            # Sentinel: Clear failed attempts on success
-            if ip in _failed_login_attempts:
-                del _failed_login_attempts[ip]
-            session['logged_in'] = True
-            return redirect(url_for('admin_dashboard'))
-        else:
-            # Sentinel: Record failure
-            record_login_failure(ip)
-            return await render_template('login.html', error="Invalid Password")
-    return await render_template('login.html')
-
-@app.route('/logout')
-async def logout():
-    session.pop('logged_in', None)
-    return redirect(url_for('index'))
 
 @app.route('/characters')
 async def characters():
@@ -1173,7 +963,7 @@ async def render_script_view():
 
 @app.route('/admin/fonts')
 async def admin_fonts():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('fonts_dashboard.html')
 
 @app.route('/api/fonts/list')
@@ -1293,12 +1083,12 @@ async def fonts_update_category():
 
 @app.route('/admin')
 async def admin_dashboard():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('admin_dashboard.html')
 
 @app.route('/admin/design')
 async def admin_design():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     settings = await load_settings_async()
     current_theme = settings.get('dashboard_theme', 'cthulhu')
     current_fonts = settings.get('dashboard_fonts', {})
@@ -1469,7 +1259,7 @@ async def admin_occupations():
 
 @app.route('/admin/browse/<folder_name>')
 async def browse_files(folder_name):
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
 
     if folder_name == 'root':
         files = ['config.json'] if os.path.exists('config.json') else []
@@ -1492,7 +1282,7 @@ async def browse_files(folder_name):
 
 @app.route('/admin/edit/<folder_name>/<filename>')
 async def edit_file(folder_name, filename):
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
 
     if folder_name == 'infodata':
         target_dir = INFODATA_FOLDER
@@ -1542,7 +1332,7 @@ async def save_file(folder_name, filename):
 
 @app.route('/admin/bot_config')
 async def admin_bot_config():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
 
     if not app.bot:
         return "Bot not initialized", 500
@@ -1618,7 +1408,7 @@ async def save_prefix():
 
 @app.route('/admin/game_settings')
 async def admin_game_settings():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     skills_data = await load_skills_data()
     return await render_template('game_settings.html', skills=sorted(list(skills_data.keys())))
 
@@ -1788,7 +1578,7 @@ async def game_sounds_save():
 
 @app.route('/admin/karma')
 async def admin_karma():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
 
     if not app.bot:
         return "Bot not initialized", 500
@@ -2004,7 +1794,7 @@ async def detect_karma_emojis():
 
 @app.route('/admin/soundboard')
 async def soundboard_page():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('soundboard.html')
 
 @app.route('/api/soundboard/data')
@@ -2710,7 +2500,7 @@ async def track_remove():
 
 @app.route('/admin/reactionroles')
 async def admin_reaction_roles():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('reaction_roles.html')
 
 @app.route('/api/reactionroles/data')
@@ -2961,7 +2751,7 @@ async def reaction_roles_delete():
 
 @app.route('/admin/music')
 async def music_dashboard():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('music_dashboard.html')
 
 @app.route('/api/music/data')
@@ -3109,7 +2899,7 @@ async def music_ban():
 
 @app.route('/admin/rss')
 async def admin_rss():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('rss_dashboard.html')
 
 @app.route('/api/rss/data')
@@ -3297,7 +3087,7 @@ async def rss_delete():
 
 @app.route('/admin/gameroles')
 async def admin_gameroles():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('gameroles.html')
 
 @app.route('/api/gameroles/data')
@@ -3493,7 +3283,7 @@ async def gameroles_ignore_remove():
 
 @app.route('/admin/autorooms')
 async def admin_autorooms():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('autoroom_dashboard.html')
 
 @app.route('/api/autorooms/data')
@@ -3569,7 +3359,7 @@ async def autorooms_save():
 
 @app.route('/admin/deleter')
 async def admin_deleter():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('deleter_dashboard.html')
 
 @app.route('/api/deleter/data')
@@ -3676,7 +3466,7 @@ async def deleter_bulk():
 
 @app.route('/admin/backup')
 async def admin_backup():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     settings = await load_settings_async()
     backup_time = settings.get('backup_time')
     return await render_template('backup_dashboard.html', backup_time=backup_time)
@@ -3777,7 +3567,7 @@ async def backup_delete_file():
 
 @app.route('/admin/backup/download/<filename>')
 async def backup_download_file(filename):
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
 
     # Security checks
     try:
@@ -3796,7 +3586,7 @@ async def backup_download_file(filename):
 
 @app.route('/admin/pokemon')
 async def admin_pokemon():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('pokemon_dashboard.html')
 
 @app.route('/api/pokemon/data')
@@ -3979,7 +3769,7 @@ async def pokemon_push_next():
 
 @app.route('/admin/giveaway')
 async def admin_giveaway():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('giveaway_dashboard.html')
 
 @app.route('/api/giveaway/data')
@@ -4209,7 +3999,7 @@ async def giveaway_reroll():
 
 @app.route('/admin/polls')
 async def admin_polls():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('polls_dashboard.html')
 
 @app.route('/api/polls/data')
@@ -4320,7 +4110,7 @@ async def polls_end():
 
 @app.route('/admin/reminders')
 async def admin_reminders():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('reminders_dashboard.html')
 
 @app.route('/api/reminders/data')
@@ -4440,12 +4230,12 @@ async def reminders_delete():
 
 @app.route('/admin/enroll')
 async def admin_enroll():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('enroll_dashboard.html')
 
 @app.route('/admin/newspaper')
 async def admin_newspaper():
-    if not is_admin(): return redirect(url_for('login'))
+    if not is_admin(): return redirect(url_for('core.login'))
     return await render_template('newspaper_dashboard.html')
 
 @app.route('/api/enroll/data')
