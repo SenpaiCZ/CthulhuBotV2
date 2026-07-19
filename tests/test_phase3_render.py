@@ -21,7 +21,7 @@ def mock_dependencies():
 @pytest.mark.asyncio
 async def test_render_character_uses_palette(client):
     """Test character render uses oklch palette"""
-    with patch('dashboard.app.load_player_stats', new_callable=AsyncMock) as mock_stats:
+    with patch('dashboard.blueprints.render.load_player_stats', new_callable=AsyncMock) as mock_stats:
         mock_stats.return_value = {"123": {"456": {"NAME": "Harvey Walters"}}}
         response = await client.get('/render/character/123/456')
         assert response.status_code == 200
@@ -32,7 +32,7 @@ async def test_render_character_uses_palette(client):
 @pytest.mark.asyncio
 async def test_render_monster_uses_palette(client):
     """Test monster render uses oklch palette"""
-    with patch('dashboard.app.load_monsters_data', new_callable=AsyncMock) as mock_load:
+    with patch('dashboard.blueprints.render.load_monsters_data', new_callable=AsyncMock) as mock_load:
         mock_load.return_value = {"monsters": [{
             "monster_entry": {
                 "name": "Deep One",
@@ -48,7 +48,7 @@ async def test_render_monster_uses_palette(client):
 @pytest.mark.asyncio
 async def test_render_archetype_uses_palette(client):
     """Test archetype render uses oklch palette"""
-    with patch('dashboard.app.load_archetype_data', new_callable=AsyncMock) as mock_load:
+    with patch('dashboard.blueprints.render.load_archetype_data', new_callable=AsyncMock) as mock_load:
         mock_load.return_value = {"Adventurer": {"description": "A brave soul.", "adjustments": []}}
         response = await client.get('/render/archetype?name=Adventurer')
         assert response.status_code == 200
@@ -58,7 +58,7 @@ async def test_render_archetype_uses_palette(client):
 @pytest.mark.asyncio
 async def test_render_occupation_uses_palette(client):
     """Test occupation render uses oklch palette"""
-    with patch('dashboard.app.load_occupations_data', new_callable=AsyncMock) as mock_load:
+    with patch('dashboard.blueprints.render.load_occupations_data', new_callable=AsyncMock) as mock_load:
         mock_load.return_value = {"Antiquarian": {"description": "Old stuff.", "skills": "History"}}
         response = await client.get('/render/occupation?name=Antiquarian')
         assert response.status_code == 200
@@ -68,7 +68,7 @@ async def test_render_occupation_uses_palette(client):
 @pytest.mark.asyncio
 async def test_render_poison_uses_palette(client):
     """Test poison render uses oklch palette"""
-    with patch('dashboard.app.load_poisons_data', new_callable=AsyncMock) as mock_load:
+    with patch('dashboard.blueprints.render.load_poisons_data', new_callable=AsyncMock) as mock_load:
         mock_load.return_value = {"Arsenic": {"Onset Time": "Minutes", "Symptoms": "Death", "Damage": "1D10", "Note": "Bad."}}
         response = await client.get('/render/poison?name=Arsenic')
         assert response.status_code == 200
