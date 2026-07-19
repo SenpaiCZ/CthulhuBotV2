@@ -996,7 +996,7 @@ class Roll(commands.Cog):
                         if not sound_file and 'default' in guild_settings:
                              sound_file = guild_settings['default'].get(result_key)
                         if sound_file:
-                             from dashboard.app import guild_mixers, SOUNDBOARD_FOLDER
+                             from dashboard.state import guild_mixers, SOUNDBOARD_FOLDER
                              import os
                              mixer = guild_mixers.get(server_id)
                              if not mixer:

@@ -52,24 +52,15 @@ from .file_utils import (
     ALLOWED_IMAGE_EXTENSIONS
 )
 
-SOUNDBOARD_FOLDER = "soundboard"
-BACKUP_FOLDER = "backups"
-IMAGES_FOLDER = "images"
-FONTS_FOLDER = os.path.join("data", "fonts")
-OLD_FONTS_FOLDER = os.path.join("dashboard", "static", "fonts")
-server_volumes = {} # guild_id (str) -> {'music': 1.0, 'soundboard': 0.5}
-guild_mixers = {} # guild_id (str) -> MixingAudioSource
-_failed_login_attempts = {} # ip (str) -> [timestamp, ...]
-
-BASIC_FONTS = [
-    "Arial", "Verdana", "Helvetica", "Tahoma", "Trebuchet MS", "Times New Roman",
-    "Georgia", "Garamond", "Courier New", "Brush Script MT"
-]
+from dashboard.state import (
+    SOUNDBOARD_FOLDER, BACKUP_FOLDER, IMAGES_FOLDER, FONTS_FOLDER, OLD_FONTS_FOLDER,
+    server_volumes, guild_mixers, _failed_login_attempts, BASIC_FONTS, _PUBLIC_API,
+    _APP_START, MORSE_CODE_MAP,
+)
 
 app = Quart(__name__)
 app.secret_key = os.urandom(24)
 app.bot = None  # Placeholder for the Discord bot instance
-_APP_START = time.monotonic()
 
 @app.before_serving
 async def app_startup():
@@ -155,8 +146,6 @@ async def check_csrf():
                 return csrf_deny("CSRF: Referrer Mismatch")
         else:
             return csrf_deny("CSRF: No Origin/Referer")
-
-_PUBLIC_API = {'/api/status'}
 
 @app.before_request
 async def check_api_auth():
@@ -1051,19 +1040,6 @@ async def render_occupation_view():
     image_url = get_image_url("occupation", target_key)
     return await render_template('render_occupation.html', occupation=data[target_key], name=target_key, image_url=image_url)
 
-MORSE_CODE_MAP = {
-    'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
-    'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
-    'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
-    'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
-    'Y': '-.--', 'Z': '--..',
-    '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....',
-    '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----',
-    ',': '--..--', "'": '.----.',
-    '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...',
-    ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '_': '..--.-',
-    '"': '.-..-.', '$': '...-..-', '@': '.--.-.'
-}
 
 def text_to_morse(text):
     if not text: return ""

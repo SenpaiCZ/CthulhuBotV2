@@ -8,7 +8,7 @@ import time
 import yt_dlp
 import random
 from functools import partial
-from dashboard.app import guild_mixers, server_volumes
+from dashboard.state import guild_mixers, server_volumes
 from dashboard.audio_mixer import MixingAudioSource
 from loadnsave import (
     load_music_blacklist, save_music_blacklist,
