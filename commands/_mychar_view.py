@@ -7,7 +7,7 @@ from descriptions import get_description
 import occupation_emoji
 from commands._backstory_common import BackstoryCategorySelectView
 from loadnsave import load_player_stats, save_player_stats
-from commands.roll import RollResultView
+from commands._roll_views import RollResultView
 from support_functions import MockContext
 from rapidfuzz import process, fuzz
 
