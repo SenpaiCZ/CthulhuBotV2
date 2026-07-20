@@ -10,11 +10,10 @@ from dashboard.state import FONTS_FOLDER, MORSE_CODE_MAP
 from ..file_utils import sanitize_filename
 from loadnsave import (
     load_player_stats,
-    load_monsters_data, load_deities_data, load_spells_data,
+    load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
     load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
     load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
     load_inventions_data, load_years_data, load_occupations_data,
-    _load_json_file, INFODATA_FOLDER
 )
 
 render_bp = Blueprint('render', __name__, url_prefix='/render')
@@ -163,7 +162,7 @@ async def render_weapon_view():
     if not name:
         return "Missing name parameter", 400
 
-    data = await _load_json_file(INFODATA_FOLDER, 'weapons.json')
+    data = await load_weapons_data()
 
     # Find weapon (case-insensitive lookup in dict keys)
     target_key = None
