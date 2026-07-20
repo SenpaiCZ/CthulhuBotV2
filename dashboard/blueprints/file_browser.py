@@ -3,7 +3,7 @@ import json
 from quart import Blueprint, request, jsonify, redirect, url_for, render_template
 
 from dashboard.app import is_admin
-from loadnsave import _load_json_file, _save_json_file, DATA_FOLDER, INFODATA_FOLDER
+from loadnsave import _load_json_file, _save_json_file, invalidate_data_cache, DATA_FOLDER, INFODATA_FOLDER
 
 file_browser_bp = Blueprint('file_browser', __name__)
 
@@ -73,6 +73,8 @@ async def save_file(folder_name, filename):
         parsed = json.loads(json_content)
 
         await _save_json_file(target_dir, filename, parsed)
+        if target_dir == DATA_FOLDER:
+            invalidate_data_cache(filename)
         return jsonify({"status": "success"})
     except json.JSONDecodeError:
         return jsonify({"status": "error", "message": "Invalid JSON format"}), 400
