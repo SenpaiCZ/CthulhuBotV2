@@ -1,0 +1,92 @@
+ERA_SKILLS = {
+    "1920s Era": {
+        "Accounting": 5, "Anthropology": 1, "Archaeology": 1, "Appraise": 5,
+        "Art / Craft (any)": 5, "Charm": 15, "Climb": 20, "Credit Rating": 0,
+        "Cthulhu Mythos": 0, "Disguise": 5, "Dodge": 0, "Drive Auto": 20,
+        "Elec. Repair": 10, "Fast Talk": 5, "Fighting (Brawl)": 25,
+        "Firearms (Handgun)": 20, "Firearms (Rifle/Shotgun)": 25, "First Aid": 30,
+        "History": 5, "Intimidate": 15, "Jump": 20, "Language (Other)": 1,
+        "Language (Own)": 0, "Law": 5, "Library Use": 20, "Listen": 20,
+        "Locksmith": 1, "Mech. Repair": 10, "Medicine": 1, "Natural World": 10,
+        "Navigate": 10, "Occult": 5, "Persuade": 10, "Pilot (any)": 1,
+        "Psychoanalysis": 1, "Psychology": 10, "Ride": 5, "Science (any)": 1,
+        "Sleight of Hand": 10, "Spot Hidden": 25, "Stealth": 20,
+        "Survival (any)": 10, "Swim": 20, "Throw": 20, "Track": 10
+    },
+    "1930s Era": {
+        "Accounting": 5, "Archaeology": 1, "Appraise": 5, "Art / Craft (any)": 5,
+        "Charm": 15, "Climb": 20, "Computer Use": 0, "Credit Rating": 0,
+        "Cthulhu Mythos": 0, "Disguise": 5, "Diving": 1, "Demolitions": 1,
+        "Dodge": 0, "Drive Auto": 20, "Elec. Repair": 10, "Fast Talk": 5,
+        "Fighting (Brawl)": 25, "Firearms (Handgun)": 20,
+        "Firearms (Rifle/Shotgun)": 25, "First Aid": 30, "History": 5,
+        "Intimidate": 15, "Jump": 20, "Language (Other)": 1, "Language (Own)": 0,
+        "Law": 5, "Library Use": 20, "Listen": 20, "Locksmith": 1,
+        "Mech. Repair": 10, "Medicine": 1, "Natural World": 10, "Navigate": 10,
+        "Occult": 5, "Persuade": 10, "Pilot (any)": 1, "Psychoanalysis": 1,
+        "Psychology": 10, "Ride": 5, "Read Lips": 1, "Science (any)": 1,
+        "Sleight of Hand": 10, "Spot Hidden": 25, "Stealth": 20,
+        "Survival (any)": 10, "Swim": 20, "Throw": 20, "Track": 10
+    },
+    "Modern Era": {
+        "Accounting": 5, "Anthropology": 1, "Archaeology": 1, "Appraise": 5,
+        "Art / Craft (any)": 5, "Charm": 15, "Climb": 20, "Computer Use": 5,
+        "Credit Rating": 0, "Cthulhu Mythos": 0, "Disguise": 5, "Dodge": 0,
+        "Drive Auto": 20, "Elec. Repair": 10, "Electronics": 1, "Fast Talk": 5,
+        "Fighting (Brawl)": 25, "Firearms (Handgun)": 20,
+        "Firearms (Rifle/Shotgun)": 25, "First Aid": 30, "History": 5,
+        "Intimidate": 15, "Jump": 20, "Language (Other)": 1, "Language (Own)": 0,
+        "Law": 5, "Library Use": 20, "Listen": 20, "Locksmith": 1,
+        "Mech. Repair": 10, "Medicine": 1, "Natural World": 10, "Navigate": 10,
+        "Occult": 5, "Persuade": 10, "Pilot (any)": 1, "Psychoanalysis": 1,
+        "Psychology": 10, "Ride": 5, "Science (any)": 1, "Sleight of Hand": 10,
+        "Spot Hidden": 25, "Stealth": 20, "Survival (any)": 10, "Swim": 20,
+        "Throw": 20, "Track": 10
+    },
+    "Cthulhu by Gaslight": {
+        "Accounting": 10, "Alienism": 1, "Anthropology": 1, "Appraise": 5,
+        "Archaeology": 1, "Art / Craft (any)": 5, "Charm": 15, "Climb": 20,
+        "Credit Rating": 0, "Cthulhu Mythos": 0, "Disguise": 5, "Dodge": 0,
+        "Drive Carriage": 20, "Fast Talk": 5, "Fighting (Brawl)": 25,
+        "Firearms (Handgun)": 20, "Firearms (Rifle/Shotgun)": 25, "First Aid": 30,
+        "History": 5, "Intimidate": 15, "Jump": 20, "Language (Other)": 1,
+        "Language (Own)": 0, "Law": 5, "Library Use": 20, "Listen": 20,
+        "Locksmith": 1, "Mech. Repair": 20, "Medicine": 1, "Natural World": 10,
+        "Navigate": 10, "Occult": 5, "Operate Heavy Machinery": 1, "Persuade": 10,
+        "Pilot (any)": 1, "Psychology": 10, "Reassure": 0,
+        "Religion": 10, "Ride": 20, "Science (any)": 1, "Sleight of Hand": 10,
+        "Spot Hidden": 25, "Stealth": 20, "Survival (any)": 10, "Swim": 30,
+        "Throw": 20, "Track": 10
+    },
+    "Down Darker Trails": {
+        "Accounting": 5, "Animal Handling": 5, "Anthropology": 1, "Appraise": 5,
+        "Art / Craft (any)": 5, "Charm": 15, "Climb": 20, "Credit Rating": 0,
+        "Cthulhu Mythos": 0, "Disguise": 5, "Dodge": 0, "Drive Wagon/Coach": 20,
+        "Elec. Repair": 0, "Fast Talk": 5, "Fighting (Brawl)": 25,
+        "Firearms (Handgun)": 20, "Firearms (Rifle/Shotgun)": 25, "First Aid": 30,
+        "Gambling": 10, "History": 5, "Intimidate": 15, "Jump": 20,
+        "Language (Other)": 1, "Language (Own)": 0, "Law": 5, "Library Use": 20,
+        "Listen": 20, "Locksmith": 1, "Mech. Repair": 10, "Medicine": 1,
+        "Natural World": 20, "Navigate": 10, "Occult": 5,
+        "Operate Heavy Machinery": 1, "Persuade": 10, "Pilot (any)": 1,
+        "Psychology": 10, "Ride": 15, "Rope Use": 5, "Science (any)": 1,
+        "Sleight of Hand": 10, "Spot Hidden": 25, "Stealth": 20,
+        "Survival (any)": 10, "Swim": 20, "Throw": 20, "Track": 10, "Trap": 10
+    },
+    "Dark Ages": {
+        "Accounting": 10, "Animal Handling": 15, "Appraise": 5,
+        "Art / Craft (any)": 5, "Charm": 15, "Climb": 20, "Cthulhu Mythos": 0,
+        "Disguise": 5, "Dodge": 0, "Drive (Horses/Oxen)": 20, "Fast Talk": 5,
+        "Fighting (Brawl)": 25, "First Aid": 30, "Insight": 5, "Intimidate": 15,
+        "Jump": 25, "Library Use": 5, "Listen": 25, "Medicine": 1,
+        "Natural World (any)": 20, "Navigate": 10, "Occult": 5,
+        "Other Kingdoms (any)": 10, "Language (Other)": 1, "Kingdom (Own)": 20,
+        "Language (Own)": 0, "Persuade": 15, "Pilot Boat": 1,
+        "Read/Write Language (any)": 1, "Repair/Devise": 20, "Religion": 20,
+        "Ride Horse": 5, "Science (any)": 1, "Sleight of Hand": 25,
+        "Spot Hidden": 25, "Status": 0, "Stealth": 20, "Swim": 25, "Throw": 25,
+        "Track": 10
+    }
+}
+
+BASE_SKILLS = ERA_SKILLS["1920s Era"]
