@@ -7,7 +7,8 @@ from loadnsave import (
     load_archetype_data, load_pulp_talents_data, load_madness_insane_talent_data,
     load_manias_data, load_phobias_data, load_poisons_data, load_skills_data,
     load_inventions_data, load_years_data, load_occupations_data,
-    _load_json_file, INFODATA_FOLDER
+    load_monsters_data, load_deities_data, load_spells_data, load_weapons_data,
+    INFODATA_FOLDER
 )
 
 grimoire_bp = Blueprint('grimoire', __name__)
@@ -20,25 +21,25 @@ async def grimoire_hub():
 
 @grimoire_bp.route('/monsters')
 async def admin_monsters():
-    monsters_data = await _load_json_file(INFODATA_FOLDER, 'monsters.json')
+    monsters_data = await load_monsters_data()
     stat_emojis = emojis.web_symbols
     return await render_template('monsters.html', data=monsters_data, stat_emojis=stat_emojis, type_slug="monster")
 
 @grimoire_bp.route('/deities')
 async def admin_deities():
-    deities_data = await _load_json_file(INFODATA_FOLDER, 'deities.json')
+    deities_data = await load_deities_data()
     stat_emojis = emojis.web_symbols
     return await render_template('deities.html', data=deities_data, stat_emojis=stat_emojis, type_slug="deity")
 
 @grimoire_bp.route('/spells')
 async def admin_spells():
-    spells_data = await _load_json_file(INFODATA_FOLDER, 'spells.json')
+    spells_data = await load_spells_data()
     stat_emojis = emojis.web_symbols
     return await render_template('spells.html', data=spells_data, stat_emojis=stat_emojis, type_slug="spell")
 
 @grimoire_bp.route('/weapons')
 async def admin_weapons():
-    weapons_data = await _load_json_file(INFODATA_FOLDER, 'weapons.json')
+    weapons_data = await load_weapons_data()
     if not weapons_data:
         print(f"Warning: Weapons data is empty or file not found. Path: {os.path.join(INFODATA_FOLDER, 'weapons.json')} CWD: {os.getcwd()}")
     return await render_template('weapons.html', data=weapons_data, type_slug="weapon")
