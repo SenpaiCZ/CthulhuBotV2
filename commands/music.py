@@ -393,12 +393,13 @@ class Music(commands.Cog):
             next_song = self.queue[guild_id].pop(0)
             await self._play_song(guild_id, next_song)
 
-    async def _queue_playlist_entries(self, guild_id: str, entries: list, playlist_title: str,
-                                       requester) -> tuple:
+    async def _queue_playlist_entries(self, guild_id: str, entries: list[dict], playlist_title: str,
+                                       requester) -> tuple[discord.Embed, bool]:
         """Append flat playlist entries to the guild queue, skipping blacklisted URLs.
         Returns (embed, already_playing) — already_playing is always False; queueing a
         playlist never short-circuits the dashboard/playback-start step the way a
         single-track 'something's already playing' add does."""
+        self.queue.setdefault(guild_id, [])
         added = 0
         for entry in entries:
             orig = entry.get('url', '')
@@ -431,6 +432,7 @@ class Music(commands.Cog):
         is playing, embed is None and already_playing is False — the caller must call
         _finalize_play. Raises MusicLookupError (an expected condition, not an unexpected
         failure) if extraction finds nothing playable or the track is blacklisted."""
+        self.queue.setdefault(guild_id, [])
         opts = _ytdl_opts_with_cookies(YTDL_BASE)
         def _extract_single():
             with yt_dlp.YoutubeDL(opts) as ydl:

@@ -335,9 +335,6 @@ class TestPlaySingleTrackBranch:
         interaction.followup.send.assert_awaited_once_with("❌ No results found.")
 
 
-from commands.music import PlaylistChoiceView
-
-
 class TestPlaylistChoiceViewConstruction:
     def test_explicit_video_link_labels_just_one_as_this_song(self):
         entries = [{"title": "A", "url": "a"}, {"title": "B", "url": "b"}]
@@ -560,3 +557,43 @@ class TestWholePlaylistButton:
         )
         interaction.message.edit.assert_awaited_once_with(embed=playlist_embed, view=None)
         cog._finalize_play.assert_awaited_once_with(interaction, "123")
+
+
+class TestQueueGuardsAgainstMissingGuildId:
+    @pytest.mark.asyncio
+    async def test_queue_single_track_creates_queue_if_missing(self):
+        cog = make_music_cog()
+        requester = MagicMock(display_name="Tester")
+        # Don't initialize guild_id in queue — simulate guild disconnecting after /play prompt
+        assert "guild-123" not in cog.queue
+
+        # Mock yt_dlp extraction to return a valid single track
+        def _extract():
+            return {"title": "Test Track", "url": "http://example.com", "webpage_url": "http://example.com"}
+        cog.bot.loop.run_in_executor = AsyncMock(side_effect=lambda *args, **kw: _extract())
+
+        embed, already_playing = await cog._queue_single_track("guild-123", "test query", requester)
+
+        # Should create the queue entry without raising KeyError
+        assert "guild-123" in cog.queue
+        assert len(cog.queue["guild-123"]) == 1
+        assert already_playing is False
+
+    @pytest.mark.asyncio
+    async def test_queue_playlist_entries_creates_queue_if_missing(self):
+        cog = make_music_cog()
+        requester = MagicMock(display_name="Tester")
+        # Don't initialize guild_id in queue — simulate guild disconnecting after /play prompt
+        assert "guild-456" not in cog.queue
+
+        entries = [
+            {"title": "Track 1", "url": "http://example.com/1"},
+            {"title": "Track 2", "url": "http://example.com/2"},
+        ]
+
+        embed, already_playing = await cog._queue_playlist_entries("guild-456", entries, "Test Playlist", requester)
+
+        # Should create the queue entry and add all non-blacklisted tracks without raising KeyError
+        assert "guild-456" in cog.queue
+        assert len(cog.queue["guild-456"]) == 2
+        assert already_playing is False
