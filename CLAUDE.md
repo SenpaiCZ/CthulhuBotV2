@@ -57,8 +57,14 @@ Key data files:
 
 ### Commands: `commands/`
 Each file is a discord.py Cog loaded as an extension. Naming conventions:
-- `_foo.py` prefix = shared View/UI helpers imported by other commands (not standalone Cogs)
+- `_foo.py` prefix = a companion module holding `discord.ui.View`/`Modal`/`Select` classes split out of an oversized parent Cog file, or other shared helpers imported by other commands — **not** a standalone Cog. `bot.py` still tries to load every `.py` file in `commands/` as an extension, so a companion file must never define its own `async def setup(bot)`.
+- Classes a companion file's parent Cog constructs directly are imported *by name* into the Cog module (`from commands._newinvestigator_stats import CoreStatSelectView`); classes only ever constructed by another class *within the same companion file* don't need a Cog-level import.
+- A Cog occasionally imports a UI class from a companion file that isn't its own — e.g. `commands/combat.py` and `commands/_mychar_roll.py` both import `RollResultView` from `commands/_roll_views.py`, not from `commands/roll.py`'s own file. Grep the whole repo, not just the file you're editing, before assuming a class's only consumer is its original parent.
 - Uses `app_commands` (slash) + legacy `commands` (prefix) mixed
+
+Companion-file clusters as of this writing: `commands/newinvestigator.py`'s wizard splits across `_newinvestigator_data.py` (era/skill constants), `_newinvestigator_basicinfo.py`, `_newinvestigator_gamemode.py`, `_newinvestigator_stats.py`, `_newinvestigator_talents.py`, `_newinvestigator_skills.py`, `_newinvestigator_occupation.py`; `commands/roll.py` → `_roll_views.py`; `commands/codex.py` → `_codex_views.py`; `commands/karma.py` → `_karma_views.py`; `commands/journal.py` → `_journal_views.py`; `commands/mycharacter.py`'s `_mychar_view.py` hub further splits into `_mychar_inventory.py` and `_mychar_roll.py`.
+
+See `docs/CONTRIBUTING.md` for the step-by-step process to add a new command or split a growing Cog.
 
 Key shared modules:
 - `emojis.py` — stat emoji helpers, health bar rendering
@@ -68,21 +74,25 @@ Key shared modules:
 - `rss_utils.py` — YouTube channel URL → RSS feed URL resolver (uses yt-dlp)
 
 ### Dashboard: `dashboard/`
-- `app.py` — Quart app; all web routes + API endpoints. Imports heavily from `loadnsave`. Shares `guild_mixers` and `server_volumes` dicts with the music cog.
+- `app.py` — composition root only (~300 lines): Quart app instance, security/CSRF/auth `before_request`/`after_request` hooks, template filters, context processors, and blueprint registration. It never defines a route directly.
+- `blueprints/` — one file per feature area (24 files), each a Quart `Blueprint` registered in `app.py` near the bottom of the file. Every dashboard route lives in exactly one of these files, grouped by feature (e.g. all `/admin/karma` + `/api/karma/*` routes are in `karma.py`). Blueprints import `app` and other shared helpers back from `dashboard.app` — this circular-looking import is intentional and safe as long as `dashboard.app` (not a blueprint module) is always imported first, which is how `bot.py` and every test in this repo already does it.
+- `state.py` — shared mutable state that must keep single, consistent object identity across `dashboard/app.py`, every blueprint that touches it, and the `commands/` cogs that also read/write it: `guild_mixers` and `server_volumes` (both shared with `commands/music.py`; `server_volumes` also with `commands/roll.py`), plus folder-path/constant globals (`IMAGES_FOLDER`, `FONTS_FOLDER`, `OLD_FONTS_FOLDER`, `BACKUP_FOLDER`, `SOUNDBOARD_FOLDER`, `BASIC_FONTS`, `MORSE_CODE_MAP`, `_PUBLIC_API`). Import these by reference (`from dashboard.state import server_volumes`, then mutate in place with `.update()`/`[key] = value`) — never rebind the name (`server_volumes = {...}` inside a consuming module breaks the shared identity every other importer relies on).
 - `audio_mixer.py` — `MixingAudioSource`: FFmpeg-based audio source that mixes music + soundboard streams
 - `file_utils.py` — sync file ops for dashboard use (upload, extract zip, rename, delete)
+
+See `docs/CONTRIBUTING.md` for the step-by-step process to add a new dashboard route.
 
 ### Music: `commands/music.py`
 - yt-dlp for audio extraction, FFmpeg for playback via discord.py voice
 - Per-guild queue (`self.queue[guild_id]`), current track, volume
-- Shares mixer state with dashboard via `dashboard.app.guild_mixers`
+- Shares mixer state with dashboard via `dashboard.state.guild_mixers` (imported by reference, not `dashboard.app`)
 - Linux/Pi: voice reconnect handled carefully (recent fix: `dcd8252`)
 
 ### Character System
-- `commands/newinvestigator.py` — multi-step modal wizard; handles eras (1920s/1930s/Modern), occupations, stat rolling, skill allocation
-- `commands/roll.py` — dice + skill checks; uses `rapidfuzz` for fuzzy skill name matching
+- `commands/newinvestigator.py` — multi-step modal wizard hub Cog; handles eras (1920s/1930s/Modern), occupations, stat rolling, skill allocation. Wizard-stage View/Modal classes live in the sibling `commands/_newinvestigator_*.py` companion files (see Commands section above), not in this file.
+- `commands/roll.py` — dice + skill checks; uses `rapidfuzz` for fuzzy skill name matching. UI classes (roll-result view, dice tray, disambiguation) live in `commands/_roll_views.py`.
 - `descriptions.py` — maps stat values to flavor descriptions (thresholds, not exact match)
-- Era skill base values defined in `newinvestigator.py` as `ERA_SKILLS` dict
+- Era skill base values live in `commands/_newinvestigator_data.py` as `ERA_SKILLS` (per-era dict) and `BASE_SKILLS` (the 1920s era, aliased as the default baseline). This is game-balance-sensitive static data — treat changes to it as game-content changes, not refactors, and keep it byte-identical across any future file move.
 
 ### Auto-Restart
 - `restarter.py` — spawned by `/updatebot` and `/restart` commands; waits for old PID to exit (psutil), then re-launches `bot.py`
