@@ -168,3 +168,52 @@ class TestFinalizePlay:
         await cog._finalize_play(interaction, guild_id)
 
         assert cog.dashboard_messages[guild_id] is sent_msg
+
+
+class TestQueuePlaylistEntries:
+    @pytest.mark.asyncio
+    async def test_appends_all_non_blacklisted_entries_and_returns_embed(self):
+        cog = make_music_cog()
+        cog.queue["g1"] = []
+        cog.blacklist = ["blocked-url"]
+        entries = [
+            {"title": "Song A", "url": "url-a", "thumbnail": "thumb-a", "duration": 100},
+            {"title": "Song B", "url": "blocked-url", "thumbnail": "", "duration": 50},
+            {"title": "Song C", "url": "url-c", "thumbnail": "", "duration": 200},
+        ]
+        requester = MagicMock(display_name="Alice")
+
+        embed, already_playing = await cog._queue_playlist_entries("g1", entries, "My Playlist", requester)
+
+        assert already_playing is False
+        assert len(cog.queue["g1"]) == 2
+        assert cog.queue["g1"][0] == {
+            "title": "Song A", "url": None, "webpage_url": "url-a", "original_url": "url-a",
+            "thumbnail": "thumb-a", "duration": 100, "requested_by": "Alice", "needs_resolve": True,
+        }
+        assert cog.queue["g1"][1]["title"] == "Song C"
+        assert "My Playlist" in embed.description
+        assert "2 tracks queued" in embed.description
+        assert embed.title == "📥 Playlist Added"
+
+    @pytest.mark.asyncio
+    async def test_play_command_single_entry_playlist_queues_directly_no_prompt(self):
+        cog = make_music_cog()
+        cog._ensure_voice = AsyncMock(return_value=MagicMock())
+        cog._finalize_play = AsyncMock()
+        flat_info = {
+            "title": "My Playlist",
+            "entries": [{"title": "Song A", "url": "url-a", "thumbnail": "", "duration": 100}],
+        }
+        cog.bot.loop.run_in_executor = AsyncMock(return_value=flat_info)
+        interaction = make_interaction()
+
+        await Music.play.callback(cog, interaction, "https://www.youtube.com/playlist?list=PL1")
+
+        assert len(cog.queue["123"]) == 1
+        assert cog.queue["123"][0]["title"] == "Song A"
+        cog._finalize_play.assert_awaited_once()
+        # followup.send called once for the "Playlist Added" embed, no view kwarg (no prompt)
+        interaction.followup.send.assert_awaited_once()
+        _, kwargs = interaction.followup.send.call_args
+        assert "view" not in kwargs

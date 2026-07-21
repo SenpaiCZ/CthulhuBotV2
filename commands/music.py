@@ -316,6 +316,36 @@ class Music(commands.Cog):
             next_song = self.queue[guild_id].pop(0)
             await self._play_song(guild_id, next_song)
 
+    async def _queue_playlist_entries(self, guild_id: str, entries: list, playlist_title: str,
+                                       requester) -> tuple:
+        """Append flat playlist entries to the guild queue, skipping blacklisted URLs.
+        Returns (embed, already_playing) — already_playing is always False; queueing a
+        playlist never short-circuits the dashboard/playback-start step the way a
+        single-track 'something's already playing' add does."""
+        added = 0
+        for entry in entries:
+            orig = entry.get('url', '')
+            if orig in self.blacklist:
+                continue
+            self.queue[guild_id].append({
+                'title': entry.get('title', 'Unknown'),
+                'url': None,
+                'webpage_url': orig,
+                'original_url': orig,
+                'thumbnail': entry.get('thumbnail', ''),
+                'duration': entry.get('duration'),
+                'requested_by': requester.display_name,
+                'needs_resolve': True,
+            })
+            added += 1
+
+        embed = discord.Embed(
+            title="📥 Playlist Added",
+            description=f"**{playlist_title}**\n{added} tracks queued",
+            color=discord.Color.blurple(),
+        )
+        return embed, False
+
     def _get_volume(self, guild_id: str) -> float:
         return server_volumes.get(guild_id, {}).get('music', 0.5)
 
@@ -554,28 +584,9 @@ class Music(commands.Cog):
                 if not entries:
                     return await interaction.followup.send("❌ No playable tracks found in that playlist.")
 
-                added = 0
-                for entry in entries:
-                    orig = entry.get('url', '')
-                    if orig in self.blacklist:
-                        continue
-                    self.queue[guild_id].append({
-                        'title': entry.get('title', 'Unknown'),
-                        'url': None,
-                        'webpage_url': orig,
-                        'original_url': orig,
-                        'thumbnail': entry.get('thumbnail', ''),
-                        'duration': entry.get('duration'),
-                        'requested_by': interaction.user.display_name,
-                        'needs_resolve': True,
-                    })
-                    added += 1
-
                 playlist_title = info.get('title', 'Playlist')
-                embed = discord.Embed(
-                    title="📥 Playlist Added",
-                    description=f"**{playlist_title}**\n{added} tracks queued",
-                    color=discord.Color.blurple(),
+                embed, _already_playing = await self._queue_playlist_entries(
+                    guild_id, entries, playlist_title, interaction.user
                 )
                 msg = await interaction.followup.send(embed=embed)
                 asyncio.create_task(_delete_after(msg, 10))
