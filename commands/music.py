@@ -346,6 +346,64 @@ class Music(commands.Cog):
         )
         return embed, False
 
+    async def _queue_single_track(self, guild_id: str, query: str, requester) -> tuple:
+        """Full yt-dlp extraction + blacklist check + queue append for one track.
+        Returns (embed, already_playing). If something is already playing, embed is the
+        'Added to Queue' embed and already_playing is True — the caller must send/edit it
+        and call _update_dashboard_for_guild, and must NOT call _finalize_play. If nothing
+        is playing, embed is None and already_playing is False — the caller must call
+        _finalize_play. Raises MusicLookupError (an expected condition, not an unexpected
+        failure) if extraction finds nothing playable or the track is blacklisted."""
+        opts = _ytdl_opts_with_cookies(YTDL_BASE)
+        def _extract_single():
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                return ydl.extract_info(query, download=False)
+
+        info = await self.bot.loop.run_in_executor(None, _extract_single)
+
+        if not info:
+            raise MusicLookupError("❌ No results found.")
+
+        if 'entries' in info:
+            entry = next((e for e in info['entries'] if e), None)
+            if not entry:
+                raise MusicLookupError("❌ No playable result found.")
+            info = entry
+
+        original_url = info.get('webpage_url', info.get('url', ''))
+        if original_url in self.blacklist:
+            raise MusicLookupError(f"❌ **{info.get('title', 'That track')}** is blacklisted.")
+
+        song_info = {
+            'title': info.get('title', 'Unknown'),
+            'url': info.get('url', ''),
+            'original_url': original_url,
+            'thumbnail': info.get('thumbnail', ''),
+            'duration': info.get('duration'),
+            'requested_by': requester.display_name,
+            'needs_resolve': False,
+        }
+        self.queue[guild_id].append(song_info)
+
+        current = self.current_track.get(guild_id)
+        if current and not current.finished:
+            pos = len(self.queue[guild_id])
+            dur = song_info['duration']
+            embed = discord.Embed(
+                title="📥 Added to Queue",
+                description=f"[{song_info['title']}]({original_url})",
+                color=discord.Color.blurple(),
+            )
+            if dur:
+                embed.add_field(name="Duration", value=_fmt_duration(dur), inline=True)
+            embed.add_field(name="Position", value=f"#{pos}", inline=True)
+            embed.set_footer(text=f"Requested by {requester.display_name}")
+            if song_info['thumbnail']:
+                embed.set_thumbnail(url=song_info['thumbnail'])
+            return embed, True
+
+        return None, False
+
     def _get_volume(self, guild_id: str) -> float:
         return server_volumes.get(guild_id, {}).get('music', 0.5)
 
@@ -592,61 +650,15 @@ class Music(commands.Cog):
                 asyncio.create_task(_delete_after(msg, 10))
 
             else:
-                # Single track — full extraction
-                opts = _ytdl_opts_with_cookies(YTDL_BASE)
-                def _extract_single():
-                    with yt_dlp.YoutubeDL(opts) as ydl:
-                        return ydl.extract_info(query, download=False)
-
-                info = await self.bot.loop.run_in_executor(None, _extract_single)
-
-                if not info:
-                    return await interaction.followup.send("❌ No results found.")
-
-                if 'entries' in info:
-                    entry = next((e for e in info['entries'] if e), None)
-                    if not entry:
-                        return await interaction.followup.send("❌ No playable result found.")
-                    info = entry
-
-                original_url = info.get('webpage_url', info.get('url', ''))
-                if original_url in self.blacklist:
-                    return await interaction.followup.send(
-                        f"❌ **{info.get('title', 'That track')}** is blacklisted."
-                    )
-
-                song_info = {
-                    'title': info.get('title', 'Unknown'),
-                    'url': info.get('url', ''),
-                    'original_url': original_url,
-                    'thumbnail': info.get('thumbnail', ''),
-                    'duration': info.get('duration'),
-                    'requested_by': interaction.user.display_name,
-                    'needs_resolve': False,
-                }
-                self.queue[guild_id].append(song_info)
-
-                # If something is playing, send "added to queue" notification
-                current = self.current_track.get(guild_id)
-                if current and not current.finished:
-                    pos = len(self.queue[guild_id])
-                    dur = song_info['duration']
-                    embed = discord.Embed(
-                        title="📥 Added to Queue",
-                        description=f"[{song_info['title']}]({original_url})",
-                        color=discord.Color.blurple(),
-                    )
-                    if dur:
-                        embed.add_field(name="Duration", value=_fmt_duration(dur), inline=True)
-                    embed.add_field(name="Position", value=f"#{pos}", inline=True)
-                    embed.set_footer(text=f"Requested by {interaction.user.display_name}")
-                    if song_info['thumbnail']:
-                        embed.set_thumbnail(url=song_info['thumbnail'])
+                embed, already_playing = await self._queue_single_track(guild_id, query, interaction.user)
+                if already_playing:
                     msg = await interaction.followup.send(embed=embed)
                     asyncio.create_task(_delete_after(msg, 15))
                     await self._update_dashboard_for_guild(guild_id)
                     return  # Don't replace dashboard; just update queue section
 
+        except MusicLookupError as e:
+            return await interaction.followup.send(str(e))
         except yt_dlp.utils.DownloadError as e:
             content, embed, view, ephemeral = _format_download_error(e)
             return await interaction.followup.send(content=content, embed=embed, view=view, ephemeral=ephemeral)

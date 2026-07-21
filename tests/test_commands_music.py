@@ -217,3 +217,110 @@ class TestQueuePlaylistEntries:
         interaction.followup.send.assert_awaited_once()
         _, kwargs = interaction.followup.send.call_args
         assert "view" not in kwargs
+
+
+class TestQueueSingleTrack:
+    @pytest.mark.asyncio
+    async def test_queues_track_and_returns_none_embed_when_nothing_playing(self):
+        cog = make_music_cog()
+        cog.queue["g1"] = []
+        cog.bot.loop.run_in_executor = AsyncMock(return_value={
+            "title": "Song A", "webpage_url": "url-a", "url": "stream-a",
+            "thumbnail": "thumb-a", "duration": 120,
+        })
+        requester = MagicMock(display_name="Alice")
+
+        embed, already_playing = await cog._queue_single_track("g1", "url-a", requester)
+
+        assert embed is None
+        assert already_playing is False
+        assert len(cog.queue["g1"]) == 1
+        assert cog.queue["g1"][0]["title"] == "Song A"
+        assert cog.queue["g1"][0]["requested_by"] == "Alice"
+        assert cog.queue["g1"][0]["needs_resolve"] is False
+
+    @pytest.mark.asyncio
+    async def test_returns_added_to_queue_embed_when_something_already_playing(self):
+        cog = make_music_cog()
+        cog.queue["g1"] = []
+        cog.current_track["g1"] = MagicMock(finished=False)
+        cog.bot.loop.run_in_executor = AsyncMock(return_value={
+            "title": "Song A", "webpage_url": "url-a", "url": "stream-a",
+            "thumbnail": "", "duration": 120,
+        })
+        requester = MagicMock(display_name="Alice")
+
+        embed, already_playing = await cog._queue_single_track("g1", "url-a", requester)
+
+        assert already_playing is True
+        assert embed.title == "📥 Added to Queue"
+        assert len(cog.queue["g1"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_raises_lookup_error_when_no_results(self):
+        cog = make_music_cog()
+        cog.queue["g1"] = []
+        cog.bot.loop.run_in_executor = AsyncMock(return_value=None)
+
+        with pytest.raises(MusicLookupError, match="No results found"):
+            await cog._queue_single_track("g1", "nonsense query", MagicMock(display_name="Alice"))
+
+    @pytest.mark.asyncio
+    async def test_raises_lookup_error_when_blacklisted(self):
+        cog = make_music_cog()
+        cog.queue["g1"] = []
+        cog.blacklist = ["url-a"]
+        cog.bot.loop.run_in_executor = AsyncMock(return_value={
+            "title": "Song A", "webpage_url": "url-a", "url": "stream-a",
+        })
+
+        with pytest.raises(MusicLookupError, match="is blacklisted"):
+            await cog._queue_single_track("g1", "url-a", MagicMock(display_name="Alice"))
+
+
+class TestPlaySingleTrackBranch:
+    @pytest.mark.asyncio
+    async def test_play_queues_and_finalizes_when_nothing_playing(self):
+        cog = make_music_cog()
+        cog._ensure_voice = AsyncMock(return_value=MagicMock())
+        cog._finalize_play = AsyncMock()
+        cog.bot.loop.run_in_executor = AsyncMock(return_value={
+            "title": "Song A", "webpage_url": "url-a", "url": "stream-a", "duration": 100,
+        })
+        interaction = make_interaction()
+
+        await Music.play.callback(cog, interaction, "url-a")
+
+        assert len(cog.queue["123"]) == 1
+        cog._finalize_play.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_play_sends_added_to_queue_and_updates_dashboard_when_already_playing(self):
+        cog = make_music_cog()
+        cog._ensure_voice = AsyncMock(return_value=MagicMock())
+        cog._finalize_play = AsyncMock()
+        cog._update_dashboard_for_guild = AsyncMock()
+        cog.current_track["123"] = MagicMock(finished=False)
+        cog.bot.loop.run_in_executor = AsyncMock(return_value={
+            "title": "Song A", "webpage_url": "url-a", "url": "stream-a", "duration": 100,
+        })
+        interaction = make_interaction()
+
+        await Music.play.callback(cog, interaction, "url-a")
+
+        interaction.followup.send.assert_awaited_once()
+        _, kwargs = interaction.followup.send.call_args
+        assert kwargs["embed"].title == "📥 Added to Queue"
+        cog._update_dashboard_for_guild.assert_awaited_once_with("123")
+        cog._finalize_play.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_play_sends_lookup_error_message_on_no_results(self):
+        cog = make_music_cog()
+        cog._ensure_voice = AsyncMock(return_value=MagicMock())
+        cog.bot.loop.run_in_executor = AsyncMock(return_value=None)
+        interaction = make_interaction()
+
+        await Music.play.callback(cog, interaction, "nonsense query")
+
+        interaction.followup.send.assert_awaited_once_with("❌ No results found.")
