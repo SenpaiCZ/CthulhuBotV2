@@ -291,6 +291,31 @@ class Music(commands.Cog):
             )
             return None
 
+    async def _finalize_play(self, interaction: discord.Interaction, guild_id: str):
+        """Update the existing dashboard message or send a new one (avoid delete+send to
+        keep the panel stable); start playback if nothing is currently playing."""
+        old_msg = self.dashboard_messages.get(guild_id)
+        view = MusicView(self, guild_id)
+        embed = view.get_embed()
+
+        if old_msg:
+            try:
+                await old_msg.edit(embed=embed, view=view)
+            except discord.NotFound:
+                self.dashboard_messages.pop(guild_id, None)
+                old_msg = None
+            except Exception:
+                old_msg = None
+
+        if not old_msg:
+            new_msg = await interaction.followup.send(embed=embed, view=view)
+            self.dashboard_messages[guild_id] = new_msg
+
+        current = self.current_track.get(guild_id)
+        if (not current or current.finished) and self.queue.get(guild_id):
+            next_song = self.queue[guild_id].pop(0)
+            await self._play_song(guild_id, next_song)
+
     def _get_volume(self, guild_id: str) -> float:
         return server_volumes.get(guild_id, {}).get('music', 0.5)
 
@@ -617,29 +642,7 @@ class Music(commands.Cog):
         except Exception as e:
             return await interaction.followup.send(f"❌ Unexpected error: {type(e).__name__}: {str(e)[:200]}")
 
-        # Update existing dashboard or send new one (avoid delete+send to keep panel stable)
-        old_msg = self.dashboard_messages.get(guild_id)
-        view = MusicView(self, guild_id)
-        embed = view.get_embed()
-
-        if old_msg:
-            try:
-                await old_msg.edit(embed=embed, view=view)
-            except discord.NotFound:
-                self.dashboard_messages.pop(guild_id, None)
-                old_msg = None
-            except Exception:
-                old_msg = None
-
-        if not old_msg:
-            new_msg = await interaction.followup.send(embed=embed, view=view)
-            self.dashboard_messages[guild_id] = new_msg
-
-        # Start playback — also handle stale finished track
-        current = self.current_track.get(guild_id)
-        if (not current or current.finished) and self.queue.get(guild_id):
-            next_song = self.queue[guild_id].pop(0)
-            await self._play_song(guild_id, next_song)
+        await self._finalize_play(interaction, guild_id)
 
     @app_commands.command(name="setytcookie", description="🍪 Set YouTube cookies for age-restricted playback. (Admin)")
     @app_commands.checks.has_permissions(administrator=True)

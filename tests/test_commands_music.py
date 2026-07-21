@@ -107,3 +107,64 @@ class TestPlayDownloadErrorHandling:
         assert kwargs["embed"].title == "🔞 Age-Restricted Content"
         assert isinstance(kwargs["view"], CookieView)
         assert kwargs["ephemeral"] is True
+
+
+class TestFinalizePlay:
+    @pytest.mark.asyncio
+    async def test_sends_new_dashboard_and_starts_playback_when_idle(self):
+        cog = make_music_cog()
+        guild_id = "123"
+        cog.queue[guild_id] = [{"title": "Next Song"}]
+        cog._play_song = AsyncMock()
+        interaction = make_interaction()
+        sent_msg = MagicMock()
+        interaction.followup.send = AsyncMock(return_value=sent_msg)
+
+        await cog._finalize_play(interaction, guild_id)
+
+        interaction.followup.send.assert_awaited_once()
+        assert cog.dashboard_messages[guild_id] is sent_msg
+        cog._play_song.assert_awaited_once_with(guild_id, {"title": "Next Song"})
+        assert cog.queue[guild_id] == []
+
+    @pytest.mark.asyncio
+    async def test_edits_existing_dashboard_and_does_not_start_playback_when_already_playing(self):
+        cog = make_music_cog()
+        guild_id = "123"
+        old_msg = MagicMock()
+        old_msg.edit = AsyncMock()
+        cog.dashboard_messages[guild_id] = old_msg
+        track_mock = MagicMock()
+        track_mock.finished = False
+        track_mock.paused = False
+        track_mock.volume = 0.5
+        track_mock.metadata = {"title": "Current Song", "original_url": "https://youtu.be/xyz"}
+        cog.current_track[guild_id] = track_mock
+        cog.queue[guild_id] = [{"title": "Waiting Song"}]
+        cog._play_song = AsyncMock()
+        interaction = make_interaction()
+
+        await cog._finalize_play(interaction, guild_id)
+
+        old_msg.edit.assert_awaited_once()
+        interaction.followup.send.assert_not_called()
+        cog._play_song.assert_not_called()
+        assert cog.queue[guild_id] == [{"title": "Waiting Song"}]  # untouched
+
+    @pytest.mark.asyncio
+    async def test_falls_back_to_new_message_when_old_dashboard_message_not_found(self):
+        cog = make_music_cog()
+        guild_id = "123"
+        old_msg = MagicMock()
+        old_msg.edit = AsyncMock(
+            side_effect=discord.NotFound(SimpleNamespace(status=404, reason="Not Found"), "Unknown Message")
+        )
+        cog.dashboard_messages[guild_id] = old_msg
+        cog.queue[guild_id] = []
+        interaction = make_interaction()
+        sent_msg = MagicMock()
+        interaction.followup.send = AsyncMock(return_value=sent_msg)
+
+        await cog._finalize_play(interaction, guild_id)
+
+        assert cog.dashboard_messages[guild_id] is sent_msg
