@@ -7,7 +7,7 @@ import pytest
 import yt_dlp
 from discord.ext import tasks
 
-from commands.music import Music, _query_has_explicit_video
+from commands.music import Music, _query_has_explicit_video, MusicLookupError, _format_download_error, CookieView
 
 
 def make_interaction(user=None):
@@ -60,3 +60,50 @@ class TestQueryHasExplicitVideo:
 
     def test_search_query_has_no_explicit_video(self):
         assert _query_has_explicit_video("some random search terms") is False
+
+
+class TestFormatDownloadError:
+    def test_age_restricted_returns_cookie_embed_and_view_ephemeral(self):
+        e = yt_dlp.utils.DownloadError("Sign in to confirm your age")
+        content, embed, view, ephemeral = _format_download_error(e)
+        assert content is None
+        assert embed.title == "🔞 Age-Restricted Content"
+        assert isinstance(view, CookieView)
+        assert ephemeral is True
+
+    def test_private_video_returns_plain_message(self):
+        e = yt_dlp.utils.DownloadError("Private video")
+        content, embed, view, ephemeral = _format_download_error(e)
+        assert content == "❌ That video is private."
+        assert embed is None and view is None and ephemeral is False
+
+    def test_unavailable_video_returns_plain_message(self):
+        e = yt_dlp.utils.DownloadError("Video unavailable")
+        content, embed, view, ephemeral = _format_download_error(e)
+        assert content == "❌ Video is unavailable."
+        assert embed is None and view is None and ephemeral is False
+
+    def test_generic_download_error_truncated_to_200_chars(self):
+        e = yt_dlp.utils.DownloadError("x" * 300)
+        content, embed, view, ephemeral = _format_download_error(e)
+        assert content == f"❌ Download error: {'x' * 200}"
+        assert embed is None and view is None and ephemeral is False
+
+
+class TestPlayDownloadErrorHandling:
+    @pytest.mark.asyncio
+    async def test_play_sends_cookie_prompt_on_age_restricted_download_error(self):
+        cog = make_music_cog()
+        cog._ensure_voice = AsyncMock(return_value=MagicMock())
+        cog.bot.loop.run_in_executor = AsyncMock(
+            side_effect=yt_dlp.utils.DownloadError("Sign in to confirm your age")
+        )
+        interaction = make_interaction()
+
+        await Music.play.callback(cog, interaction, "https://youtu.be/abc123")
+
+        interaction.followup.send.assert_awaited_once()
+        _, kwargs = interaction.followup.send.call_args
+        assert kwargs["embed"].title == "🔞 Age-Restricted Content"
+        assert isinstance(kwargs["view"], CookieView)
+        assert kwargs["ephemeral"] is True

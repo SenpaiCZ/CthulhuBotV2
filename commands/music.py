@@ -133,6 +133,35 @@ class CookieView(discord.ui.View):
         await interaction.response.send_modal(CookieModal())
 
 
+class MusicLookupError(Exception):
+    """Raised by queue helpers for an expected 'no results / blacklisted' condition — the
+    caller sends str(exc) to the user unmodified, with no '❌ Unexpected error' prefix."""
+
+
+def _format_download_error(e: yt_dlp.utils.DownloadError) -> tuple:
+    """Map a yt-dlp DownloadError to (content, embed, view, ephemeral) for an interaction
+    response/followup/message-edit — matches /play's DownloadError branches exactly."""
+    err = str(e)
+    if 'Sign in' in err or 'age' in err.lower() or 'login' in err.lower():
+        cookie_exists = os.path.exists(COOKIES_FILE)
+        embed = discord.Embed(
+            title="🔞 Age-Restricted Content",
+            description=(
+                "This video requires a YouTube login to play.\n\n"
+                + ("⚠️ Cookies are set but may be expired — try refreshing them.\n\n" if cookie_exists else "")
+                + COOKIE_INSTRUCTIONS
+            ),
+            color=discord.Color.orange()
+        )
+        return None, embed, CookieView(), True
+    elif 'Private' in err or 'private' in err:
+        return "❌ That video is private.", None, None, False
+    elif 'unavailable' in err.lower():
+        return "❌ Video is unavailable.", None, None, False
+    else:
+        return f"❌ Download error: {err[:200]}", None, None, False
+
+
 # ── Cog ──────────────────────────────────────────────────────────────────────
 
 class Music(commands.Cog):
@@ -583,26 +612,8 @@ class Music(commands.Cog):
                     return  # Don't replace dashboard; just update queue section
 
         except yt_dlp.utils.DownloadError as e:
-            err = str(e)
-            if 'Sign in' in err or 'age' in err.lower() or 'login' in err.lower():
-                cookie_exists = os.path.exists(COOKIES_FILE)
-                embed = discord.Embed(
-                    title="🔞 Age-Restricted Content",
-                    description=(
-                        "This video requires a YouTube login to play.\n\n"
-                        + ("⚠️ Cookies are set but may be expired — try refreshing them.\n\n" if cookie_exists else "")
-                        + COOKIE_INSTRUCTIONS
-                    ),
-                    color=discord.Color.orange()
-                )
-                return await interaction.followup.send(embed=embed, view=CookieView(), ephemeral=True)
-            elif 'Private' in err or 'private' in err:
-                msg = "❌ That video is private."
-            elif 'unavailable' in err.lower():
-                msg = "❌ Video is unavailable."
-            else:
-                msg = f"❌ Download error: {err[:200]}"
-            return await interaction.followup.send(msg)
+            content, embed, view, ephemeral = _format_download_error(e)
+            return await interaction.followup.send(content=content, embed=embed, view=view, ephemeral=ephemeral)
         except Exception as e:
             return await interaction.followup.send(f"❌ Unexpected error: {type(e).__name__}: {str(e)[:200]}")
 
