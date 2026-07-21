@@ -138,7 +138,7 @@ class MusicLookupError(Exception):
     caller sends str(exc) to the user unmodified, with no '❌ Unexpected error' prefix."""
 
 
-def _format_download_error(e: yt_dlp.utils.DownloadError) -> tuple:
+def _format_download_error(e: yt_dlp.utils.DownloadError) -> tuple[str | None, discord.Embed | None, discord.ui.View | None, bool]:
     """Map a yt-dlp DownloadError to (content, embed, view, ephemeral) for an interaction
     response/followup/message-edit — matches /play's DownloadError branches exactly."""
     err = str(e)
