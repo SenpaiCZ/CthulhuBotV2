@@ -7,7 +7,7 @@ import pytest
 import yt_dlp
 from discord.ext import tasks
 
-from commands.music import Music, _query_has_explicit_video, MusicLookupError, _format_download_error, CookieView
+from commands.music import Music, _query_has_explicit_video, MusicLookupError, _format_download_error, CookieView, PlaylistChoiceView
 
 
 def make_interaction(user=None):
@@ -432,3 +432,131 @@ class TestPlayAmbiguousPlaylistBranch:
         _, kwargs = interaction.followup.send.call_args
         assert isinstance(kwargs["view"], PlaylistChoiceView)
         assert kwargs["view"].just_one.label == "🎵 Just this song"
+
+
+class TestJustOneButton:
+    @pytest.mark.asyncio
+    async def test_explicit_video_case_queues_via_original_query_and_finalizes(self):
+        cog = make_music_cog()
+        cog._queue_single_track = AsyncMock(return_value=(None, False))
+        cog._finalize_play = AsyncMock()
+        view = PlaylistChoiceView(
+            cog=cog, guild_id="123", requester_id=999,
+            single_query="https://www.youtube.com/watch?v=abc&list=PL1",
+            has_explicit_video=True,
+            entries=[{"title": "A", "url": "a"}, {"title": "B", "url": "b"}],
+            playlist_title="P",
+        )
+        interaction = make_interaction(user=MagicMock(id=999))
+
+        await view.just_one.callback(interaction)
+
+        cog._queue_single_track.assert_awaited_once_with(
+            "123", "https://www.youtube.com/watch?v=abc&list=PL1", interaction.user
+        )
+        interaction.message.edit.assert_awaited_once()
+        _, kwargs = interaction.message.edit.call_args
+        assert kwargs["view"] is None
+        cog._finalize_play.assert_awaited_once_with(interaction, "123")
+
+    @pytest.mark.asyncio
+    async def test_bare_playlist_case_queues_via_first_entry_url(self):
+        cog = make_music_cog()
+        cog._queue_single_track = AsyncMock(return_value=(None, False))
+        cog._finalize_play = AsyncMock()
+        view = PlaylistChoiceView(
+            cog=cog, guild_id="123", requester_id=999,
+            single_query="url-a", has_explicit_video=False,
+            entries=[{"title": "A", "url": "url-a"}, {"title": "B", "url": "url-b"}],
+            playlist_title="P",
+        )
+        interaction = make_interaction(user=MagicMock(id=999))
+
+        await view.just_one.callback(interaction)
+
+        cog._queue_single_track.assert_awaited_once_with("123", "url-a", interaction.user)
+
+    @pytest.mark.asyncio
+    async def test_already_playing_edits_added_to_queue_embed_and_updates_dashboard_only(self):
+        cog = make_music_cog()
+        added_embed = discord.Embed(title="📥 Added to Queue")
+        cog._queue_single_track = AsyncMock(return_value=(added_embed, True))
+        cog._finalize_play = AsyncMock()
+        cog._update_dashboard_for_guild = AsyncMock()
+        view = PlaylistChoiceView(
+            cog=cog, guild_id="123", requester_id=999,
+            single_query="url-a", has_explicit_video=False,
+            entries=[{"title": "A", "url": "url-a"}, {"title": "B", "url": "url-b"}],
+            playlist_title="P",
+        )
+        interaction = make_interaction(user=MagicMock(id=999))
+
+        await view.just_one.callback(interaction)
+
+        interaction.message.edit.assert_awaited_once_with(embed=added_embed, view=None)
+        cog._update_dashboard_for_guild.assert_awaited_once_with("123")
+        cog._finalize_play.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_lookup_error_edits_message_with_error_and_does_not_finalize(self):
+        cog = make_music_cog()
+        cog._queue_single_track = AsyncMock(side_effect=MusicLookupError("❌ No results found."))
+        cog._finalize_play = AsyncMock()
+        view = PlaylistChoiceView(
+            cog=cog, guild_id="123", requester_id=999,
+            single_query="url-a", has_explicit_video=False,
+            entries=[{"title": "A", "url": "url-a"}, {"title": "B", "url": "url-b"}],
+            playlist_title="P",
+        )
+        interaction = make_interaction(user=MagicMock(id=999))
+
+        await view.just_one.callback(interaction)
+
+        interaction.message.edit.assert_awaited_once_with(
+            content="❌ No results found.", embed=None, view=None
+        )
+        cog._finalize_play.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_download_error_edits_message_via_format_download_error(self):
+        cog = make_music_cog()
+        cog._queue_single_track = AsyncMock(
+            side_effect=yt_dlp.utils.DownloadError("Private video")
+        )
+        view = PlaylistChoiceView(
+            cog=cog, guild_id="123", requester_id=999,
+            single_query="url-a", has_explicit_video=False,
+            entries=[{"title": "A", "url": "url-a"}, {"title": "B", "url": "url-b"}],
+            playlist_title="P",
+        )
+        interaction = make_interaction(user=MagicMock(id=999))
+
+        await view.just_one.callback(interaction)
+
+        interaction.message.edit.assert_awaited_once_with(
+            content="❌ That video is private.", embed=None, view=None
+        )
+
+
+class TestWholePlaylistButton:
+    @pytest.mark.asyncio
+    async def test_queues_all_entries_and_finalizes(self):
+        cog = make_music_cog()
+        playlist_embed = discord.Embed(title="📥 Playlist Added")
+        cog._queue_playlist_entries = AsyncMock(return_value=(playlist_embed, False))
+        cog._finalize_play = AsyncMock()
+        entries = [{"title": "A", "url": "url-a"}, {"title": "B", "url": "url-b"}]
+        view = PlaylistChoiceView(
+            cog=cog, guild_id="123", requester_id=999,
+            single_query="url-a", has_explicit_video=False,
+            entries=entries, playlist_title="My Playlist",
+        )
+        interaction = make_interaction(user=MagicMock(id=999))
+
+        await view.whole_playlist.callback(interaction)
+
+        cog._queue_playlist_entries.assert_awaited_once_with(
+            "123", entries, "My Playlist", interaction.user
+        )
+        interaction.message.edit.assert_awaited_once_with(embed=playlist_embed, view=None)
+        cog._finalize_play.assert_awaited_once_with(interaction, "123")

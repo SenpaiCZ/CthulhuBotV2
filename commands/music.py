@@ -196,11 +196,47 @@ class PlaylistChoiceView(discord.ui.View):
 
     @discord.ui.button(label="Just one song", style=discord.ButtonStyle.primary)
     async def just_one(self, interaction: discord.Interaction, button: discord.ui.Button):
-        pass  # implemented in Task 7
+        await interaction.response.defer()
+        try:
+            embed, already_playing = await self.cog._queue_single_track(
+                self.guild_id, self.single_query, interaction.user
+            )
+        except MusicLookupError as e:
+            await interaction.message.edit(content=str(e), embed=None, view=None)
+            self.stop()
+            return
+        except yt_dlp.utils.DownloadError as e:
+            content, err_embed, err_view, _ephemeral = _format_download_error(e)
+            await interaction.message.edit(content=content, embed=err_embed, view=err_view)
+            self.stop()
+            return
+        except Exception as e:
+            await interaction.message.edit(
+                content=f"❌ Unexpected error: {type(e).__name__}: {str(e)[:200]}", embed=None, view=None
+            )
+            self.stop()
+            return
+
+        if already_playing:
+            await interaction.message.edit(embed=embed, view=None)
+            await self.cog._update_dashboard_for_guild(self.guild_id)
+        else:
+            queued_embed = discord.Embed(
+                description="▶️ Queued — starting playback.", color=discord.Color.blurple()
+            )
+            await interaction.message.edit(embed=queued_embed, view=None)
+            await self.cog._finalize_play(interaction, self.guild_id)
+        self.stop()
 
     @discord.ui.button(label="Whole playlist", style=discord.ButtonStyle.secondary)
     async def whole_playlist(self, interaction: discord.Interaction, button: discord.ui.Button):
-        pass  # implemented in Task 7
+        await interaction.response.defer()
+        embed, _already_playing = await self.cog._queue_playlist_entries(
+            self.guild_id, self.entries, self.playlist_title, interaction.user
+        )
+        await interaction.message.edit(embed=embed, view=None)
+        await self.cog._finalize_play(interaction, self.guild_id)
+        self.stop()
 
 
 # ── Cog ──────────────────────────────────────────────────────────────────────
