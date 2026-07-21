@@ -61,6 +61,12 @@ def _is_playlist_url(query: str) -> bool:
     return 'list=' in query or '/playlist' in query
 
 
+def _query_has_explicit_video(query: str) -> bool:
+    """True if the query references a specific video (watch?v=... or youtu.be/...), as
+    opposed to a bare playlist link with no video reference."""
+    return '?v=' in query or '&v=' in query or 'youtu.be/' in query
+
+
 async def _delete_after(message, delay: float):
     await asyncio.sleep(delay)
     try:
