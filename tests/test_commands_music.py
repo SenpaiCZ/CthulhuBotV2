@@ -277,6 +277,15 @@ class TestQueueSingleTrack:
         with pytest.raises(MusicLookupError, match="is blacklisted"):
             await cog._queue_single_track("g1", "url-a", MagicMock(display_name="Alice"))
 
+    @pytest.mark.asyncio
+    async def test_raises_lookup_error_when_no_playable_entry(self):
+        cog = make_music_cog()
+        cog.queue["g1"] = []
+        cog.bot.loop.run_in_executor = AsyncMock(return_value={"entries": [None, None]})
+
+        with pytest.raises(MusicLookupError, match="No playable result found"):
+            await cog._queue_single_track("g1", "some query", MagicMock(display_name="Alice"))
+
 
 class TestPlaySingleTrackBranch:
     @pytest.mark.asyncio

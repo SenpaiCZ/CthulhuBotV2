@@ -346,7 +346,7 @@ class Music(commands.Cog):
         )
         return embed, False
 
-    async def _queue_single_track(self, guild_id: str, query: str, requester) -> tuple:
+    async def _queue_single_track(self, guild_id: str, query: str, requester) -> tuple[discord.Embed | None, bool]:
         """Full yt-dlp extraction + blacklist check + queue append for one track.
         Returns (embed, already_playing). If something is already playing, embed is the
         'Added to Queue' embed and already_playing is True — the caller must send/edit it
