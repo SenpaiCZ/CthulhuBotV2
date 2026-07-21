@@ -5,7 +5,7 @@ from discord.ext import commands
 from discord import app_commands
 from discord.ui import View, Button, Select
 from loadnsave import load_player_stats, load_weapons_data, save_player_stats, load_luck_stats
-from commands.roll import RollResultView
+from commands._roll_views import RollResultView
 from rapidfuzz import process, fuzz, utils
 from emojis import get_health_bar
 from support_functions import MockContext

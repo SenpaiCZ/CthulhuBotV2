@@ -726,3 +726,49 @@ async def save_fonts_config(data):
     global _FONTS_CONFIG_CACHE
     _FONTS_CONFIG_CACHE = data
     await _save_json_file(DATA_FOLDER, 'fonts_config.json', data)
+
+# --- Generic Cache Invalidation (for writers that bypass a specific save_X()) ---
+# Used by the admin file-browser (dashboard/blueprints/file_browser.py), which can
+# write to any data/*.json file by filename and therefore can't call a specific
+# save_X() function to keep that entity's cache in sync. Every data/-folder entity
+# below uses the same "module-global set to None means uncached" convention, so
+# resetting to None is sufficient to force the next load_X() call to re-read disk.
+_DATA_CACHE_VAR_BY_FILENAME = {
+    'player_stats.json': '_PLAYER_STATS_CACHE',
+    'bot_status.json': '_BOT_STATUS_CACHE',
+    'server_stats.json': '_SERVER_STATS_CACHE',
+    'server_volumes.json': '_SERVER_VOLUMES_CACHE',
+    'smart_react.json': '_SMART_REACT_CACHE',
+    'autorooms.json': '_AUTOROOM_CACHE',
+    'session_data.json': '_SESSION_DATA_CACHE',
+    'luck_stats.json': '_LUCK_STATS_CACHE',
+    'skill_settings.json': '_SKILL_SETTINGS_CACHE',
+    'chase_data.json': '_CHASE_DATA_CACHE',
+    'deleter_data.json': '_DELETER_DATA_CACHE',
+    'rss_data.json': '_RSS_DATA_CACHE',
+    'soundboard_settings.json': '_SOUNDBOARD_SETTINGS_CACHE',
+    'music_blacklist.json': '_MUSIC_BLACKLIST_CACHE',
+    'reminder_data.json': '_REMINDER_DATA_CACHE',
+    'retired_characters_data.json': '_RETIRED_CHARACTERS_CACHE',
+    'gamemode.json': '_GAMEMODE_STATS_CACHE',
+    'reaction_roles.json': '_REACTION_ROLES_CACHE',
+    'pogo_settings.json': '_POGO_SETTINGS_CACHE',
+    'pogo_events.json': '_POGO_EVENTS_CACHE',
+    'giveaway_data.json': '_GIVEAWAY_DATA_CACHE',
+    'polls_data.json': '_POLLS_DATA_CACHE',
+    'journal_data.json': '_JOURNAL_DATA_CACHE',
+    'gamerole_settings.json': '_GAMEROLE_SETTINGS_CACHE',
+    'enroll_settings.json': '_ENROLL_SETTINGS_CACHE',
+    'loot_settings.json': '_LOOT_SETTINGS_CACHE',
+    'skill_sound_settings.json': '_SKILL_SOUND_SETTINGS_CACHE',
+    'fonts_config.json': '_FONTS_CONFIG_CACHE',
+}
+
+def invalidate_data_cache(filename):
+    """Reset the in-memory cache for a data/-folder entity, keyed by its JSON
+    filename, so the next load_X() call re-reads the file from disk instead of
+    serving a stale cached value. No-op for filenames with no registered cache
+    (e.g. entities that never cache, like karma_settings.json) or unknown names."""
+    var_name = _DATA_CACHE_VAR_BY_FILENAME.get(filename)
+    if var_name is not None:
+        globals()[var_name] = None
