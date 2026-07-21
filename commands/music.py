@@ -162,6 +162,47 @@ def _format_download_error(e: yt_dlp.utils.DownloadError) -> tuple[str | None, d
         return f"❌ Download error: {err[:200]}", None, None, False
 
 
+class PlaylistChoiceView(discord.ui.View):
+    def __init__(self, cog, guild_id: str, requester_id: int, single_query: str,
+                 has_explicit_video: bool, entries: list, playlist_title: str):
+        super().__init__(timeout=60)
+        self.cog = cog
+        self.guild_id = guild_id
+        self.requester_id = requester_id
+        self.single_query = single_query
+        self.entries = entries
+        self.playlist_title = playlist_title
+        self.message: discord.Message | None = None
+
+        self.just_one.label = "🎵 Just this song" if has_explicit_video else "🎵 Just the first song"
+        self.whole_playlist.label = f"📥 Whole playlist ({len(entries)})"
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.requester_id:
+            await interaction.response.send_message("This choice isn't for you.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for child in self.children:
+            child.disabled = True
+        if self.message:
+            try:
+                await self.message.edit(content="⌛ Choice timed out — run `/play` again.", embed=None, view=self)
+            except discord.NotFound:
+                pass
+            except Exception:
+                pass
+
+    @discord.ui.button(label="Just one song", style=discord.ButtonStyle.primary)
+    async def just_one(self, interaction: discord.Interaction, button: discord.ui.Button):
+        pass  # implemented in Task 7
+
+    @discord.ui.button(label="Whole playlist", style=discord.ButtonStyle.secondary)
+    async def whole_playlist(self, interaction: discord.Interaction, button: discord.ui.Button):
+        pass  # implemented in Task 7
+
+
 # ── Cog ──────────────────────────────────────────────────────────────────────
 
 class Music(commands.Cog):
@@ -643,11 +684,32 @@ class Music(commands.Cog):
                     return await interaction.followup.send("❌ No playable tracks found in that playlist.")
 
                 playlist_title = info.get('title', 'Playlist')
-                embed, _already_playing = await self._queue_playlist_entries(
-                    guild_id, entries, playlist_title, interaction.user
-                )
-                msg = await interaction.followup.send(embed=embed)
-                asyncio.create_task(_delete_after(msg, 10))
+
+                if len(entries) <= 1:
+                    embed, _already_playing = await self._queue_playlist_entries(
+                        guild_id, entries, playlist_title, interaction.user
+                    )
+                    msg = await interaction.followup.send(embed=embed)
+                    asyncio.create_task(_delete_after(msg, 10))
+                else:
+                    has_explicit_video = _query_has_explicit_video(query)
+                    single_query = query if has_explicit_video else entries[0]['url']
+                    view = PlaylistChoiceView(
+                        cog=self, guild_id=guild_id, requester_id=interaction.user.id,
+                        single_query=single_query, has_explicit_video=has_explicit_video,
+                        entries=entries, playlist_title=playlist_title,
+                    )
+                    prompt_embed = discord.Embed(
+                        title="📀 Playlist link detected",
+                        description=(
+                            f"**{playlist_title}** — {len(entries)} tracks\n"
+                            f"First track: **{entries[0].get('title', 'Unknown')}**\n\n"
+                            "Queue the whole playlist, or just one song?"
+                        ),
+                        color=discord.Color.blurple(),
+                    )
+                    view.message = await interaction.followup.send(embed=prompt_embed, view=view)
+                    return
 
             else:
                 embed, already_playing = await self._queue_single_track(guild_id, query, interaction.user)

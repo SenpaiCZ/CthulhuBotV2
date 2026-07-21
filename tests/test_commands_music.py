@@ -333,3 +333,102 @@ class TestPlaySingleTrackBranch:
         await Music.play.callback(cog, interaction, "nonsense query")
 
         interaction.followup.send.assert_awaited_once_with("❌ No results found.")
+
+
+from commands.music import PlaylistChoiceView
+
+
+class TestPlaylistChoiceViewConstruction:
+    def test_explicit_video_link_labels_just_one_as_this_song(self):
+        entries = [{"title": "A", "url": "a"}, {"title": "B", "url": "b"}]
+        view = PlaylistChoiceView(
+            cog=MagicMock(), guild_id="123", requester_id=999,
+            single_query="https://www.youtube.com/watch?v=abc&list=PL1",
+            has_explicit_video=True, entries=entries, playlist_title="My Playlist",
+        )
+        assert view.just_one.label == "🎵 Just this song"
+        assert view.whole_playlist.label == "📥 Whole playlist (2)"
+
+    def test_bare_playlist_link_labels_just_one_as_first_song(self):
+        entries = [{"title": "A", "url": "a"}, {"title": "B", "url": "b"}, {"title": "C", "url": "c"}]
+        view = PlaylistChoiceView(
+            cog=MagicMock(), guild_id="123", requester_id=999,
+            single_query="a", has_explicit_video=False,
+            entries=entries, playlist_title="My Playlist",
+        )
+        assert view.just_one.label == "🎵 Just the first song"
+        assert view.whole_playlist.label == "📥 Whole playlist (3)"
+
+    @pytest.mark.asyncio
+    async def test_interaction_check_rejects_non_requester(self):
+        view = PlaylistChoiceView(
+            cog=MagicMock(), guild_id="123", requester_id=999,
+            single_query="a", has_explicit_video=False,
+            entries=[{"title": "A", "url": "a"}, {"title": "B", "url": "b"}],
+            playlist_title="P",
+        )
+        interaction = make_interaction(user=MagicMock(id=111))
+
+        result = await view.interaction_check(interaction)
+
+        assert result is False
+        interaction.response.send_message.assert_awaited_once_with(
+            "This choice isn't for you.", ephemeral=True
+        )
+
+    @pytest.mark.asyncio
+    async def test_interaction_check_accepts_requester(self):
+        view = PlaylistChoiceView(
+            cog=MagicMock(), guild_id="123", requester_id=999,
+            single_query="a", has_explicit_video=False,
+            entries=[{"title": "A", "url": "a"}, {"title": "B", "url": "b"}],
+            playlist_title="P",
+        )
+        interaction = make_interaction(user=MagicMock(id=999))
+
+        result = await view.interaction_check(interaction)
+
+        assert result is True
+        interaction.response.send_message.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_on_timeout_disables_buttons_and_edits_message(self):
+        view = PlaylistChoiceView(
+            cog=MagicMock(), guild_id="123", requester_id=999,
+            single_query="a", has_explicit_video=False,
+            entries=[{"title": "A", "url": "a"}, {"title": "B", "url": "b"}],
+            playlist_title="P",
+        )
+        view.message = MagicMock()
+        view.message.edit = AsyncMock()
+
+        await view.on_timeout()
+
+        assert all(c.disabled for c in view.children)
+        view.message.edit.assert_awaited_once()
+
+
+class TestPlayAmbiguousPlaylistBranch:
+    @pytest.mark.asyncio
+    async def test_play_sends_choice_view_when_entries_exceed_one(self):
+        cog = make_music_cog()
+        cog._ensure_voice = AsyncMock(return_value=MagicMock())
+        flat_info = {
+            "title": "My Playlist",
+            "entries": [
+                {"title": "Song A", "url": "url-a"},
+                {"title": "Song B", "url": "url-b"},
+            ],
+        }
+        cog.bot.loop.run_in_executor = AsyncMock(return_value=flat_info)
+        interaction = make_interaction()
+
+        await Music.play.callback(
+            cog, interaction, "https://www.youtube.com/watch?v=url-a&list=PL1"
+        )
+
+        assert cog.queue["123"] == []  # nothing queued yet -- waiting on the button click
+        interaction.followup.send.assert_awaited_once()
+        _, kwargs = interaction.followup.send.call_args
+        assert isinstance(kwargs["view"], PlaylistChoiceView)
+        assert kwargs["view"].just_one.label == "🎵 Just this song"
