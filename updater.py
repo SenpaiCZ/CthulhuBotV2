@@ -433,13 +433,27 @@ def run_update_mode(args):
         if launch_and_supervise():
             log("Update successful, bot is healthy.")
         else:
-            log("CRITICAL: update produced an unhealthy bot.")
-            # Note: this notice is only ever delivered by a healthy bot's on_ready handler,
-            # so the owner will NOT receive this Discord DM until a bot is next started healthy.
-            write_status_notice(
-                "🚨 Your last update failed to start correctly. Automatic rollback isn't "
-                "wired up yet — use /rollback or the dashboard to restore a previous backup."
-            )
+            log("Update produced an unhealthy bot -- attempting automatic rollback...")
+            latest_backup = find_latest_backup()
+            if latest_backup and restore_from_backup(latest_backup):
+                if launch_and_supervise():
+                    log("Automatic rollback succeeded.")
+                    write_status_notice(
+                        "⚠️ Your last update failed to start, so I automatically rolled back "
+                        "to the previous version."
+                    )
+                else:
+                    log("CRITICAL: automatic rollback also failed to produce a healthy bot.")
+                    write_status_notice(
+                        "🚨 Your last update failed AND the automatic rollback also failed to "
+                        "start. Manual intervention needed — check the server directly."
+                    )
+            else:
+                log("CRITICAL: update failed and no usable backup was available to roll back to.")
+                write_status_notice(
+                    "🚨 Your last update failed and I could not automatically roll back (no "
+                    "backup available, or restore itself failed). Manual intervention needed."
+                )
     else:
         log("Update finished. Please restart the bot manually.")
 

@@ -309,17 +309,6 @@ class TestRunUpdateMode:
 
         mock_backup.assert_not_called()
 
-    def test_unhealthy_update_writes_notice_pointing_at_manual_rollback(self, tmp_path):
-        args = argparse.Namespace(no_backup=True, no_restart=False)
-        with patch.object(updater, "download_update"), \
-             patch.object(updater, "extract_and_apply"), \
-             patch.object(updater, "update_dependencies"), \
-             patch.object(updater, "launch_and_supervise", return_value=False), \
-             patch.object(updater, "write_status_notice") as mock_notice:
-            updater.run_update_mode(args)
-
-        assert "/rollback" in mock_notice.call_args[0][0]
-
     def test_no_restart_flag_skips_supervision(self, tmp_path):
         args = argparse.Namespace(no_backup=True, no_restart=True)
         with patch.object(updater, "download_update"), \
@@ -329,3 +318,76 @@ class TestRunUpdateMode:
             updater.run_update_mode(args)
 
         mock_launch.assert_not_called()
+
+
+class TestRunUpdateModeAutoRollback:
+    def test_healthy_update_never_attempts_rollback(self, tmp_path):
+        args = argparse.Namespace(no_backup=True, no_restart=False)
+        with patch.object(updater, "download_update"), \
+             patch.object(updater, "extract_and_apply"), \
+             patch.object(updater, "update_dependencies"), \
+             patch.object(updater, "launch_and_supervise", return_value=True), \
+             patch.object(updater, "find_latest_backup") as mock_find, \
+             patch.object(updater, "restore_from_backup") as mock_restore:
+            updater.run_update_mode(args)
+
+        mock_find.assert_not_called()
+        mock_restore.assert_not_called()
+
+    def test_unhealthy_update_auto_restores_and_succeeds(self, tmp_path):
+        args = argparse.Namespace(no_backup=True, no_restart=False)
+        with patch.object(updater, "download_update"), \
+             patch.object(updater, "extract_and_apply"), \
+             patch.object(updater, "update_dependencies"), \
+             patch.object(updater, "launch_and_supervise", side_effect=[False, True]) as mock_launch, \
+             patch.object(updater, "find_latest_backup", return_value="/backups/backup_x.zip"), \
+             patch.object(updater, "restore_from_backup", return_value=True) as mock_restore, \
+             patch.object(updater, "write_status_notice") as mock_notice:
+            updater.run_update_mode(args)
+
+        mock_restore.assert_called_once_with("/backups/backup_x.zip")
+        assert mock_launch.call_count == 2
+        assert "automatically rolled back" in mock_notice.call_args[0][0]
+
+    def test_unhealthy_update_auto_restore_also_unhealthy(self, tmp_path):
+        args = argparse.Namespace(no_backup=True, no_restart=False)
+        with patch.object(updater, "download_update"), \
+             patch.object(updater, "extract_and_apply"), \
+             patch.object(updater, "update_dependencies"), \
+             patch.object(updater, "launch_and_supervise", side_effect=[False, False]), \
+             patch.object(updater, "find_latest_backup", return_value="/backups/backup_x.zip"), \
+             patch.object(updater, "restore_from_backup", return_value=True), \
+             patch.object(updater, "write_status_notice") as mock_notice:
+            updater.run_update_mode(args)
+
+        assert "rollback also failed" in mock_notice.call_args[0][0]
+
+    def test_unhealthy_update_no_backup_available_skips_restore(self, tmp_path):
+        args = argparse.Namespace(no_backup=True, no_restart=False)
+        with patch.object(updater, "download_update"), \
+             patch.object(updater, "extract_and_apply"), \
+             patch.object(updater, "update_dependencies"), \
+             patch.object(updater, "launch_and_supervise", return_value=False), \
+             patch.object(updater, "find_latest_backup", return_value=None), \
+             patch.object(updater, "restore_from_backup") as mock_restore, \
+             patch.object(updater, "write_status_notice") as mock_notice:
+            updater.run_update_mode(args)
+
+        mock_restore.assert_not_called()
+        assert "could not automatically roll back" in mock_notice.call_args[0][0]
+
+    def test_unhealthy_update_restore_itself_fails(self, tmp_path):
+        args = argparse.Namespace(no_backup=True, no_restart=False)
+        with patch.object(updater, "download_update"), \
+             patch.object(updater, "extract_and_apply"), \
+             patch.object(updater, "update_dependencies"), \
+             patch.object(updater, "launch_and_supervise", return_value=False) as mock_launch, \
+             patch.object(updater, "find_latest_backup", return_value="/backups/backup_x.zip"), \
+             patch.object(updater, "restore_from_backup", return_value=False), \
+             patch.object(updater, "write_status_notice") as mock_notice:
+            updater.run_update_mode(args)
+
+        # restore_from_backup returning False means launch_and_supervise is never called a
+        # second time -- only the initial (failed) attempt from the top of run_update_mode.
+        assert mock_launch.call_count == 1
+        assert "could not automatically roll back" in mock_notice.call_args[0][0]
