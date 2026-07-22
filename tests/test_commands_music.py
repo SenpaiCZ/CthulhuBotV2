@@ -795,3 +795,176 @@ class TestSeekCommand:
         await Music.seek.callback(cog, interaction, "+10")
 
         interaction.followup.send.assert_awaited_once_with("❌ Could not seek — track is no longer active.")
+
+
+def make_reaction_payload(user_id=999, guild_id=123, message_id=555, emoji="❤️"):
+    return SimpleNamespace(user_id=user_id, guild_id=guild_id, message_id=message_id, emoji=emoji)
+
+
+class TestAddRemoveFavorite:
+    @pytest.mark.asyncio
+    async def test_add_favorite_saves_new_entry(self, monkeypatch):
+        cog = make_music_cog()
+        save_mock = AsyncMock()
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value={}))
+        monkeypatch.setattr("commands.music.save_music_favorites", save_mock)
+
+        await cog._add_favorite("g1", "u1", {
+            "original_url": "url-a", "title": "Song A", "thumbnail": "thumb-a", "duration": 100,
+        })
+
+        save_mock.assert_awaited_once()
+        saved = save_mock.call_args[0][0]
+        assert saved["g1"]["u1"] == [{"url": "url-a", "title": "Song A", "thumbnail": "thumb-a", "duration": 100}]
+
+    @pytest.mark.asyncio
+    async def test_add_favorite_is_noop_when_url_missing(self, monkeypatch):
+        cog = make_music_cog()
+        save_mock = AsyncMock()
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value={}))
+        monkeypatch.setattr("commands.music.save_music_favorites", save_mock)
+
+        await cog._add_favorite("g1", "u1", {"title": "No URL"})
+
+        save_mock.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_add_favorite_dedupes_by_url(self, monkeypatch):
+        cog = make_music_cog()
+        existing = {"g1": {"u1": [{"url": "url-a", "title": "Song A", "thumbnail": "", "duration": 100}]}}
+        save_mock = AsyncMock()
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value=existing))
+        monkeypatch.setattr("commands.music.save_music_favorites", save_mock)
+
+        await cog._add_favorite("g1", "u1", {"original_url": "url-a", "title": "Song A (dup)"})
+
+        save_mock.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_remove_favorite_removes_matching_url(self, monkeypatch):
+        cog = make_music_cog()
+        existing = {"g1": {"u1": [
+            {"url": "url-a", "title": "Song A", "thumbnail": "", "duration": 100},
+            {"url": "url-b", "title": "Song B", "thumbnail": "", "duration": 50},
+        ]}}
+        save_mock = AsyncMock()
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value=existing))
+        monkeypatch.setattr("commands.music.save_music_favorites", save_mock)
+
+        await cog._remove_favorite("g1", "u1", "url-a")
+
+        save_mock.assert_awaited_once()
+        saved = save_mock.call_args[0][0]
+        assert saved["g1"]["u1"] == [{"url": "url-b", "title": "Song B", "thumbnail": "", "duration": 50}]
+
+    @pytest.mark.asyncio
+    async def test_remove_favorite_is_noop_when_url_absent(self, monkeypatch):
+        cog = make_music_cog()
+        existing = {"g1": {"u1": [{"url": "url-a", "title": "Song A", "thumbnail": "", "duration": 100}]}}
+        save_mock = AsyncMock()
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value=existing))
+        monkeypatch.setattr("commands.music.save_music_favorites", save_mock)
+
+        await cog._remove_favorite("g1", "u1", "url-does-not-exist")
+
+        save_mock.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_remove_favorite_is_noop_for_unknown_guild_or_user(self, monkeypatch):
+        cog = make_music_cog()
+        save_mock = AsyncMock()
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value={}))
+        monkeypatch.setattr("commands.music.save_music_favorites", save_mock)
+
+        await cog._remove_favorite("g1", "u1", "url-a")
+
+        save_mock.assert_not_called()
+
+
+class TestReactionListeners:
+    @pytest.mark.asyncio
+    async def test_add_ignores_bot_own_reaction(self):
+        cog = make_music_cog()
+        cog.bot.user = MagicMock(id=999)
+        cog._add_favorite = AsyncMock()
+        payload = make_reaction_payload(user_id=999)
+
+        await cog.on_raw_reaction_add(payload)
+
+        cog._add_favorite.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_add_ignores_non_heart_emoji(self):
+        cog = make_music_cog()
+        cog.bot.user = MagicMock(id=1)
+        cog._add_favorite = AsyncMock()
+        payload = make_reaction_payload(user_id=999, emoji="👍")
+
+        await cog.on_raw_reaction_add(payload)
+
+        cog._add_favorite.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_add_ignores_reaction_on_non_dashboard_message(self):
+        cog = make_music_cog()
+        cog.bot.user = MagicMock(id=1)
+        cog._add_favorite = AsyncMock()
+        cog.dashboard_messages["123"] = MagicMock(id=555)
+        payload = make_reaction_payload(guild_id=123, message_id=999)  # different message id
+
+        await cog.on_raw_reaction_add(payload)
+
+        cog._add_favorite.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_add_ignores_when_nothing_playing(self):
+        cog = make_music_cog()
+        cog.bot.user = MagicMock(id=1)
+        cog._add_favorite = AsyncMock()
+        cog.dashboard_messages["123"] = MagicMock(id=555)
+        payload = make_reaction_payload(guild_id=123, message_id=555)
+
+        await cog.on_raw_reaction_add(payload)
+
+        cog._add_favorite.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_add_ignores_finished_track(self):
+        cog = make_music_cog()
+        cog.bot.user = MagicMock(id=1)
+        cog._add_favorite = AsyncMock()
+        cog.dashboard_messages["123"] = MagicMock(id=555)
+        cog.current_track["123"] = MagicMock(finished=True)
+        payload = make_reaction_payload(guild_id=123, message_id=555)
+
+        await cog.on_raw_reaction_add(payload)
+
+        cog._add_favorite.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_add_calls_add_favorite_with_current_track_metadata(self):
+        cog = make_music_cog()
+        cog.bot.user = MagicMock(id=1)
+        cog._add_favorite = AsyncMock()
+        cog.dashboard_messages["123"] = MagicMock(id=555)
+        track = MagicMock(finished=False, metadata={"original_url": "url-a", "title": "Song A"})
+        cog.current_track["123"] = track
+        payload = make_reaction_payload(user_id=999, guild_id=123, message_id=555)
+
+        await cog.on_raw_reaction_add(payload)
+
+        cog._add_favorite.assert_awaited_once_with("123", "999", track.metadata)
+
+    @pytest.mark.asyncio
+    async def test_remove_calls_remove_favorite_with_current_track_original_url(self):
+        cog = make_music_cog()
+        cog.bot.user = MagicMock(id=1)
+        cog._remove_favorite = AsyncMock()
+        cog.dashboard_messages["123"] = MagicMock(id=555)
+        track = MagicMock(finished=False, metadata={"original_url": "url-a", "title": "Song A"})
+        cog.current_track["123"] = track
+        payload = make_reaction_payload(user_id=999, guild_id=123, message_id=555)
+
+        await cog.on_raw_reaction_remove(payload)
+
+        cog._remove_favorite.assert_awaited_once_with("123", "999", "url-a")

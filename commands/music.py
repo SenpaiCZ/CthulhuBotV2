@@ -13,6 +13,7 @@ from dashboard.audio_mixer import MixingAudioSource
 from loadnsave import (
     load_music_blacklist, save_music_blacklist,
     load_server_volumes, save_server_volumes,
+    load_music_favorites, save_music_favorites,
 )
 from commands._music_view import MusicView, _fmt_duration, _pct_to_vol, _vol_to_pct
 
@@ -1120,6 +1121,80 @@ class Music(commands.Cog):
             track.paused = False
             await self._update_dashboard_for_guild(guild_id)
             print(f"[Music] Auto-resumed in {before.channel.guild.name} — member rejoined")
+
+    # ── Favorites ────────────────────────────────────────────────────────────
+
+    FAVORITE_EMOJI = "❤️"
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if payload.user_id == self.bot.user.id:
+            return
+        if str(payload.emoji) != self.FAVORITE_EMOJI:
+            return
+        guild_id = str(payload.guild_id) if payload.guild_id else None
+        if not guild_id:
+            return
+
+        dashboard_msg = self.dashboard_messages.get(guild_id)
+        if not dashboard_msg or dashboard_msg.id != payload.message_id:
+            return
+
+        track = self.current_track.get(guild_id)
+        if not track or track.finished:
+            return
+
+        await self._add_favorite(guild_id, str(payload.user_id), track.metadata)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+        if payload.user_id == self.bot.user.id:
+            return
+        if str(payload.emoji) != self.FAVORITE_EMOJI:
+            return
+        guild_id = str(payload.guild_id) if payload.guild_id else None
+        if not guild_id:
+            return
+
+        dashboard_msg = self.dashboard_messages.get(guild_id)
+        if not dashboard_msg or dashboard_msg.id != payload.message_id:
+            return
+
+        track = self.current_track.get(guild_id)
+        if not track or track.finished:
+            return
+
+        await self._remove_favorite(guild_id, str(payload.user_id), track.metadata.get('original_url', ''))
+
+    async def _add_favorite(self, guild_id: str, user_id: str, metadata: dict):
+        url = metadata.get('original_url', '')
+        if not url:
+            return
+        favorites = await load_music_favorites()
+        favorites.setdefault(guild_id, {}).setdefault(user_id, [])
+        user_favs = favorites[guild_id][user_id]
+        if any(f['url'] == url for f in user_favs):
+            return
+        user_favs.append({
+            'url': url,
+            'title': metadata.get('title', 'Unknown'),
+            'thumbnail': metadata.get('thumbnail', ''),
+            'duration': metadata.get('duration'),
+        })
+        await save_music_favorites(favorites)
+
+    async def _remove_favorite(self, guild_id: str, user_id: str, url: str):
+        if not url:
+            return
+        favorites = await load_music_favorites()
+        user_favs = favorites.get(guild_id, {}).get(user_id)
+        if not user_favs:
+            return
+        new_favs = [f for f in user_favs if f['url'] != url]
+        if len(new_favs) == len(user_favs):
+            return
+        favorites[guild_id][user_id] = new_favs
+        await save_music_favorites(favorites)
 
 
 async def setup(bot):
