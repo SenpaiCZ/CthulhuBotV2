@@ -102,18 +102,24 @@ function escHtml(t) {
     return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
 
-function progressBar(elapsed, duration) {
+function progressBar(elapsed, duration, guildId) {
     if (!duration || duration <= 0) return '';
     const pct = Math.min(100, Math.max(0, (elapsed / duration) * 100)).toFixed(1);
     const elStr = fmtDur(elapsed) || '0:00';
     const durStr = fmtDur(duration) || '?:??';
     return `
         <div class="progress-row">
-            <div class="progress-bar-wrapper">
+            <div class="progress-bar-wrapper" onclick="seekClick(event, '${guildId}', ${duration})">
                 <div class="progress-bar-fill" style="width:${pct}%"></div>
             </div>
             <div class="progress-times"><span>${elStr}</span><span>${durStr}</span></div>
         </div>`;
+}
+
+function seekClick(evt, guildId, duration) {
+    const rect = evt.currentTarget.getBoundingClientRect();
+    const frac = Math.min(1, Math.max(0, (evt.clientX - rect.left) / rect.width));
+    ctrl(guildId, 'seek', null, null, frac * duration);
 }
 
 function renderGuild(guildId, guildData) {
@@ -146,7 +152,7 @@ function renderGuild(guildId, guildData) {
             ? `<button class="btn-eld primary" onclick="ctrl('${guildId}', 'resume')">⌁ RESUME</button>`
             : `<button class="btn-eld" onclick="ctrl('${guildId}', 'pause')">⏸ PAUSE</button>`;
 
-        const progHtml = progressBar(track.elapsed, track.duration);
+        const progHtml = progressBar(track.elapsed, track.duration, guildId);
 
         nowPlayingHtml = `
             <div class="now-playing">
@@ -169,6 +175,8 @@ function renderGuild(guildId, guildData) {
             </div>
             <div class="controls-row">
                 ${pauseBtn}
+                <button class="btn-eld" onclick="ctrl('${guildId}', 'seek', null, null, ${Math.max(0, track.elapsed - 10)})">⏪ 10s</button>
+                <button class="btn-eld" onclick="ctrl('${guildId}', 'seek', null, null, ${track.elapsed + 10})">10s ⏩</button>
                 <button class="btn-eld" onclick="ctrl('${guildId}', 'skip')">⌁ SKIP</button>
                 <button class="btn-eld ${loopClass}" onclick="ctrl('${guildId}', 'loop')">◎ LOOP MODE</button>
                 <button class="btn-eld rust" onclick="banTrack('${guildId}', '${url}')">⌫ BAN SONG</button>
@@ -236,11 +244,11 @@ async function updateMusicData() {
     }
 }
 
-async function ctrl(guildId, action, volume = null, index = null) {
+async function ctrl(guildId, action, volume = null, index = null, seconds = null) {
     await fetch('/api/music/control', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ guild_id: guildId, action, volume, index })
+        body: JSON.stringify({ guild_id: guildId, action, volume, index, seconds })
     });
     await updateMusicData();
 }
