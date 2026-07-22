@@ -471,6 +471,13 @@ async def load_karma_stats():
 async def save_karma_stats(stats):
     await _save_json_file(DATA_FOLDER, 'karma_stats.json', stats)
 
+# --- Music Favorites ---
+async def load_music_favorites():
+    return await _load_json_file(DATA_FOLDER, 'music_favorites.json')
+
+async def save_music_favorites(favorites):
+    await _save_json_file(DATA_FOLDER, 'music_favorites.json', favorites)
+
 # --- Reaction Roles ---
 _REACTION_ROLES_CACHE = None
 

@@ -55,6 +55,12 @@ ENTITY_CASES = [
         {"123": [{"NAME": "Retired Guy"}]},
         id="retired_characters_data",
     ),
+    pytest.param(
+        loadnsave.load_music_favorites, loadnsave.save_music_favorites,
+        "music_favorites.json", None,
+        {"123": {"456": [{"url": "u", "title": "t", "thumbnail": "", "duration": 100}]}},
+        id="music_favorites",
+    ),
 ]
 
 
