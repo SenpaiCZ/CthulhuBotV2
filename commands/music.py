@@ -614,6 +614,7 @@ class Music(commands.Cog):
         if dashboard_msg:
             try:
                 await dashboard_msg.clear_reactions()
+                await dashboard_msg.add_reaction(self.FAVORITE_EMOJI)
             except Exception:
                 pass
         await self._update_dashboard_for_guild(guild_id)
