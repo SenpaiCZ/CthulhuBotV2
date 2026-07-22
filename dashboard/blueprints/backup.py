@@ -1,5 +1,7 @@
 import os
 import re
+import sys
+import subprocess
 import datetime
 from quart import Blueprint, request, jsonify, redirect, url_for, render_template, send_from_directory
 
@@ -90,6 +92,39 @@ async def backup_delete_file():
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@backup_bp.route('/api/backup/restore', methods=['POST'])
+async def backup_restore():
+    if not is_admin(): return "Unauthorized", 401
+
+    data = await request.get_json()
+    filename = data.get('filename')
+
+    if not filename or not filename.endswith('.zip'):
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    if '..' in filename or '/' in filename or '\\' in filename:
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+
+    target_path = os.path.join(BACKUP_FOLDER, filename)
+    if not os.path.exists(target_path):
+        return jsonify({"status": "error", "message": "File not found"}), 404
+
+    if not app.bot:
+        return jsonify({"status": "error", "message": "Bot not ready"}), 500
+
+    pid = str(os.getpid())
+    cmd = [sys.executable, "updater.py", pid, "--restore", filename]
+
+    try:
+        if os.name == 'nt':
+            subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
+        else:
+            subprocess.Popen(cmd)
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Failed to start restore: {e}"}), 500
+
+    await app.bot.close()
+    return jsonify({"status": "success"})
 
 @backup_bp.route('/admin/backup/download/<filename>')
 async def backup_download_file(filename):

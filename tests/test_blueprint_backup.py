@@ -306,3 +306,62 @@ async def test_backup_download_returns_file_contents(client, isolated_backup_fol
     assert response.status_code == 200
     body = await response.get_data(as_text=False)
     assert body[:2] == b"PK"
+
+
+@pytest.mark.asyncio
+async def test_backup_restore_unauthorized_without_session(client):
+    response = await client.post(
+        '/api/backup/restore', json={"filename": "x.zip"},
+        headers={"Origin": "http://localhost"},
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_backup_restore_rejects_path_traversal(client, isolated_backup_folder):
+    await login(client)
+    response = await client.post(
+        '/api/backup/restore', json={"filename": "../evil.zip"},
+        headers={"Origin": "http://localhost"},
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_backup_restore_file_not_found_returns_404(client, isolated_backup_folder):
+    await login(client)
+    response = await client.post(
+        '/api/backup/restore', json={"filename": "missing.zip"},
+        headers={"Origin": "http://localhost"},
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_backup_restore_bot_not_ready_returns_500(client, isolated_backup_folder):
+    await login(client)
+    make_zip(isolated_backup_folder, "backup_1.zip")
+    with patch('dashboard.app.app.bot', None):
+        response = await client.post(
+            '/api/backup/restore', json={"filename": "backup_1.zip"},
+            headers={"Origin": "http://localhost"},
+        )
+    assert response.status_code == 500
+
+
+@pytest.mark.asyncio
+async def test_backup_restore_spawns_updater_and_closes_bot(client, isolated_backup_folder):
+    await login(client)
+    make_zip(isolated_backup_folder, "backup_1.zip")
+    mock_bot = MagicMock()
+    mock_bot.close = AsyncMock()
+    with patch('dashboard.app.app.bot', mock_bot), \
+         patch('dashboard.blueprints.backup.subprocess.Popen') as mock_popen, \
+         patch('dashboard.blueprints.backup.os.getpid', return_value=999):
+        response = await client.post(
+            '/api/backup/restore', json={"filename": "backup_1.zip"},
+            headers={"Origin": "http://localhost"},
+        )
+    assert response.status_code == 200
+    mock_popen.assert_called_once()
+    mock_bot.close.assert_awaited_once()

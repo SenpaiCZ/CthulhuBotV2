@@ -122,6 +122,7 @@ async function loadSystemBackups() {
                 <td class="pe-4 py-3 align-middle text-md-end">
                     <div style="display:flex; gap:8px; justify-content: flex-end">
                         <a href="/admin/backup/download/${file.name}" class="btn-eld on" style="padding: 6px 12px; font-size: 10px">DOWNLOAD</a>
+                        <button class="btn-eld primary" style="padding: 6px 12px; font-size: 10px" onclick="restoreBackup('${file.name}')">RESTORE</button>
                         <button class="btn-eld rust" style="padding: 6px 12px; font-size: 10px" onclick="deleteBackup('${file.name}')">DELETE</button>
                     </div>
                 </td>
@@ -142,6 +143,22 @@ async function deleteBackup(filename) {
         });
         const data = await response.json();
         if (data.status === 'success') loadSystemBackups();
+    } catch (e) { alert("Error: " + e); }
+}
+
+async function restoreBackup(filename) {
+    if (!confirm(`Restore ${filename}? The bot will restart immediately after applying it.`)) return;
+    try {
+        const response = await fetch('/api/backup/restore', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: filename })
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            alert('Restore started — the bot is restarting.');
+        } else {
+            alert('Error: ' + data.message);
+        }
     } catch (e) { alert("Error: " + e); }
 }
 
