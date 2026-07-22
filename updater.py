@@ -147,8 +147,12 @@ def sync_files(source_root, target_root):
     """
     log("Synchronizing files (removing obsolete files)...")
 
+    source_root = os.path.abspath(source_root)
+    target_root = os.path.abspath(target_root)
+
     for root, dirs, files in os.walk(target_root):
         rel_path = os.path.relpath(root, target_root)
+        current_abs = target_root if rel_path == "." else os.path.join(target_root, rel_path)
 
         # Skip protected directories
         path_parts = rel_path.split(os.sep)
@@ -161,6 +165,14 @@ def sync_files(source_root, target_root):
             continue
         if rel_path == EXTRACT_DIR or rel_path.startswith(EXTRACT_DIR + os.sep):
             continue
+
+        # Skip the source_root directory itself if it's within target_root
+        # This prevents sync_files from incorrectly deleting files from the source during sync
+        if source_root.startswith(current_abs + os.sep) or source_root == current_abs:
+            source_rel = os.path.relpath(source_root, current_abs)
+            source_top_level = source_rel.split(os.sep)[0]
+            if source_top_level in dirs:
+                dirs.remove(source_top_level)
 
         # Filter dirs traversal
         if rel_path == ".":
@@ -198,6 +210,38 @@ def update_self_in_place(src_path, dest_path):
     except Exception as e:
         log(f"Failed to self-update {os.path.basename(dest_path)}: {e}")
 
+def apply_source_to_tree(source_root: str):
+    """Sync + copy source_root's contents onto the current directory tree, respecting
+    PROTECTED_DIRS/PROTECTED_FILES exactly as extract_and_apply() always did."""
+    sync_files(source_root, ".")
+
+    for root, dirs, files in os.walk(source_root):
+        rel_path = os.path.relpath(root, source_root)
+        dest_dir = os.path.join(".", rel_path)
+
+        if rel_path == ".":
+            dirs[:] = [d for d in dirs if d not in PROTECTED_DIRS]
+
+        if rel_path != "." and not os.path.exists(dest_dir):
+            os.makedirs(dest_dir, exist_ok=True)
+
+        for file in files:
+            src_file = os.path.join(root, file)
+            dest_file = os.path.join(dest_dir, file)
+
+            if rel_path == "." and file in PROTECTED_FILES:
+                continue
+
+            if rel_path == "." and file == "updater.py":
+                update_self_in_place(src_file, dest_file)
+                continue
+
+            try:
+                shutil.copy2(src_file, dest_file)
+            except Exception as e:
+                log(f"Failed to copy {file}: {e}")
+
+
 def extract_and_apply():
     log("Extracting update...")
     try:
@@ -211,36 +255,7 @@ def extract_and_apply():
         extracted_root = os.path.join(EXTRACT_DIR, entries[0])
 
         log(f"Applying updates from {extracted_root}...")
-
-        # 1. Sync (Delete obsolete files)
-        sync_files(extracted_root, ".")
-
-        # 2. Copy/Overwrite new files
-        for root, dirs, files in os.walk(extracted_root):
-            rel_path = os.path.relpath(root, extracted_root)
-            dest_dir = os.path.join(".", rel_path)
-
-            if rel_path == ".":
-                dirs[:] = [d for d in dirs if d not in PROTECTED_DIRS]
-
-            if rel_path != "." and not os.path.exists(dest_dir):
-                os.makedirs(dest_dir, exist_ok=True)
-
-            for file in files:
-                src_file = os.path.join(root, file)
-                dest_file = os.path.join(dest_dir, file)
-
-                if rel_path == "." and file in PROTECTED_FILES:
-                    continue
-
-                if rel_path == "." and file == "updater.py":
-                    update_self_in_place(src_file, dest_file)
-                    continue
-
-                try:
-                    shutil.copy2(src_file, dest_file)
-                except Exception as e:
-                    log(f"Failed to copy {file}: {e}")
+        apply_source_to_tree(extracted_root)
 
         log("Update applied successfully.")
 
@@ -257,6 +272,35 @@ def extract_and_apply():
             try:
                 os.remove(ZIP_FILENAME)
             except:
+                pass
+
+
+def restore_from_backup(backup_zip_path: str) -> bool:
+    """Apply a specific backup zip onto the current tree, after snapshotting the current
+    (possibly-bad) state so the restore itself is always reversible too."""
+    if not os.path.exists(backup_zip_path):
+        log(f"Backup file not found: {backup_zip_path}")
+        return False
+
+    log("Snapshotting current state before restore...")
+    create_backup()
+
+    restore_dir = "restore_extract_temp"
+    try:
+        with zipfile.ZipFile(backup_zip_path, 'r') as zip_ref:
+            zip_ref.extractall(restore_dir)
+        log(f"Applying backup contents from {backup_zip_path}...")
+        apply_source_to_tree(restore_dir)  # backup zips have no extra top-level folder
+        log("Restore applied successfully.")
+        return True
+    except Exception as e:
+        log(f"Restore failed: {e}")
+        return False
+    finally:
+        if os.path.exists(restore_dir):
+            try:
+                shutil.rmtree(restore_dir)
+            except Exception:
                 pass
 
 def update_dependencies():
