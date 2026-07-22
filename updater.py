@@ -408,9 +408,9 @@ def run_restore_mode(args):
         sys.exit(1)
 
     if not args.no_restart:
+        write_status_notice("✅ Manual rollback succeeded — bot restored and healthy.")
         if launch_and_supervise():
             log("Manual rollback succeeded -- bot restored and healthy.")
-            write_status_notice("✅ Manual rollback succeeded — bot restored and healthy.")
         else:
             log("Manual rollback applied, but the bot did not become healthy afterward.")
             write_status_notice(
@@ -435,13 +435,15 @@ def run_update_mode(args):
         else:
             log("Update produced an unhealthy bot -- attempting automatic rollback...")
             latest_backup = find_latest_backup()
+            if latest_backup:
+                log(f"Found backup to restore: {latest_backup}")
             if latest_backup and restore_from_backup(latest_backup):
+                write_status_notice(
+                    "⚠️ Your last update failed to start, so I automatically rolled back "
+                    "to the previous version."
+                )
                 if launch_and_supervise():
                     log("Automatic rollback succeeded.")
-                    write_status_notice(
-                        "⚠️ Your last update failed to start, so I automatically rolled back "
-                        "to the previous version."
-                    )
                 else:
                     log("CRITICAL: automatic rollback also failed to produce a healthy bot.")
                     write_status_notice(

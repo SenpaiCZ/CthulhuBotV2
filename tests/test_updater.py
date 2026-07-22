@@ -391,3 +391,42 @@ class TestRunUpdateModeAutoRollback:
         # second time -- only the initial (failed) attempt from the top of run_update_mode.
         assert mock_launch.call_count == 1
         assert "could not automatically roll back" in mock_notice.call_args[0][0]
+
+    def test_auto_rollback_success_writes_notice_before_supervise(self, tmp_path):
+        """Verify that write_status_notice is called before the second launch_and_supervise,
+        so the notice file exists when the bot's on_ready checks for it."""
+        args = argparse.Namespace(no_backup=True, no_restart=False)
+        call_order = []
+
+        class CallTracker:
+            def __init__(self, call_order_list):
+                self.call_order = call_order_list
+                self.call_count = 0
+
+            def __call__(self, *args, **kwargs):
+                self.call_count += 1
+                if self.call_count == 1:
+                    # First call: unhealthy update
+                    return False
+                elif self.call_count == 2:
+                    # Second call: after rollback
+                    self.call_order.append("supervise")
+                    return True
+                return False
+
+        def track_notice(msg):
+            call_order.append("notice")
+
+        tracker = CallTracker(call_order)
+
+        with patch.object(updater, "download_update"), \
+             patch.object(updater, "extract_and_apply"), \
+             patch.object(updater, "update_dependencies"), \
+             patch.object(updater, "launch_and_supervise", side_effect=tracker), \
+             patch.object(updater, "find_latest_backup", return_value="/backups/backup_x.zip"), \
+             patch.object(updater, "restore_from_backup", return_value=True), \
+             patch.object(updater, "write_status_notice", side_effect=track_notice):
+            updater.run_update_mode(args)
+
+        # call_order should record notice before supervise, not after
+        assert call_order == ["notice", "supervise"]
