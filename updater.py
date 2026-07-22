@@ -384,12 +384,56 @@ def restart_bot(detached=True):
         # Just return, let the calling script handle it?
         pass
 
+
+def run_restore_mode(args):
+    log(f"Restoring from backup: {args.restore}")
+    restore_path = os.path.join(BACKUP_DIR, args.restore)
+    if not restore_from_backup(restore_path):
+        log("Restore failed -- aborting, bot NOT restarted automatically.")
+        sys.exit(1)
+
+    if not args.no_restart:
+        if launch_and_supervise():
+            log("Manual rollback succeeded -- bot restored and healthy.")
+            write_status_notice("✅ Manual rollback succeeded — bot restored and healthy.")
+        else:
+            log("Manual rollback applied, but the bot did not become healthy afterward.")
+            write_status_notice(
+                "⚠️ Manual rollback applied, but the bot did not become healthy afterward. "
+                "Check logs or try a different backup."
+            )
+    else:
+        log("Restore finished. Please restart the bot manually.")
+
+
+def run_update_mode(args):
+    if not args.no_backup:
+        create_backup()
+
+    download_update()
+    extract_and_apply()
+    update_dependencies()
+
+    if not args.no_restart:
+        if launch_and_supervise():
+            log("Update successful, bot is healthy.")
+        else:
+            log("CRITICAL: update produced an unhealthy bot.")
+            write_status_notice(
+                "🚨 Your last update failed to start correctly. Automatic rollback isn't "
+                "wired up yet — use /rollback or the dashboard to restore a previous backup."
+            )
+    else:
+        log("Update finished. Please restart the bot manually.")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="CthulhuBotV2 Auto-Updater")
     parser.add_argument("pid", nargs='?', type=int, help="PID of the process to wait for")
     parser.add_argument("--no-restart", action="store_true", help="Do not restart the bot automatically")
     parser.add_argument("--no-backup", action="store_true", help="Skip backup")
     parser.add_argument("--update-infodata", action="store_true", help="Update infodata folder (overwrite changes)")
+    parser.add_argument("--restore", metavar="FILENAME", help="Restore a specific backup zip from backups/ instead of downloading an update")
     args = parser.parse_args()
 
     # Update global sets based on arguments
@@ -408,21 +452,7 @@ if __name__ == "__main__":
         wait_for_pid(args.pid)
         time.sleep(2)
 
-    # 2. Backup
-    if not args.no_backup:
-        create_backup()
-
-    # 3. Download
-    download_update()
-
-    # 4. Apply (Sync + Update)
-    extract_and_apply()
-
-    # 5. Dependencies
-    update_dependencies()
-
-    # 6. Restart
-    if not args.no_restart:
-        restart_bot(detached=True)
+    if args.restore:
+        run_restore_mode(args)
     else:
-        log("Update finished. Please restart the bot manually.")
+        run_update_mode(args)

@@ -1,5 +1,6 @@
 import os
 import zipfile
+import argparse
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -174,3 +175,92 @@ class TestWriteStatusNotice:
         updater.write_status_notice("test message")
         with open(updater.ROLLBACK_NOTICE_FILE) as f:
             assert f.read() == "test message"
+
+
+class TestRunRestoreMode:
+    def test_success_path_calls_restore_and_supervises(self, tmp_path):
+        args = argparse.Namespace(restore="backup_x.zip", no_restart=False)
+        with patch.object(updater, "restore_from_backup", return_value=True) as mock_restore, \
+             patch.object(updater, "launch_and_supervise", return_value=True) as mock_launch, \
+             patch.object(updater, "write_status_notice") as mock_notice:
+            updater.run_restore_mode(args)
+
+        mock_restore.assert_called_once_with(os.path.join(updater.BACKUP_DIR, "backup_x.zip"))
+        mock_launch.assert_called_once()
+        mock_notice.assert_called_once()
+        assert "succeeded" in mock_notice.call_args[0][0]
+
+    def test_exits_nonzero_when_restore_fails(self, tmp_path):
+        args = argparse.Namespace(restore="backup_x.zip", no_restart=False)
+        with patch.object(updater, "restore_from_backup", return_value=False), \
+             patch.object(updater, "launch_and_supervise") as mock_launch:
+            with pytest.raises(SystemExit) as exc_info:
+                updater.run_restore_mode(args)
+
+        assert exc_info.value.code == 1
+        mock_launch.assert_not_called()
+
+    def test_unhealthy_after_restore_writes_warning_notice(self, tmp_path):
+        args = argparse.Namespace(restore="backup_x.zip", no_restart=False)
+        with patch.object(updater, "restore_from_backup", return_value=True), \
+             patch.object(updater, "launch_and_supervise", return_value=False), \
+             patch.object(updater, "write_status_notice") as mock_notice:
+            updater.run_restore_mode(args)
+
+        assert "did not become healthy" in mock_notice.call_args[0][0]
+
+    def test_no_restart_skips_supervision(self, tmp_path):
+        args = argparse.Namespace(restore="backup_x.zip", no_restart=True)
+        with patch.object(updater, "restore_from_backup", return_value=True), \
+             patch.object(updater, "launch_and_supervise") as mock_launch:
+            updater.run_restore_mode(args)
+
+        mock_launch.assert_not_called()
+
+
+class TestRunUpdateMode:
+    def test_normal_flow_calls_steps_in_order_and_reports_healthy(self, tmp_path):
+        args = argparse.Namespace(no_backup=False, no_restart=False)
+        calls = []
+        with patch.object(updater, "create_backup", side_effect=lambda: calls.append("backup")), \
+             patch.object(updater, "download_update", side_effect=lambda: calls.append("download")), \
+             patch.object(updater, "extract_and_apply", side_effect=lambda: calls.append("apply")), \
+             patch.object(updater, "update_dependencies", side_effect=lambda: calls.append("deps")), \
+             patch.object(updater, "launch_and_supervise", return_value=True), \
+             patch.object(updater, "write_status_notice") as mock_notice:
+            updater.run_update_mode(args)
+
+        assert calls == ["backup", "download", "apply", "deps"]
+        mock_notice.assert_not_called()
+
+    def test_no_backup_flag_skips_backup(self, tmp_path):
+        args = argparse.Namespace(no_backup=True, no_restart=False)
+        with patch.object(updater, "create_backup") as mock_backup, \
+             patch.object(updater, "download_update"), \
+             patch.object(updater, "extract_and_apply"), \
+             patch.object(updater, "update_dependencies"), \
+             patch.object(updater, "launch_and_supervise", return_value=True):
+            updater.run_update_mode(args)
+
+        mock_backup.assert_not_called()
+
+    def test_unhealthy_update_writes_notice_pointing_at_manual_rollback(self, tmp_path):
+        args = argparse.Namespace(no_backup=True, no_restart=False)
+        with patch.object(updater, "download_update"), \
+             patch.object(updater, "extract_and_apply"), \
+             patch.object(updater, "update_dependencies"), \
+             patch.object(updater, "launch_and_supervise", return_value=False), \
+             patch.object(updater, "write_status_notice") as mock_notice:
+            updater.run_update_mode(args)
+
+        assert "/rollback" in mock_notice.call_args[0][0]
+
+    def test_no_restart_flag_skips_supervision(self, tmp_path):
+        args = argparse.Namespace(no_backup=True, no_restart=True)
+        with patch.object(updater, "download_update"), \
+             patch.object(updater, "extract_and_apply"), \
+             patch.object(updater, "update_dependencies"), \
+             patch.object(updater, "launch_and_supervise") as mock_launch:
+            updater.run_update_mode(args)
+
+        mock_launch.assert_not_called()
