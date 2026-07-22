@@ -387,6 +387,10 @@ def restart_bot(detached=True):
 
 def run_restore_mode(args):
     log(f"Restoring from backup: {args.restore}")
+    # Defense-in-depth: reject path-traversal attempts even though callers validate
+    if '..' in args.restore or '/' in args.restore or '\\' in args.restore:
+        log(f"Invalid filename: {args.restore} (contains path-traversal characters)")
+        sys.exit(1)
     restore_path = os.path.join(BACKUP_DIR, args.restore)
     if not restore_from_backup(restore_path):
         log("Restore failed -- aborting, bot NOT restarted automatically.")
@@ -419,6 +423,8 @@ def run_update_mode(args):
             log("Update successful, bot is healthy.")
         else:
             log("CRITICAL: update produced an unhealthy bot.")
+            # Note: this notice is only ever delivered by a healthy bot's on_ready handler,
+            # so the owner will NOT receive this Discord DM until a bot is next started healthy.
             write_status_notice(
                 "🚨 Your last update failed to start correctly. Automatic rollback isn't "
                 "wired up yet — use /rollback or the dashboard to restore a previous backup."

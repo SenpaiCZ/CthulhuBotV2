@@ -217,6 +217,39 @@ class TestRunRestoreMode:
 
         mock_launch.assert_not_called()
 
+    def test_rejects_path_traversal_with_dotdot(self, tmp_path):
+        args = argparse.Namespace(restore="../evil.zip", no_restart=False)
+        with patch.object(updater, "restore_from_backup") as mock_restore, \
+             patch.object(updater, "launch_and_supervise") as mock_launch:
+            with pytest.raises(SystemExit) as exc_info:
+                updater.run_restore_mode(args)
+
+        assert exc_info.value.code == 1
+        mock_restore.assert_not_called()
+        mock_launch.assert_not_called()
+
+    def test_rejects_path_traversal_with_forward_slash(self, tmp_path):
+        args = argparse.Namespace(restore="../subdir/evil.zip", no_restart=False)
+        with patch.object(updater, "restore_from_backup") as mock_restore, \
+             patch.object(updater, "launch_and_supervise") as mock_launch:
+            with pytest.raises(SystemExit) as exc_info:
+                updater.run_restore_mode(args)
+
+        assert exc_info.value.code == 1
+        mock_restore.assert_not_called()
+        mock_launch.assert_not_called()
+
+    def test_rejects_path_traversal_with_backslash(self, tmp_path):
+        args = argparse.Namespace(restore="..\\evil.zip", no_restart=False)
+        with patch.object(updater, "restore_from_backup") as mock_restore, \
+             patch.object(updater, "launch_and_supervise") as mock_launch:
+            with pytest.raises(SystemExit) as exc_info:
+                updater.run_restore_mode(args)
+
+        assert exc_info.value.code == 1
+        mock_restore.assert_not_called()
+        mock_launch.assert_not_called()
+
 
 class TestRunUpdateMode:
     def test_normal_flow_calls_steps_in_order_and_reports_healthy(self, tmp_path):
