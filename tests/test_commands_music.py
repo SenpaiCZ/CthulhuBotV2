@@ -7,7 +7,7 @@ import pytest
 import yt_dlp
 from discord.ext import tasks
 
-from commands.music import Music, _query_has_explicit_video, MusicLookupError, _format_download_error, CookieView, PlaylistChoiceView
+from commands.music import Music, _query_has_explicit_video, MusicLookupError, _format_download_error, CookieView, PlaylistChoiceView, _parse_seek_position
 
 
 def make_interaction(user=None):
@@ -597,3 +597,42 @@ class TestQueueGuardsAgainstMissingGuildId:
         assert "guild-456" in cog.queue
         assert len(cog.queue["guild-456"]) == 2
         assert already_playing is False
+
+
+class TestParseSeekPosition:
+    def test_plain_seconds_is_absolute(self):
+        assert _parse_seek_position("90") == (90.0, False)
+
+    def test_mm_ss_is_absolute(self):
+        assert _parse_seek_position("1:30") == (90.0, False)
+
+    def test_h_mm_ss_is_absolute(self):
+        assert _parse_seek_position("1:02:03") == (3723.0, False)
+
+    def test_relative_forward_plain_seconds(self):
+        assert _parse_seek_position("+30") == (30.0, True)
+
+    def test_relative_backward_plain_seconds(self):
+        assert _parse_seek_position("-15") == (-15.0, True)
+
+    def test_relative_forward_mm_ss(self):
+        assert _parse_seek_position("+1:30") == (90.0, True)
+
+    def test_relative_backward_mm_ss(self):
+        assert _parse_seek_position("-1:30") == (-90.0, True)
+
+    def test_invalid_text_raises_value_error(self):
+        with pytest.raises(ValueError):
+            _parse_seek_position("not-a-time")
+
+    def test_empty_string_raises_value_error(self):
+        with pytest.raises(ValueError):
+            _parse_seek_position("")
+
+    def test_too_many_colon_segments_raises_value_error(self):
+        with pytest.raises(ValueError):
+            _parse_seek_position("1:2:3:4")
+
+    def test_bare_sign_raises_value_error(self):
+        with pytest.raises(ValueError):
+            _parse_seek_position("+")

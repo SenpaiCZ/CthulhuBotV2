@@ -67,6 +67,41 @@ def _query_has_explicit_video(query: str) -> bool:
     return '?v=' in query or '&v=' in query or 'youtu.be/' in query
 
 
+def _parse_seek_position(position: str) -> tuple[float, bool]:
+    """Parse a /seek argument. Returns (seconds, is_relative).
+    '+30' / '-15' / '+1:30' -> relative, signed seconds.
+    '90' / '1:30' / '1:02:03' -> absolute, unsigned.
+    Raises ValueError with a user-facing message on unparseable input."""
+    position = position.strip()
+    error = ValueError(
+        f"❌ Couldn't parse a time from '{position}' — try a number of seconds, MM:SS, or +/-30."
+    )
+    if not position:
+        raise error
+
+    is_relative = position[0] in ('+', '-')
+    sign = -1.0 if position[0] == '-' else 1.0
+    body = position[1:] if is_relative else position
+
+    parts = body.split(':')
+    if not (1 <= len(parts) <= 3):
+        raise error
+
+    try:
+        nums = [float(p) for p in parts]
+    except ValueError:
+        raise error
+
+    seconds = 0.0
+    for n in nums:
+        seconds = seconds * 60 + n
+
+    if is_relative:
+        seconds *= sign
+
+    return seconds, is_relative
+
+
 async def _delete_after(message, delay: float):
     await asyncio.sleep(delay)
     try:
