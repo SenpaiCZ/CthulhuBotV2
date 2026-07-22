@@ -610,6 +610,12 @@ class Music(commands.Cog):
             on_finish=partial(self._on_track_finish, guild_id),
         )
         self.current_track[guild_id] = track
+        dashboard_msg = self.dashboard_messages.get(guild_id)
+        if dashboard_msg:
+            try:
+                await dashboard_msg.clear_reactions()
+            except Exception:
+                pass
         await self._update_dashboard_for_guild(guild_id)
 
     async def _update_dashboard_for_guild(self, guild_id: str):

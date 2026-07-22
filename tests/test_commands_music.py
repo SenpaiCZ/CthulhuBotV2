@@ -8,6 +8,7 @@ import yt_dlp
 from discord.ext import tasks
 
 from commands.music import Music, _query_has_explicit_video, MusicLookupError, _format_download_error, CookieView, PlaylistChoiceView, _parse_seek_position
+from dashboard.audio_mixer import MixingAudioSource
 
 
 def make_interaction(user=None):
@@ -968,3 +969,74 @@ class TestReactionListeners:
         await cog.on_raw_reaction_remove(payload)
 
         cog._remove_favorite.assert_awaited_once_with("123", "999", "url-a")
+
+
+def make_playable_guild(cog, guild_id, mixer):
+    """Wire up cog.bot.get_guild(...) and guild_mixers so _play_song's existing setup path
+    (mixer lookup, voice-client-already-playing-this-mixer check) is satisfied without
+    constructing any real discord.py audio objects or spawning FFmpeg."""
+    fake_source = MagicMock(spec=discord.PCMVolumeTransformer)
+    fake_source.original = mixer
+    fake_vc = MagicMock()
+    fake_vc.is_connected.return_value = True
+    fake_vc.is_playing.return_value = True
+    fake_vc.source = fake_source
+
+    fake_guild = MagicMock()
+    fake_guild.voice_client = fake_vc
+    cog.bot.get_guild = MagicMock(return_value=fake_guild)
+
+
+class TestPlaySongClearsReactions:
+    @pytest.mark.asyncio
+    async def test_clears_reactions_on_dashboard_message_when_new_track_starts(self, monkeypatch):
+        cog = make_music_cog()
+        dashboard_msg = MagicMock()
+        dashboard_msg.clear_reactions = AsyncMock()
+        cog.dashboard_messages["123"] = dashboard_msg
+        cog._update_dashboard_for_guild = AsyncMock()
+
+        fake_mixer = MagicMock(spec=MixingAudioSource)
+        fake_track = MagicMock(id="track-1")
+        fake_mixer.add_track = MagicMock(return_value=fake_track)
+        monkeypatch.setattr("commands.music.guild_mixers", {"123": fake_mixer})
+        make_playable_guild(cog, "123", fake_mixer)
+
+        await cog._play_song("123", {"url": "stream-a", "needs_resolve": False, "title": "Song A"})
+
+        dashboard_msg.clear_reactions.assert_awaited_once()
+        assert cog.current_track["123"] is fake_track
+
+    @pytest.mark.asyncio
+    async def test_no_dashboard_message_is_noop_no_error(self, monkeypatch):
+        cog = make_music_cog()
+        cog._update_dashboard_for_guild = AsyncMock()
+
+        fake_mixer = MagicMock(spec=MixingAudioSource)
+        fake_mixer.add_track = MagicMock(return_value=MagicMock(id="track-1"))
+        monkeypatch.setattr("commands.music.guild_mixers", {"123": fake_mixer})
+        make_playable_guild(cog, "123", fake_mixer)
+
+        await cog._play_song("123", {"url": "stream-a", "needs_resolve": False, "title": "Song A"})
+        # No dashboard message registered for this guild -- must not raise.
+
+    @pytest.mark.asyncio
+    async def test_clear_reactions_failure_does_not_prevent_playback(self, monkeypatch):
+        cog = make_music_cog()
+        dashboard_msg = MagicMock()
+        dashboard_msg.clear_reactions = AsyncMock(
+            side_effect=discord.Forbidden(SimpleNamespace(status=403, reason="Forbidden"), "Missing Permissions")
+        )
+        cog.dashboard_messages["123"] = dashboard_msg
+        cog._update_dashboard_for_guild = AsyncMock()
+
+        fake_mixer = MagicMock(spec=MixingAudioSource)
+        fake_track = MagicMock(id="track-1")
+        fake_mixer.add_track = MagicMock(return_value=fake_track)
+        monkeypatch.setattr("commands.music.guild_mixers", {"123": fake_mixer})
+        make_playable_guild(cog, "123", fake_mixer)
+
+        await cog._play_song("123", {"url": "stream-a", "needs_resolve": False, "title": "Song A"})
+
+        assert cog.current_track["123"] is fake_track  # playback still proceeded
+        cog._update_dashboard_for_guild.assert_awaited_once_with("123")
