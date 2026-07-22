@@ -65,9 +65,16 @@ class FakeMusicCog:
         self.loop_mode = {}
         self.blacklist = []
         self.process_queue_calls = []
+        self.seek_calls = []
+        self.seek_error = None
 
     async def _process_queue(self, guild_id):
         self.process_queue_calls.append(guild_id)
+
+    async def _seek(self, guild_id, target_seconds):
+        self.seek_calls.append((guild_id, target_seconds))
+        if self.seek_error:
+            raise self.seek_error
 
 
 class FakeVoiceClient:
@@ -284,3 +291,50 @@ async def test_music_ban_does_not_duplicate_existing_entry(client, isolated_data
     )
     assert response.status_code == 200
     assert cog.blacklist == ["http://example.com/banned"]
+
+
+@pytest.mark.asyncio
+async def test_music_control_seek_calls_cog_seek_with_float_seconds(client, monkeypatch):
+    await login(client)
+    cog = FakeMusicCog()
+    monkeypatch.setattr(app, "bot", FakeBot(cog, guilds=[FakeGuild(555)]))
+
+    response = await client.post(
+        '/api/music/control',
+        json={"action": "seek", "guild_id": "555", "seconds": 42.5},
+        headers={"Origin": "http://localhost"}
+    )
+    assert response.status_code == 200
+    assert cog.seek_calls == [("555", 42.5)]
+
+
+@pytest.mark.asyncio
+async def test_music_control_seek_missing_seconds_is_noop(client, monkeypatch):
+    await login(client)
+    cog = FakeMusicCog()
+    monkeypatch.setattr(app, "bot", FakeBot(cog, guilds=[FakeGuild(555)]))
+
+    response = await client.post(
+        '/api/music/control',
+        json={"action": "seek", "guild_id": "555"},
+        headers={"Origin": "http://localhost"}
+    )
+    assert response.status_code == 200
+    assert cog.seek_calls == []
+
+
+@pytest.mark.asyncio
+async def test_music_control_seek_swallows_music_lookup_error(client, monkeypatch):
+    await login(client)
+    from commands.music import MusicLookupError
+    cog = FakeMusicCog()
+    cog.seek_error = MusicLookupError("❌ Nothing is playing.")
+    monkeypatch.setattr(app, "bot", FakeBot(cog, guilds=[FakeGuild(555)]))
+
+    response = await client.post(
+        '/api/music/control',
+        json={"action": "seek", "guild_id": "555", "seconds": 10},
+        headers={"Origin": "http://localhost"}
+    )
+    assert response.status_code == 200
+    assert cog.seek_calls == [("555", 10.0)]

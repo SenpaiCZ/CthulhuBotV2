@@ -3,6 +3,7 @@ from quart import Blueprint, request, jsonify, redirect, url_for, render_templat
 from dashboard.app import app, is_admin
 from dashboard.state import server_volumes
 from loadnsave import save_server_volumes, save_music_blacklist
+from commands.music import MusicLookupError
 
 music_bp = Blueprint('music', __name__)
 
@@ -119,6 +120,13 @@ async def music_control():
         track = music_cog.current_track.get(guild_id)
         if track:
             track.volume = (clamped / 100.0) ** 2  # log-scale amplitude for PCM
+    elif action == 'seek':
+        seconds = data.get('seconds')
+        if seconds is not None:
+            try:
+                await music_cog._seek(guild_id, float(seconds))
+            except MusicLookupError:
+                pass  # track ended between page render and click; silently ignore like other stale-state actions
     elif action == 'remove':
         # Remove from queue
         index = data.get('index')
