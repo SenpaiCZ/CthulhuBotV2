@@ -7,7 +7,10 @@ from dashboard.app import app
 # endpoint alongside the 156 real routes). Hardcoded, not recomputed, so this test can
 # actually detect a route silently vanishing in a later commit — recomputing it live
 # would make the comparison a tautology that can never fail.
-EXPECTED_RULE_COUNT = 157
+#
+# Updated to 158 when the update-rollback feature (Phase A, Task 7) intentionally added
+# POST /api/backup/restore — a deliberate new route, not a regression.
+EXPECTED_RULE_COUNT = 158
 
 
 def _dummy_path(rule_str):
