@@ -60,6 +60,7 @@ LEGACY_CATEGORY_MAP = {
     "Ping": "Admin",
     "Restart": "Admin",
     "UpdateBot": "Admin",
+    "Rollback": "Admin",
 
     # New Admin Mappings
     "Deleter": "Admin",
