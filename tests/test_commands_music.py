@@ -1040,3 +1040,54 @@ class TestPlaySongClearsReactions:
 
         assert cog.current_track["123"] is fake_track  # playback still proceeded
         cog._update_dashboard_for_guild.assert_awaited_once_with("123")
+
+
+class TestFavoritesPlay:
+    @pytest.mark.asyncio
+    async def test_no_favorites_sends_message(self, monkeypatch):
+        cog = make_music_cog()
+        cog._ensure_voice = AsyncMock(return_value=MagicMock())
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value={}))
+        interaction = make_interaction()
+
+        await Music.favorites_play.callback(cog, interaction)
+
+        interaction.followup.send.assert_awaited_once()
+        args, kwargs = interaction.followup.send.call_args
+        assert "don't have any favorited" in args[0]
+
+    @pytest.mark.asyncio
+    async def test_queues_all_favorites_and_finalizes(self, monkeypatch):
+        cog = make_music_cog()
+        cog._ensure_voice = AsyncMock(return_value=MagicMock())
+        cog._finalize_play = AsyncMock()
+        favorites = {"123": {"999": [
+            {"url": "url-a", "title": "Song A", "thumbnail": "thumb-a", "duration": 100},
+            {"url": "url-b", "title": "Song B", "thumbnail": "", "duration": 50},
+        ]}}
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value=favorites))
+        embed = discord.Embed(title="📥 Playlist Added")
+        cog._queue_playlist_entries = AsyncMock(return_value=(embed, False))
+        interaction = make_interaction()
+
+        await Music.favorites_play.callback(cog, interaction)
+
+        cog._queue_playlist_entries.assert_awaited_once()
+        call_args = cog._queue_playlist_entries.call_args[0]
+        assert call_args[0] == "123"
+        assert call_args[1] == [
+            {"url": "url-a", "title": "Song A", "thumbnail": "thumb-a", "duration": 100},
+            {"url": "url-b", "title": "Song B", "thumbnail": "", "duration": 50},
+        ]
+        cog._finalize_play.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_no_voice_channel_aborts_early(self, monkeypatch):
+        cog = make_music_cog()
+        cog._ensure_voice = AsyncMock(return_value=None)
+        cog._queue_playlist_entries = AsyncMock()
+        interaction = make_interaction()
+
+        await Music.favorites_play.callback(cog, interaction)
+
+        cog._queue_playlist_entries.assert_not_called()

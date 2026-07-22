@@ -1202,6 +1202,43 @@ class Music(commands.Cog):
         favorites[guild_id][user_id] = new_favs
         await save_music_favorites(favorites)
 
+    favorites_group = app_commands.Group(name="favorites", description="❤️ Manage your favorite songs")
+
+    @favorites_group.command(name="play", description="▶️ Queue all of your favorited songs.")
+    async def favorites_play(self, interaction: discord.Interaction):
+        if not interaction.guild:
+            return await interaction.response.send_message("Servers only.", ephemeral=True)
+
+        vc = await self._ensure_voice(interaction)
+        if not vc:
+            return
+
+        await interaction.response.defer()
+
+        guild_id = str(interaction.guild.id)
+        user_id = str(interaction.user.id)
+        favorites = await load_music_favorites()
+        user_favs = favorites.get(guild_id, {}).get(user_id, [])
+
+        if not user_favs:
+            return await interaction.followup.send(
+                "❌ You don't have any favorited songs yet. React ❤️ on the now-playing panel to save one."
+            )
+
+        if not self.blacklist:
+            self.blacklist = await load_music_blacklist() or []
+
+        entries = [
+            {'url': f['url'], 'title': f['title'], 'thumbnail': f['thumbnail'], 'duration': f['duration']}
+            for f in user_favs
+        ]
+        embed, _already_playing = await self._queue_playlist_entries(
+            guild_id, entries, f"❤️ {interaction.user.display_name}'s Favorites", interaction.user
+        )
+        msg = await interaction.followup.send(embed=embed)
+        asyncio.create_task(_delete_after(msg, 10))
+        await self._finalize_play(interaction, guild_id)
+
 
 async def setup(bot):
     await bot.add_cog(Music(bot))
