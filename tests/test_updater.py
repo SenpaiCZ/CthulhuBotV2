@@ -251,6 +251,38 @@ class TestRunRestoreMode:
         mock_launch.assert_not_called()
 
 
+class TestFindLatestBackup:
+    def test_returns_none_when_backup_dir_missing(self, tmp_path):
+        assert updater.find_latest_backup() is None
+
+    def test_returns_none_when_no_matching_files(self, tmp_path):
+        os.makedirs(updater.BACKUP_DIR)
+        with open(os.path.join(updater.BACKUP_DIR, "notes.txt"), "w") as f:
+            f.write("x")
+        assert updater.find_latest_backup() is None
+
+    def test_returns_lexicographically_latest_backup(self, tmp_path):
+        os.makedirs(updater.BACKUP_DIR)
+        for name in ["backup_20260101_000000.zip", "backup_20260722_120000.zip", "backup_20260315_080000.zip"]:
+            with open(os.path.join(updater.BACKUP_DIR, name), "w") as f:
+                f.write("zip content")
+
+        result = updater.find_latest_backup()
+
+        assert result == os.path.join(updater.BACKUP_DIR, "backup_20260722_120000.zip")
+
+    def test_ignores_files_not_matching_backup_prefix_pattern(self, tmp_path):
+        os.makedirs(updater.BACKUP_DIR)
+        with open(os.path.join(updater.BACKUP_DIR, "backup_20260101_000000.zip"), "w") as f:
+            f.write("real backup")
+        with open(os.path.join(updater.BACKUP_DIR, "update_pkg.zip"), "w") as f:
+            f.write("not a backup")
+
+        result = updater.find_latest_backup()
+
+        assert result == os.path.join(updater.BACKUP_DIR, "backup_20260101_000000.zip")
+
+
 class TestRunUpdateMode:
     def test_normal_flow_calls_steps_in_order_and_reports_healthy(self, tmp_path):
         args = argparse.Namespace(no_backup=False, no_restart=False)

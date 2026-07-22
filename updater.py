@@ -366,6 +366,17 @@ def write_status_notice(message: str):
     except Exception as e:
         log(f"Failed to write status notice: {e}")
 
+
+def find_latest_backup() -> str | None:
+    """Return the path to the most recent backup_*.zip in BACKUP_DIR, or None if there
+    isn't one. create_backup() is the only thing that ever writes backup_*.zip files here,
+    so 'the latest one' is unambiguous."""
+    if not os.path.exists(BACKUP_DIR):
+        return None
+    zips = sorted(f for f in os.listdir(BACKUP_DIR) if f.startswith("backup_") and f.endswith(".zip"))
+    return os.path.join(BACKUP_DIR, zips[-1]) if zips else None
+
+
 def restart_bot(detached=True):
     if detached:
         log("Restarting bot...")
