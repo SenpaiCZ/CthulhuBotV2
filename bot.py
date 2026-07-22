@@ -27,23 +27,65 @@ bot = commands.Bot(command_prefix=get_prefix,
 # Global list to track failed loads
 bot.failed_extensions = []
 
+UPDATE_HEALTH_MARKER = "update_health.marker"  # must match updater.py's copy of this filename
+ROLLBACK_NOTICE_FILE = "rollback_notice.txt"   # must match updater.py's copy of this filename
+
+
+async def _get_owner(bot_instance):
+    """Resolve the bot owner (handling Team ownership), or None if unavailable."""
+    try:
+        app_info = await bot_instance.application_info()
+        owner = app_info.owner
+
+        # Handle Team ownership edge case
+        if isinstance(owner, discord.Team):
+            owner = getattr(owner, 'owner', None)
+            if isinstance(owner, int):
+                owner = await bot_instance.fetch_user(owner)
+
+        return owner if owner and hasattr(owner, 'send') else None
+    except Exception as e:
+        print(f"Failed to resolve bot owner: {e}")
+        return None
+
+
+def _write_health_marker():
+    try:
+        open(UPDATE_HEALTH_MARKER, "w").close()
+    except Exception as e:
+        print(f"Failed to write health marker: {e}")
+
+
+async def _send_rollback_notice_if_present(bot_instance):
+    if not os.path.exists(ROLLBACK_NOTICE_FILE):
+        return
+    try:
+        with open(ROLLBACK_NOTICE_FILE, "r", encoding="utf-8") as f:
+            message = f.read()
+        owner = await _get_owner(bot_instance)
+        if owner:
+            await owner.send(message)
+    except Exception as e:
+        print(f"Failed to send rollback notice: {e}")
+    finally:
+        try:
+            os.remove(ROLLBACK_NOTICE_FILE)
+        except Exception:
+            pass
+
+
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
 
+    _write_health_marker()
+
     if hasattr(bot, 'failed_extensions') and bot.failed_extensions:
         try:
-            app_info = await bot.application_info()
-            owner = app_info.owner
+            owner = await _get_owner(bot)
 
-            # Handle Team ownership edge case
-            if isinstance(owner, discord.Team):
-                 owner = getattr(owner, 'owner', None)
-                 if isinstance(owner, int):
-                      owner = await bot.fetch_user(owner)
-
-            if owner and hasattr(owner, 'send'):
+            if owner:
                 error_message = "**⚠️ Startup Issues:**\nThe following extensions failed to load:\n\n"
                 for filename, error in bot.failed_extensions:
                     error_message += f"**{filename}**:\n`{error}`\n\n"
@@ -60,6 +102,8 @@ async def on_ready():
                 bot.failed_extensions = [] # Clear after sending
         except Exception as e:
             print(f"Failed to send error report to owner: {e}")
+
+    await _send_rollback_notice_if_present(bot)
 
 # Loading cogs!
 async def load():
