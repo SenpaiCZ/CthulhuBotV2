@@ -6,6 +6,7 @@ from quart import Blueprint, request, jsonify, redirect, url_for, render_templat
 from dashboard.app import app, is_admin
 from dashboard.state import BACKUP_FOLDER
 from loadnsave import load_settings_async, save_settings
+from backup_utils import get_system_backups
 
 backup_bp = Blueprint('backup', __name__)
 
@@ -57,32 +58,10 @@ async def backup_run():
 
 # --- System Backups (Physical Files) ---
 
-def get_system_backups():
-    if not os.path.exists(BACKUP_FOLDER):
-        return []
-
-    files = []
-    try:
-        for f in os.listdir(BACKUP_FOLDER):
-            if f.endswith('.zip'):
-                full_path = os.path.join(BACKUP_FOLDER, f)
-                stat = os.stat(full_path)
-                files.append({
-                    "name": f,
-                    "size": stat.st_size,
-                    "created": datetime.datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
-                })
-        # Sort by creation date desc
-        files.sort(key=lambda x: x['created'], reverse=True)
-    except Exception as e:
-        print(f"Error scanning backups: {e}")
-
-    return files
-
 @backup_bp.route('/api/backup/files')
 async def backup_files_list():
     if not is_admin(): return "Unauthorized", 401
-    return jsonify(get_system_backups())
+    return jsonify(get_system_backups(BACKUP_FOLDER))
 
 @backup_bp.route('/api/backup/delete', methods=['POST'])
 async def backup_delete_file():

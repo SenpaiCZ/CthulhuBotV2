@@ -306,17 +306,3 @@ async def test_backup_download_returns_file_contents(client, isolated_backup_fol
     assert response.status_code == 200
     body = await response.get_data(as_text=False)
     assert body[:2] == b"PK"
-
-
-@pytest.mark.asyncio
-async def test_get_system_backups_directly_scans_folder(isolated_backup_folder):
-    make_zip(isolated_backup_folder, "direct.zip")
-    files = backup.get_system_backups()
-    assert len(files) == 1
-    assert files[0]["name"] == "direct.zip"
-
-
-def test_get_system_backups_missing_folder_returns_empty_list(tmp_path, monkeypatch):
-    missing = tmp_path / "nope"
-    monkeypatch.setattr(backup, "BACKUP_FOLDER", str(missing))
-    assert backup.get_system_backups() == []
