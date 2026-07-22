@@ -405,11 +405,23 @@ backup row's action group, next to the existing DOWNLOAD/DELETE buttons, guarded
 ## Rollout / Risk
 
 - **Two-phase implementation**, matching this repo's existing precedent (the original
-  maintainability-refactor spec had 6 phases, each its own plan): **Phase A** (sections 1 and 4 —
-  the shared restore primitive, manual Discord/dashboard restore) ships first and is independently
-  useful — an owner can already recover from a bad update by hand, just not automatically yet.
-  **Phase B** (sections 2 and 3 — the health marker and the supervised auto-rollback) builds
-  directly on Phase A's `restore_from_backup()`/`find_latest_backup()` and ships second.
+  maintainability-refactor spec had 6 phases, each its own plan) — but the phase boundary is drawn
+  by actual dependency, not by section number: section 4's manual `--restore` flow itself calls
+  `launch_and_supervise()` (so a human doing a manual restore also gets a clear "did it come back
+  healthy?" signal), and `launch_and_supervise()` in turn depends on `bot.py`'s health marker
+  (section 2) to have anything to wait for. So:
+  - **Phase A** ships section 1 (`apply_source_to_tree`/`restore_from_backup`, `backup_utils.py`),
+    section 2 (`bot.py`'s health marker + owner-resolution + rollback-notice *reading*),
+    `launch_and_supervise()`/`reset_health_marker()`/`write_status_notice()` (moved here from
+    section 3's text, since Phase A's own manual-restore flow needs them), and all of section 4
+    (the `--restore` CLI mode, the `/rollback` command, the dashboard route/button). This is
+    independently useful — an owner can already recover from a bad update by hand, including a
+    "did the restore actually work?" confirmation, just not automatically yet.
+  - **Phase B** ships the rest of section 3: `find_latest_backup()` plus the orchestration that
+    replaces the normal update flow's unconditional restart with "supervise, and on failure,
+    auto-restore the latest backup and supervise once more." Everything it calls
+    (`restore_from_backup`, `launch_and_supervise`, `write_status_notice`) already exists from
+    Phase A — Phase B is genuinely thin wiring on top, not new primitives.
 - No data-layer changes in either phase — `data/`, `infodata/`, `config.json`, `cookies/` are
   never read, written, or deleted by any code path this design adds, by construction (same
   protected-paths logic as the existing update path, not a new promise to keep separately).
