@@ -78,14 +78,36 @@ class Track:
             total -= time.monotonic() - self._paused_since
         return max(0.0, total)
 
-    def _create_source(self) -> discord.FFmpegPCMAudio:
+    def _create_source(self, seek_seconds: float = 0) -> discord.FFmpegPCMAudio:
         if not self.is_url and not os.path.exists(self.file_path):
             raise FileNotFoundError(f"File not found: {self.file_path}")
+        before_options = self.before_options or ''
+        if seek_seconds:
+            before_options = f"-ss {seek_seconds:.2f} {before_options}".rstrip()
         return discord.FFmpegPCMAudio(
             self.file_path,
-            before_options=self.before_options,
+            before_options=before_options,
             options=self.options
         )
+
+    def seek(self, seconds: float):
+        """Restart the FFmpeg source at `seconds` into the track, preserving play/pause state."""
+        seconds = max(0.0, seconds)
+        duration = self.metadata.get('duration')
+        if duration:
+            seconds = min(seconds, max(0.0, duration - 3))
+
+        old_source = self.source
+        self.source = self._create_source(seek_seconds=seconds)
+        try:
+            old_source.cleanup()
+        except Exception:
+            pass
+
+        now = time.monotonic()
+        self.started_at = now - seconds
+        self._paused_duration = 0.0
+        self._paused_since = now if self._paused else None
 
     def read(self) -> bytes:
         if self._paused:
@@ -171,6 +193,14 @@ class MixingAudioSource(discord.AudioSource):
     def get_track(self, track_id: str) -> 'Track | None':
         with self.lock:
             return next((t for t in self.tracks if t.id == track_id), None)
+
+    def seek_track(self, track_id: str, seconds: float) -> bool:
+        with self.lock:
+            track = next((t for t in self.tracks if t.id == track_id), None)
+            if not track:
+                return False
+            track.seek(seconds)
+            return True
 
     def read(self) -> bytes:
         mixed = bytearray(b'\x00' * CHUNK_SIZE)
