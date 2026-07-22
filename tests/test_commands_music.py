@@ -636,3 +636,162 @@ class TestParseSeekPosition:
     def test_bare_sign_raises_value_error(self):
         with pytest.raises(ValueError):
             _parse_seek_position("+")
+
+
+class TestMusicSeek:
+    @pytest.mark.asyncio
+    async def test_seek_raises_lookup_error_when_nothing_playing(self):
+        cog = make_music_cog()
+        with pytest.raises(MusicLookupError, match="Nothing is playing"):
+            await cog._seek("g1", 30.0)
+
+    @pytest.mark.asyncio
+    async def test_seek_raises_lookup_error_when_track_finished(self):
+        cog = make_music_cog()
+        cog.current_track["g1"] = MagicMock(finished=True)
+        with pytest.raises(MusicLookupError, match="Nothing is playing"):
+            await cog._seek("g1", 30.0)
+
+    @pytest.mark.asyncio
+    async def test_seek_raises_lookup_error_when_no_mixer(self, monkeypatch):
+        monkeypatch.setattr("commands.music.guild_mixers", {})
+        cog = make_music_cog()
+        track = MagicMock(finished=False, id="t1")
+        cog.current_track["g1"] = track
+        with pytest.raises(MusicLookupError, match="Could not seek"):
+            await cog._seek("g1", 30.0)
+
+    @pytest.mark.asyncio
+    async def test_seek_raises_lookup_error_when_mixer_reports_track_gone(self, monkeypatch):
+        mixer = MagicMock()
+        mixer.seek_track.return_value = False
+        monkeypatch.setattr("commands.music.guild_mixers", {"g1": mixer})
+        cog = make_music_cog()
+        track = MagicMock(finished=False, id="t1")
+        cog.current_track["g1"] = track
+        with pytest.raises(MusicLookupError, match="Could not seek"):
+            await cog._seek("g1", 30.0)
+
+    @pytest.mark.asyncio
+    async def test_seek_success_calls_mixer_and_updates_dashboard(self, monkeypatch):
+        mixer = MagicMock()
+        mixer.seek_track.return_value = True
+        monkeypatch.setattr("commands.music.guild_mixers", {"g1": mixer})
+        cog = make_music_cog()
+        cog._update_dashboard_for_guild = AsyncMock()
+        track = MagicMock(finished=False, id="t1", elapsed=30.0, metadata={"duration": 200})
+        cog.current_track["g1"] = track
+
+        embed = await cog._seek("g1", 30.0)
+
+        mixer.seek_track.assert_called_once_with("t1", 30.0)
+        cog._update_dashboard_for_guild.assert_awaited_once_with("g1")
+        # _fmt_duration zero-pads minutes (e.g. 30s -> "00:30", 200s -> "03:20") -- assert
+        # the exact strings, not a substring, so this doesn't silently pass on a format change.
+        assert "00:30" in embed.description
+        assert "03:20" in embed.description
+
+    @pytest.mark.asyncio
+    async def test_seek_success_omits_total_duration_when_unknown(self, monkeypatch):
+        mixer = MagicMock()
+        mixer.seek_track.return_value = True
+        monkeypatch.setattr("commands.music.guild_mixers", {"g1": mixer})
+        cog = make_music_cog()
+        cog._update_dashboard_for_guild = AsyncMock()
+        track = MagicMock(finished=False, id="t1", elapsed=30.0, metadata={})
+        cog.current_track["g1"] = track
+
+        embed = await cog._seek("g1", 30.0)
+
+        assert "00:30" in embed.description
+        assert "/" not in embed.description
+
+
+class TestSeekCommand:
+    @pytest.mark.asyncio
+    async def test_relative_seek_adds_to_elapsed(self, monkeypatch):
+        cog = make_music_cog()
+        cog._seek = AsyncMock(return_value=discord.Embed(description="ok"))
+        track = MagicMock(finished=False, elapsed=40.0, metadata={"duration": 200})
+        cog.current_track["123"] = track
+        interaction = make_interaction()
+
+        await Music.seek.callback(cog, interaction, "+30")
+
+        cog._seek.assert_awaited_once_with("123", 70.0)
+        interaction.followup.send.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_absolute_seek_uses_position_directly(self, monkeypatch):
+        cog = make_music_cog()
+        cog._seek = AsyncMock(return_value=discord.Embed(description="ok"))
+        track = MagicMock(finished=False, elapsed=40.0, metadata={"duration": 200})
+        cog.current_track["123"] = track
+        interaction = make_interaction()
+
+        await Music.seek.callback(cog, interaction, "1:30")
+
+        cog._seek.assert_awaited_once_with("123", 90.0)
+
+    @pytest.mark.asyncio
+    async def test_absolute_seek_rejected_when_duration_unknown(self):
+        cog = make_music_cog()
+        cog._seek = AsyncMock()
+        track = MagicMock(finished=False, elapsed=40.0, metadata={})
+        cog.current_track["123"] = track
+        interaction = make_interaction()
+
+        await Music.seek.callback(cog, interaction, "1:30")
+
+        cog._seek.assert_not_called()
+        interaction.response.send_message.assert_awaited_once()
+        args, kwargs = interaction.response.send_message.call_args
+        assert "duration is unknown" in args[0]
+
+    @pytest.mark.asyncio
+    async def test_relative_seek_allowed_when_duration_unknown(self):
+        cog = make_music_cog()
+        cog._seek = AsyncMock(return_value=discord.Embed(description="ok"))
+        track = MagicMock(finished=False, elapsed=40.0, metadata={})
+        cog.current_track["123"] = track
+        interaction = make_interaction()
+
+        await Music.seek.callback(cog, interaction, "+10")
+
+        cog._seek.assert_awaited_once_with("123", 50.0)
+
+    @pytest.mark.asyncio
+    async def test_nothing_playing_rejected(self):
+        cog = make_music_cog()
+        cog._seek = AsyncMock()
+        interaction = make_interaction()
+
+        await Music.seek.callback(cog, interaction, "+10")
+
+        cog._seek.assert_not_called()
+        interaction.response.send_message.assert_awaited_once_with("❌ Nothing is playing.", ephemeral=True)
+
+    @pytest.mark.asyncio
+    async def test_unparseable_position_rejected(self):
+        cog = make_music_cog()
+        cog._seek = AsyncMock()
+        track = MagicMock(finished=False, elapsed=40.0, metadata={"duration": 200})
+        cog.current_track["123"] = track
+        interaction = make_interaction()
+
+        await Music.seek.callback(cog, interaction, "garbage")
+
+        cog._seek.assert_not_called()
+        interaction.response.send_message.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_lookup_error_from_seek_sent_as_followup(self):
+        cog = make_music_cog()
+        cog._seek = AsyncMock(side_effect=MusicLookupError("❌ Could not seek — track is no longer active."))
+        track = MagicMock(finished=False, elapsed=40.0, metadata={"duration": 200})
+        cog.current_track["123"] = track
+        interaction = make_interaction()
+
+        await Music.seek.callback(cog, interaction, "+10")
+
+        interaction.followup.send.assert_awaited_once_with("❌ Could not seek — track is no longer active.")

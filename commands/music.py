@@ -625,6 +625,25 @@ class Music(commands.Cog):
         except Exception:
             pass
 
+    async def _seek(self, guild_id: str, target_seconds: float) -> discord.Embed:
+        """Seek the currently playing track to target_seconds (already resolved to absolute
+        seconds by the caller — this method does no relative-vs-absolute interpretation).
+        Raises MusicLookupError if nothing is playing or the track is no longer active."""
+        track = self.current_track.get(guild_id)
+        if not track or track.finished:
+            raise MusicLookupError("❌ Nothing is playing.")
+
+        mixer = guild_mixers.get(guild_id)
+        if not mixer or not mixer.seek_track(track.id, target_seconds):
+            raise MusicLookupError("❌ Could not seek — track is no longer active.")
+
+        await self._update_dashboard_for_guild(guild_id)
+        dur = track.metadata.get('duration')
+        return discord.Embed(
+            description=f"⏩ Seeked to **{_fmt_duration(track.elapsed)}**" + (f" / {_fmt_duration(dur)}" if dur else ""),
+            color=discord.Color.blurple(),
+        )
+
     async def refresh_dashboard(self, interaction: discord.Interaction | None = None,
                                 guild_id: str | None = None):
         """Send or update the dashboard. Called by button handlers."""
@@ -953,6 +972,38 @@ class Music(commands.Cog):
             f"🔊 Volume set to **{clamped}%**", ephemeral=True
         )
         await self._update_dashboard_for_guild(guild_id)
+
+    @app_commands.command(name="seek", description="⏩ Jump to a time in the current track, or skip +/- seconds.")
+    @app_commands.describe(position="Absolute: 90, 1:30, 1:02:03 — Relative: +30, -15")
+    async def seek(self, interaction: discord.Interaction, position: str):
+        if not interaction.guild:
+            return
+        guild_id = str(interaction.guild.id)
+        track = self.current_track.get(guild_id)
+        if not track or track.finished:
+            return await interaction.response.send_message("❌ Nothing is playing.", ephemeral=True)
+
+        try:
+            seconds, is_relative = _parse_seek_position(position)
+        except ValueError as e:
+            return await interaction.response.send_message(str(e), ephemeral=True)
+
+        if is_relative:
+            target = track.elapsed + seconds
+        else:
+            if not track.metadata.get('duration'):
+                return await interaction.response.send_message(
+                    "❌ This track's duration is unknown (likely a livestream) — use a relative "
+                    "skip like `+30` or `-15` instead.", ephemeral=True
+                )
+            target = seconds
+
+        await interaction.response.defer()
+        try:
+            embed = await self._seek(guild_id, target)
+        except MusicLookupError as e:
+            return await interaction.followup.send(str(e))
+        await interaction.followup.send(embed=embed)
 
     @app_commands.command(name="loop", description="🔁 Cycle loop mode: Off → Track → Queue → Off")
     async def loop(self, interaction: discord.Interaction):
