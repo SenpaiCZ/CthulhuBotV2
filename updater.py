@@ -16,6 +16,8 @@ REPO_URL = "https://github.com/SenpaiCZ/CthulhuBotV2/archive/refs/heads/main.zip
 ZIP_FILENAME = "update_pkg.zip"
 EXTRACT_DIR = "update_extract_temp"
 BACKUP_DIR = "backups"  # Must match BACKUP_FOLDER in dashboard/app.py
+UPDATE_HEALTH_MARKER = "update_health.marker"  # must match bot.py's copy of this filename
+ROLLBACK_NOTICE_FILE = "rollback_notice.txt"   # must match bot.py's copy of this filename
 
 # Directories to exclude from backup (too big or irrelevant)
 BACKUP_EXCLUDE_DIRS = {
@@ -33,7 +35,8 @@ PROTECTED_DIRS = {
 
 # Files in the root directory to never delete or overwrite
 PROTECTED_FILES = {
-    "config.json", ZIP_FILENAME, "updater.py.old", "update_temp_script.ps1"
+    "config.json", ZIP_FILENAME, "updater.py.old", "update_temp_script.ps1",
+    UPDATE_HEALTH_MARKER, ROLLBACK_NOTICE_FILE,
 }
 
 # Ignore SIGHUP on Linux to prevent termination when parent shell exits/fluctuates
@@ -311,6 +314,57 @@ def update_dependencies():
         log("Dependencies updated.")
     except subprocess.CalledProcessError as e:
         log(f"Dependency update warning: {e}")
+
+
+def reset_health_marker():
+    try:
+        if os.path.exists(UPDATE_HEALTH_MARKER):
+            os.remove(UPDATE_HEALTH_MARKER)
+    except Exception:
+        pass
+
+
+def launch_and_supervise(timeout=60) -> bool:
+    """Launch bot.py; return True only if it signals healthy (marker appears) while still
+    alive within `timeout` seconds. On crash or timeout, returns False -- and on timeout
+    specifically, forcibly terminates the still-running process first, so at most one bot
+    process is ever alive."""
+    reset_health_marker()
+    log("Launching bot.py...")
+    cmd = [sys.executable, "bot.py"]
+    if platform.system() == "Windows":
+        proc = subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
+    else:
+        proc = subprocess.Popen(cmd, close_fds=True)
+
+    start = time.time()
+    while time.time() - start < timeout:
+        if proc.poll() is not None:
+            log(f"Bot process exited early (code {proc.returncode}) before becoming healthy.")
+            return False
+        if os.path.exists(UPDATE_HEALTH_MARKER):
+            log("Bot signaled healthy.")
+            return True
+        time.sleep(1)
+
+    log(f"Bot did not become healthy within {timeout}s -- terminating stuck process.")
+    try:
+        proc.terminate()
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+    except Exception as e:
+        log(f"Failed to terminate stuck process: {e}")
+    return False
+
+
+def write_status_notice(message: str):
+    try:
+        with open(ROLLBACK_NOTICE_FILE, "w", encoding="utf-8") as f:
+            f.write(message)
+    except Exception as e:
+        log(f"Failed to write status notice: {e}")
 
 def restart_bot(detached=True):
     if detached:

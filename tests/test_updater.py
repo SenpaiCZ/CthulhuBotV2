@@ -1,6 +1,6 @@
 import os
 import zipfile
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -112,3 +112,65 @@ class TestRestoreFromBackup:
             result = updater.restore_from_backup(str(bad_zip))
         assert result is False
         assert not os.path.exists("restore_extract_temp")
+
+
+class TestLaunchAndSupervise:
+    def test_returns_true_when_marker_appears_while_alive(self, tmp_path):
+        fake_proc = MagicMock()
+        fake_proc.poll.return_value = None  # still running
+
+        call_count = {"n": 0}
+        def fake_sleep(seconds):
+            call_count["n"] += 1
+            if call_count["n"] == 1:
+                open(updater.UPDATE_HEALTH_MARKER, "w").close()
+
+        with patch("updater.subprocess.Popen", return_value=fake_proc), \
+             patch("updater.time.sleep", side_effect=fake_sleep):
+            result = updater.launch_and_supervise(timeout=5)
+
+        assert result is True
+        fake_proc.terminate.assert_not_called()
+
+    def test_returns_false_without_terminate_when_process_exits_early(self, tmp_path):
+        fake_proc = MagicMock()
+        fake_proc.poll.return_value = 1  # already exited
+
+        with patch("updater.subprocess.Popen", return_value=fake_proc):
+            result = updater.launch_and_supervise(timeout=5)
+
+        assert result is False
+        fake_proc.terminate.assert_not_called()
+
+    def test_terminates_stuck_process_on_timeout(self, tmp_path):
+        fake_proc = MagicMock()
+        fake_proc.poll.return_value = None  # never exits, marker never appears
+        fake_proc.wait.return_value = None
+
+        with patch("updater.subprocess.Popen", return_value=fake_proc), \
+             patch("updater.time.sleep"):
+            result = updater.launch_and_supervise(timeout=0.01)
+
+        assert result is False
+        fake_proc.terminate.assert_called_once()
+        fake_proc.kill.assert_not_called()
+
+    def test_kills_process_if_terminate_does_not_stop_it_in_time(self, tmp_path):
+        fake_proc = MagicMock()
+        fake_proc.poll.return_value = None
+        fake_proc.wait.side_effect = updater.subprocess.TimeoutExpired(cmd="bot.py", timeout=10)
+
+        with patch("updater.subprocess.Popen", return_value=fake_proc), \
+             patch("updater.time.sleep"):
+            result = updater.launch_and_supervise(timeout=0.01)
+
+        assert result is False
+        fake_proc.terminate.assert_called_once()
+        fake_proc.kill.assert_called_once()
+
+
+class TestWriteStatusNotice:
+    def test_writes_message_to_file(self, tmp_path):
+        updater.write_status_notice("test message")
+        with open(updater.ROLLBACK_NOTICE_FILE) as f:
+            assert f.read() == "test message"
