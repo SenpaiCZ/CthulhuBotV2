@@ -1239,6 +1239,66 @@ class Music(commands.Cog):
         asyncio.create_task(_delete_after(msg, 10))
         await self._finalize_play(interaction, guild_id)
 
+    @favorites_group.command(name="list", description="📋 Show your favorited songs.")
+    async def favorites_list(self, interaction: discord.Interaction):
+        if not interaction.guild:
+            return await interaction.response.send_message("Servers only.", ephemeral=True)
+
+        guild_id = str(interaction.guild.id)
+        user_id = str(interaction.user.id)
+        favorites = await load_music_favorites()
+        user_favs = favorites.get(guild_id, {}).get(user_id, [])
+
+        embed = discord.Embed(title="❤️ Your Favorites", color=discord.Color.red())
+        if not user_favs:
+            embed.description = "No favorited songs yet. React ❤️ on the now-playing panel to save one."
+        else:
+            lines = []
+            for i, f in enumerate(user_favs[:10], 1):
+                dur = f" `{_fmt_duration(f['duration'])}`" if f.get('duration') else ""
+                lines.append(f"`{i}.` [{f['title']}]({f['url']}){dur}")
+            if len(user_favs) > 10:
+                lines.append(f"*…and {len(user_favs) - 10} more*")
+            embed.description = "\n".join(lines)
+            embed.set_footer(text=f"Total: {len(user_favs)} songs")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @favorites_group.command(name="remove", description="🗑️ Remove a favorited song by its number in /favorites list.")
+    @app_commands.describe(position="Position from /favorites list (1 = first)")
+    async def favorites_remove(self, interaction: discord.Interaction, position: int):
+        if not interaction.guild:
+            return await interaction.response.send_message("Servers only.", ephemeral=True)
+
+        guild_id = str(interaction.guild.id)
+        user_id = str(interaction.user.id)
+        favorites = await load_music_favorites()
+        user_favs = favorites.get(guild_id, {}).get(user_id, [])
+
+        if not user_favs:
+            return await interaction.response.send_message("You don't have any favorited songs.", ephemeral=True)
+        if position < 1 or position > len(user_favs):
+            return await interaction.response.send_message(f"Position must be 1–{len(user_favs)}.", ephemeral=True)
+
+        removed = user_favs.pop(position - 1)
+        favorites[guild_id][user_id] = user_favs
+        await save_music_favorites(favorites)
+        await interaction.response.send_message(f"🗑️ Removed **{removed['title']}** from your favorites.", ephemeral=True)
+
+    @favorites_group.command(name="clear", description="🧹 Clear all of your favorited songs.")
+    async def favorites_clear(self, interaction: discord.Interaction):
+        if not interaction.guild:
+            return await interaction.response.send_message("Servers only.", ephemeral=True)
+
+        guild_id = str(interaction.guild.id)
+        user_id = str(interaction.user.id)
+        favorites = await load_music_favorites()
+        if guild_id in favorites and user_id in favorites[guild_id]:
+            favorites[guild_id][user_id] = []
+            await save_music_favorites(favorites)
+
+        await interaction.response.send_message("🧹 Your favorites have been cleared.", ephemeral=True)
+
 
 async def setup(bot):
     await bot.add_cog(Music(bot))

@@ -1091,3 +1091,115 @@ class TestFavoritesPlay:
         await Music.favorites_play.callback(cog, interaction)
 
         cog._queue_playlist_entries.assert_not_called()
+
+
+class TestFavoritesList:
+    @pytest.mark.asyncio
+    async def test_empty_favorites_shows_message(self, monkeypatch):
+        cog = make_music_cog()
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value={}))
+        interaction = make_interaction()
+
+        await Music.favorites_list.callback(cog, interaction)
+
+        interaction.response.send_message.assert_awaited_once()
+        _, kwargs = interaction.response.send_message.call_args
+        assert "No favorited songs yet" in kwargs["embed"].description
+
+    @pytest.mark.asyncio
+    async def test_lists_favorites_with_truncation(self, monkeypatch):
+        cog = make_music_cog()
+        favs = [{"url": f"url-{i}", "title": f"Song {i}", "thumbnail": "", "duration": 60} for i in range(12)]
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value={"123": {"999": favs}}))
+        interaction = make_interaction()
+
+        await Music.favorites_list.callback(cog, interaction)
+
+        _, kwargs = interaction.response.send_message.call_args
+        desc = kwargs["embed"].description
+        assert "Song 0" in desc
+        assert "Song 9" in desc
+        assert "Song 10" not in desc
+        assert "and 2 more" in desc
+
+
+class TestFavoritesRemove:
+    @pytest.mark.asyncio
+    async def test_no_favorites_shows_message(self, monkeypatch):
+        cog = make_music_cog()
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value={}))
+        interaction = make_interaction()
+
+        await Music.favorites_remove.callback(cog, interaction, 1)
+
+        interaction.response.send_message.assert_awaited_once_with(
+            "You don't have any favorited songs.", ephemeral=True
+        )
+
+    @pytest.mark.asyncio
+    async def test_out_of_range_position_rejected(self, monkeypatch):
+        cog = make_music_cog()
+        favs = [{"url": "url-a", "title": "Song A", "thumbnail": "", "duration": 100}]
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value={"123": {"999": favs}}))
+        interaction = make_interaction()
+
+        await Music.favorites_remove.callback(cog, interaction, 5)
+
+        interaction.response.send_message.assert_awaited_once_with("Position must be 1–1.", ephemeral=True)
+
+    @pytest.mark.asyncio
+    async def test_removes_correct_entry_and_saves(self, monkeypatch):
+        cog = make_music_cog()
+        favs = [
+            {"url": "url-a", "title": "Song A", "thumbnail": "", "duration": 100},
+            {"url": "url-b", "title": "Song B", "thumbnail": "", "duration": 50},
+        ]
+        data = {"123": {"999": favs}}
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value=data))
+        save_mock = AsyncMock()
+        monkeypatch.setattr("commands.music.save_music_favorites", save_mock)
+        interaction = make_interaction()
+
+        await Music.favorites_remove.callback(cog, interaction, 1)
+
+        save_mock.assert_awaited_once()
+        saved = save_mock.call_args[0][0]
+        assert saved["123"]["999"] == [{"url": "url-b", "title": "Song B", "thumbnail": "", "duration": 50}]
+        interaction.response.send_message.assert_awaited_once_with(
+            "🗑️ Removed **Song A** from your favorites.", ephemeral=True
+        )
+
+
+class TestFavoritesClear:
+    @pytest.mark.asyncio
+    async def test_clears_existing_favorites(self, monkeypatch):
+        cog = make_music_cog()
+        data = {"123": {"999": [{"url": "url-a", "title": "Song A", "thumbnail": "", "duration": 100}]}}
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value=data))
+        save_mock = AsyncMock()
+        monkeypatch.setattr("commands.music.save_music_favorites", save_mock)
+        interaction = make_interaction()
+
+        await Music.favorites_clear.callback(cog, interaction)
+
+        save_mock.assert_awaited_once()
+        saved = save_mock.call_args[0][0]
+        assert saved["123"]["999"] == []
+        interaction.response.send_message.assert_awaited_once_with(
+            "🧹 Your favorites have been cleared.", ephemeral=True
+        )
+
+    @pytest.mark.asyncio
+    async def test_clearing_when_no_favorites_exist_does_not_raise(self, monkeypatch):
+        cog = make_music_cog()
+        monkeypatch.setattr("commands.music.load_music_favorites", AsyncMock(return_value={}))
+        save_mock = AsyncMock()
+        monkeypatch.setattr("commands.music.save_music_favorites", save_mock)
+        interaction = make_interaction()
+
+        await Music.favorites_clear.callback(cog, interaction)
+
+        save_mock.assert_not_called()
+        interaction.response.send_message.assert_awaited_once_with(
+            "🧹 Your favorites have been cleared.", ephemeral=True
+        )
