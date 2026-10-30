@@ -408,6 +408,7 @@ class Music(commands.Cog):
         # Diagnostics & error reporting state
         self._intentional_disconnects: set[str] = set()
         self.last_text_channel: dict[str, discord.abc.Messageable] = {}
+        self.last_requester: dict[str, discord.abc.User] = {}
         self._last_bg_error: dict[str, str] = {}
 
         self.bot.music_cog = self
@@ -501,17 +502,22 @@ class Music(commands.Cog):
         track=None,
         extra: str | None = None,
     ):
-        """Send a diagnostic error log embed to the guild's active music text channel."""
+        """Send a diagnostic error log embed via DM (PM) to the requester (or bot owner),
+        falling back to the guild text channel only if DM delivery is blocked."""
+        recipient = self.last_requester.get(guild_id)
         channel = self.last_text_channel.get(guild_id)
         if not channel:
             dash_msg = self.dashboard_messages.get(guild_id)
             if dash_msg and getattr(dash_msg, "channel", None):
                 channel = dash_msg.channel
-        if not channel:
+        if not recipient and not channel:
             return
 
+        guild = self.bot.get_guild(int(guild_id)) if guild_id.isdigit() else None
+        guild_label = f" (`{guild.name}`)" if guild and getattr(guild, "name", None) else ""
+
         embed = discord.Embed(
-            title="⚠️ Music Diagnostic / Error Log",
+            title=f"⚠️ Music Diagnostic / Error Log{guild_label}",
             description=f"**Reason:** {reason}",
             color=discord.Color.red(),
             timestamp=datetime.datetime.now(datetime.timezone.utc),
@@ -574,17 +580,30 @@ class Music(commands.Cog):
                 inline=False,
             )
 
-        try:
-            await channel.send(embed=embed)
-        except Exception as e:
-            print(f"[Music] Failed to send error log embed: {e}")
+        # 1. Primary delivery: Direct Message (PM) to the user who invoked playback
+        if recipient and hasattr(recipient, "send"):
+            try:
+                await recipient.send(embed=embed)
+                return
+            except Exception as e:
+                print(f"[Music] Could not DM error log to {recipient}: {e}")
+
+        # 2. Fallback: Guild text channel if DM could not be delivered
+        if channel and hasattr(channel, "send"):
+            try:
+                await channel.send(embed=embed)
+            except Exception as e:
+                print(f"[Music] Failed to send error log embed: {e}")
 
     async def _ensure_voice(self, interaction: discord.Interaction) -> discord.VoiceClient | None:
         """Join/return voice client, or send an error and return None."""
-        if interaction.guild and getattr(interaction, "channel", None):
+        if interaction.guild:
             guild_id = str(interaction.guild.id)
-            self.last_text_channel[guild_id] = interaction.channel
             self._intentional_disconnects.discard(guild_id)
+            if getattr(interaction, "user", None):
+                self.last_requester[guild_id] = interaction.user
+            if getattr(interaction, "channel", None):
+                self.last_text_channel[guild_id] = interaction.channel
 
         if not interaction.user.voice or not interaction.user.voice.channel:
             if interaction.response.is_done():

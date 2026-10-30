@@ -1709,11 +1709,14 @@ class TestPlaylistAndPrefetchOptimizations:
         cog._play_song.assert_awaited_once_with(guild_id, {"title": "Next Song"})
 
     @pytest.mark.asyncio
-    async def test_unexpected_voice_disconnect_sends_error_log_embed(self):
+    async def test_unexpected_voice_disconnect_sends_error_log_embed_to_user_dm(self):
         cog = make_music_cog()
         guild_id = "123"
+        requester = MagicMock()
+        requester.send = AsyncMock()
         channel = MagicMock()
         channel.send = AsyncMock()
+        cog.last_requester[guild_id] = requester
         cog.last_text_channel[guild_id] = channel
         cog._update_dashboard_for_guild = AsyncMock()
 
@@ -1735,8 +1738,9 @@ class TestPlaylistAndPrefetchOptimizations:
 
         await cog.on_voice_state_update(cog.bot.user, before, after)
 
-        channel.send.assert_awaited_once()
-        sent_embed = channel.send.call_args.kwargs["embed"]
+        requester.send.assert_awaited_once()
+        channel.send.assert_not_called()
+        sent_embed = requester.send.call_args.kwargs["embed"]
         assert "Music Diagnostic / Error Log" in sent_embed.title
         assert "unexpectedly disconnected" in sent_embed.description
         fields_text = " ".join(f.value for f in sent_embed.fields)
