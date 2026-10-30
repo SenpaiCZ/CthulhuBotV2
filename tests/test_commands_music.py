@@ -1247,3 +1247,417 @@ class TestFavoritesClear:
         interaction.response.send_message.assert_awaited_once_with(
             "🧹 Your favorites have been cleared.", ephemeral=True
         )
+
+
+class TestMusicAudioCache:
+    @pytest.mark.asyncio
+    async def test_queue_single_track_uses_cache_without_calling_ytdlp(self, tmp_path, monkeypatch):
+        from commands.music import _extract_video_key
+        cog = make_music_cog()
+        url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        key = _extract_video_key(url)
+        assert key == "yt_dQw4w9WgXcQ"
+
+        cached_file = tmp_path / f"{key}.webm"
+        cached_file.write_bytes(b"fake-audio-bytes")
+
+        monkeypatch.setattr(
+            "commands.music.load_music_cache_settings",
+            AsyncMock(return_value={"enabled": True, "max_duration_minutes": 30, "max_size_gb": 10.0}),
+        )
+        monkeypatch.setattr(
+            "commands.music.load_music_cache_index",
+            AsyncMock(return_value={
+                "entries": {
+                    key: {
+                        "key": key,
+                        "title": "Cached Eldritch Chant",
+                        "original_url": url,
+                        "thumbnail": "thumb.png",
+                        "duration": 180,
+                        "file_path": str(cached_file),
+                        "size_bytes": 16,
+                        "last_played": 100.0,
+                    }
+                },
+                "queries": {},
+            }),
+        )
+
+        requester = MagicMock(display_name="Keeper")
+        embed, already_playing = await cog._queue_single_track("g1", url, requester)
+
+        assert already_playing is False
+        assert embed is None
+        cog.bot.loop.run_in_executor.assert_not_called()
+        queued = cog.queue["g1"][0]
+        assert queued["is_cached"] is True
+        assert queued["cached_path"] == str(cached_file)
+        assert queued["title"] == "Cached Eldritch Chant"
+
+    @pytest.mark.asyncio
+    async def test_play_song_uses_local_cached_file_with_is_url_false(self, tmp_path, monkeypatch):
+        from commands.music import _extract_video_key
+        cog = make_music_cog()
+        cog._update_dashboard_for_guild = AsyncMock()
+
+        url = "https://youtu.be/abc123xyz"
+        key = _extract_video_key(url)
+        cached_file = tmp_path / f"{key}.webm"
+        cached_file.write_bytes(b"pcm-audio")
+
+        index_data = {
+            "entries": {
+                key: {
+                    "key": key,
+                    "title": "Arkham Rain",
+                    "original_url": url,
+                    "duration": 120,
+                    "file_path": str(cached_file),
+                    "size_bytes": 9,
+                    "last_played": 1.0,
+                }
+            },
+            "queries": {},
+        }
+        monkeypatch.setattr(
+            "commands.music.load_music_cache_settings",
+            AsyncMock(return_value={"enabled": True, "max_duration_minutes": 30, "max_size_gb": 10.0}),
+        )
+        monkeypatch.setattr("commands.music.load_music_cache_index", AsyncMock(return_value=index_data))
+        monkeypatch.setattr("commands.music.save_music_cache_index", AsyncMock())
+
+        fake_mixer = MagicMock(spec=MixingAudioSource)
+        fake_mixer.add_track = MagicMock(return_value=MagicMock(id="track-1"))
+        monkeypatch.setattr("commands.music.guild_mixers", {"123": fake_mixer})
+        make_playable_guild(cog, "123", fake_mixer)
+
+        await cog._play_song("123", {
+            "title": "Arkham Rain",
+            "original_url": url,
+            "webpage_url": url,
+            "url": None,
+            "duration": 120,
+            "needs_resolve": True,
+        })
+
+        fake_mixer.add_track.assert_called_once()
+        _, kwargs = fake_mixer.add_track.call_args
+        assert kwargs["file_path"] == str(cached_file)
+        assert kwargs["is_url"] is False
+        assert kwargs["before_options"] is None
+
+    @pytest.mark.asyncio
+    async def test_background_cache_skips_tracks_exceeding_max_duration(self, monkeypatch):
+        cog = make_music_cog()
+        monkeypatch.setattr(
+            "commands.music.load_music_cache_settings",
+            AsyncMock(return_value={"enabled": True, "max_duration_minutes": 30, "max_size_gb": 10.0}),
+        )
+        # 31 minutes = 1860 seconds (> 30 min limit)
+        await cog._cache_track_in_background({
+            "title": "Long Ambience",
+            "original_url": "https://youtu.be/longvideo1",
+            "duration": 1860,
+        })
+        cog.bot.loop.run_in_executor.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_enforce_cache_limits_protects_favorites_over_non_favorites(self, tmp_path, monkeypatch):
+        from commands.music import _extract_video_key
+        cog = make_music_cog()
+
+        fav_url = "https://youtu.be/favsong111"
+        non_fav_url = "https://youtu.be/oldsong222"
+        fav_key = _extract_video_key(fav_url)
+        non_fav_key = _extract_video_key(non_fav_url)
+
+        fav_file = tmp_path / f"{fav_key}.webm"
+        non_fav_file = tmp_path / f"{non_fav_key}.webm"
+        # Each file is 600 bytes; limit set so only one fits
+        fav_file.write_bytes(b"a" * 600)
+        non_fav_file.write_bytes(b"b" * 600)
+
+        # Even though fav_song has an OLDER last_played (10.0) than non_fav_song (50.0),
+        # non_fav_song must be evicted first because fav_song is in ❤️ Favorites!
+        index_data = {
+            "entries": {
+                fav_key: {
+                    "key": fav_key,
+                    "title": "Fav Song",
+                    "original_url": fav_url,
+                    "file_path": str(fav_file),
+                    "size_bytes": 600,
+                    "last_played": 10.0,
+                },
+                non_fav_key: {
+                    "key": non_fav_key,
+                    "title": "Regular Song",
+                    "original_url": non_fav_url,
+                    "file_path": str(non_fav_file),
+                    "size_bytes": 600,
+                    "last_played": 50.0,
+                },
+            },
+            "queries": {},
+        }
+        # Limit = ~800 bytes in GB
+        max_gb = 800 / (1024 ** 3)
+        monkeypatch.setattr(
+            "commands.music.load_music_cache_settings",
+            AsyncMock(return_value={"enabled": True, "max_duration_minutes": 30, "max_size_gb": max_gb}),
+        )
+        monkeypatch.setattr("commands.music.load_music_cache_index", AsyncMock(return_value=index_data))
+        save_index_mock = AsyncMock()
+        monkeypatch.setattr("commands.music.save_music_cache_index", save_index_mock)
+        monkeypatch.setattr(
+            "commands.music.load_music_favorites",
+            AsyncMock(return_value={"123": {"999": [{"url": fav_url, "title": "Fav Song"}]}}),
+        )
+
+        await cog._enforce_cache_limits()
+
+        assert fav_file.exists() is True
+        assert non_fav_file.exists() is False
+        assert fav_key in index_data["entries"]
+        assert non_fav_key not in index_data["entries"]
+        save_index_mock.assert_awaited_once()
+
+
+class TestMusicUXEnhancements:
+    @pytest.mark.asyncio
+    async def test_adjust_volume_clamps_and_updates_track_and_server_volumes(self, monkeypatch):
+        from commands._music_view import _pct_to_vol
+        cog = make_music_cog()
+        cog.refresh_dashboard = AsyncMock()
+        save_vol_mock = AsyncMock()
+        monkeypatch.setattr("commands.music.save_server_volumes", save_vol_mock)
+        monkeypatch.setattr("commands.music.server_volumes", {"123": {"music": 0.5, "soundboard": 0.5}})
+
+        track = MagicMock(finished=False, volume=_pct_to_vol(50))
+        cog.current_track["123"] = track
+        interaction = make_interaction()
+
+        await cog.adjust_volume(interaction, 10)
+
+        assert track.volume == pytest.approx(_pct_to_vol(60))
+        save_vol_mock.assert_awaited_once()
+        cog.refresh_dashboard.assert_awaited_once_with(interaction)
+
+    @pytest.mark.asyncio
+    async def test_toggle_favorite_button_adds_then_removes_favorite(self, monkeypatch):
+        cog = make_music_cog()
+        fav_store = {}
+
+        async def _load():
+            return fav_store
+
+        async def _save(data):
+            fav_store.update(data)
+
+        monkeypatch.setattr("commands.music.load_music_favorites", _load)
+        monkeypatch.setattr("commands.music.save_music_favorites", _save)
+
+        track = MagicMock(
+            finished=False,
+            metadata={"original_url": "https://youtu.be/cthulhu1", "title": "Call of Cthulhu OST", "duration": 180},
+        )
+        cog.current_track["123"] = track
+
+        # 1st click -> adds to favorites
+        i1 = make_interaction()
+        await cog.toggle_favorite_button(i1)
+        assert len(fav_store["123"]["999"]) == 1
+        i1.response.send_message.assert_awaited_once()
+        assert "Added" in i1.response.send_message.call_args[0][0]
+
+        # 2nd click -> removes from favorites
+        i2 = make_interaction()
+        await cog.toggle_favorite_button(i2)
+        assert len(fav_store["123"]["999"]) == 0
+        i2.response.send_message.assert_awaited_once()
+        assert "Removed" in i2.response.send_message.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_query_autocomplete_suggests_favorites_and_cached_songs(self, monkeypatch):
+        cog = make_music_cog()
+        cog.blacklist = ["https://youtu.be/blocked"]
+
+        monkeypatch.setattr(
+            "commands.music.load_music_favorites",
+            AsyncMock(return_value={
+                "123": {
+                    "999": [
+                        {"title": "Innsmouth Harbor Ambience", "url": "https://youtu.be/innsmouth1"},
+                        {"title": "Blocked Song", "url": "https://youtu.be/blocked"},
+                    ]
+                }
+            }),
+        )
+        monkeypatch.setattr(
+            "commands.music.load_music_cache_index",
+            AsyncMock(return_value={
+                "entries": {
+                    "yt_arkham1": {
+                        "key": "yt_arkham1",
+                        "title": "Arkham Asylum Jazz",
+                        "original_url": "https://youtu.be/arkham1",
+                        "last_played": 200.0,
+                    }
+                },
+                "queries": {},
+            }),
+        )
+
+        interaction = make_interaction()
+        # Empty query returns all non-blacklisted candidates (user favs first, then cached)
+        choices_empty = await cog._query_autocomplete(interaction, "")
+        assert [c.value for c in choices_empty] == [
+            "https://youtu.be/innsmouth1",
+            "https://youtu.be/arkham1",
+        ]
+        assert choices_empty[0].name.startswith("❤️")
+        assert choices_empty[1].name.startswith("💾")
+
+        # Fuzzy filter for "Arkham"
+        choices_filtered = await cog._query_autocomplete(interaction, "Arkham")
+        assert len(choices_filtered) >= 1
+        assert choices_filtered[0].value == "https://youtu.be/arkham1"
+
+    @pytest.mark.asyncio
+    async def test_playnext_uses_cache_and_enforces_blacklist(self, tmp_path, monkeypatch):
+        from commands.music import _extract_video_key
+        cog = make_music_cog()
+        cog._ensure_voice = AsyncMock(return_value=MagicMock())
+        cog._update_dashboard_for_guild = AsyncMock()
+        cog._play_song = AsyncMock()
+        cog.current_track["123"] = MagicMock(finished=False)
+
+        url = "https://youtu.be/cachednext1"
+        key = _extract_video_key(url)
+        cached_file = tmp_path / f"{key}.webm"
+        cached_file.write_bytes(b"audio")
+
+        monkeypatch.setattr(
+            "commands.music.load_music_cache_settings",
+            AsyncMock(return_value={"enabled": True, "max_duration_minutes": 30, "max_size_gb": 10.0}),
+        )
+        monkeypatch.setattr(
+            "commands.music.load_music_cache_index",
+            AsyncMock(return_value={
+                "entries": {
+                    key: {
+                        "key": key,
+                        "title": "Next Cached Song",
+                        "original_url": url,
+                        "duration": 95,
+                        "file_path": str(cached_file),
+                        "size_bytes": 5,
+                        "last_played": 50.0,
+                    }
+                },
+                "queries": {},
+            }),
+        )
+
+        # 1. Playnext with cached song inserts at index 0 without calling yt-dlp
+        cog.queue["123"] = [{"title": "Later Song"}]
+        interaction = make_interaction()
+        await Music.playnext.callback(cog, interaction, url)
+
+        cog.bot.loop.run_in_executor.assert_not_called()
+        assert cog.queue["123"][0]["title"] == "Next Cached Song"
+        assert cog.queue["123"][0]["is_cached"] is True
+
+        # 2. Blacklisted song is rejected
+        cog.blacklist = [url]
+        interaction_bl = make_interaction()
+        await Music.playnext.callback(cog, interaction_bl, url)
+        assert "is blacklisted" in interaction_bl.followup.send.call_args[0][0]
+
+
+class TestPlaylistAndPrefetchOptimizations:
+    def test_prepare_playlist_extraction_optimizes_watch_list_and_radio_mix(self):
+        from commands.music import _prepare_playlist_extraction
+
+        opts_pl, url_pl = _prepare_playlist_extraction(
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PL123456789"
+        )
+        assert url_pl == "https://www.youtube.com/playlist?list=PL123456789"
+        assert opts_pl["playlistend"] == 100
+        assert opts_pl["lazy_playlist"] is True
+
+        opts_rd, url_rd = _prepare_playlist_extraction(
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ"
+        )
+        assert url_rd == "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ"
+        assert opts_rd["playlistend"] == 25
+
+    @pytest.mark.asyncio
+    async def test_queue_playlist_entries_marks_cached_tracks_ready_immediately(self, tmp_path, monkeypatch):
+        from commands.music import _extract_video_key
+        cog = make_music_cog()
+        url_cached = "https://youtu.be/cachedpl1"
+        url_uncached = "https://youtu.be/uncachedpl2"
+        key = _extract_video_key(url_cached)
+        cached_file = tmp_path / f"{key}.webm"
+        cached_file.write_bytes(b"pcm")
+
+        monkeypatch.setattr(
+            "commands.music.load_music_cache_settings",
+            AsyncMock(return_value={"enabled": True, "max_duration_minutes": 30, "max_size_gb": 10.0}),
+        )
+        monkeypatch.setattr(
+            "commands.music.load_music_cache_index",
+            AsyncMock(return_value={
+                "entries": {
+                    key: {
+                        "key": key,
+                        "title": "Cached Playlist Song",
+                        "original_url": url_cached,
+                        "duration": 140,
+                        "file_path": str(cached_file),
+                        "size_bytes": 3,
+                        "last_played": 10.0,
+                    }
+                },
+                "queries": {},
+            }),
+        )
+
+        entries = [
+            {"title": "Cached Playlist Song", "url": url_cached, "duration": 140},
+            {"title": "Uncached Song", "url": url_uncached, "duration": 200},
+        ]
+        requester = MagicMock(display_name="Keeper")
+        await cog._queue_playlist_entries("g1", entries, "Session Playlist", requester)
+
+        assert cog.queue["g1"][0]["is_cached"] is True
+        assert cog.queue["g1"][0]["needs_resolve"] is False
+        assert cog.queue["g1"][0]["cached_path"] == str(cached_file)
+        assert cog.queue["g1"][1]["needs_resolve"] is True
+
+    @pytest.mark.asyncio
+    async def test_prefetch_track_in_background_resolves_next_track_ahead_of_time(self, monkeypatch):
+        cog = make_music_cog()
+        cog._get_cached_entry = AsyncMock(return_value=None)
+        cog._resolve_stream_url = AsyncMock(return_value={
+            "url": "https://googlevideo.com/stream-next",
+            "thumbnail": "next-thumb.jpg",
+            "duration": 155,
+        })
+        cog._schedule_background_cache = MagicMock()
+
+        next_song = {
+            "title": "Track 2",
+            "url": None,
+            "webpage_url": "https://youtu.be/track2",
+            "original_url": "https://youtu.be/track2",
+            "needs_resolve": True,
+        }
+        await cog._prefetch_track_in_background("123", next_song)
+
+        assert next_song["needs_resolve"] is False
+        assert next_song["url"] == "https://googlevideo.com/stream-next"
+        assert next_song["duration"] == 155
+        cog._schedule_background_cache.assert_called_once()

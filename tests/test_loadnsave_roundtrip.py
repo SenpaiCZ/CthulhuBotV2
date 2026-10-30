@@ -61,6 +61,18 @@ ENTITY_CASES = [
         {"123": {"456": [{"url": "u", "title": "t", "thumbnail": "", "duration": 100}]}},
         id="music_favorites",
     ),
+    pytest.param(
+        loadnsave.load_music_cache_settings, loadnsave.save_music_cache_settings,
+        "music_cache_settings.json", "_MUSIC_CACHE_SETTINGS_CACHE",
+        {"enabled": True, "max_duration_minutes": 30, "max_size_gb": 10.0},
+        id="music_cache_settings",
+    ),
+    pytest.param(
+        loadnsave.load_music_cache_index, loadnsave.save_music_cache_index,
+        "music_cache_index.json", "_MUSIC_CACHE_INDEX_CACHE",
+        {"entries": {"yt_abc": {"key": "yt_abc", "title": "Song", "file_path": "/tmp/a.webm"}}, "queries": {"song": "yt_abc"}},
+        id="music_cache_index",
+    ),
 ]
 
 
@@ -70,6 +82,7 @@ def isolated_data_dir(tmp_path, monkeypatch):
     for cache_name in [
         "_PLAYER_STATS_CACHE", "_SERVER_STATS_CACHE", "_SESSION_DATA_CACHE",
         "_CHASE_DATA_CACHE", "_RETIRED_CHARACTERS_CACHE",
+        "_MUSIC_CACHE_SETTINGS_CACHE", "_MUSIC_CACHE_INDEX_CACHE",
     ]:
         monkeypatch.setattr(loadnsave, cache_name, None)
     return tmp_path

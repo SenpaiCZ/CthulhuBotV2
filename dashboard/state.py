@@ -6,6 +6,7 @@ BACKUP_FOLDER = "backups"
 IMAGES_FOLDER = "images"
 FONTS_FOLDER = os.path.join("data", "fonts")
 OLD_FONTS_FOLDER = os.path.join("dashboard", "static", "fonts")
+MUSIC_CACHE_FOLDER = os.path.join("data", "music_cache")
 server_volumes = {} # guild_id (str) -> {'music': 1.0, 'soundboard': 0.5}
 guild_mixers = {} # guild_id (str) -> MixingAudioSource
 _failed_login_attempts = {} # ip (str) -> [timestamp, ...]

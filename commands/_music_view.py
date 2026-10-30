@@ -67,6 +67,9 @@ class MusicView(View):
         self.btn_loop.disabled = not is_active and len(queue) == 0
 
         self.btn_shuffle.disabled = len(queue) < 2
+        self.btn_vol_down.disabled = not is_active
+        self.btn_vol_up.disabled = not is_active
+        self.btn_fav.disabled = not is_active
 
     # ── Row 0 ────────────────────────────────────────────────────────────────
 
@@ -95,6 +98,21 @@ class MusicView(View):
                        style=discord.ButtonStyle.secondary, row=1)
     async def btn_shuffle(self, interaction: discord.Interaction, button: Button):
         await self.cog.shuffle_queue(interaction)
+
+    @discord.ui.button(label="-10%", emoji="🔉", custom_id="music_vol_down",
+                       style=discord.ButtonStyle.secondary, row=1)
+    async def btn_vol_down(self, interaction: discord.Interaction, button: Button):
+        await self.cog.adjust_volume(interaction, -10)
+
+    @discord.ui.button(label="+10%", emoji="🔊", custom_id="music_vol_up",
+                       style=discord.ButtonStyle.secondary, row=1)
+    async def btn_vol_up(self, interaction: discord.Interaction, button: Button):
+        await self.cog.adjust_volume(interaction, 10)
+
+    @discord.ui.button(label="Favorite", emoji="❤️", custom_id="music_favorite",
+                       style=discord.ButtonStyle.secondary, row=1)
+    async def btn_fav(self, interaction: discord.Interaction, button: Button):
+        await self.cog.toggle_favorite_button(interaction)
 
     # ── Embed ────────────────────────────────────────────────────────────────
 
@@ -141,7 +159,10 @@ class MusicView(View):
                 lines.append("🔴 **Live**" if not duration else "")
 
             vol_pct = _vol_to_pct(track.volume)
-            lines.append(f"**Volume:** {vol_pct}%")
+            vol_line = f"**Volume:** {vol_pct}%"
+            if meta.get('is_cached'):
+                vol_line += " · 💾 **Cached**"
+            lines.append(vol_line)
 
             embed.description = "\n".join(l for l in lines if l)
         else:
@@ -157,11 +178,12 @@ class MusicView(View):
                 t_esc = t.replace('[', '(').replace(']', ')')
                 dur = song.get('duration')
                 dur_str = f" `{_fmt_duration(dur)}`" if dur else ""
+                cache_icon = " 💾" if song.get('is_cached') else ""
                 url = song.get('original_url', '')
                 if url:
-                    q_lines.append(f"`{i}.` [{t_esc}]({url}){dur_str}")
+                    q_lines.append(f"`{i}.` [{t_esc}]({url}){dur_str}{cache_icon}")
                 else:
-                    q_lines.append(f"`{i}.` {t_esc}{dur_str}")
+                    q_lines.append(f"`{i}.` {t_esc}{dur_str}{cache_icon}")
 
             if len(queue) > 10:
                 q_lines.append(f"*…and {len(queue) - 10} more*")

@@ -338,3 +338,43 @@ async def test_music_control_seek_swallows_music_lookup_error(client, monkeypatc
     )
     assert response.status_code == 200
     assert cog.seek_calls == [("555", 10.0)]
+
+
+@pytest.mark.asyncio
+async def test_music_control_cache_settings_updates_and_returns_status(client, monkeypatch):
+    await login(client)
+    cog = FakeMusicCog()
+    cog.update_cache_settings = AsyncMock(return_value={
+        "enabled": True, "max_duration_minutes": 45, "max_size_gb": 15.0,
+        "track_count": 2, "favorite_track_count": 1, "total_bytes": 1024, "total_mb": 0.0, "max_bytes": 15 * 1024**3,
+    })
+    monkeypatch.setattr(app, "bot", FakeBot(cog, guilds=[FakeGuild(555)]))
+
+    response = await client.post(
+        '/api/music/control',
+        json={"action": "cache_settings", "enabled": True, "max_duration_minutes": 45, "max_size_gb": 15.0},
+        headers={"Origin": "http://localhost"}
+    )
+    assert response.status_code == 200
+    body = await response.get_json()
+    assert body["status"] == "success"
+    assert body["cache"]["max_duration_minutes"] == 45
+    assert body["cache"]["max_size_gb"] == 15.0
+
+
+@pytest.mark.asyncio
+async def test_music_control_clear_cache_calls_cog_and_returns_counts(client, monkeypatch):
+    await login(client)
+    cog = FakeMusicCog()
+    cog.clear_cache = AsyncMock(return_value=(3, 5242880))
+    monkeypatch.setattr(app, "bot", FakeBot(cog, guilds=[FakeGuild(555)]))
+
+    response = await client.post(
+        '/api/music/control',
+        json={"action": "clear_cache", "keep_favorites": True},
+        headers={"Origin": "http://localhost"}
+    )
+    assert response.status_code == 200
+    body = await response.get_json()
+    assert body == {"status": "success", "removed": 3, "freed_bytes": 5242880}
+    cog.clear_cache.assert_awaited_once_with(keep_favorites=True)

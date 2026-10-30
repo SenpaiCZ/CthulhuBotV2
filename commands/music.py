@@ -3,19 +3,36 @@ import discord
 from discord.ext import commands, tasks
 from discord import app_commands
 import asyncio
+import hashlib
 import os
+import re
 import time
 import yt_dlp
 import random
 from functools import partial
-from dashboard.state import guild_mixers, server_volumes
-from dashboard.audio_mixer import MixingAudioSource
+from rapidfuzz import fuzz, process
+from dashboard.state import guild_mixers, server_volumes, MUSIC_CACHE_FOLDER
+from dashboard.audio_mixer import MixingAudioSource, Track
 from loadnsave import (
     load_music_blacklist, save_music_blacklist,
     load_server_volumes, save_server_volumes,
     load_music_favorites, save_music_favorites,
+    load_music_cache_settings, save_music_cache_settings,
+    load_music_cache_index, save_music_cache_index,
 )
 from commands._music_view import MusicView, _fmt_duration, _pct_to_vol, _vol_to_pct
+
+_YT_ID_RE = re.compile(r"(?:[?&]v=|youtu\.be/|/(?:shorts|embed|live)/)([A-Za-z0-9_-]{6,})")
+
+
+def _extract_video_key(url: str) -> str:
+    """Return a deterministic, filesystem-safe key for a YouTube/audio URL."""
+    url = (url or "").strip()
+    m = _YT_ID_RE.search(url)
+    if m:
+        return f"yt_{m.group(1)}"
+    digest = hashlib.sha256(url.encode("utf-8")).hexdigest()[:16]
+    return f"url_{digest}"
 
 # ── yt-dlp options ────────────────────────────────────────────────────────────
 
@@ -41,9 +58,32 @@ YTDL_PLAYLIST = {
     'no_warnings': True,
     'extract_flat': 'in_playlist',
     'noplaylist': False,
+    'playlistend': 100,
+    'lazy_playlist': True,
     'ignoreerrors': True,
-    'socket_timeout': 30,
+    'socket_timeout': 15,
+    'source_address': '0.0.0.0',
 }
+
+_LIST_ID_RE = re.compile(r"[?&]list=([A-Za-z0-9_-]+)")
+
+
+def _prepare_playlist_extraction(query: str) -> tuple[dict, str]:
+    """Return optimized (ytdl_opts, extract_url) for fast playlist extraction on RPi5.
+    - For standard playlists (e.g. PL..., OLAK..., UU..., FL...) embedded in a `watch?v=...&list=...`
+      URL, rewrite to `https://www.youtube.com/playlist?list=...` so yt-dlp fetches the playlist tab
+      directly instead of first downloading and parsing the single-video watch page.
+    - For YouTube Radio/Mixes (`list=RD...`), cap `playlistend` at 25 so yt-dlp doesn't paginate
+      infinite auto-generated mixes."""
+    opts = _ytdl_opts_with_cookies(YTDL_PLAYLIST)
+    m = _LIST_ID_RE.search(query or "")
+    if not m:
+        return opts, query
+    list_id = m.group(1)
+    if list_id.startswith("RD"):
+        opts["playlistend"] = 25
+        return opts, query
+    return opts, f"https://www.youtube.com/playlist?list={list_id}"
 
 FFMPEG_OPTIONS = {
     'before_options': (
@@ -294,6 +334,10 @@ class Music(commands.Cog):
         self.idle_since: dict[str, float] = {}
         # guild_id (str) → "off" | "track" | "queue"
         self.loop_mode: dict[str, str] = {}
+        # Cache keys currently being downloaded in the background
+        self._caching_in_progress: set[str] = set()
+        self._cache_tasks: set[asyncio.Task] = set()
+        self._cache_lock = asyncio.Lock()
 
         self.bot.music_cog = self
 
@@ -303,6 +347,8 @@ class Music(commands.Cog):
     def cog_unload(self):
         self._idle_disconnect.cancel()
         self._refresh_dashboards.cancel()
+        for t in list(self._cache_tasks):
+            t.cancel()
 
     # ── Background tasks ──────────────────────────────────────────────────────
 
@@ -318,8 +364,9 @@ class Music(commands.Cog):
 
             track = self.current_track.get(guild_id)
             has_queue = bool(self.queue.get(guild_id))
+            channel_empty = vc.channel is not None and not any(not m.bot for m in vc.channel.members)
 
-            if (not track or track.finished) and not has_queue:
+            if ((not track or track.finished) and not has_queue) or channel_empty:
                 if guild_id not in self.idle_since:
                     self.idle_since[guild_id] = now
                 elif now - self.idle_since[guild_id] >= IDLE_TIMEOUT:
@@ -432,6 +479,8 @@ class Music(commands.Cog):
     async def _queue_playlist_entries(self, guild_id: str, entries: list[dict], playlist_title: str,
                                        requester) -> tuple[discord.Embed, bool]:
         """Append flat playlist entries to the guild queue, skipping blacklisted URLs.
+        Marks any tracks already present in the local audio cache so they play immediately
+        with 0ms latency.
         Returns (embed, already_playing) — already_playing is always False; queueing a
         playlist never short-circuits the dashboard/playback-start step the way a
         single-track 'something's already playing' add does."""
@@ -441,16 +490,31 @@ class Music(commands.Cog):
             orig = entry.get('url', '')
             if orig in self.blacklist:
                 continue
-            self.queue[guild_id].append({
-                'title': entry.get('title', 'Unknown'),
-                'url': None,
-                'webpage_url': orig,
-                'original_url': orig,
-                'thumbnail': entry.get('thumbnail', ''),
-                'duration': entry.get('duration'),
-                'requested_by': requester.display_name,
-                'needs_resolve': True,
-            })
+            cached = await self._get_cached_entry(orig) if orig else None
+            if cached:
+                self.queue[guild_id].append({
+                    'title': cached.get('title') or entry.get('title', 'Unknown'),
+                    'url': cached['file_path'],
+                    'cached_path': cached['file_path'],
+                    'is_cached': True,
+                    'webpage_url': orig,
+                    'original_url': cached.get('original_url', orig),
+                    'thumbnail': cached.get('thumbnail') or entry.get('thumbnail', ''),
+                    'duration': cached.get('duration') or entry.get('duration'),
+                    'requested_by': requester.display_name,
+                    'needs_resolve': False,
+                })
+            else:
+                self.queue[guild_id].append({
+                    'title': entry.get('title', 'Unknown'),
+                    'url': None,
+                    'webpage_url': orig,
+                    'original_url': orig,
+                    'thumbnail': entry.get('thumbnail', ''),
+                    'duration': entry.get('duration'),
+                    'requested_by': requester.display_name,
+                    'needs_resolve': True,
+                })
             added += 1
 
         embed = discord.Embed(
@@ -460,8 +524,373 @@ class Music(commands.Cog):
         )
         return embed, False
 
+    # ── Audio Cache Helpers ───────────────────────────────────────────────────
+
+    async def _get_cached_entry(self, query_or_url: str) -> dict | None:
+        """Return a valid cache index entry for `query_or_url` if caching is enabled
+        and the file exists on disk; otherwise return None (cleaning up stale index entries)."""
+        if not query_or_url:
+            return None
+        settings = await load_music_cache_settings()
+        if not settings.get("enabled", True):
+            return None
+
+        index = await load_music_cache_index()
+        entries = index.get("entries", {})
+        queries = index.get("queries", {})
+
+        key = _extract_video_key(query_or_url)
+        entry = entries.get(key)
+        if not entry:
+            norm_q = query_or_url.strip().lower()
+            mapped_key = queries.get(norm_q)
+            if mapped_key:
+                entry = entries.get(mapped_key)
+                key = mapped_key
+
+        if not entry:
+            return None
+
+        file_path = entry.get("file_path", "")
+        if file_path and os.path.isfile(file_path):
+            return entry
+
+        # Stale entry — file was deleted externally
+        entries.pop(key, None)
+        for q_k, q_v in list(queries.items()):
+            if q_v == key:
+                queries.pop(q_k, None)
+        await save_music_cache_index(index)
+        return None
+
+    def _schedule_background_cache(self, song_info: dict, query: str | None = None):
+        """Schedule a background task to download `song_info` into the local audio cache
+        if it has a valid URL and known duration."""
+        url = song_info.get("original_url") or song_info.get("webpage_url")
+        duration = song_info.get("duration")
+        if not url or not isinstance(duration, (int, float)) or duration <= 0:
+            return
+        if song_info.get("is_cached"):
+            return
+        key = _extract_video_key(url)
+        if key in self._caching_in_progress:
+            return
+        task = asyncio.create_task(self._cache_track_in_background(dict(song_info), query=query))
+        self._cache_tasks.add(task)
+        task.add_done_callback(self._cache_tasks.discard)
+
+    async def _cache_track_in_background(self, song_info: dict, query: str | None = None):
+        """Download a track to `MUSIC_CACHE_FOLDER` in the background if it meets the
+        configured duration and size limits, then run LRU eviction."""
+        url = song_info.get("original_url") or song_info.get("webpage_url")
+        duration = song_info.get("duration")
+        if not url or not isinstance(duration, (int, float)) or duration <= 0:
+            return
+
+        settings = await load_music_cache_settings()
+        if not settings.get("enabled", True):
+            return
+
+        max_dur_sec = float(settings.get("max_duration_minutes", 30)) * 60
+        if duration > max_dur_sec:
+            return
+
+        max_size_bytes = int(float(settings.get("max_size_gb", 10.0)) * (1024 ** 3))
+        if max_size_bytes <= 0:
+            return
+
+        existing = await self._get_cached_entry(url)
+        if existing:
+            return
+
+        key = _extract_video_key(url)
+        if key in self._caching_in_progress:
+            return
+
+        self._caching_in_progress.add(key)
+        try:
+            os.makedirs(MUSIC_CACHE_FOLDER, exist_ok=True)
+            base_dl_opts = {
+                "format": "bestaudio/best",
+                "outtmpl": os.path.join(MUSIC_CACHE_FOLDER, f"{key}.%(ext)s"),
+                "noplaylist": True,
+                "nocheckcertificate": True,
+                "quiet": True,
+                "no_warnings": True,
+                "socket_timeout": 30,
+                "source_address": "0.0.0.0",
+            }
+            if os.path.isdir("/dev/shm") and os.access("/dev/shm", os.W_OK):
+                base_dl_opts["paths"] = {
+                    "home": MUSIC_CACHE_FOLDER,
+                    "temp": "/dev/shm",
+                }
+                base_dl_opts["outtmpl"] = f"{key}.%(ext)s"
+            dl_opts = _ytdl_opts_with_cookies(base_dl_opts)
+
+            def _download():
+                with yt_dlp.YoutubeDL(dl_opts) as ydl:
+                    info = ydl.extract_info(url, download=True)
+                    if not info:
+                        return None, None
+                    if "entries" in info:
+                        info = next((e for e in info["entries"] if e), None)
+                    if not info:
+                        return None, None
+                    return info, ydl.prepare_filename(info)
+
+            res = await self.bot.loop.run_in_executor(None, _download)
+            if not res or not isinstance(res, tuple):
+                return
+            info, file_path = res
+            if not file_path or not os.path.isfile(file_path):
+                # Fallback scan for any file matching `<key>.*` in MUSIC_CACHE_FOLDER
+                file_path = None
+                if os.path.isdir(MUSIC_CACHE_FOLDER):
+                    for fname in os.listdir(MUSIC_CACHE_FOLDER):
+                        if fname.startswith(f"{key}.") and not fname.endswith((".part", ".ytdl")):
+                            candidate = os.path.join(MUSIC_CACHE_FOLDER, fname)
+                            if os.path.isfile(candidate):
+                                file_path = candidate
+                                break
+            if not file_path or not os.path.isfile(file_path):
+                return
+
+            size_bytes = os.path.getsize(file_path)
+            if size_bytes > max_size_bytes:
+                try:
+                    os.remove(file_path)
+                except OSError:
+                    pass
+                return
+
+            now = time.time()
+            async with self._cache_lock:
+                index = await load_music_cache_index()
+                index.setdefault("entries", {})[key] = {
+                    "key": key,
+                    "title": song_info.get("title") or (info.get("title", "Unknown") if info else "Unknown"),
+                    "original_url": url,
+                    "thumbnail": song_info.get("thumbnail") or (info.get("thumbnail", "") if info else ""),
+                    "duration": duration,
+                    "file_path": file_path,
+                    "size_bytes": size_bytes,
+                    "last_played": now,
+                    "cached_at": now,
+                }
+                if query:
+                    norm_q = query.strip().lower()
+                    if norm_q:
+                        index.setdefault("queries", {})[norm_q] = key
+                await save_music_cache_index(index)
+
+            # Mark any matching active track or queued items as cached
+            for track in self.current_track.values():
+                if track and getattr(track, "metadata", None):
+                    if track.metadata.get("original_url") == url:
+                        track.metadata["is_cached"] = True
+                        track.metadata["cached_path"] = file_path
+            for q in self.queue.values():
+                for item in q:
+                    if item.get("original_url") == url or item.get("webpage_url") == url:
+                        item["is_cached"] = True
+                        item["cached_path"] = file_path
+
+            await self._enforce_cache_limits()
+        except Exception as e:
+            print(f"[MusicCache] Background download failed for {url}: {e}")
+        finally:
+            self._caching_in_progress.discard(key)
+
+    async def _get_favorite_keys_and_urls(self) -> tuple[set[str], set[str]]:
+        favorites = await load_music_favorites()
+        fav_keys: set[str] = set()
+        fav_urls: set[str] = set()
+        if isinstance(favorites, dict):
+            for guild_favs in favorites.values():
+                if isinstance(guild_favs, dict):
+                    for user_favs in guild_favs.values():
+                        if isinstance(user_favs, list):
+                            for f in user_favs:
+                                u = f.get("url", "")
+                                if u:
+                                    fav_urls.add(u)
+                                    fav_keys.add(_extract_video_key(u))
+        return fav_keys, fav_urls
+
+    async def _enforce_cache_limits(self):
+        """Evict least-recently-played cached files until total size is within max_size_gb.
+        Favorited (❤️) songs are given priority protection and only evicted as a last resort."""
+        settings = await load_music_cache_settings()
+        max_size_bytes = int(float(settings.get("max_size_gb", 10.0)) * (1024 ** 3))
+        index = await load_music_cache_index()
+        entries = index.get("entries", {})
+        queries = index.get("queries", {})
+
+        # 1. Prune missing files and refresh file sizes
+        changed = False
+        for k, entry in list(entries.items()):
+            fp = entry.get("file_path", "")
+            if not fp or not os.path.isfile(fp):
+                entries.pop(k, None)
+                changed = True
+            else:
+                try:
+                    entry["size_bytes"] = os.path.getsize(fp)
+                except OSError:
+                    entries.pop(k, None)
+                    changed = True
+
+        total_bytes = sum(e.get("size_bytes", 0) for e in entries.values())
+        if total_bytes <= max_size_bytes:
+            if changed:
+                await save_music_cache_index(index)
+            return
+
+        fav_keys, fav_urls = await self._get_favorite_keys_and_urls()
+        active_paths = {
+            getattr(t, "file_path", None)
+            for t in self.current_track.values()
+            if t and not getattr(t, "finished", True)
+        }
+
+        def _is_fav(e: dict) -> bool:
+            return e.get("key") in fav_keys or e.get("original_url") in fav_urls
+
+        # Non-favorites (0) before favorites (1), oldest last_played first
+        candidates = [
+            e for e in entries.values()
+            if e.get("file_path") not in active_paths
+        ]
+        candidates.sort(key=lambda e: (1 if _is_fav(e) else 0, e.get("last_played", 0.0)))
+
+        for entry in candidates:
+            if total_bytes <= max_size_bytes:
+                break
+            k = entry.get("key")
+            fp = entry.get("file_path", "")
+            sz = entry.get("size_bytes", 0)
+            try:
+                if fp and os.path.isfile(fp):
+                    os.remove(fp)
+            except OSError:
+                pass
+            entries.pop(k, None)
+            total_bytes -= sz
+            changed = True
+
+        if changed:
+            valid_keys = set(entries.keys())
+            for q_k, q_v in list(queries.items()):
+                if q_v not in valid_keys:
+                    queries.pop(q_k, None)
+            await save_music_cache_index(index)
+
+    async def get_cache_status(self) -> dict:
+        """Return current cache configuration and usage statistics."""
+        settings = await load_music_cache_settings()
+        index = await load_music_cache_index()
+        entries = index.get("entries", {})
+        fav_keys, fav_urls = await self._get_favorite_keys_and_urls()
+
+        total_bytes = 0
+        track_count = 0
+        fav_count = 0
+        pruned = False
+
+        for k, entry in list(entries.items()):
+            fp = entry.get("file_path", "")
+            if not fp or not os.path.isfile(fp):
+                entries.pop(k, None)
+                pruned = True
+                continue
+            try:
+                sz = os.path.getsize(fp)
+                entry["size_bytes"] = sz
+            except OSError:
+                entries.pop(k, None)
+                pruned = True
+                continue
+            total_bytes += sz
+            track_count += 1
+            if k in fav_keys or entry.get("original_url") in fav_urls:
+                fav_count += 1
+
+        if pruned:
+            await save_music_cache_index(index)
+
+        max_size_gb = float(settings.get("max_size_gb", 10.0))
+        return {
+            "enabled": bool(settings.get("enabled", True)),
+            "max_duration_minutes": int(settings.get("max_duration_minutes", 30)),
+            "max_size_gb": max_size_gb,
+            "track_count": track_count,
+            "favorite_track_count": fav_count,
+            "total_bytes": total_bytes,
+            "total_mb": round(total_bytes / (1024 * 1024), 2),
+            "max_bytes": int(max_size_gb * (1024 ** 3)),
+        }
+
+    async def update_cache_settings(
+        self,
+        *,
+        enabled: bool | None = None,
+        max_duration_minutes: int | None = None,
+        max_size_gb: float | None = None,
+    ) -> dict:
+        """Update cache settings, enforce new size limits immediately, and return new status."""
+        settings = await load_music_cache_settings()
+        if enabled is not None:
+            settings["enabled"] = bool(enabled)
+        if max_duration_minutes is not None:
+            settings["max_duration_minutes"] = max(1, int(max_duration_minutes))
+        if max_size_gb is not None:
+            settings["max_size_gb"] = round(max(0.1, float(max_size_gb)), 2)
+        await save_music_cache_settings(settings)
+        await self._enforce_cache_limits()
+        return await self.get_cache_status()
+
+    async def clear_cache(self, keep_favorites: bool = True) -> tuple[int, int]:
+        """Delete cached audio files from disk and index. Returns (removed_count, freed_bytes)."""
+        index = await load_music_cache_index()
+        entries = index.get("entries", {})
+        queries = index.get("queries", {})
+        fav_keys, fav_urls = await self._get_favorite_keys_and_urls()
+        active_paths = {
+            getattr(t, "file_path", None)
+            for t in self.current_track.values()
+            if t and not getattr(t, "finished", True)
+        }
+
+        removed_count = 0
+        freed_bytes = 0
+        for k, entry in list(entries.items()):
+            fp = entry.get("file_path", "")
+            if fp in active_paths:
+                continue
+            is_fav = k in fav_keys or entry.get("original_url") in fav_urls
+            if keep_favorites and is_fav:
+                continue
+            sz = entry.get("size_bytes", 0)
+            if fp and os.path.isfile(fp):
+                try:
+                    sz = os.path.getsize(fp)
+                    os.remove(fp)
+                except OSError:
+                    pass
+            entries.pop(k, None)
+            removed_count += 1
+            freed_bytes += sz
+
+        valid_keys = set(entries.keys())
+        for q_k, q_v in list(queries.items()):
+            if q_v not in valid_keys:
+                queries.pop(q_k, None)
+        await save_music_cache_index(index)
+        return removed_count, freed_bytes
+
     async def _queue_single_track(self, guild_id: str, query: str, requester) -> tuple[discord.Embed | None, bool]:
-        """Full yt-dlp extraction + blacklist check + queue append for one track.
+        """Full yt-dlp extraction (or local cache hit) + blacklist check + queue append for one track.
         Returns (embed, already_playing). If something is already playing, embed is the
         'Added to Queue' embed and already_playing is True — the caller must send/edit it
         and call _update_dashboard_for_guild, and must NOT call _finalize_play. If nothing
@@ -469,35 +898,74 @@ class Music(commands.Cog):
         _finalize_play. Raises MusicLookupError (an expected condition, not an unexpected
         failure) if extraction finds nothing playable or the track is blacklisted."""
         self.queue.setdefault(guild_id, [])
-        opts = _ytdl_opts_with_cookies(YTDL_BASE)
-        def _extract_single():
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                return ydl.extract_info(query, download=False)
 
-        info = await self.bot.loop.run_in_executor(None, _extract_single)
+        cached = await self._get_cached_entry(query)
+        if cached:
+            original_url = cached.get('original_url', query)
+            if original_url in self.blacklist or query in self.blacklist:
+                raise MusicLookupError(f"❌ **{cached.get('title', 'That track')}** is blacklisted.")
+            song_info = {
+                'title': cached.get('title', 'Unknown'),
+                'url': cached['file_path'],
+                'cached_path': cached['file_path'],
+                'is_cached': True,
+                'original_url': original_url,
+                'thumbnail': cached.get('thumbnail', ''),
+                'duration': cached.get('duration'),
+                'requested_by': requester.display_name,
+                'needs_resolve': False,
+                'query': query,
+            }
+        else:
+            opts = _ytdl_opts_with_cookies(YTDL_BASE)
+            def _extract_single():
+                with yt_dlp.YoutubeDL(opts) as ydl:
+                    return ydl.extract_info(query, download=False)
 
-        if not info:
-            raise MusicLookupError("❌ No results found.")
+            info = await self.bot.loop.run_in_executor(None, _extract_single)
 
-        if 'entries' in info:
-            entry = next((e for e in info['entries'] if e), None)
-            if not entry:
-                raise MusicLookupError("❌ No playable result found.")
-            info = entry
+            if not info:
+                raise MusicLookupError("❌ No results found.")
 
-        original_url = info.get('webpage_url', info.get('url', ''))
-        if original_url in self.blacklist:
-            raise MusicLookupError(f"❌ **{info.get('title', 'That track')}** is blacklisted.")
+            if 'entries' in info:
+                entry = next((e for e in info['entries'] if e), None)
+                if not entry:
+                    raise MusicLookupError("❌ No playable result found.")
+                info = entry
 
-        song_info = {
-            'title': info.get('title', 'Unknown'),
-            'url': info.get('url', ''),
-            'original_url': original_url,
-            'thumbnail': info.get('thumbnail', ''),
-            'duration': info.get('duration'),
-            'requested_by': requester.display_name,
-            'needs_resolve': False,
-        }
+            original_url = info.get('webpage_url', info.get('url', ''))
+            if original_url in self.blacklist:
+                raise MusicLookupError(f"❌ **{info.get('title', 'That track')}** is blacklisted.")
+
+            cached_by_url = await self._get_cached_entry(original_url) if original_url else None
+            if cached_by_url:
+                index = await load_music_cache_index()
+                index.setdefault("queries", {})[query.strip().lower()] = cached_by_url["key"]
+                await save_music_cache_index(index)
+                song_info = {
+                    'title': cached_by_url.get('title', info.get('title', 'Unknown')),
+                    'url': cached_by_url['file_path'],
+                    'cached_path': cached_by_url['file_path'],
+                    'is_cached': True,
+                    'original_url': original_url,
+                    'thumbnail': cached_by_url.get('thumbnail', info.get('thumbnail', '')),
+                    'duration': cached_by_url.get('duration', info.get('duration')),
+                    'requested_by': requester.display_name,
+                    'needs_resolve': False,
+                    'query': query,
+                }
+            else:
+                song_info = {
+                    'title': info.get('title', 'Unknown'),
+                    'url': info.get('url', ''),
+                    'original_url': original_url,
+                    'thumbnail': info.get('thumbnail', ''),
+                    'duration': info.get('duration'),
+                    'requested_by': requester.display_name,
+                    'needs_resolve': False,
+                    'query': query,
+                }
+
         self.queue[guild_id].append(song_info)
 
         current = self.current_track.get(guild_id)
@@ -544,10 +1012,18 @@ class Music(commands.Cog):
         coro = self._process_queue(guild_id)
         asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
 
+    def _fade_or_finish_track(self, track, duration_sec: float = 0.8):
+        """Start a smooth fade-out on a real mixer Track (detaching its on_finish callback),
+        or mark finished immediately on a mock/non-Track."""
+        if isinstance(track, Track):
+            track.start_fade_out(duration_sec)
+        else:
+            track.finished = True
+
     async def _process_queue(self, guild_id: str):
         """Advance to next song or update dashboard when queue is empty."""
         track = self.current_track.get(guild_id)
-        if track and track.finished:
+        if track and (track.finished or getattr(track, '_fade_out_total_chunks', 0) > 0):
             if self.loop_mode.get(guild_id) == "queue" and track.metadata:
                 recycled = dict(track.metadata)
                 recycled['needs_resolve'] = True
@@ -567,17 +1043,42 @@ class Music(commands.Cog):
         if not guild:
             return
 
-        # Lazy resolution for playlist tracks that only have webpage_url
-        if song_info.get('needs_resolve'):
-            info = await self._resolve_stream_url(song_info['webpage_url'])
-            if not info:
-                print(f"[Music] Could not resolve track: {song_info.get('title')}, skipping.")
-                await self._process_queue(guild_id)
-                return
-            song_info['url'] = info['url']
-            song_info['thumbnail'] = info.get('thumbnail', song_info.get('thumbnail', ''))
-            song_info['duration'] = info.get('duration', song_info.get('duration'))
+        # 1. Check if this song is already in the local audio cache
+        cached_path = song_info.get('cached_path')
+        lookup_url = song_info.get('original_url') or song_info.get('webpage_url')
+        cached_entry = None
+        if cached_path and os.path.isfile(cached_path):
+            cached_entry = await self._get_cached_entry(lookup_url or cached_path)
+        elif lookup_url:
+            cached_entry = await self._get_cached_entry(lookup_url)
+            if cached_entry:
+                cached_path = cached_entry['file_path']
+
+        play_from_cache = bool(cached_path and os.path.isfile(cached_path))
+
+        if play_from_cache:
+            song_info['cached_path'] = cached_path
+            song_info['url'] = cached_path
+            song_info['is_cached'] = True
             song_info['needs_resolve'] = False
+            if cached_entry:
+                cached_entry['last_played'] = time.time()
+                index = await load_music_cache_index()
+                await save_music_cache_index(index)
+        else:
+            song_info['is_cached'] = False
+            song_info.pop('cached_path', None)
+            # Lazy resolution for playlist tracks that only have webpage_url
+            if song_info.get('needs_resolve'):
+                info = await self._resolve_stream_url(song_info['webpage_url'])
+                if not info:
+                    print(f"[Music] Could not resolve track: {song_info.get('title')}, skipping.")
+                    await self._process_queue(guild_id)
+                    return
+                song_info['url'] = info['url']
+                song_info['thumbnail'] = info.get('thumbnail', song_info.get('thumbnail', ''))
+                song_info['duration'] = info.get('duration', song_info.get('duration'))
+                song_info['needs_resolve'] = False
 
         # Set up mixer
         mixer = guild_mixers.get(guild_id)
@@ -600,16 +1101,25 @@ class Music(commands.Cog):
 
         music_vol = self._get_volume(guild_id)
         track = mixer.add_track(
-            file_path=song_info['url'],
-            is_url=True,
+            file_path=cached_path if play_from_cache else song_info['url'],
+            is_url=not play_from_cache,
             metadata=song_info,
             volume=_pct_to_vol(round(music_vol * 100)),
             loop=(self.loop_mode.get(guild_id) == "track"),
-            before_options=FFMPEG_OPTIONS['before_options'],
+            before_options=None if play_from_cache else FFMPEG_OPTIONS['before_options'],
             options=FFMPEG_OPTIONS['options'],
             on_finish=partial(self._on_track_finish, guild_id),
+            fade_in_sec=1.0,
         )
         self.current_track[guild_id] = track
+
+        # Schedule background download if streaming and eligible for cache
+        if not play_from_cache:
+            self._schedule_background_cache(song_info, query=song_info.get('query'))
+
+        # Lookahead: pre-resolve and pre-cache the next track in queue so transitions are instant
+        self._schedule_prefetch_next(guild_id)
+
         dashboard_msg = self.dashboard_messages.get(guild_id)
         if dashboard_msg:
             try:
@@ -618,6 +1128,52 @@ class Music(commands.Cog):
             except Exception:
                 pass
         await self._update_dashboard_for_guild(guild_id)
+
+    def _schedule_prefetch_next(self, guild_id: str):
+        """If the next song in the guild queue needs yt-dlp resolution, pre-resolve and
+        pre-cache it in the background while the current song is playing."""
+        q = self.queue.get(guild_id)
+        if not q:
+            return
+        next_song = q[0]
+        if not next_song.get('needs_resolve') or next_song.get('is_cached') or next_song.get('_prefetching'):
+            if not next_song.get('is_cached') and next_song.get('duration'):
+                self._schedule_background_cache(next_song, query=next_song.get('query'))
+            return
+        if not next_song.get('webpage_url'):
+            return
+
+        next_song['_prefetching'] = True
+        task = asyncio.create_task(self._prefetch_track_in_background(guild_id, next_song))
+        self._cache_tasks.add(task)
+        task.add_done_callback(self._cache_tasks.discard)
+
+    async def _prefetch_track_in_background(self, guild_id: str, song_info: dict):
+        """Background lookahead resolver + cacher for the next song in queue."""
+        try:
+            webpage_url = song_info.get('webpage_url') or song_info.get('original_url')
+            if not webpage_url:
+                return
+            cached = await self._get_cached_entry(webpage_url)
+            if cached:
+                song_info['cached_path'] = cached['file_path']
+                song_info['url'] = cached['file_path']
+                song_info['is_cached'] = True
+                song_info['needs_resolve'] = False
+                return
+
+            info = await self._resolve_stream_url(webpage_url)
+            if not info or not info.get('url'):
+                return
+            song_info['url'] = info['url']
+            song_info['thumbnail'] = info.get('thumbnail', song_info.get('thumbnail', ''))
+            song_info['duration'] = info.get('duration', song_info.get('duration'))
+            song_info['needs_resolve'] = False
+            self._schedule_background_cache(song_info, query=song_info.get('query'))
+        except Exception as e:
+            print(f"[Music] Prefetch error for {song_info.get('title')}: {e}")
+        finally:
+            song_info.pop('_prefetching', None)
 
     async def _update_dashboard_for_guild(self, guild_id: str):
         """Edit the existing dashboard message if one exists."""
@@ -699,7 +1255,7 @@ class Music(commands.Cog):
             return
         if not interaction.response.is_done():
             await interaction.response.defer()
-        track.finished = True
+        self._fade_or_finish_track(track)
         await self._process_queue(guild_id)
 
     async def stop_music(self, interaction: discord.Interaction):
@@ -740,6 +1296,120 @@ class Music(commands.Cog):
             if not interaction.response.is_done():
                 await interaction.response.send_message("Not enough songs to shuffle.", ephemeral=True)
 
+    async def adjust_volume(self, interaction: discord.Interaction, delta_pct: int):
+        guild_id = str(interaction.guild.id)
+        track = self.current_track.get(guild_id)
+        if track and not track.finished:
+            current_pct = _vol_to_pct(track.volume)
+        else:
+            current_pct = round(self._get_volume(guild_id) * 100)
+
+        clamped = max(0, min(100, current_pct + delta_pct))
+        new_vol = clamped / 100.0
+
+        if guild_id not in server_volumes:
+            server_volumes[guild_id] = {'music': 1.0, 'soundboard': 0.5}
+        server_volumes[guild_id]['music'] = new_vol
+        await save_server_volumes(server_volumes)
+
+        if track and not track.finished:
+            track.volume = _pct_to_vol(clamped)
+
+        await self.refresh_dashboard(interaction)
+
+    async def toggle_favorite_button(self, interaction: discord.Interaction):
+        guild_id = str(interaction.guild.id)
+        user_id = str(interaction.user.id)
+        track = self.current_track.get(guild_id)
+        if not track or track.finished:
+            if not interaction.response.is_done():
+                await interaction.response.send_message("Nothing is playing.", ephemeral=True)
+            return
+
+        url = track.metadata.get('original_url', '')
+        title = track.metadata.get('title', 'Unknown')
+        if not url:
+            if not interaction.response.is_done():
+                await interaction.response.send_message("❌ Cannot favorite a track without a URL.", ephemeral=True)
+            return
+
+        favorites = await load_music_favorites()
+        user_favs = favorites.get(guild_id, {}).get(user_id, [])
+        if any(f.get('url') == url for f in user_favs):
+            await self._remove_favorite(guild_id, user_id, url)
+            msg = f"💔 Removed **{title}** from your favorites."
+        else:
+            await self._add_favorite(guild_id, user_id, track.metadata)
+            msg = f"❤️ Added **{title}** to your favorites."
+
+        if not interaction.response.is_done():
+            await interaction.response.send_message(msg, ephemeral=True)
+
+    async def _query_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        """Suggest songs from the user's ❤️ Favorites, guild Favorites, and local Audio Cache."""
+        guild_id = str(interaction.guild.id) if interaction.guild else ""
+        user_id = str(interaction.user.id) if interaction.user else ""
+
+        favorites = await load_music_favorites()
+        index = await load_music_cache_index()
+        blacklist_set = set(self.blacklist or [])
+
+        candidates: list[tuple[str, str, str]] = []  # (search_title, display_label, url)
+        seen_urls: set[str] = set()
+
+        def _add_candidate(title: str, url: str, prefix: str):
+            url = (url or "").strip()
+            if not url or len(url) > 100 or url in seen_urls or url in blacklist_set:
+                return
+            seen_urls.add(url)
+            clean_title = (title or url).strip()
+            label = f"{prefix} {clean_title}"[:100]
+            candidates.append((clean_title, label, url))
+
+        # 1. Calling user's favorites first
+        guild_favs = favorites.get(guild_id, {}) if isinstance(favorites, dict) else {}
+        if isinstance(guild_favs, dict):
+            for f in guild_favs.get(user_id, []):
+                if isinstance(f, dict):
+                    _add_candidate(f.get("title", ""), f.get("url", ""), "❤️")
+            # 2. Other guild members' favorites
+            for uid, ufavs in guild_favs.items():
+                if uid == user_id or not isinstance(ufavs, list):
+                    continue
+                for f in ufavs:
+                    if isinstance(f, dict):
+                        _add_candidate(f.get("title", ""), f.get("url", ""), "❤️")
+
+        # 3. Local audio cache entries (most recently played first)
+        entries = index.get("entries", {}) if isinstance(index, dict) else {}
+        if isinstance(entries, dict):
+            sorted_entries = sorted(
+                (e for e in entries.values() if isinstance(e, dict)),
+                key=lambda e: e.get("last_played", 0.0),
+                reverse=True,
+            )
+            for e in sorted_entries:
+                _add_candidate(e.get("title", ""), e.get("original_url", ""), "💾")
+
+        if not candidates:
+            return []
+
+        q = (current or "").strip()
+        if not q:
+            return [
+                app_commands.Choice(name=label, value=url)
+                for _, label, url in candidates[:25]
+            ]
+
+        titles = [c[0] for c in candidates]
+        matches = process.extract(q, titles, scorer=fuzz.WRatio, limit=25, score_cutoff=35)
+        return [
+            app_commands.Choice(name=candidates[idx][1], value=candidates[idx][2])
+            for _, _, idx in matches
+        ]
+
     # ── Slash commands ────────────────────────────────────────────────────────
 
     @app_commands.command(name="play", description="▶️ Play a song or playlist by URL or search query.")
@@ -767,10 +1437,10 @@ class Music(commands.Cog):
         try:
             if is_playlist:
                 # Fast flat extraction for playlists
-                opts = _ytdl_opts_with_cookies(YTDL_PLAYLIST)
+                opts, extract_url = _prepare_playlist_extraction(query)
                 def _extract_playlist():
                     with yt_dlp.YoutubeDL(opts) as ydl:
-                        return ydl.extract_info(query, download=False)
+                        return ydl.extract_info(extract_url, download=False)
 
                 info = await self.bot.loop.run_in_executor(None, _extract_playlist)
 
@@ -829,6 +1499,12 @@ class Music(commands.Cog):
 
         await self._finalize_play(interaction, guild_id)
 
+    @play.autocomplete('query')
+    async def play_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        return await self._query_autocomplete(interaction, current)
+
     @app_commands.command(name="setytcookie", description="🍪 Set YouTube cookies for age-restricted playback. (Admin)")
     @app_commands.checks.has_permissions(administrator=True)
     async def setytcookie(self, interaction: discord.Interaction):
@@ -860,30 +1536,78 @@ class Music(commands.Cog):
         if guild_id not in self.queue:
             self.queue[guild_id] = []
 
-        opts = _ytdl_opts_with_cookies(YTDL_BASE)
+        if not self.blacklist:
+            self.blacklist = await load_music_blacklist() or []
+
         try:
-            def _extract():
-                with yt_dlp.YoutubeDL(opts) as ydl:
-                    return ydl.extract_info(query, download=False)
+            cached = await self._get_cached_entry(query)
+            if cached:
+                original_url = cached.get('original_url', query)
+                if original_url in self.blacklist or query in self.blacklist:
+                    return await interaction.followup.send(
+                        f"❌ **{cached.get('title', 'That track')}** is blacklisted."
+                    )
+                song_info = {
+                    'title': cached.get('title', 'Unknown'),
+                    'url': cached['file_path'],
+                    'cached_path': cached['file_path'],
+                    'is_cached': True,
+                    'original_url': original_url,
+                    'thumbnail': cached.get('thumbnail', ''),
+                    'duration': cached.get('duration'),
+                    'requested_by': interaction.user.display_name,
+                    'needs_resolve': False,
+                    'query': query,
+                }
+            else:
+                opts = _ytdl_opts_with_cookies(YTDL_BASE)
+                def _extract():
+                    with yt_dlp.YoutubeDL(opts) as ydl:
+                        return ydl.extract_info(query, download=False)
 
-            info = await self.bot.loop.run_in_executor(None, _extract)
-            if not info:
-                return await interaction.followup.send("❌ No results found.")
-            if 'entries' in info:
-                info = next((e for e in info['entries'] if e), None)
-            if not info:
-                return await interaction.followup.send("❌ No results found.")
+                info = await self.bot.loop.run_in_executor(None, _extract)
+                if not info:
+                    return await interaction.followup.send("❌ No results found.")
+                if 'entries' in info:
+                    info = next((e for e in info['entries'] if e), None)
+                if not info:
+                    return await interaction.followup.send("❌ No results found.")
 
-            original_url = info.get('webpage_url', info.get('url', ''))
-            song_info = {
-                'title': info.get('title', 'Unknown'),
-                'url': info.get('url', ''),
-                'original_url': original_url,
-                'thumbnail': info.get('thumbnail', ''),
-                'duration': info.get('duration'),
-                'requested_by': interaction.user.display_name,
-                'needs_resolve': False,
-            }
+                original_url = info.get('webpage_url', info.get('url', ''))
+                if original_url in self.blacklist:
+                    return await interaction.followup.send(
+                        f"❌ **{info.get('title', 'That track')}** is blacklisted."
+                    )
+
+                cached_by_url = await self._get_cached_entry(original_url) if original_url else None
+                if cached_by_url:
+                    index = await load_music_cache_index()
+                    index.setdefault("queries", {})[query.strip().lower()] = cached_by_url["key"]
+                    await save_music_cache_index(index)
+                    song_info = {
+                        'title': cached_by_url.get('title', info.get('title', 'Unknown')),
+                        'url': cached_by_url['file_path'],
+                        'cached_path': cached_by_url['file_path'],
+                        'is_cached': True,
+                        'original_url': original_url,
+                        'thumbnail': cached_by_url.get('thumbnail', info.get('thumbnail', '')),
+                        'duration': cached_by_url.get('duration', info.get('duration')),
+                        'requested_by': interaction.user.display_name,
+                        'needs_resolve': False,
+                        'query': query,
+                    }
+                else:
+                    song_info = {
+                        'title': info.get('title', 'Unknown'),
+                        'url': info.get('url', ''),
+                        'original_url': original_url,
+                        'thumbnail': info.get('thumbnail', ''),
+                        'duration': info.get('duration'),
+                        'requested_by': interaction.user.display_name,
+                        'needs_resolve': False,
+                        'query': query,
+                    }
+
             self.queue[guild_id].insert(0, song_info)
 
             embed = discord.Embed(
@@ -900,12 +1624,22 @@ class Music(commands.Cog):
             asyncio.create_task(_delete_after(msg, 10))
             await self._update_dashboard_for_guild(guild_id)
 
-            if not self.current_track.get(guild_id):
+            current = self.current_track.get(guild_id)
+            if not current or current.finished:
                 next_song = self.queue[guild_id].pop(0)
                 await self._play_song(guild_id, next_song)
 
+        except yt_dlp.utils.DownloadError as e:
+            content, embed, view, ephemeral = _format_download_error(e)
+            await interaction.followup.send(content=content, embed=embed, view=view, ephemeral=ephemeral)
         except Exception as e:
             await interaction.followup.send(f"❌ Error: {type(e).__name__}: {str(e)[:200]}")
+
+    @playnext.autocomplete('query')
+    async def playnext_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        return await self._query_autocomplete(interaction, current)
 
     @app_commands.command(name="pause", description="⏸️ Pause the current song.")
     async def pause(self, interaction: discord.Interaction):
@@ -942,7 +1676,7 @@ class Music(commands.Cog):
         if not track or track.finished:
             return await interaction.response.send_message("Nothing to skip.", ephemeral=True)
         await interaction.response.defer()
-        track.finished = True
+        self._fade_or_finish_track(track)
         await self._process_queue(guild_id)
 
     @app_commands.command(name="stop", description="⏹️ Stop music and disconnect from voice.")
@@ -1080,7 +1814,7 @@ class Music(commands.Cog):
             self.blacklist.append(url)
             await save_music_blacklist(self.blacklist)
 
-        track.finished = True
+        self._fade_or_finish_track(track)
         await interaction.response.send_message(
             f"🚫 **{title}** blacklisted and skipped.", ephemeral=True
         )
@@ -1299,6 +2033,88 @@ class Music(commands.Cog):
             await save_music_favorites(favorites)
 
         await interaction.response.send_message("🧹 Your favorites have been cleared.", ephemeral=True)
+
+    # ── Audio Cache Slash Commands (Admin) ───────────────────────────────────
+
+    musiccache_group = app_commands.Group(
+        name="musiccache",
+        description="💾 Manage the local YouTube audio cache (Admin)",
+        default_permissions=discord.Permissions(administrator=True),
+    )
+
+    @musiccache_group.command(name="status", description="📊 Show YouTube audio cache usage and limits.")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def musiccache_status(self, interaction: discord.Interaction):
+        status = await self.get_cache_status()
+        enabled_str = "✅ Enabled" if status["enabled"] else "⏸️ Disabled"
+        used_mb = status["total_mb"]
+        max_gb = status["max_size_gb"]
+        pct = min(100.0, (status["total_bytes"] / status["max_bytes"] * 100.0)) if status["max_bytes"] > 0 else 0.0
+
+        embed = discord.Embed(
+            title="💾 YouTube Audio Cache",
+            color=discord.Color.green() if status["enabled"] else discord.Color.orange(),
+        )
+        embed.add_field(name="Status", value=enabled_str, inline=True)
+        embed.add_field(
+            name="Cached Tracks",
+            value=f"**{status['track_count']}** ({status['favorite_track_count']} ❤️ favs)",
+            inline=True,
+        )
+        embed.add_field(
+            name="Max Track Length",
+            value=f"**{status['max_duration_minutes']} min**",
+            inline=True,
+        )
+        embed.add_field(
+            name="Disk Usage",
+            value=f"**{used_mb:.1f} MB** / **{max_gb:.1f} GB** ({pct:.1f}%)",
+            inline=False,
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @musiccache_group.command(name="settings", description="⚙️ Configure YouTube audio cache limits (Admin).")
+    @app_commands.describe(
+        max_duration_minutes="Max track length to cache in minutes (default: 30)",
+        max_size_gb="Maximum total cache size in GB (default: 10)",
+        enabled="Enable or disable caching",
+    )
+    @app_commands.checks.has_permissions(administrator=True)
+    async def musiccache_settings(
+        self,
+        interaction: discord.Interaction,
+        max_duration_minutes: int | None = None,
+        max_size_gb: float | None = None,
+        enabled: bool | None = None,
+    ):
+        status = await self.update_cache_settings(
+            enabled=enabled,
+            max_duration_minutes=max_duration_minutes,
+            max_size_gb=max_size_gb,
+        )
+        embed = discord.Embed(
+            title="⚙️ Audio Cache Settings Updated",
+            description=(
+                f"**Enabled:** {'Yes' if status['enabled'] else 'No'}\n"
+                f"**Max Track Duration:** {status['max_duration_minutes']} min\n"
+                f"**Max Cache Size:** {status['max_size_gb']:.1f} GB\n"
+                f"**Current Usage:** {status['total_mb']:.1f} MB ({status['track_count']} tracks)"
+            ),
+            color=discord.Color.blurple(),
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @musiccache_group.command(name="clear", description="🧹 Clear cached audio files from disk (Admin).")
+    @app_commands.describe(keep_favorites="Preserve cached songs that are in someone's ❤️ Favorites (default: True)")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def musiccache_clear(self, interaction: discord.Interaction, keep_favorites: bool = True):
+        removed, freed_bytes = await self.clear_cache(keep_favorites=keep_favorites)
+        freed_mb = freed_bytes / (1024 * 1024)
+        note = " (❤️ Favorites preserved)" if keep_favorites else " (including ❤️ Favorites)"
+        await interaction.response.send_message(
+            f"🧹 Cleared **{removed}** cached track(s), freeing **{freed_mb:.1f} MB**{note}.",
+            ephemeral=True,
+        )
 
 
 async def setup(bot):

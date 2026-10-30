@@ -38,10 +38,11 @@ async def music_data():
                     "thumbnail": track.metadata.get('thumbnail', ''),
                     "volume": int(track.volume * 100),
                     "loop": track.loop,
-            "loop_mode": music_cog.loop_mode.get(guild_id, "off"),
+                    "loop_mode": music_cog.loop_mode.get(guild_id, "off"),
                     "paused": track.paused,
                     "elapsed": round(track.elapsed, 1),
                     "duration": track.metadata.get('duration'),
+                    "is_cached": bool(track.metadata.get('is_cached')),
                 }
 
         # Queue
@@ -53,6 +54,7 @@ async def music_data():
                     "original_url": song.get('original_url', ''),
                     "thumbnail": song.get('thumbnail', ''),
                     "duration": song.get('duration'),
+                    "is_cached": bool(song.get('is_cached')),
                 })
 
         data[guild_id] = {
@@ -61,10 +63,14 @@ async def music_data():
             "queue": queue
         }
 
-    return jsonify({
+    resp = {
         "guilds": data,
         "blacklist": music_cog.blacklist
-    })
+    }
+    if hasattr(music_cog, 'get_cache_status'):
+        resp["cache"] = await music_cog.get_cache_status()
+
+    return jsonify(resp)
 
 @music_bp.route('/api/music/control', methods=['POST'])
 async def music_control():
@@ -96,7 +102,10 @@ async def music_control():
     elif action == 'skip':
         track = music_cog.current_track.get(guild_id)
         if track:
-            track.finished = True
+            if hasattr(music_cog, '_fade_or_finish_track'):
+                music_cog._fade_or_finish_track(track)
+            else:
+                track.finished = True
             await music_cog._process_queue(guild_id)
     elif action == 'loop':
         _cycle = {"off": "track", "track": "queue", "queue": "off"}
@@ -132,6 +141,23 @@ async def music_control():
         index = data.get('index')
         if guild_id in music_cog.queue and 0 <= index < len(music_cog.queue[guild_id]):
             music_cog.queue[guild_id].pop(index)
+    elif action == 'cache_settings':
+        if hasattr(music_cog, 'update_cache_settings'):
+            cache_status = await music_cog.update_cache_settings(
+                enabled=data.get('enabled'),
+                max_duration_minutes=data.get('max_duration_minutes'),
+                max_size_gb=data.get('max_size_gb'),
+            )
+            return jsonify({"status": "success", "cache": cache_status})
+    elif action == 'clear_cache':
+        if hasattr(music_cog, 'clear_cache'):
+            keep_favorites = bool(data.get('keep_favorites', True))
+            removed, freed_bytes = await music_cog.clear_cache(keep_favorites=keep_favorites)
+            return jsonify({
+                "status": "success",
+                "removed": removed,
+                "freed_bytes": freed_bytes,
+            })
 
     return jsonify({"status": "success"})
 

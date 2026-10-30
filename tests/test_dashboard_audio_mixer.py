@@ -92,3 +92,72 @@ class TestMixingAudioSourceSeekTrack:
 
         assert result is True
         assert track.elapsed == pytest.approx(50, abs=0.05)
+
+
+class TestTrackFadeInOut:
+    def test_fade_in_ramps_amplitude_up_over_configured_duration(self):
+        import struct
+
+        track = make_track(volume=1.0, fade_in_sec=0.1)  # 0.1s = 5 chunks of 20ms
+        full_chunk = struct.pack('<1920h', *([10000] * 1920))
+        track.source.read.return_value = full_chunk
+
+        first_out = struct.unpack('<1920h', track.read())
+        # First chunk should be scaled to ~1/5 of 10000 = 2000
+        assert first_out[0] == pytest.approx(2000, abs=5)
+
+        for _ in range(4):
+            last_out = struct.unpack('<1920h', track.read())
+        assert last_out[0] == pytest.approx(10000, abs=5)
+
+    def test_start_fade_out_detaches_on_finish_and_marks_finished_after_ramp(self):
+        import struct
+
+        on_finish = MagicMock()
+        track = make_track(volume=1.0, on_finish=on_finish)
+        full_chunk = struct.pack('<1920h', *([10000] * 1920))
+        track.source.read.return_value = full_chunk
+
+        track.start_fade_out(duration_sec=0.06)  # 3 chunks
+        assert track.on_finish is None
+        assert track.finished is False
+
+        c1 = struct.unpack('<1920h', track.read())
+        assert 0 < c1[0] < 10000
+        assert track.finished is False
+
+        c2 = struct.unpack('<1920h', track.read())
+        assert 0 <= c2[0] < c1[0]
+
+        c3 = track.read()
+        assert c3 == b""
+        assert track.finished is True
+        on_finish.assert_not_called()
+
+
+class TestPcmHelpersRPi5Optimization:
+    def test_apply_volume_fast_paths_and_scaling(self):
+        import struct
+        from dashboard.audio_mixer import _apply_volume, CHUNK_SIZE
+
+        raw = struct.pack('<1920h', *([10000] * 1920))
+        # volume <= 0 returns all zeros
+        assert _apply_volume(raw, 0.0) == b'\x00' * CHUNK_SIZE
+        # volume == 1.0 returns original slice without re-packing
+        assert _apply_volume(raw, 1.0) == raw
+        # 0 < volume < 1 scales without overflow
+        half = struct.unpack('<1920h', _apply_volume(raw, 0.5))
+        assert half[0] == 5000
+        # volume > 1 clips at 32767
+        clipped = struct.unpack('<1920h', _apply_volume(raw, 5.0))
+        assert clipped[0] == 32767
+
+    def test_mix_pcm_sums_and_clips_at_int16_bounds(self):
+        import struct
+        from dashboard.audio_mixer import _mix_pcm
+
+        a = struct.pack('<1920h', *([25000] * 960 + [-25000] * 960))
+        b = struct.pack('<1920h', *([15000] * 960 + [-15000] * 960))
+        mixed = struct.unpack('<1920h', _mix_pcm(a, b))
+        assert mixed[0] == 32767
+        assert mixed[-1] == -32768

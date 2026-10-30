@@ -11,6 +11,8 @@
     <div id="refresh-indicator" class="mono d-none d-sm-block" style="font-size:9px; letter-spacing:0.18em; color:var(--sigil)">RESONANCE: SYNCED</div>
 </div>
 
+<div id="cache-container" class="mb-4"></div>
+
 <div id="guilds-container">
     <div id="loading-spinner" class="text-center py-5">
         <span class="pulse-dot" style="display:inline-block; width:12px; height:12px; background:var(--sigil); border-radius:50%"></span>
@@ -162,6 +164,7 @@ function renderGuild(guildId, guildData) {
                     <div class="track-badges">
                         <span class="badge ${isPaused ? 'bg-warning text-dark' : 'bg-success'}" style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.1em; border-radius:0">${isPaused ? 'PAUSED' : 'PLAYING'}</span>
                         <span class="badge bg-secondary" style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.1em; border-radius:0">LOOP: ${loopLabel}</span>
+                        ${track.is_cached ? `<span class="badge bg-info text-dark" style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.1em; border-radius:0">💾 CACHED</span>` : ''}
                     </div>
                     ${progHtml}
                     <div class="volume-row">
@@ -188,10 +191,11 @@ function renderGuild(guildId, guildData) {
         const rows = queue.slice(0,10).map((s, i) => {
             const t = escHtml(s.title || 'Unknown');
             const dur = fmtDur(s.duration);
+            const cacheBadge = s.is_cached ? ' <span title="Cached locally">💾</span>' : '';
             const url = s.original_url ? escHtml(s.original_url) : '';
             const titleEl = url
-                ? `<a href="${url}" target="_blank" rel="noopener" class="queue-item-title text-decoration-none">${i+1}. ${t}</a>`
-                : `<span class="queue-item-title">${i+1}. ${t}</span>`;
+                ? `<a href="${url}" target="_blank" rel="noopener" class="queue-item-title text-decoration-none">${i+1}. ${t}${cacheBadge}</a>`
+                : `<span class="queue-item-title">${i+1}. ${t}${cacheBadge}</span>`;
             return `<div class="queue-item">
                         <div style="display:flex;align-items:center;gap:0.4rem;min-width:0;">${titleEl}</div>
                         <div style="display:flex;align-items:center;flex-shrink:0;">
@@ -219,11 +223,100 @@ function renderGuild(guildId, guildData) {
         </div>`;
 }
 
+function renderCachePanel(cache) {
+    const cacheEl = document.getElementById('cache-container');
+    if (!cache || !cacheEl) return;
+    // Do not overwrite inputs while admin is editing them
+    const activeId = document.activeElement ? document.activeElement.id : '';
+    if (activeId === 'cache-max-dur' || activeId === 'cache-max-gb') return;
+
+    const pct = cache.max_bytes > 0 ? Math.min(100, (cache.total_bytes / cache.max_bytes) * 100).toFixed(1) : '0.0';
+    const enabledBadge = cache.enabled
+        ? `<span class="badge bg-success" style="font-family:var(--font-mono); font-size:9px; border-radius:0">ENABLED</span>`
+        : `<span class="badge bg-secondary" style="font-family:var(--font-mono); font-size:9px; border-radius:0">DISABLED</span>`;
+
+    cacheEl.innerHTML = `
+        <div class="music-card" style="margin-bottom:1.5rem">
+            <div class="music-card-header" style="justify-content:space-between; flex-wrap:wrap">
+                <div style="display:flex; align-items:center; gap:12px">
+                    <span class="serif" style="color:var(--sigil); font-size:20px">💾</span>
+                    <span class="guild-name" style="font-size:1.1rem">YouTube Audio Cache</span>
+                    ${enabledBadge}
+                </div>
+                <div class="mono" style="font-size:11px; color:var(--bone-fade)">
+                    ${cache.track_count} tracks (${cache.favorite_track_count} ❤️) · ${cache.total_mb} MB / ${cache.max_size_gb} GB (${pct}%)
+                </div>
+            </div>
+            <div class="music-body" style="padding:1rem 1.5rem">
+                <div class="progress-bar-wrapper" style="margin-bottom:14px">
+                    <div class="progress-bar-fill" style="width:${pct}%"></div>
+                </div>
+                <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap">
+                    <label class="mono" style="font-size:11px; color:var(--bone-fade)">
+                        Max Track (min):
+                        <input id="cache-max-dur" type="number" min="1" max="600" value="${cache.max_duration_minutes}"
+                            style="width:70px; margin-left:6px; background:var(--void-2); color:var(--bone); border:1px solid var(--hair); padding:3px 6px">
+                    </label>
+                    <label class="mono" style="font-size:11px; color:var(--bone-fade)">
+                        Max Size (GB):
+                        <input id="cache-max-gb" type="number" min="0.1" max="500" step="0.5" value="${cache.max_size_gb}"
+                            style="width:80px; margin-left:6px; background:var(--void-2); color:var(--bone); border:1px solid var(--hair); padding:3px 6px">
+                    </label>
+                    <button class="btn-eld primary" onclick="saveCacheSettings(${cache.enabled})">💾 SAVE LIMITS</button>
+                    <button class="btn-eld" onclick="toggleCacheEnabled(${!cache.enabled})">${cache.enabled ? '⏸ DISABLE CACHE' : '▶ ENABLE CACHE'}</button>
+                    <button class="btn-eld rust" onclick="clearAudioCache(true)">🧹 CLEAR (KEEP ❤️)</button>
+                    <button class="btn-eld rust" onclick="clearAudioCache(false)">🗑️ PURGE ALL</button>
+                </div>
+            </div>
+        </div>`;
+}
+
+async function saveCacheSettings(currentEnabled) {
+    const maxDur = parseInt(document.getElementById('cache-max-dur')?.value || '30', 10);
+    const maxGb = parseFloat(document.getElementById('cache-max-gb')?.value || '10');
+    await fetch('/api/music/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'cache_settings',
+            enabled: currentEnabled,
+            max_duration_minutes: maxDur,
+            max_size_gb: maxGb
+        })
+    });
+    await updateMusicData();
+}
+
+async function toggleCacheEnabled(enable) {
+    await fetch('/api/music/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cache_settings', enabled: enable })
+    });
+    await updateMusicData();
+}
+
+async function clearAudioCache(keepFavorites) {
+    const msg = keepFavorites
+        ? 'Clear cached audio files (preserving ❤️ Favorites)?'
+        : 'Purge ALL cached audio files including ❤️ Favorites?';
+    if (!confirm(msg)) return;
+    await fetch('/api/music/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear_cache', keep_favorites: keepFavorites })
+    });
+    await updateMusicData();
+}
+
 async function updateMusicData() {
     try {
         const resp = await fetch('/api/music/data', { cache: 'no-store' });
         if (!resp.ok) return;
         const data = await resp.json();
+        if (data.cache) {
+            renderCachePanel(data.cache);
+        }
         const container = document.getElementById('guilds-container');
 
         if (!data.guilds || Object.keys(data.guilds).length === 0) {

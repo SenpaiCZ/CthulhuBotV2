@@ -21,21 +21,21 @@ ROLLBACK_NOTICE_FILE = "rollback_notice.txt"   # must match bot.py's copy of thi
 
 # Directories to exclude from backup (too big or irrelevant)
 BACKUP_EXCLUDE_DIRS = {
-    "venv", ".git", "__pycache__", "soundboard", "backups",
-    ".vscode", ".idea", "node_modules", "infodata", "data",
-    EXTRACT_DIR, "images"
+    "venv", ".venv", "env", ".git", "__pycache__", ".pytest_cache",
+    "soundboard", "backups", ".vscode", ".idea", "node_modules",
+    "infodata", "data", EXTRACT_DIR, "images"
 }
 
 # Directories to preserve during update (do not delete/overwrite)
 PROTECTED_DIRS = {
-    "venv", ".git", "__pycache__", "soundboard", "backups",
-    ".vscode", ".idea", "node_modules", "infodata", "data",
-    EXTRACT_DIR, "images", "cookies"
+    "venv", ".venv", "env", ".git", "__pycache__", ".pytest_cache",
+    "soundboard", "backups", ".vscode", ".idea", "node_modules",
+    "infodata", "data", EXTRACT_DIR, "images", "cookies"
 }
 
 # Files in the root directory to never delete or overwrite
 PROTECTED_FILES = {
-    "config.json", ZIP_FILENAME, "updater.py.old", "update_temp_script.ps1",
+    "config.json", ".env", ZIP_FILENAME, "updater.py.old", "update_temp_script.ps1",
     UPDATE_HEALTH_MARKER, ROLLBACK_NOTICE_FILE,
 }
 
@@ -57,10 +57,11 @@ def log(message):
     except Exception as e:
         print(f"Failed to write to updater.log: {e}", flush=True)
 
-def wait_for_pid(pid):
+def wait_for_pid(pid, timeout=20):
     if not pid:
         return
     log(f"Waiting for process {pid} to exit...")
+    start = time.time()
     try:
         import psutil
         while psutil.pid_exists(pid):
@@ -69,6 +70,14 @@ def wait_for_pid(pid):
                 proc = psutil.Process(pid)
                 if proc.status() == psutil.STATUS_ZOMBIE:
                     log(f"Process {pid} is a zombie. Proceeding.")
+                    break
+                if time.time() - start > timeout:
+                    log(f"Process {pid} did not exit within {timeout}s; terminating...")
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=5)
+                    except psutil.TimeoutExpired:
+                        proc.kill()
                     break
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 # Process might be gone or we can't check it, assume gone
@@ -89,6 +98,10 @@ def wait_for_pid(pid):
                         if len(stat) > 2 and stat[2] in ('Z', 'X', 'x', 'z'):
                             log(f"Process {pid} is a zombie/dead. Proceeding.")
                             break
+                    if time.time() - start > timeout:
+                        log(f"Process {pid} did not exit within {timeout}s; sending SIGKILL...")
+                        os.kill(pid, signal.SIGKILL)
+                        break
                 except FileNotFoundError:
                     # Process disappeared
                     break

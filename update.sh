@@ -21,8 +21,10 @@ read -p "Press Enter to continue..."
 # Activate Virtual Environment
 if [ -d "venv" ]; then
     source venv/bin/activate
+elif [ -d ".venv" ]; then
+    source .venv/bin/activate
 else
-    echo "Error: Virtual environment not found in 'venv'."
+    echo "Error: Virtual environment not found in 'venv' or '.venv'."
     exit 1
 fi
 

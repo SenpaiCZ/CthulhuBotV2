@@ -478,6 +478,55 @@ async def load_music_favorites():
 async def save_music_favorites(favorites):
     await _save_json_file(DATA_FOLDER, 'music_favorites.json', favorites)
 
+# --- Music Cache Settings & Index ---
+_MUSIC_CACHE_SETTINGS_CACHE = None
+
+DEFAULT_MUSIC_CACHE_SETTINGS = {
+    "enabled": True,
+    "max_duration_minutes": 30,
+    "max_size_gb": 10.0,
+}
+
+async def load_music_cache_settings():
+    global _MUSIC_CACHE_SETTINGS_CACHE
+    if _MUSIC_CACHE_SETTINGS_CACHE is None:
+        loaded = await _load_json_file(DATA_FOLDER, 'music_cache_settings.json')
+        merged = DEFAULT_MUSIC_CACHE_SETTINGS.copy()
+        if isinstance(loaded, dict):
+            merged.update(loaded)
+        _MUSIC_CACHE_SETTINGS_CACHE = merged
+    return _MUSIC_CACHE_SETTINGS_CACHE.copy()
+
+async def save_music_cache_settings(settings_data):
+    global _MUSIC_CACHE_SETTINGS_CACHE
+    merged = DEFAULT_MUSIC_CACHE_SETTINGS.copy()
+    if isinstance(settings_data, dict):
+        merged.update(settings_data)
+    _MUSIC_CACHE_SETTINGS_CACHE = merged.copy()
+    await _save_json_file(DATA_FOLDER, 'music_cache_settings.json', merged)
+
+_MUSIC_CACHE_INDEX_CACHE = None
+
+async def load_music_cache_index():
+    global _MUSIC_CACHE_INDEX_CACHE
+    if _MUSIC_CACHE_INDEX_CACHE is None:
+        loaded = await _load_json_file(DATA_FOLDER, 'music_cache_index.json')
+        if not isinstance(loaded, dict):
+            loaded = {}
+        loaded.setdefault("entries", {})
+        loaded.setdefault("queries", {})
+        _MUSIC_CACHE_INDEX_CACHE = loaded
+    return _MUSIC_CACHE_INDEX_CACHE
+
+async def save_music_cache_index(index_data):
+    global _MUSIC_CACHE_INDEX_CACHE
+    if not isinstance(index_data, dict):
+        index_data = {"entries": {}, "queries": {}}
+    index_data.setdefault("entries", {})
+    index_data.setdefault("queries", {})
+    _MUSIC_CACHE_INDEX_CACHE = index_data
+    await _save_json_file(DATA_FOLDER, 'music_cache_index.json', index_data, ensure_ascii=False)
+
 # --- Reaction Roles ---
 _REACTION_ROLES_CACHE = None
 
@@ -769,6 +818,8 @@ _DATA_CACHE_VAR_BY_FILENAME = {
     'loot_settings.json': '_LOOT_SETTINGS_CACHE',
     'skill_sound_settings.json': '_SKILL_SOUND_SETTINGS_CACHE',
     'fonts_config.json': '_FONTS_CONFIG_CACHE',
+    'music_cache_settings.json': '_MUSIC_CACHE_SETTINGS_CACHE',
+    'music_cache_index.json': '_MUSIC_CACHE_INDEX_CACHE',
 }
 
 def invalidate_data_cache(filename):
