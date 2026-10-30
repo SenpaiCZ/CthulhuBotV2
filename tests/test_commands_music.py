@@ -1661,3 +1661,50 @@ class TestPlaylistAndPrefetchOptimizations:
         assert next_song["url"] == "https://googlevideo.com/stream-next"
         assert next_song["duration"] == 155
         cog._schedule_background_cache.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_ensure_voice_defers_before_channel_connect(self):
+        cog = make_music_cog()
+        events = []
+
+        interaction = make_interaction()
+        interaction.guild.voice_client = None
+        is_done = {"val": False}
+        interaction.response.is_done = MagicMock(side_effect=lambda: is_done["val"])
+
+        async def _defer():
+            events.append("defer")
+            is_done["val"] = True
+
+        async def _connect(**kwargs):
+            events.append("connect")
+            return MagicMock()
+
+        interaction.response.defer = AsyncMock(side_effect=_defer)
+        interaction.user.voice.channel.connect = AsyncMock(side_effect=_connect)
+
+        vc = await cog._ensure_voice(interaction)
+
+        assert vc is not None
+        assert events == ["defer", "connect"]
+
+    @pytest.mark.asyncio
+    async def test_finalize_play_deletes_deferred_slash_response_when_reusing_old_dashboard(self):
+        cog = make_music_cog()
+        guild_id = "123"
+        old_msg = MagicMock()
+        old_msg.edit = AsyncMock()
+        cog.dashboard_messages[guild_id] = old_msg
+        cog.queue[guild_id] = [{"title": "Next Song"}]
+        cog._play_song = AsyncMock()
+
+        interaction = make_interaction()
+        interaction.message = None  # Slash command interaction has no .message
+        interaction.delete_original_response = AsyncMock()
+
+        await cog._finalize_play(interaction, guild_id)
+
+        old_msg.edit.assert_awaited_once()
+        interaction.delete_original_response.assert_awaited_once()
+        cog._play_song.assert_awaited_once_with(guild_id, {"title": "Next Song"})
+

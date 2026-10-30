@@ -337,11 +337,40 @@ def reset_health_marker():
         pass
 
 
+def terminate_existing_bot_processes():
+    """Ensure no duplicate bot.py instances from the same directory remain running."""
+    my_pid = os.getpid()
+    cwd = os.path.abspath(".")
+    try:
+        import psutil
+        for proc in psutil.process_iter(["pid", "cmdline", "cwd"]):
+            try:
+                if proc.pid == my_pid:
+                    continue
+                cmdline = proc.info.get("cmdline") or []
+                if not any(os.path.basename(arg) == "bot.py" for arg in cmdline):
+                    continue
+                proc_cwd = proc.info.get("cwd")
+                if proc_cwd and os.path.abspath(proc_cwd) != cwd:
+                    continue
+                log(f"Terminating leftover bot.py process (PID {proc.pid})...")
+                proc.terminate()
+                try:
+                    proc.wait(timeout=5)
+                except psutil.TimeoutExpired:
+                    proc.kill()
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    except Exception:
+        pass
+
+
 def launch_and_supervise(timeout=60) -> bool:
     """Launch bot.py; return True only if it signals healthy (marker appears) while still
     alive within `timeout` seconds. On crash or timeout, returns False -- and on timeout
     specifically, forcibly terminates the still-running process first, so at most one bot
     process is ever alive."""
+    terminate_existing_bot_processes()
     reset_health_marker()
     log("Launching bot.py...")
     cmd = [sys.executable, "bot.py"]

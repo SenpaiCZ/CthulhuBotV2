@@ -338,6 +338,7 @@ class Music(commands.Cog):
         self._caching_in_progress: set[str] = set()
         self._cache_tasks: set[asyncio.Task] = set()
         self._cache_lock = asyncio.Lock()
+        self._bg_ytdl_semaphore = asyncio.Semaphore(1)
 
         self.bot.music_cog = self
 
@@ -425,30 +426,51 @@ class Music(commands.Cog):
     async def _ensure_voice(self, interaction: discord.Interaction) -> discord.VoiceClient | None:
         """Join/return voice client, or send an error and return None."""
         if not interaction.user.voice or not interaction.user.voice.channel:
-            await interaction.response.send_message(
-                "❌ You need to be in a voice channel first.", ephemeral=True
-            )
+            if interaction.response.is_done():
+                await interaction.followup.send(
+                    "❌ You need to be in a voice channel first.", ephemeral=True
+                )
+            else:
+                await interaction.response.send_message(
+                    "❌ You need to be in a voice channel first.", ephemeral=True
+                )
             return None
 
         channel = interaction.user.voice.channel
         vc = interaction.guild.voice_client
 
-        if vc:
+        if vc and vc.is_connected():
             if vc.channel != channel:
+                if not interaction.response.is_done():
+                    await interaction.response.defer()
                 await vc.move_to(channel)
             return vc
+
+        # Acknowledge the interaction before the voice handshake (which can exceed 3s on RPi5)
+        if not interaction.response.is_done():
+            await interaction.response.defer()
+
+        if vc and not vc.is_connected():
+            try:
+                await vc.disconnect(force=True)
+            except Exception:
+                pass
 
         try:
             return await channel.connect(timeout=15, reconnect=True)
         except asyncio.TimeoutError:
-            await interaction.response.send_message(
-                "❌ Timed out connecting to voice. Try again.", ephemeral=True
-            )
+            msg = "❌ Timed out connecting to voice. Try again."
+            if interaction.response.is_done():
+                await interaction.followup.send(msg, ephemeral=True)
+            else:
+                await interaction.response.send_message(msg, ephemeral=True)
             return None
         except Exception as e:
-            await interaction.response.send_message(
-                f"❌ Could not connect to voice: {e}", ephemeral=True
-            )
+            msg = f"❌ Could not connect to voice: {e}"
+            if interaction.response.is_done():
+                await interaction.followup.send(msg, ephemeral=True)
+            else:
+                await interaction.response.send_message(msg, ephemeral=True)
             return None
 
     async def _finalize_play(self, interaction: discord.Interaction, guild_id: str):
@@ -470,6 +492,11 @@ class Music(commands.Cog):
         if not old_msg:
             new_msg = await interaction.followup.send(embed=embed, view=view)
             self.dashboard_messages[guild_id] = new_msg
+        elif getattr(interaction, "message", None) is None and getattr(interaction, "_followup_sent", False) is not True:
+            try:
+                await interaction.delete_original_response()
+            except Exception:
+                pass
 
         current = self.current_track.get(guild_id)
         if (not current or current.finished) and self.queue.get(guild_id):
@@ -575,7 +602,14 @@ class Music(commands.Cog):
         key = _extract_video_key(url)
         if key in self._caching_in_progress:
             return
-        task = asyncio.create_task(self._cache_track_in_background(dict(song_info), query=query))
+        snapshot = dict(song_info)
+
+        async def _delayed_cache():
+            await asyncio.sleep(2.0)
+            async with self._bg_ytdl_semaphore:
+                await self._cache_track_in_background(snapshot, query=query)
+
+        task = asyncio.create_task(_delayed_cache())
         self._cache_tasks.add(task)
         task.add_done_callback(self._cache_tasks.discard)
 
@@ -1113,13 +1147,7 @@ class Music(commands.Cog):
         )
         self.current_track[guild_id] = track
 
-        # Schedule background download if streaming and eligible for cache
-        if not play_from_cache:
-            self._schedule_background_cache(song_info, query=song_info.get('query'))
-
-        # Lookahead: pre-resolve and pre-cache the next track in queue so transitions are instant
-        self._schedule_prefetch_next(guild_id)
-
+        await self._update_dashboard_for_guild(guild_id)
         dashboard_msg = self.dashboard_messages.get(guild_id)
         if dashboard_msg:
             try:
@@ -1127,7 +1155,13 @@ class Music(commands.Cog):
                 await dashboard_msg.add_reaction(self.FAVORITE_EMOJI)
             except Exception:
                 pass
-        await self._update_dashboard_for_guild(guild_id)
+
+        # Schedule background download if streaming and eligible for cache
+        if not play_from_cache:
+            self._schedule_background_cache(song_info, query=song_info.get('query'))
+
+        # Lookahead: pre-resolve and pre-cache the next track in queue so transitions are instant
+        self._schedule_prefetch_next(guild_id)
 
     def _schedule_prefetch_next(self, guild_id: str):
         """If the next song in the guild queue needs yt-dlp resolution, pre-resolve and
@@ -1144,7 +1178,13 @@ class Music(commands.Cog):
             return
 
         next_song['_prefetching'] = True
-        task = asyncio.create_task(self._prefetch_track_in_background(guild_id, next_song))
+
+        async def _delayed_prefetch():
+            await asyncio.sleep(2.0)
+            async with self._bg_ytdl_semaphore:
+                await self._prefetch_track_in_background(guild_id, next_song)
+
+        task = asyncio.create_task(_delayed_prefetch())
         self._cache_tasks.add(task)
         task.add_done_callback(self._cache_tasks.discard)
 
@@ -1225,6 +1265,11 @@ class Music(commands.Cog):
                 await msg.edit(embed=embed, view=view)
                 if interaction and not interaction.response.is_done():
                     await interaction.response.defer()
+                    if getattr(interaction, "message", None) is None:
+                        try:
+                            await interaction.delete_original_response()
+                        except Exception:
+                            pass
                 return
             except discord.NotFound:
                 self.dashboard_messages.pop(guild_id, None)
@@ -1422,7 +1467,8 @@ class Music(commands.Cog):
         if not vc:
             return
 
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
         guild_id = str(interaction.guild.id)
         if guild_id not in self.queue:
@@ -1440,7 +1486,10 @@ class Music(commands.Cog):
                 opts, extract_url = _prepare_playlist_extraction(query)
                 def _extract_playlist():
                     with yt_dlp.YoutubeDL(opts) as ydl:
-                        return ydl.extract_info(extract_url, download=False)
+                        res = ydl.extract_info(extract_url, download=False)
+                        if res and 'entries' in res and res['entries'] is not None:
+                            res['entries'] = list(res['entries'])
+                        return res
 
                 info = await self.bot.loop.run_in_executor(None, _extract_playlist)
 
@@ -1460,6 +1509,7 @@ class Music(commands.Cog):
                         guild_id, entries, playlist_title, interaction.user
                     )
                     msg = await interaction.followup.send(embed=embed)
+                    interaction._followup_sent = True
                     asyncio.create_task(_delete_after(msg, 10))
                 else:
                     has_explicit_video = _query_has_explicit_video(query)
@@ -1489,6 +1539,8 @@ class Music(commands.Cog):
                     await self._update_dashboard_for_guild(guild_id)
                     return  # Don't replace dashboard; just update queue section
 
+            await self._finalize_play(interaction, guild_id)
+
         except MusicLookupError as e:
             return await interaction.followup.send(str(e))
         except yt_dlp.utils.DownloadError as e:
@@ -1496,8 +1548,6 @@ class Music(commands.Cog):
             return await interaction.followup.send(content=content, embed=embed, view=view, ephemeral=ephemeral)
         except Exception as e:
             return await interaction.followup.send(f"❌ Unexpected error: {type(e).__name__}: {str(e)[:200]}")
-
-        await self._finalize_play(interaction, guild_id)
 
     @play.autocomplete('query')
     async def play_autocomplete(
@@ -1530,7 +1580,8 @@ class Music(commands.Cog):
         if not vc:
             return
 
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
         guild_id = str(interaction.guild.id)
         if guild_id not in self.queue:
@@ -1678,6 +1729,11 @@ class Music(commands.Cog):
         await interaction.response.defer()
         self._fade_or_finish_track(track)
         await self._process_queue(guild_id)
+        if getattr(interaction, "message", None) is None:
+            try:
+                await interaction.delete_original_response()
+            except Exception:
+                pass
 
     @app_commands.command(name="stop", description="⏹️ Stop music and disconnect from voice.")
     async def stop(self, interaction: discord.Interaction):
@@ -1948,7 +2004,8 @@ class Music(commands.Cog):
         if not vc:
             return
 
-        await interaction.response.defer()
+        if not interaction.response.is_done():
+            await interaction.response.defer()
 
         guild_id = str(interaction.guild.id)
         user_id = str(interaction.user.id)
@@ -1971,6 +2028,7 @@ class Music(commands.Cog):
             guild_id, entries, f"❤️ {interaction.user.display_name}'s Favorites", interaction.user
         )
         msg = await interaction.followup.send(embed=embed)
+        interaction._followup_sent = True
         asyncio.create_task(_delete_after(msg, 10))
         await self._finalize_play(interaction, guild_id)
 
