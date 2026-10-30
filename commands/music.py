@@ -1,11 +1,14 @@
+import collections
 import datetime
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
 import asyncio
 import hashlib
+import logging
 import os
 import re
+import shutil
 import time
 import yt_dlp
 import random
@@ -13,6 +16,68 @@ from functools import partial
 from rapidfuzz import fuzz, process
 from dashboard.state import guild_mixers, server_volumes, MUSIC_CACHE_FOLDER
 from dashboard.audio_mixer import MixingAudioSource, Track
+
+
+class _VoiceLogBuffer(logging.Handler):
+    """Ring-buffer logging handler capturing recent discord.voice_state / voice_client / player logs."""
+
+    def __init__(self, maxlen: int = 30):
+        super().__init__(level=logging.INFO)
+        self.records: collections.deque[str] = collections.deque(maxlen=maxlen)
+
+    def emit(self, record: logging.LogRecord):
+        try:
+            ts = time.strftime("%H:%M:%S", time.localtime(record.created))
+            short_name = record.name.replace("discord.", "")
+            msg = record.getMessage()
+            line = f"{ts} [{short_name}] {record.levelname}: {msg}"
+            if record.exc_info:
+                exc_type, exc_val, _ = record.exc_info
+                if exc_type is not None:
+                    line += f" ({exc_type.__name__}: {exc_val})"
+            self.records.append(line)
+        except Exception:
+            pass
+
+    def get_recent(self, max_chars: int = 900) -> str:
+        if not self.records:
+            return ""
+        text = "\n".join(self.records)
+        if len(text) > max_chars:
+            text = "..." + text[-max_chars:]
+        return text
+
+
+_voice_log_buffer = _VoiceLogBuffer()
+for _logger_name in ("discord.voice_state", "discord.voice_client", "discord.player"):
+    _lg = logging.getLogger(_logger_name)
+    if _voice_log_buffer not in _lg.handlers:
+        _lg.addHandler(_voice_log_buffer)
+    if _lg.level == logging.NOTSET or _lg.level > logging.INFO:
+        _lg.setLevel(logging.INFO)
+
+
+def _get_voice_env_diagnostics() -> str:
+    """Return a compact one-line summary of voice-critical library versions."""
+    try:
+        import davey
+        dave_str = f"davey {getattr(davey, '__version__', 'installed')}"
+    except ImportError:
+        dave_str = "❌ davey MISSING"
+
+    try:
+        import nacl
+        nacl_str = f"PyNaCl {getattr(nacl, '__version__', 'installed')}"
+    except ImportError:
+        nacl_str = "❌ PyNaCl MISSING"
+
+    ytdl_ver = getattr(getattr(yt_dlp, "version", None), "__version__", "unknown")
+    ffmpeg_ok = "✅" if shutil.which("ffmpeg") else "❌ MISSING"
+    opus_ok = "✅" if discord.opus.is_loaded() else "auto"
+    return (
+        f"discord.py `{discord.__version__}` | `{dave_str}` | `{nacl_str}` | "
+        f"yt-dlp `{ytdl_ver}` | ffmpeg {ffmpeg_ok} | opus {opus_ok}"
+    )
 from loadnsave import (
     load_music_blacklist, save_music_blacklist,
     load_server_volumes, save_server_volumes,
@@ -340,6 +405,10 @@ class Music(commands.Cog):
         self._cache_tasks: set[asyncio.Task] = set()
         self._cache_lock = asyncio.Lock()
         self._bg_ytdl_semaphore = asyncio.Semaphore(1)
+        # Diagnostics & error reporting state
+        self._intentional_disconnects: set[str] = set()
+        self.last_text_channel: dict[str, discord.abc.Messageable] = {}
+        self._last_bg_error: dict[str, str] = {}
 
         self.bot.music_cog = self
 
@@ -373,6 +442,7 @@ class Music(commands.Cog):
                     self.idle_since[guild_id] = now
                 elif now - self.idle_since[guild_id] >= IDLE_TIMEOUT:
                     self.idle_since.pop(guild_id, None)
+                    self._intentional_disconnects.add(guild_id)
                     await self._cleanup_guild(guild_id, disconnect=True)
                     try:
                         await vc.disconnect(force=False)
@@ -424,8 +494,98 @@ class Music(commands.Cog):
         if mixer:
             mixer.cleanup()
 
+    async def _send_error_log(
+        self,
+        guild_id: str,
+        reason: str,
+        track=None,
+        extra: str | None = None,
+    ):
+        """Send a diagnostic error log embed to the guild's active music text channel."""
+        channel = self.last_text_channel.get(guild_id)
+        if not channel:
+            dash_msg = self.dashboard_messages.get(guild_id)
+            if dash_msg and getattr(dash_msg, "channel", None):
+                channel = dash_msg.channel
+        if not channel:
+            return
+
+        embed = discord.Embed(
+            title="⚠️ Music Diagnostic / Error Log",
+            description=f"**Reason:** {reason}",
+            color=discord.Color.red(),
+            timestamp=datetime.datetime.now(datetime.timezone.utc),
+        )
+
+        embed.add_field(
+            name="Environment",
+            value=_get_voice_env_diagnostics()[:1024],
+            inline=False,
+        )
+
+        if track is not None:
+            meta = getattr(track, "metadata", None) or {}
+            title = meta.get("title", "Unknown")
+            mode = "💾 Local Cache" if meta.get("is_cached") else "🌐 YouTube Stream"
+            chunks = getattr(track, "chunks_read", None)
+            elapsed = getattr(track, "elapsed", 0.0)
+            read_err = getattr(track, "read_error", None)
+            track_lines = [
+                f"**Title:** {title}",
+                f"**Source:** {mode}",
+                f"**Elapsed Timer:** `{elapsed:.2f}s`",
+            ]
+            if chunks is not None:
+                track_lines.append(f"**PCM Chunks Read:** `{chunks}` (`{chunks * 0.02:.2f}s` of audio)")
+            if read_err:
+                track_lines.append(f"**Read Error:** `{read_err}`")
+            embed.add_field(
+                name="Track State",
+                value="\n".join(track_lines)[:1024],
+                inline=False,
+            )
+
+            stderr_tail = ""
+            if hasattr(track, "get_stderr_tail"):
+                try:
+                    stderr_tail = track.get_stderr_tail(max_chars=800)
+                except Exception:
+                    stderr_tail = ""
+            if stderr_tail:
+                embed.add_field(
+                    name="FFmpeg stderr",
+                    value=f"```\n{stderr_tail}\n```"[:1024],
+                    inline=False,
+                )
+
+        voice_logs = _voice_log_buffer.get_recent(max_chars=800)
+        if voice_logs:
+            embed.add_field(
+                name="Discord Voice / Player Logs",
+                value=f"```\n{voice_logs}\n```"[:1024],
+                inline=False,
+            )
+
+        bg_err = extra or self._last_bg_error.get(guild_id)
+        if bg_err:
+            embed.add_field(
+                name="Additional Error Details",
+                value=f"```\n{str(bg_err)[:900]}\n```",
+                inline=False,
+            )
+
+        try:
+            await channel.send(embed=embed)
+        except Exception as e:
+            print(f"[Music] Failed to send error log embed: {e}")
+
     async def _ensure_voice(self, interaction: discord.Interaction) -> discord.VoiceClient | None:
         """Join/return voice client, or send an error and return None."""
+        if interaction.guild and getattr(interaction, "channel", None):
+            guild_id = str(interaction.guild.id)
+            self.last_text_channel[guild_id] = interaction.channel
+            self._intentional_disconnects.discard(guild_id)
+
         if not interaction.user.voice or not interaction.user.voice.channel:
             if interaction.response.is_done():
                 await interaction.followup.send(
@@ -1041,11 +1201,25 @@ class Music(commands.Cog):
             return info
         except Exception as e:
             print(f"[Music] resolve_stream_url error: {e}")
+            self._last_bg_error["last"] = f"resolve_stream_url({webpage_url}): {type(e).__name__}: {e}"
             return None
 
     def _on_track_finish(self, guild_id: str):
         """Called from audio thread when a track naturally ends."""
         coro = self._process_queue(guild_id)
+        asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
+
+    def _on_player_error(self, guild_id: str, error: Exception | None):
+        """Called by discord.VoiceClient's AudioPlayer thread if playback terminates with an error."""
+        if not error:
+            return
+        print(f"[Music] Voice error in guild {guild_id}: {error}")
+        track = self.current_track.get(guild_id)
+        coro = self._send_error_log(
+            guild_id,
+            f"VoiceClient player error: `{type(error).__name__}: {error}`",
+            track=track,
+        )
         asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
 
     def _fade_or_finish_track(self, track, duration_sec: float = 0.8):
@@ -1060,6 +1234,16 @@ class Music(commands.Cog):
         """Advance to next song or update dashboard when queue is empty."""
         track = self.current_track.get(guild_id)
         if track and (track.finished or getattr(track, '_fade_out_total_chunks', 0) > 0):
+            # If the track ended naturally (not faded out by skip/stop) after <0.5s of audio,
+            # send a diagnostic error log so FFmpeg / stream errors are visible in Discord.
+            was_faded = getattr(track, '_fade_out_total_chunks', 0) > 0
+            if not was_faded and isinstance(track, Track) and (track.chunks_read < 25 or track.read_error):
+                await self._send_error_log(
+                    guild_id,
+                    f"Track ended prematurely after `{track.chunks_read}` audio chunks "
+                    f"(`{track.chunks_read * 0.02:.2f}s` of audio read from FFmpeg).",
+                    track=track,
+                )
             if self.loop_mode.get(guild_id) == "queue" and track.metadata:
                 recycled = dict(track.metadata)
                 recycled['needs_resolve'] = True
@@ -1111,6 +1295,11 @@ class Music(commands.Cog):
                 info = await self._resolve_stream_url(song_info['webpage_url'])
                 if not info:
                     print(f"[Music] Could not resolve track: {song_info.get('title')}, skipping.")
+                    await self._send_error_log(
+                        guild_id,
+                        f"Could not resolve YouTube stream URL for **{song_info.get('title', 'Unknown')}**.",
+                        extra=self._last_bg_error.get("last"),
+                    )
                     await self._process_queue(guild_id)
                     return
                 song_info['url'] = info['url']
@@ -1135,7 +1324,7 @@ class Music(commands.Cog):
         ):
             vc.stop()
             source = discord.PCMVolumeTransformer(mixer, volume=1.0)
-            vc.play(source, after=lambda e: print(f"[Music] Voice error: {e}") if e else None)
+            vc.play(source, after=partial(self._on_player_error, guild_id))
 
         music_vol = self._get_volume(guild_id)
         track = mixer.add_track(
@@ -1309,6 +1498,7 @@ class Music(commands.Cog):
 
     async def stop_music(self, interaction: discord.Interaction):
         guild_id = str(interaction.guild.id)
+        self._intentional_disconnects.add(guild_id)
         vc = interaction.guild.voice_client
         if vc and vc.is_connected():
             vc.stop()
@@ -1744,6 +1934,7 @@ class Music(commands.Cog):
         if not interaction.guild:
             return
         guild_id = str(interaction.guild.id)
+        self._intentional_disconnects.add(guild_id)
         vc = interaction.guild.voice_client
         if vc and vc.is_connected():
             vc.stop()
@@ -1898,9 +2089,19 @@ class Music(commands.Cog):
         if member == self.bot.user:
             if before.channel and not after.channel:
                 guild_id = str(before.channel.guild.id)
+                was_intentional = guild_id in self._intentional_disconnects
+                self._intentional_disconnects.discard(guild_id)
+                active_track = self.current_track.get(guild_id)
                 print(f"[Music] Disconnected from {before.channel.name} in {before.channel.guild.name}")
                 await self._cleanup_guild(guild_id)
                 await self._update_dashboard_for_guild(guild_id)
+                if not was_intentional and active_track is not None:
+                    await self._send_error_log(
+                        guild_id,
+                        f"Bot was unexpectedly disconnected from voice channel **#{before.channel.name}** "
+                        "while a track was active.",
+                        track=active_track,
+                    )
             return
 
         # Auto-pause when everyone leaves the voice channel

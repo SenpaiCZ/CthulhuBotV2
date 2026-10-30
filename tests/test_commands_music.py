@@ -1708,3 +1708,62 @@ class TestPlaylistAndPrefetchOptimizations:
         interaction.delete_original_response.assert_awaited_once()
         cog._play_song.assert_awaited_once_with(guild_id, {"title": "Next Song"})
 
+    @pytest.mark.asyncio
+    async def test_unexpected_voice_disconnect_sends_error_log_embed(self):
+        cog = make_music_cog()
+        guild_id = "123"
+        channel = MagicMock()
+        channel.send = AsyncMock()
+        cog.last_text_channel[guild_id] = channel
+        cog._update_dashboard_for_guild = AsyncMock()
+
+        fake_track = MagicMock()
+        fake_track.metadata = {"title": "Silent Song", "is_cached": False}
+        fake_track.chunks_read = 0
+        fake_track.elapsed = 12.4
+        fake_track.read_error = None
+        fake_track.get_stderr_tail = MagicMock(return_value="HTTP error 403 Forbidden")
+        cog.current_track[guild_id] = fake_track
+
+        before = MagicMock()
+        before.channel = MagicMock()
+        before.channel.name = "General"
+        before.channel.guild.id = 123
+        before.channel.guild.name = "TestGuild"
+        after = MagicMock()
+        after.channel = None
+
+        await cog.on_voice_state_update(cog.bot.user, before, after)
+
+        channel.send.assert_awaited_once()
+        sent_embed = channel.send.call_args.kwargs["embed"]
+        assert "Music Diagnostic / Error Log" in sent_embed.title
+        assert "unexpectedly disconnected" in sent_embed.description
+        fields_text = " ".join(f.value for f in sent_embed.fields)
+        assert "Silent Song" in fields_text
+        assert "HTTP error 403 Forbidden" in fields_text
+
+    @pytest.mark.asyncio
+    async def test_intentional_stop_disconnect_does_not_send_error_log(self):
+        cog = make_music_cog()
+        guild_id = "123"
+        channel = MagicMock()
+        channel.send = AsyncMock()
+        cog.last_text_channel[guild_id] = channel
+        cog._update_dashboard_for_guild = AsyncMock()
+        cog._intentional_disconnects.add(guild_id)
+        cog.current_track[guild_id] = MagicMock()
+
+        before = MagicMock()
+        before.channel = MagicMock()
+        before.channel.name = "General"
+        before.channel.guild.id = 123
+        before.channel.guild.name = "TestGuild"
+        after = MagicMock()
+        after.channel = None
+
+        await cog.on_voice_state_update(cog.bot.user, before, after)
+
+        channel.send.assert_not_called()
+
+

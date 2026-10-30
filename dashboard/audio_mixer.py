@@ -1,5 +1,6 @@
 import discord
 import struct
+import tempfile
 import uuid
 import os
 import threading
@@ -89,6 +90,13 @@ class Track:
         self._paused_since: float | None = None
         self._paused = False  # backing field — use .paused property
 
+        # Diagnostics
+        self.created_at: float = time.monotonic()
+        self.chunks_read: int = 0
+        self.read_error: str | None = None
+        self._stderr_file = None
+        self._last_stderr_tail: str = ""
+
         self.source = self._create_source()
 
     def start_fade_out(self, duration_sec: float = 0.8):
@@ -135,11 +143,38 @@ class Track:
         before_options = self.before_options or ''
         if seek_seconds:
             before_options = f"-ss {seek_seconds:.2f} {before_options}".rstrip()
+        if self._stderr_file is not None:
+            try:
+                self._stderr_file.close()
+            except Exception:
+                pass
+        try:
+            self._stderr_file = tempfile.TemporaryFile(mode="w+b")
+        except Exception:
+            self._stderr_file = None
         return discord.FFmpegPCMAudio(
             self.file_path,
             before_options=before_options,
-            options=self.options
+            options=self.options,
+            stderr=self._stderr_file,
         )
+
+    def get_stderr_tail(self, max_chars: int = 1200) -> str:
+        """Return the tail of FFmpeg's stderr output for diagnostic reporting."""
+        if self._stderr_file is not None:
+            try:
+                self._stderr_file.flush()
+                self._stderr_file.seek(0, os.SEEK_END)
+                size = self._stderr_file.tell()
+                read_len = min(size, max_chars * 2)
+                self._stderr_file.seek(max(0, size - read_len))
+                raw = self._stderr_file.read()
+                text = raw.decode("utf-8", errors="replace").strip()
+                if text:
+                    self._last_stderr_tail = text[-max_chars:]
+            except Exception:
+                pass
+        return self._last_stderr_tail
 
     def seek(self, seconds: float):
         """Restart the FFmpeg source at `seconds` into the track, preserving play/pause state."""
@@ -181,6 +216,7 @@ class Track:
         try:
             data = self.source.read()
         except Exception as e:
+            self.read_error = f"{type(e).__name__}: {e}"
             print(f"[Track] Read error: {e}")
             self._mark_finished()
             return b''
@@ -203,12 +239,15 @@ class Track:
                         self._mark_finished()
                         return b''
                 except Exception as e:
+                    self.read_error = f"{type(e).__name__}: {e}"
                     print(f"[Track] Loop restart error: {e}")
                     self._mark_finished()
                     return b''
             else:
                 self._mark_finished()
                 return b''
+
+        self.chunks_read += 1
 
         if len(data) < CHUNK_SIZE:
             data += b'\x00' * (CHUNK_SIZE - len(data))
@@ -228,6 +267,7 @@ class Track:
         return _apply_volume(data, eff_vol) if eff_vol != 1.0 else data
 
     def _mark_finished(self):
+        self.get_stderr_tail()
         self.finished = True
         if self.on_finish:
             try:
@@ -236,11 +276,18 @@ class Track:
                 print(f"[Track] on_finish error: {e}")
 
     def cleanup(self):
+        self.get_stderr_tail()
         try:
             if self.source:
                 self.source.cleanup()
         except Exception:
             pass
+        if self._stderr_file is not None:
+            try:
+                self._stderr_file.close()
+            except Exception:
+                pass
+            self._stderr_file = None
 
 
 class MixingAudioSource(discord.AudioSource):
