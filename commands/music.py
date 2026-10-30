@@ -51,6 +51,7 @@ YTDL_BASE = {
     'default_search': 'auto',
     'socket_timeout': 30,
     'source_address': '0.0.0.0',
+    'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
 }
 
 YTDL_PLAYLIST = {
@@ -579,7 +580,7 @@ class Music(commands.Cog):
             return None
 
         file_path = entry.get("file_path", "")
-        if file_path and os.path.isfile(file_path):
+        if file_path and os.path.isfile(file_path) and os.path.getsize(file_path) > 0:
             return entry
 
         # Stale entry — file was deleted externally
@@ -653,6 +654,7 @@ class Music(commands.Cog):
                 "no_warnings": True,
                 "socket_timeout": 30,
                 "source_address": "0.0.0.0",
+                "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
             }
             if os.path.isdir("/dev/shm") and os.access("/dev/shm", os.W_OK):
                 base_dl_opts["paths"] = {
@@ -691,7 +693,7 @@ class Music(commands.Cog):
                 return
 
             size_bytes = os.path.getsize(file_path)
-            if size_bytes > max_size_bytes:
+            if size_bytes <= 0 or size_bytes > max_size_bytes:
                 try:
                     os.remove(file_path)
                 except OSError:
@@ -1088,7 +1090,9 @@ class Music(commands.Cog):
             if cached_entry:
                 cached_path = cached_entry['file_path']
 
-        play_from_cache = bool(cached_path and os.path.isfile(cached_path))
+        play_from_cache = bool(
+            cached_path and os.path.isfile(cached_path) and os.path.getsize(cached_path) > 0
+        )
 
         if play_from_cache:
             song_info['cached_path'] = cached_path

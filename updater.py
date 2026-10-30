@@ -324,6 +324,7 @@ def update_dependencies():
     pip_cmd = [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
     try:
         subprocess.check_call(pip_cmd)
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "yt-dlp"])
         log("Dependencies updated.")
     except subprocess.CalledProcessError as e:
         log(f"Dependency update warning: {e}")
