@@ -50,14 +50,17 @@ def wait_for_pid(pid, timeout=20):
     log("Process exited.")
 
 
-def terminate_existing_bot_processes():
-    """Ensure no duplicate bot.py instances from the same directory remain running."""
+def find_running_bot_processes():
+    """Return list of psutil.Process objects for running bot.py instances in current cwd."""
     my_pid = os.getpid()
     cwd = os.path.abspath(".")
+    found = []
     try:
-        for proc in psutil.process_iter(["pid", "cmdline", "cwd"]):
+        for proc in psutil.process_iter(["pid", "cmdline", "cwd", "status"]):
             try:
                 if proc.pid == my_pid:
+                    continue
+                if proc.info.get("status") == psutil.STATUS_ZOMBIE:
                     continue
                 cmdline = proc.info.get("cmdline") or []
                 if not any(os.path.basename(arg) == "bot.py" for arg in cmdline):
@@ -65,20 +68,40 @@ def terminate_existing_bot_processes():
                 proc_cwd = proc.info.get("cwd")
                 if proc_cwd and os.path.abspath(proc_cwd) != cwd:
                     continue
-                log(f"Terminating leftover bot.py process (PID {proc.pid})...")
-                proc.terminate()
-                try:
-                    proc.wait(timeout=5)
-                except psutil.TimeoutExpired:
-                    proc.kill()
+                found.append(proc)
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
     except Exception as e:
         log(f"Process scan warning: {e}")
+    return found
 
 
-def restart_bot():
+def terminate_existing_bot_processes():
+    """Ensure no duplicate bot.py instances from the same directory remain running."""
+    for proc in find_running_bot_processes():
+        try:
+            log(f"Terminating leftover bot.py process (PID {proc.pid})...")
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except psutil.TimeoutExpired:
+                proc.kill()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+
+
+def restart_bot(autostart_grace=8):
     terminate_existing_bot_processes()
+    if autostart_grace > 0:
+        log(f"Waiting up to {autostart_grace}s to check if system autostart launches bot.py...")
+        start = time.time()
+        while time.time() - start < autostart_grace:
+            running = find_running_bot_processes()
+            if running:
+                log(f"Detected system autostart launched bot.py (PID {running[0].pid}). Exiting restarter without spawning duplicate.")
+                sys.exit(0)
+            time.sleep(0.5)
+
     log("Starting bot...")
     cmd = [sys.executable, "bot.py"]
 

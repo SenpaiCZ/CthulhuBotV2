@@ -57,8 +57,27 @@ for _logger_name in ("discord.voice_state", "discord.voice_client", "discord.pla
         _lg.setLevel(logging.INFO)
 
 
+def _get_bot_pids() -> list[int]:
+    """Return all running bot.py PIDs on the host."""
+    pids = []
+    try:
+        import psutil
+        for proc in psutil.process_iter(["pid", "cmdline", "status"]):
+            try:
+                if proc.info.get("status") == psutil.STATUS_ZOMBIE:
+                    continue
+                cmdline = proc.info.get("cmdline") or []
+                if any(os.path.basename(arg) == "bot.py" for arg in cmdline):
+                    pids.append(proc.pid)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    except Exception:
+        pass
+    return pids or [os.getpid()]
+
+
 def _get_voice_env_diagnostics() -> str:
-    """Return a compact one-line summary of voice-critical library versions."""
+    """Return a compact one-line summary of voice-critical library versions and bot PIDs."""
     try:
         import davey
         dave_str = f"davey {getattr(davey, '__version__', 'installed')}"
@@ -74,9 +93,11 @@ def _get_voice_env_diagnostics() -> str:
     ytdl_ver = getattr(getattr(yt_dlp, "version", None), "__version__", "unknown")
     ffmpeg_ok = "✅" if shutil.which("ffmpeg") else "❌ MISSING"
     opus_ok = "✅" if discord.opus.is_loaded() else "auto"
+    pids = _get_bot_pids()
+    pid_warn = f"⚠️ DUPLICATE BOT PIDs `{pids}`" if len(pids) > 1 else f"PID `{os.getpid()}`"
     return (
         f"discord.py `{discord.__version__}` | `{dave_str}` | `{nacl_str}` | "
-        f"yt-dlp `{ytdl_ver}` | ffmpeg {ffmpeg_ok} | opus {opus_ok}"
+        f"yt-dlp `{ytdl_ver}` | ffmpeg {ffmpeg_ok} | opus {opus_ok} | {pid_warn}"
     )
 from loadnsave import (
     load_music_blacklist, save_music_blacklist,
@@ -409,6 +430,7 @@ class Music(commands.Cog):
         self._intentional_disconnects: set[str] = set()
         self.last_text_channel: dict[str, discord.abc.Messageable] = {}
         self.last_requester: dict[str, discord.abc.User] = {}
+        self.last_track: dict[str, object] = {}
         self._last_bg_error: dict[str, str] = {}
 
         self.bot.music_cog = self
@@ -1253,16 +1275,19 @@ class Music(commands.Cog):
         """Advance to next song or update dashboard when queue is empty."""
         track = self.current_track.get(guild_id)
         if track and (track.finished or getattr(track, '_fade_out_total_chunks', 0) > 0):
-            # If the track ended naturally (not faded out by skip/stop) after <0.5s of audio,
-            # send a diagnostic error log so FFmpeg / stream errors are visible in Discord.
+            # If the track ended naturally (not faded out by skip/stop) prematurely or with an error,
+            # send a diagnostic error log so FFmpeg / stream / voice errors are visible in PM.
             was_faded = getattr(track, '_fade_out_total_chunks', 0) > 0
-            if not was_faded and isinstance(track, Track) and (track.chunks_read < 25 or track.read_error):
-                await self._send_error_log(
-                    guild_id,
-                    f"Track ended prematurely after `{track.chunks_read}` audio chunks "
-                    f"(`{track.chunks_read * 0.02:.2f}s` of audio read from FFmpeg).",
-                    track=track,
-                )
+            if not was_faded and isinstance(track, Track):
+                dur = (getattr(track, 'metadata', None) or {}).get('duration')
+                ended_early = isinstance(dur, (int, float)) and dur > 15 and track.elapsed < (dur - 5)
+                if track.chunks_read < 25 or track.read_error or ended_early:
+                    await self._send_error_log(
+                        guild_id,
+                        f"Track ended prematurely at `{track.elapsed:.1f}s` / `{dur or '?'}s` "
+                        f"after `{track.chunks_read}` audio chunks (`{track.chunks_read * 0.02:.2f}s` read from FFmpeg).",
+                        track=track,
+                    )
             if self.loop_mode.get(guild_id) == "queue" and track.metadata:
                 recycled = dict(track.metadata)
                 recycled['needs_resolve'] = True
@@ -1358,6 +1383,7 @@ class Music(commands.Cog):
             fade_in_sec=1.0,
         )
         self.current_track[guild_id] = track
+        self.last_track[guild_id] = track
 
         await self._update_dashboard_for_guild(guild_id)
         dashboard_msg = self.dashboard_messages.get(guild_id)
@@ -2110,15 +2136,14 @@ class Music(commands.Cog):
                 guild_id = str(before.channel.guild.id)
                 was_intentional = guild_id in self._intentional_disconnects
                 self._intentional_disconnects.discard(guild_id)
-                active_track = self.current_track.get(guild_id)
+                active_track = self.current_track.get(guild_id) or self.last_track.get(guild_id)
                 print(f"[Music] Disconnected from {before.channel.name} in {before.channel.guild.name}")
                 await self._cleanup_guild(guild_id)
                 await self._update_dashboard_for_guild(guild_id)
-                if not was_intentional and active_track is not None:
+                if not was_intentional:
                     await self._send_error_log(
                         guild_id,
-                        f"Bot was unexpectedly disconnected from voice channel **#{before.channel.name}** "
-                        "while a track was active.",
+                        f"Bot was unexpectedly disconnected from voice channel **#{before.channel.name}**.",
                         track=active_track,
                     )
             return

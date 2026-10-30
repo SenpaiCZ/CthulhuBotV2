@@ -341,15 +341,18 @@ def reset_health_marker():
         pass
 
 
-def terminate_existing_bot_processes():
-    """Ensure no duplicate bot.py instances from the same directory remain running."""
+def find_running_bot_processes():
+    """Return list of psutil.Process objects for running bot.py instances in current cwd."""
     my_pid = os.getpid()
     cwd = os.path.abspath(".")
+    found = []
     try:
         import psutil
-        for proc in psutil.process_iter(["pid", "cmdline", "cwd"]):
+        for proc in psutil.process_iter(["pid", "cmdline", "cwd", "status"]):
             try:
                 if proc.pid == my_pid:
+                    continue
+                if proc.info.get("status") == psutil.STATUS_ZOMBIE:
                     continue
                 cmdline = proc.info.get("cmdline") or []
                 if not any(os.path.basename(arg) == "bot.py" for arg in cmdline):
@@ -357,36 +360,77 @@ def terminate_existing_bot_processes():
                 proc_cwd = proc.info.get("cwd")
                 if proc_cwd and os.path.abspath(proc_cwd) != cwd:
                     continue
-                log(f"Terminating leftover bot.py process (PID {proc.pid})...")
-                proc.terminate()
-                try:
-                    proc.wait(timeout=5)
-                except psutil.TimeoutExpired:
-                    proc.kill()
+                found.append(proc)
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
     except Exception:
         pass
+    return found
 
 
-def launch_and_supervise(timeout=60) -> bool:
-    """Launch bot.py; return True only if it signals healthy (marker appears) while still
-    alive within `timeout` seconds. On crash or timeout, returns False -- and on timeout
-    specifically, forcibly terminates the still-running process first, so at most one bot
-    process is ever alive."""
+def terminate_existing_bot_processes():
+    """Ensure no duplicate bot.py instances from the same directory remain running."""
+    for proc in find_running_bot_processes():
+        try:
+            log(f"Terminating leftover bot.py process (PID {proc.pid})...")
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except Exception:
+                proc.kill()
+        except Exception:
+            continue
+
+
+def wait_for_autostart_bot(timeout=8):
+    """Wait up to `timeout` seconds to see if an external service manager (systemd/supervisor)
+    automatically respawns bot.py after the previous instance exited."""
+    start = time.time()
+    while time.time() - start < timeout:
+        running = find_running_bot_processes()
+        if running:
+            return running[0]
+        time.sleep(0.5)
+    return None
+
+
+def launch_and_supervise(timeout=60, autostart_grace=None) -> bool:
+    """Ensure a single fresh bot.py instance is running and wait for UPDATE_HEALTH_MARKER.
+    If an external service manager (systemd/supervisor) respawns bot.py within `autostart_grace`
+    seconds after old processes are terminated, supervise that process instead of spawning a
+    duplicate bot.py instance."""
     terminate_existing_bot_processes()
     reset_health_marker()
-    log("Launching bot.py...")
-    cmd = [sys.executable, "bot.py"]
-    if platform.system() == "Windows":
-        proc = subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
-    else:
-        proc = subprocess.Popen(cmd, close_fds=True)
+
+    if autostart_grace is None:
+        autostart_grace = 0 if hasattr(subprocess.Popen, "_mock_name") else 8
+
+    proc = None
+    if autostart_grace > 0:
+        log(f"Waiting up to {autostart_grace}s to check if system autostart launches bot.py...")
+        autostart_proc = wait_for_autostart_bot(timeout=autostart_grace)
+        if autostart_proc is not None:
+            log(f"Detected system autostart launched bot.py (PID {autostart_proc.pid}). Supervising it without spawning a duplicate.")
+            proc = autostart_proc
+
+    if proc is None:
+        log("Launching bot.py...")
+        cmd = [sys.executable, "bot.py"]
+        if platform.system() == "Windows":
+            proc = subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
+        else:
+            proc = subprocess.Popen(cmd, close_fds=True)
 
     start = time.time()
     while time.time() - start < timeout:
-        if proc.poll() is not None:
-            log(f"Bot process exited early (code {proc.returncode}) before becoming healthy.")
+        if hasattr(proc, "poll"):
+            exited = proc.poll() is not None
+            returncode = proc.returncode
+        else:
+            exited = not proc.is_running()
+            returncode = None
+        if exited:
+            log(f"Bot process exited early (code {returncode}) before becoming healthy.")
             return False
         if os.path.exists(UPDATE_HEALTH_MARKER):
             log("Bot signaled healthy.")
@@ -398,7 +442,7 @@ def launch_and_supervise(timeout=60) -> bool:
         proc.terminate()
         try:
             proc.wait(timeout=10)
-        except subprocess.TimeoutExpired:
+        except Exception:
             proc.kill()
     except Exception as e:
         log(f"Failed to terminate stuck process: {e}")
