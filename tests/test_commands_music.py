@@ -1832,6 +1832,20 @@ class TestPlaylistAndPrefetchOptimizations:
             guild_id, "https://youtu.be/ritual", channel_id="456", replace_current=True
         )
 
+    @pytest.mark.asyncio
+    async def test_scene_cmd_opens_mini_controller_when_no_preset_given(self, monkeypatch):
+        cog = make_music_cog()
+        monkeypatch.setattr("commands.music.load_ambience_scenes", AsyncMock(return_value={"scenes": []}))
+        monkeypatch.setattr("commands.music.save_ambience_scenes", AsyncMock())
+        interaction = make_interaction()
+
+        await Music.scene_cmd.callback(cog, interaction, None)
+
+        interaction.response.send_message.assert_awaited_once()
+        sent_embed = interaction.response.send_message.call_args.kwargs["embed"]
+        assert "Mini-Ovladač Scény" in sent_embed.title
+
+
 
 
 

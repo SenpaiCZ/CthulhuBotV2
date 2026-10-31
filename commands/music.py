@@ -133,7 +133,7 @@ from loadnsave import (
     load_ambience_scenes, save_ambience_scenes,
     load_soundboard_settings,
 )
-from commands._music_view import MusicView, _fmt_duration, _pct_to_vol, _vol_to_pct
+from commands._music_view import MusicView, SceneControllerView, _fmt_duration, _pct_to_vol, _vol_to_pct
 
 _YT_ID_RE = re.compile(r"(?:[?&]v=|youtu\.be/|/(?:shorts|embed|live)/)([A-Za-z0-9_-]{6,})")
 
@@ -2799,6 +2799,162 @@ class Music(commands.Cog):
             track=track,
         )
         await interaction.followup.send("🩺 Diagnostic report sent (check your DMs).", ephemeral=True)
+
+    # ── Ambience Scene Mini-Controller (Discord) ─────────────────────────────
+
+    def get_active_ambience_summary(self, guild_id: str) -> str:
+        """Return a human-readable summary of active soundboard loops in `guild_id`."""
+        mixer = guild_mixers.get(str(guild_id))
+        if not mixer:
+            return ""
+        items = []
+        for t in getattr(mixer, "tracks", []):
+            if not t.finished and (t.metadata or {}).get("type") == "soundboard":
+                bname = os.path.basename(t.file_path)
+                vol_pct = round((t.metadata or {}).get("volume_modifier", 1.0) * 100)
+                loop_tag = " · LOOP" if t.loop else ""
+                items.append(f"`{bname}` ({vol_pct}%{loop_tag})")
+        return ", ".join(items)
+
+    def fade_out_guild_ambience(self, guild_id: str) -> int:
+        """Smoothly fade out all active soundboard tracks in `guild_id`. Returns count."""
+        mixer = guild_mixers.get(str(guild_id))
+        if not mixer:
+            return 0
+        with mixer.lock:
+            sb_list = [
+                t for t in mixer.tracks
+                if not t.finished and (t.metadata or {}).get("type") == "soundboard"
+            ]
+        for t in sb_list:
+            t.start_fade_out(0.8)
+        return len(sb_list)
+
+    async def adjust_ambience_volume(self, guild_id: str, delta_pct: int) -> int:
+        """Adjust soundboard master volume for `guild_id` by `delta_pct` (-100..+100)."""
+        guild_id = str(guild_id)
+        vols = server_volumes.setdefault(guild_id, {"music": 1.0, "soundboard": 0.5})
+        cur_pct = round(float(vols.get("soundboard", 0.5)) * 100)
+        new_pct = max(0, min(100, cur_pct + int(delta_pct)))
+        new_master = new_pct / 100.0
+        vols["soundboard"] = new_master
+        await save_server_volumes(server_volumes)
+
+        mixer = guild_mixers.get(guild_id)
+        if mixer:
+            for t in getattr(mixer, "tracks", []):
+                if not t.finished and (t.metadata or {}).get("type") == "soundboard":
+                    mod = float((t.metadata or {}).get("volume_modifier", 1.0))
+                    t.volume = new_master * mod
+        return new_pct
+
+    async def _get_or_seed_scenes(self) -> list[dict]:
+        """Load saved Ambience Scenes, seeding starter Lovecraftian presets if empty."""
+        scenes_data = await load_ambience_scenes()
+        scenes = scenes_data.get("scenes")
+        if isinstance(scenes, dict):
+            scenes = [{"id": k, **v} for k, v in scenes.items()]
+        if not scenes:
+            scenes = [
+                {
+                    "id": "arkham_rain_jazz",
+                    "name": "Deštivý Arkham (1920s Noir)",
+                    "icon": "🌧️",
+                    "music_query": "1920s dark jazz noir detective ambience instrumental",
+                    "music_url": "1920s dark jazz noir detective ambience instrumental",
+                    "music_volume": 30,
+                    "music_loop": "track",
+                    "soundboard_tracks": [],
+                    "soundboard": [],
+                },
+                {
+                    "id": "occult_ritual_crypt",
+                    "name": "Okultní Rituál v Kryptě",
+                    "icon": "🕯️",
+                    "music_query": "Call of Cthulhu dark ritual drone ambient music",
+                    "music_url": "Call of Cthulhu dark ritual drone ambient music",
+                    "music_volume": 35,
+                    "music_loop": "track",
+                    "soundboard_tracks": [],
+                    "soundboard": [],
+                },
+                {
+                    "id": "eldritch_combat",
+                    "name": "Střet s Mýtem (Boj / Útěk)",
+                    "icon": "⚔️",
+                    "music_query": "dark orchestral horror combat ost",
+                    "music_url": "dark orchestral horror combat ost",
+                    "music_volume": 55,
+                    "music_loop": "track",
+                    "soundboard_tracks": [],
+                    "soundboard": [],
+                },
+            ]
+            scenes_data["scenes"] = scenes
+            await save_ambience_scenes(scenes_data)
+        return scenes
+
+    async def open_scene_controller(self, interaction: discord.Interaction):
+        """Open the interactive Scene Mini-Controller in Discord."""
+        if not interaction.guild:
+            return await interaction.response.send_message("❌ Pouze na serveru.", ephemeral=True)
+        guild_id = str(interaction.guild.id)
+        scenes = await self._get_or_seed_scenes()
+        view = SceneControllerView(self, guild_id, scenes)
+        await interaction.response.send_message(embed=view.get_embed(), view=view, ephemeral=False)
+
+    async def _scene_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        scenes = await self._get_or_seed_scenes()
+        cur_low = (current or "").lower()
+        choices = []
+        for sc in scenes:
+            sc_id = str(sc.get("id") or sc.get("scene_id") or sc.get("name"))
+            label = f"{sc.get('icon', '🕯️')} {sc.get('name', sc_id)}"
+            if not cur_low or cur_low in label.lower() or cur_low in sc_id.lower():
+                choices.append(app_commands.Choice(name=label[:100], value=sc_id[:100]))
+        return choices[:25]
+
+    @app_commands.command(
+        name="scene",
+        description="🕯️ Otevře mini-ovladač scénických presetů nebo rovnou spustí vybranou scénu.",
+    )
+    @app_commands.describe(preset="Volitelně: rovnou vyberte scénický preset k okamžitému spuštění")
+    @app_commands.autocomplete(preset=_scene_autocomplete)
+    async def scene_cmd(self, interaction: discord.Interaction, preset: str | None = None):
+        if not interaction.guild:
+            return await interaction.response.send_message("❌ Pouze na serveru.", ephemeral=True)
+        guild_id = str(interaction.guild.id)
+        scenes = await self._get_or_seed_scenes()
+
+        if not preset:
+            view = SceneControllerView(self, guild_id, scenes)
+            return await interaction.response.send_message(embed=view.get_embed(), view=view)
+
+        chosen = next(
+            (
+                s for s in scenes
+                if str(s.get("id") or s.get("scene_id") or "").lower() == preset.lower()
+                or str(s.get("name") or "").lower() == preset.lower()
+            ),
+            None,
+        )
+        if not chosen:
+            return await interaction.response.send_message(
+                f"❌ Scénický preset `{preset}` nebyl nalezen.", ephemeral=True
+            )
+
+        user_vc = getattr(getattr(interaction.user, "voice", None), "channel", None)
+        ch_id = str(user_vc.id) if user_vc else None
+        await interaction.response.defer()
+        res = await self.activate_ambience_scene(guild_id, chosen, channel_id=ch_id)
+        if res.get("status") == "error":
+            return await interaction.followup.send(f"❌ {res.get('message')}", ephemeral=True)
+
+        view = SceneControllerView(self, guild_id, scenes)
+        note = f"✅ Aktivována scéna: {chosen.get('name', preset)}"
+        await interaction.followup.send(embed=view.get_embed(status_note=note), view=view)
 
 
 async def setup(bot):

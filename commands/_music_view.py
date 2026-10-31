@@ -1,6 +1,6 @@
 import math
 import discord
-from discord.ui import View, Button
+from discord.ui import View, Button, Select
 
 
 def _pct_to_vol(pct: int) -> float:
@@ -87,6 +87,11 @@ class MusicView(View):
     async def btn_stop(self, interaction: discord.Interaction, button: Button):
         await self.cog.stop_music(interaction)
 
+    @discord.ui.button(label="Scenes", emoji="🕯️", custom_id="music_scenes",
+                       style=discord.ButtonStyle.secondary, row=0)
+    async def btn_scenes(self, interaction: discord.Interaction, button: Button):
+        await self.cog.open_scene_controller(interaction)
+
     # ── Row 1 ────────────────────────────────────────────────────────────────
 
     @discord.ui.button(label="Loop: OFF", emoji="🔁", custom_id="music_loop",
@@ -164,10 +169,20 @@ class MusicView(View):
                 vol_line += " · 💾 **Cached**"
             lines.append(vol_line)
 
+            if hasattr(self.cog, "get_active_ambience_summary"):
+                amb = self.cog.get_active_ambience_summary(self.guild_id)
+                if amb:
+                    lines.append(f"🕯️ **Ambience:** {amb}")
+
             embed.description = "\n".join(l for l in lines if l)
         else:
             embed.title = "🔇 No Music Playing"
-            embed.description = "Use `/play` to add songs to the queue."
+            desc = "Use `/play` to add songs or `/scene` to launch an Ambience Scene."
+            if hasattr(self.cog, "get_active_ambience_summary"):
+                amb = self.cog.get_active_ambience_summary(self.guild_id)
+                if amb:
+                    desc += f"\n🕯️ **Active Ambience:** {amb}"
+            embed.description = desc
 
         if queue:
             q_lines = []
@@ -196,6 +211,152 @@ class MusicView(View):
             embed.add_field(name=field_title, value="\n".join(q_lines), inline=False)
         else:
             if is_active:
-                embed.set_footer(text="Queue empty · /play to add more")
+                embed.set_footer(text="Queue empty · /play or 🕯️ Scenes")
 
         return embed
+
+
+class _ScenePresetSelect(Select):
+    def __init__(self, parent_view: "SceneControllerView", scenes: list[dict]):
+        self.parent_view = parent_view
+        options = []
+        for sc in scenes[:25]:
+            sc_id = str(sc.get("id") or sc.get("scene_id") or sc.get("name"))
+            icon = (sc.get("icon") or "🕯️").strip()
+            name = (sc.get("name") or sc_id)[:90]
+            sb_list = sc.get("soundboard_tracks") or sc.get("soundboard") or []
+            mq = (sc.get("music_query") or sc.get("music_url") or "No music")[:55]
+            desc = f"♪ {mq} | ◐ {len(sb_list)} sound layer(s)"
+            options.append(
+                discord.SelectOption(
+                    label=name,
+                    value=sc_id,
+                    emoji=icon if len(icon) <= 2 else "🕯️",
+                    description=desc[:100],
+                )
+            )
+        super().__init__(
+            placeholder="🕯️ Vyberte scénický preset k okamžitému spuštění...",
+            min_values=1,
+            max_values=1,
+            options=options,
+            row=0,
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        await self.parent_view.on_select_scene(interaction, self.values[0])
+
+
+class SceneControllerView(View):
+    """Interactive Discord mini-controller for Ambience Scenes & Soundboard layers."""
+
+    def __init__(self, cog, guild_id: str, scenes: list[dict]):
+        super().__init__(timeout=600)
+        self.cog = cog
+        self.guild_id = str(guild_id)
+        self.scenes = scenes or []
+        if self.scenes:
+            self.add_item(_ScenePresetSelect(self, self.scenes))
+
+    def get_embed(self, status_note: str | None = None) -> discord.Embed:
+        embed = discord.Embed(
+            title="🕯️ Mini-Ovladač Scény (Ambience Controller)",
+            description=(
+                "Přepínejte kompletní zvukové scény (YouTube hudba + nekonečné Soundboard smyčky "
+                "s plynulým prolínáním) přímo z Discordu."
+            ),
+            color=discord.Color.dark_teal(),
+        )
+        track = self.cog.current_track.get(self.guild_id)
+        if track and not track.finished:
+            t_title = track.metadata.get("title", "Unknown")
+            vol_pct = _vol_to_pct(track.volume)
+            embed.add_field(
+                name="▶️ Aktuální Hudba",
+                value=f"**{t_title}** ({vol_pct}% · Loop: `{self.cog.loop_mode.get(self.guild_id, 'off')}`)",
+                inline=False,
+            )
+        else:
+            embed.add_field(name="▶️ Aktuální Hudba", value="*Nic nehraje*", inline=False)
+
+        amb = (
+            self.cog.get_active_ambience_summary(self.guild_id)
+            if hasattr(self.cog, "get_active_ambience_summary")
+            else ""
+        )
+        embed.add_field(
+            name="◐ Aktivní Soundboard Smyčky",
+            value=amb or "*Žádná aktivní ambientní smyčka*",
+            inline=False,
+        )
+
+        if self.scenes:
+            sc_lines = []
+            for sc in self.scenes[:8]:
+                icon = sc.get("icon") or "🕯️"
+                name = sc.get("name") or sc.get("id")
+                sb_count = len(sc.get("soundboard_tracks") or sc.get("soundboard") or [])
+                m_vol = sc.get("music_volume", 35)
+                sc_lines.append(f"{icon} **{name}** — ♪ {m_vol}% · ◐ {sb_count} vrstvy")
+            embed.add_field(
+                name=f"📜 Dostupné Scény ({len(self.scenes)})",
+                value="\n".join(sc_lines),
+                inline=False,
+            )
+
+        if status_note:
+            embed.set_footer(text=status_note)
+        else:
+            embed.set_footer(text="Tip: Další scény a vrstvy můžete upravovat na Web Dashboardu (/admin/music)")
+        return embed
+
+    async def on_select_scene(self, interaction: discord.Interaction, scene_id: str):
+        scene = next(
+            (s for s in self.scenes if str(s.get("id") or s.get("scene_id") or s.get("name")) == scene_id),
+            None,
+        )
+        if not scene:
+            return await interaction.response.send_message("❌ Scéna nebyla nalezena.", ephemeral=True)
+
+        user_vc = getattr(getattr(interaction.user, "voice", None), "channel", None)
+        ch_id = str(user_vc.id) if user_vc else None
+        await interaction.response.defer()
+        res = await self.cog.activate_ambience_scene(self.guild_id, scene, channel_id=ch_id)
+        if res.get("status") == "error":
+            await interaction.followup.send(f"❌ {res.get('message')}", ephemeral=True)
+            return
+        note = f"✅ Aktivována scéna: {scene.get('name', scene_id)}"
+        await interaction.edit_original_response(embed=self.get_embed(status_note=note), view=self)
+
+    @discord.ui.button(label="Utlumit Ambience", emoji="🔇", style=discord.ButtonStyle.secondary, row=1)
+    async def btn_fade_ambience(self, interaction: discord.Interaction, button: Button):
+        count = self.cog.fade_out_guild_ambience(self.guild_id)
+        note = f"🔇 Utlumeno {count} ambientních smyček." if count else "ℹ️ Žádné ambientní smyčky neběžely."
+        await interaction.response.edit_message(embed=self.get_embed(status_note=note), view=self)
+
+    @discord.ui.button(label="Ambience -15%", emoji="🔉", style=discord.ButtonStyle.secondary, row=1)
+    async def btn_amb_down(self, interaction: discord.Interaction, button: Button):
+        new_pct = await self.cog.adjust_ambience_volume(self.guild_id, -15)
+        await interaction.response.edit_message(
+            embed=self.get_embed(status_note=f"🔉 Hlasitost Ambience: {new_pct}%"),
+            view=self,
+        )
+
+    @discord.ui.button(label="Ambience +15%", emoji="🔊", style=discord.ButtonStyle.secondary, row=1)
+    async def btn_amb_up(self, interaction: discord.Interaction, button: Button):
+        new_pct = await self.cog.adjust_ambience_volume(self.guild_id, +15)
+        await interaction.response.edit_message(
+            embed=self.get_embed(status_note=f"🔊 Hlasitost Ambience: {new_pct}%"),
+            view=self,
+        )
+
+    @discord.ui.button(label="Hudba Pause/Play", emoji="⏯️", style=discord.ButtonStyle.primary, row=1)
+    async def btn_toggle_music(self, interaction: discord.Interaction, button: Button):
+        track = self.cog.current_track.get(self.guild_id)
+        if not track or track.finished:
+            return await interaction.response.send_message("ℹ️ Momentálně nehraje žádná YouTube skladba.", ephemeral=True)
+        track.paused = not track.paused
+        state_txt = "⏸️ Hudba pozastavena" if track.paused else "▶️ Hudba pokračuje"
+        await self.cog._update_dashboard_for_guild(self.guild_id)
+        await interaction.response.edit_message(embed=self.get_embed(status_note=state_txt), view=self)
+
