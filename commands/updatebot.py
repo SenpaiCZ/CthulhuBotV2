@@ -24,6 +24,18 @@ class UpdateBotView(discord.ui.View):
             await interaction.followup.send(f"❌ Error: `{updater_script}` not found in root directory.", ephemeral=True)
             return
 
+        # Pre-apply update while bot.py is still alive so systemd KillMode=control-group
+        # cannot SIGKILL the updater mid-download when bot.py exits.
+        if os.name != 'nt':
+            prep_cmd = [python_exe, updater_script, "--no-restart"]
+            if update_infodata:
+                prep_cmd.append("--update-infodata")
+            try:
+                proc = await asyncio.create_subprocess_exec(*prep_cmd)
+                await asyncio.wait_for(proc.wait(), timeout=180)
+            except Exception as e:
+                print(f"[UpdateBot] Pre-apply warning: {e}")
+
         cmd = [python_exe, updater_script, pid]
         if update_infodata:
             cmd.append("--update-infodata")
