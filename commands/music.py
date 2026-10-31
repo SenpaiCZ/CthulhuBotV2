@@ -76,6 +76,29 @@ def _get_bot_pids() -> list[int]:
     return pids or [os.getpid()]
 
 
+def _get_process_table_diagnostics() -> str:
+    """Return detailed list of running python/bot processes for duplicate-instance debugging."""
+    lines = []
+    try:
+        import psutil
+        for proc in psutil.process_iter(["pid", "ppid", "cmdline", "cwd", "create_time", "status"]):
+            try:
+                if proc.info.get("status") == psutil.STATUS_ZOMBIE:
+                    continue
+                cmdline = proc.info.get("cmdline") or []
+                cmd_str = " ".join(cmdline)
+                if "bot.py" in cmd_str or "updater.py" in cmd_str or "restarter.py" in cmd_str:
+                    age_s = int(time.time() - (proc.info.get("create_time") or time.time()))
+                    cwd = proc.info.get("cwd") or "?"
+                    marker = " (THIS)" if proc.pid == os.getpid() else ""
+                    lines.append(f"PID {proc.pid}{marker} (PPID {proc.info.get('ppid')}, up {age_s}s, cwd={cwd}): {cmd_str}")
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    except Exception as e:
+        lines.append(f"psutil error: {e}")
+    return "\n".join(lines) if lines else f"PID {os.getpid()} (only)"
+
+
 def _get_voice_env_diagnostics() -> str:
     """Return a compact one-line summary of voice-critical library versions and bot PIDs."""
     try:
@@ -551,6 +574,14 @@ class Music(commands.Cog):
             inline=False,
         )
 
+        proc_diag = _get_process_table_diagnostics()
+        if proc_diag:
+            embed.add_field(
+                name="Running Bot Processes",
+                value=f"```\n{proc_diag[:900]}\n```",
+                inline=False,
+            )
+
         if track is not None:
             meta = getattr(track, "metadata", None) or {}
             title = meta.get("title", "Unknown")
@@ -659,13 +690,21 @@ class Music(commands.Cog):
                 pass
 
         try:
-            return await channel.connect(timeout=15, reconnect=True)
+            return await asyncio.wait_for(
+                channel.connect(timeout=12, reconnect=True),
+                timeout=14,
+            )
         except asyncio.TimeoutError:
             msg = "❌ Timed out connecting to voice. Try again."
             if interaction.response.is_done():
                 await interaction.followup.send(msg, ephemeral=True)
             else:
                 await interaction.response.send_message(msg, ephemeral=True)
+            if interaction.guild:
+                await self._send_error_log(
+                    str(interaction.guild.id),
+                    f"Timed out during voice handshake connecting to **#{channel.name}**.",
+                )
             return None
         except Exception as e:
             msg = f"❌ Could not connect to voice: {e}"
@@ -673,6 +712,11 @@ class Music(commands.Cog):
                 await interaction.followup.send(msg, ephemeral=True)
             else:
                 await interaction.response.send_message(msg, ephemeral=True)
+            if interaction.guild:
+                await self._send_error_log(
+                    str(interaction.guild.id),
+                    f"Exception connecting to voice channel **#{channel.name}**: `{type(e).__name__}: {e}`",
+                )
             return None
 
     async def _finalize_play(self, interaction: discord.Interaction, guild_id: str):
@@ -1159,7 +1203,17 @@ class Music(commands.Cog):
                 with yt_dlp.YoutubeDL(opts) as ydl:
                     return ydl.extract_info(query, download=False)
 
-            info = await self.bot.loop.run_in_executor(None, _extract_single)
+            try:
+                info = await asyncio.wait_for(
+                    self.bot.loop.run_in_executor(None, _extract_single),
+                    timeout=35.0,
+                )
+            except asyncio.TimeoutError:
+                await self._send_error_log(
+                    guild_id,
+                    f"yt-dlp extraction timed out after 35s for query: `{query[:150]}`",
+                )
+                raise MusicLookupError("❌ Timed out resolving YouTube track (took >35s). Try again.")
 
             if not info:
                 raise MusicLookupError("❌ No results found.")
@@ -1730,7 +1784,17 @@ class Music(commands.Cog):
                             res['entries'] = list(res['entries'])
                         return res
 
-                info = await self.bot.loop.run_in_executor(None, _extract_playlist)
+                try:
+                    info = await asyncio.wait_for(
+                        self.bot.loop.run_in_executor(None, _extract_playlist),
+                        timeout=35.0,
+                    )
+                except asyncio.TimeoutError:
+                    await self._send_error_log(
+                        guild_id,
+                        f"yt-dlp playlist extraction timed out after 35s for URL: `{extract_url[:150]}`",
+                    )
+                    return await interaction.followup.send("❌ Timed out loading playlist (took >35s). Try again.")
 
                 if not info:
                     return await interaction.followup.send("❌ Could not load that playlist.")
@@ -1784,8 +1848,16 @@ class Music(commands.Cog):
             return await interaction.followup.send(str(e))
         except yt_dlp.utils.DownloadError as e:
             content, embed, view, ephemeral = _format_download_error(e)
+            await self._send_error_log(
+                guild_id,
+                f"yt-dlp DownloadError during `/play`: `{str(e)[:300]}`",
+            )
             return await interaction.followup.send(content=content, embed=embed, view=view, ephemeral=ephemeral)
         except Exception as e:
+            await self._send_error_log(
+                guild_id,
+                f"Unexpected exception during `/play`: `{type(e).__name__}: {str(e)[:300]}`",
+            )
             return await interaction.followup.send(f"❌ Unexpected error: {type(e).__name__}: {str(e)[:200]}")
 
     @play.autocomplete('query')
@@ -2422,6 +2494,22 @@ class Music(commands.Cog):
             f"🧹 Cleared **{removed}** cached track(s), freeing **{freed_mb:.1f} MB**{note}.",
             ephemeral=True,
         )
+
+    @app_commands.command(name="musicdiag", description="🩺 Send a live music & voice diagnostic report to your DM.")
+    async def musicdiag(self, interaction: discord.Interaction):
+        guild_id = str(interaction.guild.id) if interaction.guild else "0"
+        if getattr(interaction, "user", None):
+            self.last_requester[guild_id] = interaction.user
+        if getattr(interaction, "channel", None):
+            self.last_text_channel[guild_id] = interaction.channel
+        track = self.current_track.get(guild_id) or self.last_track.get(guild_id)
+        await interaction.response.defer(ephemeral=True)
+        await self._send_error_log(
+            guild_id,
+            "Manual diagnostic snapshot requested via `/musicdiag`.",
+            track=track,
+        )
+        await interaction.followup.send("🩺 Diagnostic report sent (check your DMs).", ephemeral=True)
 
 
 async def setup(bot):

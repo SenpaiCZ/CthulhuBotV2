@@ -121,7 +121,33 @@ async def load():
         print(f"Failed to load extension {filename}: {e}")
         bot.failed_extensions.append((filename, str(e)))
 
+def _terminate_duplicate_bots():
+    """Ensure no older bot.py instances remain running when a new bot.py starts up."""
+    my_pid = os.getpid()
+    try:
+        import psutil
+        for proc in psutil.process_iter(["pid", "cmdline", "status"]):
+            try:
+                if proc.pid == my_pid:
+                    continue
+                if proc.info.get("status") == psutil.STATUS_ZOMBIE:
+                    continue
+                cmdline = proc.info.get("cmdline") or []
+                if any(os.path.basename(arg) == "bot.py" for arg in cmdline):
+                    print(f"[Startup] Terminating duplicate bot.py instance (PID {proc.pid})...")
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=5)
+                    except Exception:
+                        proc.kill()
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+    except Exception as e:
+        print(f"[Startup] Process check warning: {e}")
+
+
 async def main():
+  _terminate_duplicate_bots()
   async with bot:
     await load()
 

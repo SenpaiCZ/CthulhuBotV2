@@ -3,7 +3,12 @@ from quart import Blueprint, request, jsonify, redirect, url_for, render_templat
 from dashboard.app import app, is_admin
 from dashboard.state import server_volumes
 from loadnsave import save_server_volumes, save_music_blacklist
-from commands.music import MusicLookupError
+from commands.music import (
+    MusicLookupError,
+    _get_voice_env_diagnostics,
+    _get_process_table_diagnostics,
+    _voice_log_buffer,
+)
 
 music_bp = Blueprint('music', __name__)
 
@@ -65,7 +70,13 @@ async def music_data():
 
     resp = {
         "guilds": data,
-        "blacklist": music_cog.blacklist
+        "blacklist": music_cog.blacklist,
+        "diagnostics": {
+            "env": _get_voice_env_diagnostics(),
+            "processes": _get_process_table_diagnostics(),
+            "voice_logs": _voice_log_buffer.get_recent(max_chars=1500),
+            "last_bg_error": getattr(music_cog, "_last_bg_error", {}),
+        },
     }
     if hasattr(music_cog, 'get_cache_status'):
         resp["cache"] = await music_cog.get_cache_status()

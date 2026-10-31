@@ -51,12 +51,11 @@ def wait_for_pid(pid, timeout=20):
 
 
 def find_running_bot_processes():
-    """Return list of psutil.Process objects for running bot.py instances in current cwd."""
+    """Return list of psutil.Process objects for running bot.py instances on the host."""
     my_pid = os.getpid()
-    cwd = os.path.abspath(".")
     found = []
     try:
-        for proc in psutil.process_iter(["pid", "cmdline", "cwd", "status"]):
+        for proc in psutil.process_iter(["pid", "cmdline", "status"]):
             try:
                 if proc.pid == my_pid:
                     continue
@@ -64,9 +63,6 @@ def find_running_bot_processes():
                     continue
                 cmdline = proc.info.get("cmdline") or []
                 if not any(os.path.basename(arg) == "bot.py" for arg in cmdline):
-                    continue
-                proc_cwd = proc.info.get("cwd")
-                if proc_cwd and os.path.abspath(proc_cwd) != cwd:
                     continue
                 found.append(proc)
             except (psutil.NoSuchProcess, psutil.AccessDenied):

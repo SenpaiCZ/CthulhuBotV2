@@ -1770,4 +1770,21 @@ class TestPlaylistAndPrefetchOptimizations:
 
         channel.send.assert_not_called()
 
+    @pytest.mark.asyncio
+    async def test_ensure_voice_timeout_sends_error_log_to_dm(self):
+        cog = make_music_cog()
+        interaction = make_interaction()
+        interaction.guild.voice_client = None
+        interaction.user.send = AsyncMock()
+        interaction.user.voice.channel.name = "General"
+        interaction.user.voice.channel.connect = AsyncMock(side_effect=asyncio.TimeoutError())
+
+        vc = await cog._ensure_voice(interaction)
+
+        assert vc is None
+        interaction.user.send.assert_awaited_once()
+        sent_embed = interaction.user.send.call_args.kwargs["embed"]
+        assert "Timed out during voice handshake" in sent_embed.description
+
+
 

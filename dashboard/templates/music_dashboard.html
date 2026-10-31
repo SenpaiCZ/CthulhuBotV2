@@ -13,6 +13,8 @@
 
 <div id="cache-container" class="mb-4"></div>
 
+<div id="diag-container" class="mb-4"></div>
+
 <div id="guilds-container">
     <div id="loading-spinner" class="text-center py-5">
         <span class="pulse-dot" style="display:inline-block; width:12px; height:12px; background:var(--sigil); border-radius:50%"></span>
@@ -309,6 +311,35 @@ async function clearAudioCache(keepFavorites) {
     await updateMusicData();
 }
 
+function renderDiagnosticsPanel(diag) {
+    const diagEl = document.getElementById('diag-container');
+    if (!diag || !diagEl) return;
+    const env = escHtml(diag.env || '');
+    const procs = escHtml(diag.processes || '');
+    const vlogs = escHtml(diag.voice_logs || 'No voice logs recorded yet.');
+    const hasDup = env.includes('DUPLICATE');
+    const borderStyle = hasDup ? 'border-color:#dc3545' : '';
+
+    diagEl.innerHTML = `
+        <div class="music-card" style="margin-bottom:1.5rem; ${borderStyle}">
+            <div class="music-card-header" style="justify-content:space-between; flex-wrap:wrap">
+                <div style="display:flex; align-items:center; gap:12px">
+                    <span class="serif" style="color:var(--sigil); font-size:20px">🩺</span>
+                    <span class="guild-name" style="font-size:1.1rem">Voice &amp; Process Diagnostics</span>
+                    ${hasDup ? `<span class="badge bg-danger" style="font-family:var(--font-mono); font-size:9px; border-radius:0">⚠️ DUPLICATE BOT PROCESS</span>` : ''}
+                </div>
+            </div>
+            <div class="music-body" style="padding:1rem 1.5rem; font-family:var(--font-mono); font-size:11px; color:var(--bone-dim)">
+                <div style="margin-bottom:8px"><strong>Environment:</strong> ${env}</div>
+                <div style="margin-bottom:8px"><strong>Processes:</strong><pre style="margin:4px 0 0; padding:8px; background:var(--void-2); border:1px solid var(--hair); color:var(--bone); white-space:pre-wrap">${procs}</pre></div>
+                <details>
+                    <summary style="cursor:pointer; color:var(--sigil)">Discord Voice / Player Logs</summary>
+                    <pre style="margin:6px 0 0; padding:8px; background:var(--void-2); border:1px solid var(--hair); color:var(--bone); max-height:220px; overflow-y:auto; white-space:pre-wrap">${vlogs}</pre>
+                </details>
+            </div>
+        </div>`;
+}
+
 async function updateMusicData() {
     try {
         const resp = await fetch('/api/music/data', { cache: 'no-store' });
@@ -316,6 +347,9 @@ async function updateMusicData() {
         const data = await resp.json();
         if (data.cache) {
             renderCachePanel(data.cache);
+        }
+        if (data.diagnostics) {
+            renderDiagnosticsPanel(data.diagnostics);
         }
         const container = document.getElementById('guilds-container');
 
