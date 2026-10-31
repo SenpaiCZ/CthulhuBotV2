@@ -118,8 +118,15 @@ async def music_data():
         for folder, flist in sb_tree.items():
             if not isinstance(flist, list):
                 continue
-            for fname in flist:
-                rel = fname if folder == "Root" else f"{folder}/{fname}"
+            for entry in flist:
+                if isinstance(entry, dict):
+                    fname = str(entry.get("name") or "")
+                    rel = str(entry.get("path") or (fname if folder == "Root" else f"{folder}/{fname}"))
+                else:
+                    fname = str(entry)
+                    rel = fname if folder == "Root" else f"{folder}/{fname}"
+                if not fname:
+                    continue
                 flat_sb_files.append({
                     "file": rel,
                     "name": os.path.splitext(fname)[0],
