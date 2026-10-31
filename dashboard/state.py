@@ -1,3 +1,4 @@
+import collections
 import os
 import time
 
@@ -10,6 +11,7 @@ MUSIC_CACHE_FOLDER = os.path.join("data", "music_cache")
 server_volumes = {} # guild_id (str) -> {'music': 1.0, 'soundboard': 0.5}
 guild_mixers = {} # guild_id (str) -> MixingAudioSource
 _failed_login_attempts = {} # ip (str) -> [timestamp, ...]
+console_log_buffer = collections.deque(maxlen=250) # list of "[HH:MM:SS] line" strings for Dashboard
 
 BASIC_FONTS = [
     "Arial", "Verdana", "Helvetica", "Tahoma", "Trebuchet MS", "Times New Roman",

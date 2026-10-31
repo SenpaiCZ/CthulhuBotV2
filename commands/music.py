@@ -9,12 +9,14 @@ import logging
 import os
 import re
 import shutil
+import sys
 import time
 import yt_dlp
+import importlib
 import random
 from functools import partial
 from rapidfuzz import fuzz, process
-from dashboard.state import guild_mixers, server_volumes, MUSIC_CACHE_FOLDER
+from dashboard.state import guild_mixers, server_volumes, MUSIC_CACHE_FOLDER, SOUNDBOARD_FOLDER
 from dashboard.audio_mixer import MixingAudioSource, Track
 
 
@@ -128,6 +130,8 @@ from loadnsave import (
     load_music_favorites, save_music_favorites,
     load_music_cache_settings, save_music_cache_settings,
     load_music_cache_index, save_music_cache_index,
+    load_ambience_scenes, save_ambience_scenes,
+    load_soundboard_settings,
 )
 from commands._music_view import MusicView, _fmt_duration, _pct_to_vol, _vol_to_pct
 
@@ -455,15 +459,19 @@ class Music(commands.Cog):
         self.last_requester: dict[str, discord.abc.User] = {}
         self.last_track: dict[str, object] = {}
         self._last_bg_error: dict[str, str] = {}
+        self.last_ytdlp_check: str | None = None
+        self.last_ytdlp_status: str = "pending"
 
         self.bot.music_cog = self
 
         self._idle_disconnect.start()
         self._refresh_dashboards.start()
+        self._auto_update_ytdlp.start()
 
     def cog_unload(self):
         self._idle_disconnect.cancel()
         self._refresh_dashboards.cancel()
+        self._auto_update_ytdlp.cancel()
         for t in list(self._cache_tasks):
             t.cancel()
 
@@ -528,6 +536,50 @@ class Music(commands.Cog):
     @_refresh_dashboards.before_loop
     async def _before_refresh(self):
         await self.bot.wait_until_ready()
+
+    @tasks.loop(hours=24)
+    async def _auto_update_ytdlp(self):
+        """Periodically check and upgrade yt-dlp in the background so YouTube extractor changes
+        never break playback."""
+        await self.upgrade_ytdlp_now()
+
+    @_auto_update_ytdlp.before_loop
+    async def _before_auto_update_ytdlp(self):
+        await self.bot.wait_until_ready()
+        await asyncio.sleep(30)
+
+    async def upgrade_ytdlp_now(self) -> dict:
+        """Run `pip install --upgrade yt-dlp` asynchronously and reload yt_dlp.version."""
+        old_ver = getattr(getattr(yt_dlp, "version", None), "__version__", "unknown")
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                sys.executable, "-m", "pip", "install", "--upgrade", "--quiet", "yt-dlp",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=120)
+            if proc.returncode == 0:
+                try:
+                    importlib.reload(yt_dlp.version)
+                except Exception:
+                    pass
+                new_ver = getattr(getattr(yt_dlp, "version", None), "__version__", old_ver)
+                self.last_ytdlp_check = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                if new_ver != old_ver:
+                    self.last_ytdlp_status = f"updated ({old_ver} -> {new_ver})"
+                    print(f"[Music] Auto-updated yt-dlp: {old_ver} -> {new_ver}")
+                else:
+                    self.last_ytdlp_status = f"up-to-date ({new_ver})"
+                return {"status": "success", "old_version": old_ver, "new_version": new_ver, "checked_at": self.last_ytdlp_check}
+            else:
+                err_msg = (stderr.decode("utf-8", errors="replace") or stdout.decode("utf-8", errors="replace")).strip()[:200]
+                self.last_ytdlp_check = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                self.last_ytdlp_status = f"error: {err_msg}"
+                return {"status": "error", "message": err_msg, "version": old_ver}
+        except Exception as e:
+            self.last_ytdlp_check = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.last_ytdlp_status = f"error: {e}"
+            return {"status": "error", "message": str(e), "version": old_ver}
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
@@ -1520,6 +1572,243 @@ class Music(commands.Cog):
             self.dashboard_messages.pop(guild_id, None)
         except Exception:
             pass
+
+    async def ensure_voice_for_channel(self, guild_id: str, channel_id: str | None = None) -> tuple[discord.VoiceClient | None, str | None]:
+        """Connect or move the bot to `channel_id` (or reuse active voice connection / auto-pick
+        a populated voice channel in `guild_id`). Used by Web Dashboard playback and Ambience Scenes."""
+        guild = self.bot.get_guild(int(guild_id)) if str(guild_id).isdigit() else None
+        if not guild:
+            return None, "Guild not found"
+
+        self._intentional_disconnects.discard(str(guild_id))
+        vc = guild.voice_client
+        target_channel = None
+
+        if channel_id and str(channel_id).isdigit():
+            target_channel = guild.get_channel(int(channel_id))
+            if not target_channel:
+                return None, "Voice channel not found"
+        elif vc and vc.is_connected() and vc.channel:
+            target_channel = vc.channel
+        else:
+            # Auto-select first voice channel with human members, or first voice channel
+            for ch in guild.voice_channels:
+                if any(not m.bot for m in ch.members):
+                    target_channel = ch
+                    break
+            if not target_channel and guild.voice_channels:
+                target_channel = guild.voice_channels[0]
+
+        if not target_channel:
+            return None, "No voice channel available in guild"
+
+        try:
+            if vc and vc.is_connected():
+                if vc.channel.id != target_channel.id:
+                    await vc.move_to(target_channel)
+                return vc, None
+
+            if vc and not vc.is_connected():
+                try:
+                    await vc.disconnect(force=True)
+                except Exception:
+                    pass
+
+            vc = await asyncio.wait_for(
+                target_channel.connect(timeout=12, reconnect=True),
+                timeout=14,
+            )
+            return vc, None
+        except asyncio.TimeoutError:
+            return None, f"Timed out connecting to voice channel #{target_channel.name}"
+        except Exception as e:
+            return None, f"Could not connect to voice: {e}"
+
+    async def play_from_dashboard(
+        self,
+        guild_id: str,
+        query: str,
+        channel_id: str | None = None,
+        play_next: bool = False,
+        replace_current: bool = False,
+    ) -> dict:
+        """Queue and/or immediately start a YouTube URL, playlist, or search query from the Web Dashboard."""
+        guild_id = str(guild_id)
+        query = (query or "").strip()
+        if not query:
+            return {"status": "error", "message": "Missing query or URL"}
+
+        vc, err = await self.ensure_voice_for_channel(guild_id, channel_id)
+        if err or not vc:
+            return {"status": "error", "message": err or "Could not join voice channel"}
+
+        self.queue.setdefault(guild_id, [])
+        if not self.blacklist:
+            self.blacklist = await load_music_blacklist() or []
+
+        requester = SimpleNamespace_requester = type("DashboardRequester", (), {"display_name": "Web Dashboard"})()
+
+        try:
+            if _is_playlist_url(query) and not play_next and not replace_current:
+                opts, extract_url = _prepare_playlist_extraction(query)
+                def _extract_pl():
+                    with yt_dlp.YoutubeDL(opts) as ydl:
+                        res = ydl.extract_info(extract_url, download=False)
+                        if res and 'entries' in res and res['entries'] is not None:
+                            res['entries'] = list(res['entries'])
+                        return res
+
+                info = await asyncio.wait_for(
+                    self.bot.loop.run_in_executor(None, _extract_pl),
+                    timeout=35.0,
+                )
+                entries = [e for e in ((info or {}).get('entries') or []) if e and e.get('url')]
+                if not entries:
+                    return {"status": "error", "message": "No playable tracks found in playlist"}
+                playlist_title = (info or {}).get('title', 'Playlist')
+                await self._queue_playlist_entries(guild_id, entries, playlist_title, requester)
+                current = self.current_track.get(guild_id)
+                if (not current or current.finished) and self.queue.get(guild_id):
+                    next_song = self.queue[guild_id].pop(0)
+                    await self._play_song(guild_id, next_song)
+                else:
+                    await self._update_dashboard_for_guild(guild_id)
+                return {"status": "success", "title": playlist_title, "queued": len(entries)}
+
+            embed, already_playing = await self._queue_single_track(guild_id, query, requester)
+            added_song = self.queue[guild_id][-1] if self.queue.get(guild_id) else {}
+
+            if (play_next or replace_current) and len(self.queue.get(guild_id, [])) > 1:
+                # Move the newly appended track to the front of the queue
+                song = self.queue[guild_id].pop()
+                self.queue[guild_id].insert(0, song)
+
+            current = self.current_track.get(guild_id)
+            if replace_current and current and not current.finished:
+                self._fade_or_finish_track(current)
+                await self._process_queue(guild_id)
+            elif (not current or current.finished) and self.queue.get(guild_id):
+                next_song = self.queue[guild_id].pop(0)
+                await self._play_song(guild_id, next_song)
+            else:
+                await self._update_dashboard_for_guild(guild_id)
+
+            return {
+                "status": "success",
+                "title": added_song.get("title", "Track"),
+                "already_playing": already_playing and not replace_current,
+            }
+        except MusicLookupError as e:
+            return {"status": "error", "message": str(e)}
+        except Exception as e:
+            return {"status": "error", "message": f"{type(e).__name__}: {str(e)[:200]}"}
+
+    async def activate_ambience_scene(
+        self,
+        guild_id: str,
+        scene: dict,
+        channel_id: str | None = None,
+    ) -> dict:
+        """Activate a Scenic Preset (Ambience Scene) in `guild_id`:
+        - Connects to voice channel if needed
+        - Crossfades out any previous soundboard loops (or replaces all soundboard tracks)
+        - Starts all configured soundboard tracks in the scene
+        - Optionally starts/replaces the YouTube music track and sets music volume & loop mode."""
+        guild_id = str(guild_id)
+        vc, err = await self.ensure_voice_for_channel(guild_id, channel_id)
+        if err or not vc:
+            return {"status": "error", "message": err or "Could not join voice channel"}
+
+        mixer = guild_mixers.get(guild_id)
+        if not mixer:
+            mixer = MixingAudioSource()
+            guild_mixers[guild_id] = mixer
+
+        # Ensure mixer is playing on voice client
+        if not vc.is_playing() or not (
+            isinstance(vc.source, discord.PCMVolumeTransformer)
+            and vc.source.original is mixer
+        ):
+            vc.stop()
+            source = discord.PCMVolumeTransformer(mixer, volume=1.0)
+            vc.play(source, after=partial(self._on_player_error, guild_id))
+
+        # 1. Smoothly fade out existing soundboard tracks in mixer
+        with mixer.lock:
+            existing_sb = [
+                t for t in mixer.tracks
+                if not t.finished and t.metadata.get("type") == "soundboard"
+            ]
+        for t in existing_sb:
+            t.start_fade_out(0.8)
+
+        # 2. Start scene's soundboard tracks
+        sb_master = server_volumes.get(guild_id, {'music': 1.0, 'soundboard': 0.5}).get('soundboard', 0.5)
+        sb_started = 0
+        raw_sb_list = scene.get("soundboard_tracks") or scene.get("soundboard") or []
+        for sb_item in raw_sb_list:
+            rel_path = (sb_item.get("file_path") or sb_item.get("file") or "").strip()
+            if not rel_path or ".." in rel_path:
+                continue
+            full_path = os.path.abspath(os.path.join(SOUNDBOARD_FOLDER, rel_path))
+            if os.path.commonpath([full_path, os.path.abspath(SOUNDBOARD_FOLDER)]) != os.path.abspath(SOUNDBOARD_FOLDER):
+                continue
+            if not os.path.isfile(full_path):
+                continue
+            vol_mod = max(0.0, min(1.0, float(sb_item.get("volume", 100)) / 100.0))
+            loop_flag = bool(sb_item.get("loop", True))
+            mixer.add_track(
+                full_path,
+                volume=sb_master * vol_mod,
+                loop=loop_flag,
+                metadata={
+                    "type": "soundboard",
+                    "volume_modifier": vol_mod,
+                    "scene_id": scene.get("id") or scene.get("scene_id"),
+                },
+                fade_in_sec=0.8,
+            )
+            sb_started += 1
+
+        # 3. Update music volume & loop mode if specified by scene
+        music_vol_pct = scene.get("music_volume")
+        if music_vol_pct is not None:
+            clamped = max(0, min(100, int(music_vol_pct)))
+            server_volumes.setdefault(guild_id, {'music': 1.0, 'soundboard': 0.5})['music'] = clamped / 100.0
+            await save_server_volumes(server_volumes)
+            cur = self.current_track.get(guild_id)
+            if cur and not cur.finished:
+                cur.volume = _pct_to_vol(clamped)
+
+        music_loop = scene.get("music_loop")
+        if music_loop in ("off", "track", "queue"):
+            self.loop_mode[guild_id] = music_loop
+            cur = self.current_track.get(guild_id)
+            if cur and not cur.finished:
+                cur.loop = (music_loop == "track")
+
+        # 4. Play scene's YouTube track/query if specified
+        music_query = (scene.get("music_query") or scene.get("music_url") or "").strip()
+        music_res = None
+        if music_query:
+            music_res = await self.play_from_dashboard(
+                guild_id,
+                music_query,
+                channel_id=channel_id,
+                replace_current=True,
+            )
+            if music_res.get("status") == "error":
+                return {
+                    "status": "error",
+                    "message": f"Scene soundboard started ({sb_started}), but music failed: {music_res.get('message')}",
+                }
+
+        return {
+            "status": "success",
+            "scene_name": scene.get("name", "Scene"),
+            "soundboard_started": sb_started,
+            "music": music_res,
+        }
 
     async def _seek(self, guild_id: str, target_seconds: float) -> discord.Embed:
         """Seek the currently playing track to target_seconds (already resolved to absolute

@@ -13,6 +13,8 @@
 
 <div id="cache-container" class="mb-4"></div>
 
+<div id="scenes-container" class="mb-4"></div>
+
 <div id="diag-container" class="mb-4"></div>
 
 <div id="guilds-container">
@@ -90,6 +92,9 @@
 <script>
 const REFRESH_MS = 3000;
 let refreshTimer = null;
+let guildInputState = {}; // guildId -> { query: '', channelId: '' }
+let sceneEditorOpen = false;
+let latestMusicData = null;
 
 function fmtDur(sec) {
     if (!sec || sec <= 0) return null;
@@ -103,7 +108,7 @@ function fmtDur(sec) {
 
 function escHtml(t) {
     if (!t) return '';
-    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
 
 function progressBar(elapsed, duration, guildId) {
@@ -126,13 +131,116 @@ function seekClick(evt, guildId, duration) {
     ctrl(guildId, 'seek', null, null, frac * duration);
 }
 
+function getGuildSelectedChannel(guildId, guildData) {
+    const st = guildInputState[guildId] || {};
+    if (st.channelId) return st.channelId;
+    if (guildData && guildData.connected_channel_id) return guildData.connected_channel_id;
+    const vcs = (guildData && guildData.voice_channels) || [];
+    const withMembers = vcs.find(v => v.members > 0);
+    if (withMembers) return withMembers.id;
+    return vcs.length > 0 ? vcs[0].id : '';
+}
+
+function onGuildChannelChange(guildId, val) {
+    if (!guildInputState[guildId]) guildInputState[guildId] = { query: '', channelId: '' };
+    guildInputState[guildId].channelId = val;
+}
+
+function onGuildQueryInput(guildId, val) {
+    if (!guildInputState[guildId]) guildInputState[guildId] = { query: '', channelId: '' };
+    guildInputState[guildId].query = val;
+}
+
+async function directPlay(guildId, mode) {
+    const qInput = document.getElementById(`direct-query-${guildId}`);
+    const vcSelect = document.getElementById(`direct-vc-${guildId}`);
+    const query = (qInput ? qInput.value : (guildInputState[guildId]?.query || '')).trim();
+    const channelId = vcSelect ? vcSelect.value : (guildInputState[guildId]?.channelId || '');
+
+    if (!query) {
+        alert('Zadejte YouTube URL, playlist nebo název skladby k vyhledání.');
+        return;
+    }
+
+    const resp = await fetch('/api/music/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            guild_id: guildId,
+            action: 'play',
+            query: query,
+            channel_id: channelId,
+            play_next: mode === 'next',
+            replace_current: mode === 'replace'
+        })
+    });
+    const res = await resp.json().catch(() => ({}));
+    if (!resp.ok || res.status === 'error') {
+        alert(res.message || 'Přehrávání selhalo.');
+        return;
+    }
+    if (guildInputState[guildId]) guildInputState[guildId].query = '';
+    if (qInput) qInput.value = '';
+    await updateMusicData(true);
+}
+
 function renderGuild(guildId, guildData) {
     const track = guildData.current_track;
     const queue = guildData.queue || [];
+    const vcs = guildData.voice_channels || [];
+    const activeSb = guildData.active_soundboard || [];
     const isActive = !!track;
     const isPaused = track?.paused;
 
-    let nowPlayingHtml = `<div class="text-center py-5"><div class="serif-i text-muted" style="font-size:18px">The air is silent...</div><div class="label mt-2">Use /play in Discord to begin the ritual</div></div>`;
+    const selVc = getGuildSelectedChannel(guildId, guildData);
+    if (!guildInputState[guildId]) {
+        guildInputState[guildId] = { query: '', channelId: selVc };
+    } else if (!guildInputState[guildId].channelId && selVc) {
+        guildInputState[guildId].channelId = selVc;
+    }
+    const savedQuery = escHtml(guildInputState[guildId].query || '');
+
+    const vcOptions = vcs.map(vc => {
+        const isSel = String(vc.id) === String(guildInputState[guildId].channelId) ? 'selected' : '';
+        const isConn = String(vc.id) === String(guildData.connected_channel_id) ? ' 🔊' : '';
+        const memInfo = vc.members > 0 ? ` (${vc.members} 👤)` : '';
+        return `<option value="${escHtml(vc.id)}" ${isSel}>#${escHtml(vc.name)}${memInfo}${isConn}</option>`;
+    }).join('');
+
+    const directPlayBarHtml = `
+        <div style="background:var(--void-2); border:1px solid var(--hair); padding:12px 14px; margin-bottom:18px">
+            <div class="label" style="font-size:9px; margin-bottom:8px; color:var(--sigil)">▶ PŘEHRÁVÁNÍ PŘÍMO Z DASHBOARDU (YOUTUBE URL / PLAYLIST / VYHLEDÁVÁNÍ)</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+                <select id="direct-vc-${guildId}" onchange="onGuildChannelChange('${guildId}', this.value)"
+                    style="background:var(--void-1); color:var(--bone); border:1px solid var(--hair-strong); padding:6px 10px; font-family:var(--font-mono); font-size:11px; min-width:170px">
+                    ${vcOptions || '<option value="">Žádný hlasový kanál</option>'}
+                </select>
+                <input id="direct-query-${guildId}" type="text" value="${savedQuery}"
+                    oninput="onGuildQueryInput('${guildId}', this.value)"
+                    onkeydown="if(event.key==='Enter'){directPlay('${guildId}', 'queue');}"
+                    placeholder="YouTube URL, playlist nebo hledaný výraz (např. Dark Jazz Cthulhu)..."
+                    style="flex:1; min-width:220px; background:var(--void-1); color:var(--bone); border:1px solid var(--hair-strong); padding:6px 10px; font-family:var(--font-mono); font-size:11px">
+                <button class="btn-eld primary" onclick="directPlay('${guildId}', 'queue')">▶ PLAY / QUEUE</button>
+                <button class="btn-eld" title="Zařadit hned jako další" onclick="directPlay('${guildId}', 'next')">⏭ PLAY NEXT</button>
+                <button class="btn-eld" title="Okamžitě nahradit aktuální skladbu" onclick="directPlay('${guildId}', 'replace')">⚡ PLAY NOW</button>
+                <button class="btn-eld rust" title="Zastavit a opustit kanál" onclick="ctrl('${guildId}', 'stop')">⏹ STOP &amp; LEAVE</button>
+            </div>
+        </div>`;
+
+    let sbBadgesHtml = '';
+    if (activeSb.length > 0) {
+        const pills = activeSb.map(sb =>
+            `<span class="badge bg-info text-dark" style="font-family:var(--font-mono); font-size:9px; border-radius:0">◐ ${escHtml(sb.file)} (${sb.volume}%${sb.loop ? ' · LOOP' : ''})</span>`
+        ).join(' ');
+        sbBadgesHtml = `
+            <div style="margin-bottom:14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+                <span class="mono" style="font-size:10px; color:var(--bone-fade)">ACTIVE AMBIENCE LAYERS:</span>
+                ${pills}
+                <button class="btn-eld rust" style="padding:2px 8px; font-size:9px" onclick="stopSoundboardLoops('${guildId}')">🔇 FADE OUT AMBIENCE</button>
+            </div>`;
+    }
+
+    let nowPlayingHtml = `<div class="text-center py-4"><div class="serif-i text-muted" style="font-size:18px">The air is silent...</div><div class="label mt-2">Spusťte hudbu nebo scénický preset přímo z panelu výše</div></div>`;
 
     if (isActive) {
         const title = escHtml(track.title || 'Unknown');
@@ -216,13 +324,248 @@ function renderGuild(guildId, guildData) {
     return `
         <div class="music-card" id="guild-card-${guildId}">
             <window.Corners/>
-            <div class="music-card-header">
-                <span class="serif" style="color:var(--sigil); font-size:24px">✶</span>
-                <span class="guild-name">${escHtml(guildData.name || guildId)}</span>
+            <div class="music-card-header" style="justify-content:space-between; flex-wrap:wrap">
+                <div style="display:flex; align-items:center; gap:12px">
+                    <span class="serif" style="color:var(--sigil); font-size:24px">✶</span>
+                    <span class="guild-name">${escHtml(guildData.name || guildId)}</span>
+                </div>
+                ${guildData.connected_channel_id ? `<span class="badge bg-success" style="font-family:var(--font-mono); font-size:9px; border-radius:0">🔊 VOICE CONNECTED</span>` : `<span class="badge bg-secondary" style="font-family:var(--font-mono); font-size:9px; border-radius:0">IDLE</span>`}
             </div>
-            <div class="music-body">${nowPlayingHtml}</div>
+            <div class="music-body">
+                ${directPlayBarHtml}
+                ${sbBadgesHtml}
+                ${nowPlayingHtml}
+            </div>
             ${queueHtml}
         </div>`;
+}
+
+function renderScenesPanel(data) {
+    const scenesEl = document.getElementById('scenes-container');
+    if (!scenesEl) return;
+    if (sceneEditorOpen && scenesEl.contains(document.activeElement)) return;
+
+    const rawScenes = data.scenes || [];
+    const sceneList = Array.isArray(rawScenes)
+        ? rawScenes
+        : Object.entries(rawScenes).map(([k, v]) => ({ id: k, ...v }));
+    const sbFiles = data.soundboard_files || [];
+    const guilds = data.guilds || {};
+    const guildEntries = Object.entries(guilds);
+
+    const sbOptions = `<option value="">-- Žádný zvuk --</option>` + sbFiles.map(f => {
+        if (typeof f === 'string') return `<option value="${escHtml(f)}">${escHtml(f)}</option>`;
+        return `<option value="${escHtml(f.file)}">${escHtml(f.folder ? `[${f.folder}] ` : '')}${escHtml(f.name)} (${escHtml(f.file)})</option>`;
+    }).join('');
+
+    const sceneCards = sceneList.map(sc => {
+        const sceneId = sc.id || sc.scene_id || sc.name;
+        const icon = escHtml(sc.icon || '🕯️');
+        const name = escHtml(sc.name || sceneId);
+        const musicUrl = escHtml(sc.music_url || sc.music_query || '');
+        const musicVol = sc.music_volume ?? 35;
+        const musicLoop = escHtml(sc.music_loop || 'track');
+        const sbList = Array.isArray(sc.soundboard) ? sc.soundboard : (Array.isArray(sc.soundboard_tracks) ? sc.soundboard_tracks : []);
+
+        const sbSummary = sbList.length > 0
+            ? sbList.map(item => `<span class="badge bg-secondary" style="font-family:var(--font-mono); font-size:9px; border-radius:0">◐ ${escHtml(item.file || item.file_path)} (${item.volume ?? 60}%${item.loop !== false ? ' · LOOP' : ''})</span>`).join(' ')
+            : `<span class="mono" style="font-size:10px; color:var(--bone-fade)">Bez soundboard vrstvy</span>`;
+
+        const activateBtns = guildEntries.map(([gId, gData]) =>
+            `<button class="btn-eld primary" style="padding:4px 10px; font-size:10px" onclick="activateScene('${escHtml(sceneId)}', '${escHtml(gId)}')">▶ ${escHtml(gData.name || gId)}</button>`
+        ).join(' ');
+
+        return `
+            <div style="background:var(--void-2); border:1px solid var(--hair); padding:14px; display:flex; flex-direction:column; justify-content:space-between; gap:10px">
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px">
+                        <div class="serif" style="font-size:1.15rem; color:var(--bone)">${icon} ${name}</div>
+                        <button class="btn-eld rust" style="padding:2px 6px; font-size:9px" onclick="deleteScene('${escHtml(sceneId)}')">✕</button>
+                    </div>
+                    <div class="mono" style="font-size:10px; color:var(--bone-fade); margin-top:6px; word-break:break-all">
+                        ♪ ${musicUrl ? `${musicUrl} (${musicVol}%, loop: ${musicLoop})` : 'Bez YouTube stopy'}
+                    </div>
+                    <div style="margin-top:8px; display:flex; gap:4px; flex-wrap:wrap">${sbSummary}</div>
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; border-top:1px solid var(--hair); padding-top:8px">
+                    ${activateBtns}
+                </div>
+            </div>`;
+    }).join('');
+
+    scenesEl.innerHTML = `
+        <div class="music-card" style="margin-bottom:1.5rem">
+            <div class="music-card-header" style="justify-content:space-between; flex-wrap:wrap">
+                <div style="display:flex; align-items:center; gap:12px">
+                    <span class="serif" style="color:var(--sigil); font-size:20px">🕯️</span>
+                    <span class="guild-name" style="font-size:1.1rem">Ambience Scenes (Scénické Presety)</span>
+                    <span class="mono" style="font-size:10px; color:var(--bone-fade)">YouTube hudba + nekonečné Soundboard smyčky s plynulým prolínáním</span>
+                </div>
+                <div style="display:flex; gap:8px">
+                    ${sceneList.length === 0 ? `<button class="btn-eld" onclick="createStarterScenes()">✨ NAČÍST VZOROVÉ SCÉNY</button>` : ''}
+                    <button class="btn-eld primary" onclick="toggleSceneEditor()">${sceneEditorOpen ? '▲ ZAVŘÍT EDITOR' : '＋ NOVÝ SCÉNICKÝ PRESET'}</button>
+                </div>
+            </div>
+            <div class="music-body" style="padding:1rem 1.5rem">
+                ${sceneList.length > 0
+                    ? `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:12px">${sceneCards}</div>`
+                    : `<div class="mono text-center py-3" style="font-size:11px; color:var(--bone-fade)">Zatím nemáte uložené žádné scénické presety. Klikněte na „＋ NOVÝ SCÉNICKÝ PRESET“ nebo „✨ NAČÍST VZOROVÉ SCÉNY“.</div>`
+                }
+
+                <div id="scene-editor-box" style="display:${sceneEditorOpen ? 'block' : 'none'}; margin-top:16px; padding-top:16px; border-top:1px solid var(--hair)">
+                    <div class="label" style="margin-bottom:10px; color:var(--sigil)">Vytvořit / Upravit Scénický Preset</div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:12px">
+                        <div>
+                            <div class="mono" style="font-size:10px; color:var(--bone-fade); margin-bottom:4px">Ikona</div>
+                            <input id="sc-icon" type="text" value="🌧️" style="width:100%; background:var(--void-2); color:var(--bone); border:1px solid var(--hair-strong); padding:5px 8px; font-family:var(--font-mono); font-size:11px">
+                        </div>
+                        <div>
+                            <div class="mono" style="font-size:10px; color:var(--bone-fade); margin-bottom:4px">Název scény</div>
+                            <input id="sc-name" type="text" placeholder="např. Deštivý Arkham" style="width:100%; background:var(--void-2); color:var(--bone); border:1px solid var(--hair-strong); padding:5px 8px; font-family:var(--font-mono); font-size:11px">
+                        </div>
+                        <div>
+                            <div class="mono" style="font-size:10px; color:var(--bone-fade); margin-bottom:4px">YouTube URL nebo hledaný výraz</div>
+                            <input id="sc-music-url" type="text" placeholder="URL nebo např. Dark Jazz Noir Ambience" style="width:100%; background:var(--void-2); color:var(--bone); border:1px solid var(--hair-strong); padding:5px 8px; font-family:var(--font-mono); font-size:11px">
+                        </div>
+                        <div>
+                            <div class="mono" style="font-size:10px; color:var(--bone-fade); margin-bottom:4px">Hlasitost hudby (%) &amp; Smyčka</div>
+                            <div style="display:flex; gap:6px">
+                                <input id="sc-music-vol" type="number" min="0" max="100" value="35" style="width:70px; background:var(--void-2); color:var(--bone); border:1px solid var(--hair-strong); padding:5px 8px; font-family:var(--font-mono); font-size:11px">
+                                <select id="sc-music-loop" style="flex:1; background:var(--void-2); color:var(--bone); border:1px solid var(--hair-strong); padding:5px 8px; font-family:var(--font-mono); font-size:11px">
+                                    <option value="track" selected>Loop Track</option>
+                                    <option value="queue">Loop Queue</option>
+                                    <option value="off">Bez smyčky</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mono" style="font-size:10px; color:var(--bone-fade); margin-bottom:6px">Soundboard vrstvy (např. déšť, praskání ohně, šepot):</div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:8px; margin-bottom:12px">
+                        ${[0, 1, 2].map(idx => `
+                            <div style="display:flex; gap:6px; align-items:center; background:var(--void-2); padding:6px 8px; border:1px solid var(--hair)">
+                                <select id="sc-sb-file-${idx}" style="flex:1; min-width:0; background:var(--void-1); color:var(--bone); border:1px solid var(--hair); padding:4px; font-family:var(--font-mono); font-size:10px">
+                                    ${sbOptions}
+                                </select>
+                                <input id="sc-sb-vol-${idx}" type="number" min="0" max="100" value="55" title="Hlasitost %" style="width:52px; background:var(--void-1); color:var(--bone); border:1px solid var(--hair); padding:4px; font-family:var(--font-mono); font-size:10px">
+                                <label class="mono" style="font-size:9px; color:var(--bone-fade); display:flex; align-items:center; gap:3px; margin:0">
+                                    <input id="sc-sb-loop-${idx}" type="checkbox" checked> LOOP
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="btn-eld primary" onclick="saveSceneFromEditor()">💾 ULOŽIT SCÉNICKÝ PRESET</button>
+                </div>
+            </div>
+        </div>`;
+}
+
+function toggleSceneEditor() {
+    sceneEditorOpen = !sceneEditorOpen;
+    if (latestMusicData) renderScenesPanel(latestMusicData);
+}
+
+async function saveSceneFromEditor() {
+    const name = (document.getElementById('sc-name')?.value || '').trim();
+    if (!name) { alert('Zadejte název scény.'); return; }
+    const icon = (document.getElementById('sc-icon')?.value || '🕯️').trim();
+    const musicUrl = (document.getElementById('sc-music-url')?.value || '').trim();
+    const musicVol = parseInt(document.getElementById('sc-music-vol')?.value || '35', 10);
+    const musicLoop = document.getElementById('sc-music-loop')?.value || 'track';
+
+    const soundboard = [];
+    for (let i = 0; i < 3; i++) {
+        const f = document.getElementById(`sc-sb-file-${i}`)?.value;
+        const v = parseInt(document.getElementById(`sc-sb-vol-${i}`)?.value || '55', 10);
+        const l = !!document.getElementById(`sc-sb-loop-${i}`)?.checked;
+        if (f) soundboard.push({ file: f, volume: v, loop: l });
+    }
+
+    await fetch('/api/music/scenes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'save',
+            scene: { name, icon, music_url: musicUrl, music_volume: musicVol, music_loop: musicLoop, soundboard }
+        })
+    });
+    sceneEditorOpen = false;
+    await updateMusicData(true);
+}
+
+async function createStarterScenes() {
+    const starters = [
+        {
+            scene_id: 'arkham_rain_jazz',
+            name: 'Deštivý Arkham (1920s Noir)',
+            icon: '🌧️',
+            music_url: '1920s dark jazz noir detective ambience instrumental',
+            music_volume: 30,
+            music_loop: 'track',
+            soundboard: []
+        },
+        {
+            scene_id: 'occult_ritual_crypt',
+            name: 'Okultní Rituál v Kryptě',
+            icon: '🕯️',
+            music_url: 'Call of Cthulhu dark ritual drone ambient music',
+            music_volume: 35,
+            music_loop: 'track',
+            soundboard: []
+        },
+        {
+            scene_id: 'eldritch_combat',
+            name: 'Střet s Mýtem (Boj / Útěk)',
+            icon: '⚔️',
+            music_url: 'dark orchestral horror combat ost',
+            music_volume: 55,
+            music_loop: 'track',
+            soundboard: []
+        }
+    ];
+    for (const sc of starters) {
+        await fetch('/api/music/scenes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'save', scene: sc })
+        });
+    }
+    await updateMusicData(true);
+}
+
+async function deleteScene(sceneId) {
+    if (!confirm('Smazat tento scénický preset?')) return;
+    await fetch('/api/music/scenes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', scene_id: sceneId })
+    });
+    await updateMusicData(true);
+}
+
+async function activateScene(sceneId, guildId) {
+    const vcSelect = document.getElementById(`direct-vc-${guildId}`);
+    const channelId = vcSelect ? vcSelect.value : (guildInputState[guildId]?.channelId || '');
+    const resp = await fetch('/api/music/scenes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'activate', scene_id: sceneId, guild_id: guildId, channel_id: channelId })
+    });
+    const res = await resp.json().catch(() => ({}));
+    if (!resp.ok || res.status === 'error') {
+        alert(res.message || 'Aktivace scény selhala.');
+        return;
+    }
+    await updateMusicData(true);
+}
+
+async function stopSoundboardLoops(guildId) {
+    await fetch('/api/music/scenes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'stop_soundboard', guild_id: guildId })
+    });
+    await updateMusicData(true);
 }
 
 function renderCachePanel(cache) {
@@ -286,7 +629,7 @@ async function saveCacheSettings(currentEnabled) {
             max_size_gb: maxGb
         })
     });
-    await updateMusicData();
+    await updateMusicData(true);
 }
 
 async function toggleCacheEnabled(enable) {
@@ -295,7 +638,7 @@ async function toggleCacheEnabled(enable) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'cache_settings', enabled: enable })
     });
-    await updateMusicData();
+    await updateMusicData(true);
 }
 
 async function clearAudioCache(keepFavorites) {
@@ -308,10 +651,26 @@ async function clearAudioCache(keepFavorites) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'clear_cache', keep_favorites: keepFavorites })
     });
-    await updateMusicData();
+    await updateMusicData(true);
 }
 
-function renderDiagnosticsPanel(diag) {
+async function upgradeYtdlpNow() {
+    const btn = document.getElementById('btn-upgrade-ytdlp');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ UPGRADING YT-DLP...'; }
+    try {
+        const resp = await fetch('/api/music/control', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'upgrade_ytdlp' })
+        });
+        const d = await resp.json().catch(() => ({}));
+        alert(`yt-dlp status: ${d.ytdlp_status || 'hotovo'}`);
+    } finally {
+        await updateMusicData(true);
+    }
+}
+
+function renderDiagnosticsPanel(diag, ytdlpStatus, ytdlpCheckedAt) {
     const diagEl = document.getElementById('diag-container');
     if (!diag || !diagEl) return;
     const env = escHtml(diag.env || '');
@@ -319,6 +678,8 @@ function renderDiagnosticsPanel(diag) {
     const vlogs = escHtml(diag.voice_logs || 'No voice logs recorded yet.');
     const hasDup = env.includes('DUPLICATE');
     const borderStyle = hasDup ? 'border-color:#dc3545' : '';
+    const ytStat = escHtml(ytdlpStatus || 'Auto-update active (24h loop)');
+    const ytTime = ytdlpCheckedAt ? ` · Last check: ${escHtml(ytdlpCheckedAt)}` : '';
 
     diagEl.innerHTML = `
         <div class="music-card" style="margin-bottom:1.5rem; ${borderStyle}">
@@ -327,6 +688,10 @@ function renderDiagnosticsPanel(diag) {
                     <span class="serif" style="color:var(--sigil); font-size:20px">🩺</span>
                     <span class="guild-name" style="font-size:1.1rem">Voice &amp; Process Diagnostics</span>
                     ${hasDup ? `<span class="badge bg-danger" style="font-family:var(--font-mono); font-size:9px; border-radius:0">⚠️ DUPLICATE BOT PROCESS</span>` : ''}
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+                    <span class="mono" style="font-size:10px; color:var(--bone-fade)">yt-dlp: <strong style="color:var(--sigil)">${ytStat}</strong>${ytTime}</span>
+                    <button id="btn-upgrade-ytdlp" class="btn-eld" style="padding:3px 10px; font-size:9px" onclick="upgradeYtdlpNow()">↻ UPGRADE YT-DLP NOW</button>
                 </div>
             </div>
             <div class="music-body" style="padding:1rem 1.5rem; font-family:var(--font-mono); font-size:11px; color:var(--bone-dim)">
@@ -340,18 +705,25 @@ function renderDiagnosticsPanel(diag) {
         </div>`;
 }
 
-async function updateMusicData() {
+async function updateMusicData(forceRender = false) {
     try {
         const resp = await fetch('/api/music/data', { cache: 'no-store' });
         if (!resp.ok) return;
         const data = await resp.json();
+        latestMusicData = data;
         if (data.cache) {
             renderCachePanel(data.cache);
         }
+        renderScenesPanel(data);
         if (data.diagnostics) {
-            renderDiagnosticsPanel(data.diagnostics);
+            renderDiagnosticsPanel(data.diagnostics, data.ytdlp_status, data.ytdlp_checked_at);
         }
         const container = document.getElementById('guilds-container');
+        // Do not clobber guild input focus while typing
+        if (!forceRender && container && container.contains(document.activeElement)) {
+            const tag = document.activeElement.tagName;
+            if (tag === 'INPUT' || tag === 'SELECT') return;
+        }
 
         if (!data.guilds || Object.keys(data.guilds).length === 0) {
             container.innerHTML = `
@@ -377,7 +749,7 @@ async function ctrl(guildId, action, volume = null, index = null, seconds = null
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ guild_id: guildId, action, volume, index, seconds })
     });
-    await updateMusicData();
+    await updateMusicData(true);
 }
 
 async function banTrack(guildId, url) {
@@ -388,11 +760,11 @@ async function banTrack(guildId, url) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })
     });
-    await updateMusicData();
+    await updateMusicData(true);
 }
 
 // Start auto-refresh
 refreshTimer = setInterval(updateMusicData, REFRESH_MS);
-updateMusicData();
+updateMusicData(true);
 </script>
 {% endblock %}

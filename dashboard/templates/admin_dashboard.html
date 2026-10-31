@@ -89,19 +89,36 @@ const Divider = ({label}) => (
 
 function AdminDashboard() {
   const [vitals, setVitals] = useState(null);
+  const [sysData, setSysData] = useState(null);
+  const [consoleOpen, setConsoleOpen] = useState(true);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const consoleRef = React.useRef(null);
 
   useEffect(() => {
     const poll = async () => {
       try {
-        const r = await fetch('/api/status', {cache:"no-store"});
-        const d = await r.json();
-        setVitals(d);
+        const [r1, r2] = await Promise.all([
+          fetch('/api/status', {cache:"no-store"}),
+          fetch('/api/admin/system', {cache:"no-store"})
+        ]);
+        if (r1.ok) setVitals(await r1.json());
+        if (r2.ok) setSysData(await r2.json());
       } catch {}
     };
     poll();
-    const id = setInterval(poll, 5000);
+    const id = setInterval(poll, 3000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (autoScroll && consoleRef.current) {
+      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+    }
+  }, [sysData, autoScroll, consoleOpen]);
+
+  const tel = sysData?.telemetry;
+  const logs = sysData?.console_logs || [];
+  const tempColor = tel?.cpu_temp_c >= 75 ? '#dc3545' : tel?.cpu_temp_c >= 65 ? 'var(--amber)' : 'var(--sigil)';
 
   return (
     <div style={{display:"flex", flexDirection:"column", gap:28}}>
@@ -128,6 +145,92 @@ function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Raspberry Pi & Host System Telemetry + Live Console */}
+      {tel && (
+        <div className="card-h" style={{padding:"20px 24px", background:"var(--void-1)"}}>
+          <window.Corners/>
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12, marginBottom:16}}>
+            <div style={{display:"flex", alignItems:"center", gap:10}}>
+              <span className="serif" style={{color:"var(--sigil)", fontSize:20}}>🍓</span>
+              <span className="label" style={{color:"var(--bone)"}}>Host / Raspberry Pi Telemetry &amp; Live Console</span>
+            </div>
+            <div style={{display:"flex", gap:8, alignItems:"center"}}>
+              <button className="btn-eld" style={{padding:"4px 10px", fontSize:10}} onClick={() => setConsoleOpen(!consoleOpen)}>
+                {consoleOpen ? "▼ HIDE CONSOLE" : "▶ SHOW CONSOLE"} ({logs.length})
+              </button>
+              {consoleOpen && (
+                <>
+                  <button className={`btn-eld ${autoScroll ? 'primary' : ''}`} style={{padding:"4px 10px", fontSize:10}} onClick={() => setAutoScroll(!autoScroll)}>
+                    {autoScroll ? "⬇ AUTO-SCROLL: ON" : "⏸ AUTO-SCROLL: OFF"}
+                  </button>
+                  <button className="btn-eld rust" style={{padding:"4px 10px", fontSize:10}} onClick={async () => {
+                    await fetch('/api/admin/console/clear', {method:'POST'});
+                    setSysData(prev => prev ? {...prev, console_logs: []} : prev);
+                  }}>
+                    ⌫ CLEAR LOGS
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(180px, 1fr))", gap:12}}>
+            <div style={{background:"var(--void-2)", border:"1px solid var(--hair)", padding:"12px 14px"}}>
+              <div className="label" style={{fontSize:9, marginBottom:6}}>CPU Load</div>
+              <div className="mono" style={{fontSize:18, color:"var(--sigil)"}}>{tel.cpu_percent}%</div>
+              <div style={{height:4, background:"var(--void-4)", marginTop:8}}>
+                <div style={{height:"100%", width:`${Math.min(100, tel.cpu_percent)}%`, background:"var(--sigil)"}}/>
+              </div>
+            </div>
+
+            <div style={{background:"var(--void-2)", border:"1px solid var(--hair)", padding:"12px 14px"}}>
+              <div className="label" style={{fontSize:9, marginBottom:6}}>CPU Temperature</div>
+              <div className="mono" style={{fontSize:18, color:tempColor}}>
+                {tel.cpu_temp_c !== null && tel.cpu_temp_c !== undefined ? `${tel.cpu_temp_c} °C` : "N/A"}
+              </div>
+              <div className="mono" style={{fontSize:10, color:"var(--bone-fade)", marginTop:6}}>
+                {tel.cpu_temp_c >= 75 ? "🔥 Throttling Risk" : tel.cpu_temp_c >= 65 ? "⚠️ Warm" : "❄️ Nominal"}
+              </div>
+            </div>
+
+            <div style={{background:"var(--void-2)", border:"1px solid var(--hair)", padding:"12px 14px"}}>
+              <div className="label" style={{fontSize:9, marginBottom:6}}>System RAM</div>
+              <div className="mono" style={{fontSize:16, color:"var(--bone)"}}>
+                {tel.ram_used_mb} / {tel.ram_total_mb} MB <span style={{color:"var(--sigil)", fontSize:12}}>({tel.ram_percent}%)</span>
+              </div>
+              <div className="mono" style={{fontSize:10, color:"var(--bone-fade)", marginTop:4}}>
+                Bot Process: {tel.bot_rss_mb} MB
+              </div>
+            </div>
+
+            <div style={{background:"var(--void-2)", border:"1px solid var(--hair)", padding:"12px 14px"}}>
+              <div className="label" style={{fontSize:9, marginBottom:6}}>SD / Disk Storage</div>
+              <div className="mono" style={{fontSize:16, color:"var(--bone)"}}>
+                {tel.disk_used_gb} / {tel.disk_total_gb} GB <span style={{color:"var(--sigil)", fontSize:12}}>({tel.disk_percent}%)</span>
+              </div>
+              <div style={{height:4, background:"var(--void-4)", marginTop:8}}>
+                <div style={{height:"100%", width:`${Math.min(100, tel.disk_percent)}%`, background:"var(--sigil)"}}/>
+              </div>
+            </div>
+          </div>
+
+          {consoleOpen && (
+            <div style={{marginTop:16}}>
+              <pre
+                ref={consoleRef}
+                style={{
+                  margin:0, padding:"12px 14px", background:"#07080a",
+                  border:"1px solid var(--hair-strong)", color:"var(--bone)",
+                  fontFamily:"var(--font-mono)", fontSize:11, lineHeight:1.45,
+                  maxHeight:260, overflowY:"auto", whiteSpace:"pre-wrap", wordBreak:"break-word"
+                }}>
+                {logs.length > 0 ? logs.join('\n') : "Waiting for console output..."}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
 
       {adminTiles.map(section => (
         <div key={section.group}>

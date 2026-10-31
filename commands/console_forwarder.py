@@ -8,12 +8,14 @@ import logging
 import datetime
 from collections import deque
 from loadnsave import load_settings
+from dashboard.state import console_log_buffer
 
 
 class _StreamCapture(io.TextIOBase):
-    def __init__(self, original, queue):
+    def __init__(self, original, queue, dashboard_buf=None):
         self.original = original
         self.queue = queue
+        self.dashboard_buf = dashboard_buf
         self._buf = ""
 
     def write(self, text):
@@ -22,7 +24,10 @@ class _StreamCapture(io.TextIOBase):
         while "\n" in self._buf:
             line, self._buf = self._buf.split("\n", 1)
             if line.strip():
-                self.queue.append((datetime.datetime.now(), line))
+                now = datetime.datetime.now()
+                self.queue.append((now, line))
+                if self.dashboard_buf is not None:
+                    self.dashboard_buf.append(f"[{now.strftime('%H:%M:%S')}] {line}")
         return len(text)
 
     def flush(self):
@@ -33,14 +38,19 @@ class _StreamCapture(io.TextIOBase):
 
 
 class _DiscordLogHandler(logging.Handler):
-    def __init__(self, queue):
+    def __init__(self, queue, dashboard_buf=None):
         super().__init__(level=logging.WARNING)
         self.queue = queue
+        self.dashboard_buf = dashboard_buf
         self.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
 
     def emit(self, record):
         try:
-            self.queue.append((datetime.datetime.now(), self.format(record)))
+            now = datetime.datetime.now()
+            formatted = self.format(record)
+            self.queue.append((now, formatted))
+            if self.dashboard_buf is not None:
+                self.dashboard_buf.append(f"[{now.strftime('%H:%M:%S')}] {formatted}")
         except Exception:
             pass
 
@@ -53,7 +63,8 @@ class ConsoleForwarder(commands.Cog):
         self._capturing = False
         self._original_stdout = sys.stdout
         self._original_stderr = sys.stderr
-        self._log_handler = _DiscordLogHandler(self._queue)
+        self._log_handler = _DiscordLogHandler(self._queue, console_log_buffer)
+        self._start_capture()
         self.forward_task.start()
 
     def cog_unload(self):
@@ -65,8 +76,8 @@ class ConsoleForwarder(commands.Cog):
     def _start_capture(self):
         if self._capturing:
             return
-        sys.stdout = _StreamCapture(self._original_stdout, self._queue)
-        sys.stderr = _StreamCapture(self._original_stderr, self._queue)
+        sys.stdout = _StreamCapture(self._original_stdout, self._queue, console_log_buffer)
+        sys.stderr = _StreamCapture(self._original_stderr, self._queue, console_log_buffer)
         logging.getLogger().addHandler(self._log_handler)
         self._capturing = True
 
@@ -155,7 +166,6 @@ class ConsoleForwarder(commands.Cog):
         if not await self.bot.is_owner(interaction.user):
             await interaction.response.send_message("Owner only.", ephemeral=True)
             return
-        self._stop_capture()
         self._queue.clear()
         settings = load_settings()
         settings["console_forwarding"] = False

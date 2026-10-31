@@ -1786,5 +1786,52 @@ class TestPlaylistAndPrefetchOptimizations:
         sent_embed = interaction.user.send.call_args.kwargs["embed"]
         assert "Timed out during voice handshake" in sent_embed.description
 
+    @pytest.mark.asyncio
+    async def test_play_from_dashboard_queues_and_starts_track(self, monkeypatch):
+        cog = make_music_cog()
+        guild_id = "123"
+        monkeypatch.setattr("commands.music.load_music_blacklist", AsyncMock(return_value=[]))
+        cog.ensure_voice_for_channel = AsyncMock(return_value=(MagicMock(is_connected=lambda: True), None))
+
+        async def fake_queue_single(gid, q, req):
+            cog.queue.setdefault(gid, []).append({"title": "Arkham Noir", "original_url": "https://youtu.be/abc"})
+            return MagicMock(), False
+
+        cog._queue_single_track = AsyncMock(side_effect=fake_queue_single)
+        cog._play_song = AsyncMock()
+        cog._update_dashboard_for_guild = AsyncMock()
+
+        res = await cog.play_from_dashboard(guild_id, "Arkham Noir", channel_id="456")
+
+        assert res["status"] == "success"
+        assert res["title"] == "Arkham Noir"
+        cog.ensure_voice_for_channel.assert_awaited_once_with(guild_id, "456")
+        cog._play_song.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_activate_ambience_scene_sets_loop_and_plays_music(self, monkeypatch):
+        cog = make_music_cog()
+        guild_id = "123"
+        monkeypatch.setattr("commands.music.save_server_volumes", AsyncMock())
+        cog.ensure_voice_for_channel = AsyncMock(return_value=(MagicMock(is_connected=lambda: True, is_playing=lambda: False), None))
+        cog.play_from_dashboard = AsyncMock(return_value={"status": "success", "title": "Ritual Drone"})
+        cog._update_dashboard_for_guild = AsyncMock()
+
+        scene = {
+            "name": "Crypt Ritual",
+            "music_url": "https://youtu.be/ritual",
+            "music_volume": 40,
+            "music_loop": "track",
+            "soundboard": [],
+        }
+        res = await cog.activate_ambience_scene(guild_id, scene, channel_id="456")
+
+        assert res["status"] == "success"
+        assert cog.loop_mode[guild_id] == "track"
+        cog.play_from_dashboard.assert_awaited_once_with(
+            guild_id, "https://youtu.be/ritual", channel_id="456", replace_current=True
+        )
+
+
 
 

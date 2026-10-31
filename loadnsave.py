@@ -478,6 +478,27 @@ async def load_music_favorites():
 async def save_music_favorites(favorites):
     await _save_json_file(DATA_FOLDER, 'music_favorites.json', favorites)
 
+# --- Ambience Scenes (Scenic Presets) ---
+_AMBIENCE_SCENES_CACHE = None
+
+async def load_ambience_scenes():
+    global _AMBIENCE_SCENES_CACHE
+    if _AMBIENCE_SCENES_CACHE is None:
+        loaded = await _load_json_file(DATA_FOLDER, 'ambience_scenes.json')
+        if not isinstance(loaded, dict):
+            loaded = {}
+        loaded.setdefault("scenes", [])
+        _AMBIENCE_SCENES_CACHE = loaded
+    return _AMBIENCE_SCENES_CACHE
+
+async def save_ambience_scenes(scenes_data):
+    global _AMBIENCE_SCENES_CACHE
+    if not isinstance(scenes_data, dict):
+        scenes_data = {"scenes": []}
+    scenes_data.setdefault("scenes", [])
+    _AMBIENCE_SCENES_CACHE = scenes_data
+    await _save_json_file(DATA_FOLDER, 'ambience_scenes.json', scenes_data, ensure_ascii=False)
+
 # --- Music Cache Settings & Index ---
 _MUSIC_CACHE_SETTINGS_CACHE = None
 
@@ -820,6 +841,7 @@ _DATA_CACHE_VAR_BY_FILENAME = {
     'fonts_config.json': '_FONTS_CONFIG_CACHE',
     'music_cache_settings.json': '_MUSIC_CACHE_SETTINGS_CACHE',
     'music_cache_index.json': '_MUSIC_CACHE_INDEX_CACHE',
+    'ambience_scenes.json': '_AMBIENCE_SCENES_CACHE',
 }
 
 def invalidate_data_cache(filename):
